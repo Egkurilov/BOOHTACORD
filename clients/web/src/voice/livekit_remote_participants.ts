@@ -2,6 +2,7 @@ import { RemoteParticipantController, type RemoteMicrophonePublication, type Spe
 import type { ScreenViewerPublication } from './screen_viewer_controller'
 
 export interface LiveKitRemoteParticipant {
+  attributes?: Readonly<Record<string, string>>
   getTrackPublication(source: unknown): ScreenViewerPublication | undefined
   identity: string
   metadata?: string

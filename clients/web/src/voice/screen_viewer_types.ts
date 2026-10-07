@@ -1,3 +1,5 @@
+import type { ScreenShareDescriptorV1 } from './screen_profile_metadata/types'
+
 export interface ScreenViewerTrack {
   attach(element: HTMLMediaElement): HTMLMediaElement
   detach(element: HTMLMediaElement): HTMLMediaElement[]
@@ -20,11 +22,13 @@ export interface ScreenViewerStream {
   isLocal?: boolean
   participantId: string
   participantName: string
+  descriptor?: ScreenShareDescriptorV1
+  profileSource?: 'sender-metadata' | 'legacy-track-name' | 'unknown'
   targetProfile?: string
   video: ScreenViewerPublication
 }
 
-export type ScreenViewerCard = Pick<ScreenViewerStream, 'accountId' | 'hasAudio' | 'id' | 'isLocal' | 'participantId' | 'participantName' | 'targetProfile'> & {
+export type ScreenViewerCard = Pick<ScreenViewerStream, 'accountId' | 'descriptor' | 'hasAudio' | 'id' | 'isLocal' | 'participantId' | 'participantName' | 'profileSource' | 'targetProfile'> & {
   thumbnailUrl?: string
   videoMuted?: boolean
   readReceiverStats?: () => Promise<import('./screen_receiver_diagnostics').ScreenReceiverSnapshot | undefined>

@@ -26,8 +26,9 @@ export class ScreenViewerController {
   get operationGeneration(): number { return this.lifecycle.operationGeneration }
   hasAttachedVideo(element: HTMLVideoElement | null): boolean { return this.lifecycle.hasAttachedVideo(element) }
   cards(): ScreenViewerCard[] {
-    return this.source().map(({ accountId, hasAudio, id, isLocal, participantId, participantName, targetProfile, video }) => ({
+    return this.source().map(({ accountId, descriptor, hasAudio, id, isLocal, participantId, participantName, profileSource, targetProfile, video }) => ({
       ...(accountId ? { accountId } : {}), hasAudio, id, ...(isLocal === undefined ? {} : { isLocal }), participantId, participantName,
+      ...(descriptor ? { descriptor } : {}), ...(profileSource ? { profileSource } : {}),
       ...(targetProfile ? { targetProfile } : {}), ...(video.isMuted === true ? { videoMuted: true } : {}),
       ...(this.thumbnailUrls.get(participantId) ? { thumbnailUrl: this.thumbnailUrls.get(participantId) } : {}),
       ...(!isLocal && video.track?.getReceiverStats ? { readReceiverStats: this.receiverReader(video.track) } : {}),

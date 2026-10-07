@@ -64,5 +64,6 @@
   "PUT /api/v1/channels/{channelID}/read-cursor",
   "PUT /api/v1/direct-messages/{directMessageID}/read-cursor",
   "PUT /api/v1/me/avatar",
-  "PUT /api/v1/voice/leases/{leaseID}/screen-previews/v1/{generationID}"
+  "PUT /api/v1/voice/leases/{leaseID}/screen-previews/v1/{generationID}",
+  "PUT /api/v1/voice/leases/{leaseID}/screen-profile/v1"
 ]

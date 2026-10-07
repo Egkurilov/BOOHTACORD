@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { LiveKitScreenRegistry, type ScreenParticipantPublication } from './livekit_screen_registry'
+import { readFileSync } from 'node:fs'
+
+const descriptorFixture = JSON.parse(readFileSync(new URL('../../../../contracts/screen-share-profile-v1.fixtures.json', import.meta.url), 'utf8')).validDescriptor
 
 function publication() {
   return { setSubscribed: vi.fn(), name: 'screenshare-1080p-30fps' }
@@ -8,6 +11,11 @@ function publication() {
 
 function participant(identity: string, video = publication(), audio?: ReturnType<typeof publication>): ScreenParticipantPublication {
   return { audio, identity, name: identity.toUpperCase(), video }
+}
+
+function descriptor(profile: string, generation: number, operation: number): string {
+  return JSON.stringify({ ...descriptorFixture, requested_profile_id: profile, mode: profile.endsWith('_60') ? 'motion' : 'text',
+    scope: { origin_id: 'https://app.example.test', account_id: '11111111-1111-4111-8111-111111111111', room_id: 'voice:channel-a', media_session_id: 'share-a', publication_generation: generation, operation_revision: operation } })
 }
 
 describe('LiveKit screen registry', () => {
@@ -57,9 +65,49 @@ describe('LiveKit screen registry', () => {
     })])
   })
 
-  it('reads the sender target profile from the LiveKit video track name', () => {
+  it('keeps legacy target labels for a track without a descriptor', () => {
     const registry = new LiveKitScreenRegistry()
     registry.refresh([participant('alice')], null)
     expect(registry.streams()[0]?.targetProfile).toBe('1080p · 30 FPS')
+    expect(registry.streams()[0]?.profileSource).toBe('legacy-track-name')
+  })
+
+  it('uses the owner-checked latest descriptor instead of a stale track name', () => {
+    const registry = new LiveKitScreenRegistry('https://app.example.test', 'voice:channel-a')
+    const publicationWithMetadata: ScreenParticipantPublication = {
+      ...participant('lease-a', { ...publication(), name: 'screenshare-1080p-30fps' }),
+      accountId: '11111111-1111-4111-8111-111111111111',
+      attributes: { 'boohtacord.screen-share.v1': descriptor('P720_60', 4, 12) },
+    }
+    registry.refresh([publicationWithMetadata], null)
+    expect(registry.streams()[0]).toMatchObject({ targetProfile: '720p · 60 FPS', profileSource: 'sender-metadata' })
+    publicationWithMetadata.attributes = { 'boohtacord.screen-share.v1': descriptor('P1080_60', 5, 13) }
+    registry.refresh([publicationWithMetadata], null)
+    publicationWithMetadata.attributes = { 'boohtacord.screen-share.v1': descriptor('P720_60', 4, 12) }
+    registry.refresh([publicationWithMetadata], null)
+    expect(registry.streams()[0]).toMatchObject({ targetProfile: '1080p · 60 FPS', profileSource: 'sender-metadata' })
+  })
+
+  it('retires a descriptor when a new publication SID arrives until its newer generation is observed', () => {
+    const registry = new LiveKitScreenRegistry('https://app.example.test', 'voice:channel-a')
+    const screen = participant('lease-a')
+    const scoped = { ...screen, accountId: '11111111-1111-4111-8111-111111111111', attributes: { 'boohtacord.screen-share.v1': descriptor('P1080_60', 4, 12) } }
+    scoped.video = { ...publication(), trackSid: 'old-sid' }
+    registry.refresh([scoped], null)
+    expect(registry.streams()[0]?.profileSource).toBe('sender-metadata')
+    scoped.video = { ...publication(), trackSid: 'new-sid' }
+    registry.refresh([scoped], null)
+    expect(registry.streams()[0]).toMatchObject({ targetProfile: '1080p · 30 FPS', profileSource: 'legacy-track-name' })
+    scoped.attributes = { 'boohtacord.screen-share.v1': descriptor('P720_60', 5, 13) }
+    registry.refresh([scoped], null)
+    expect(registry.streams()[0]).toMatchObject({ targetProfile: '720p · 60 FPS', profileSource: 'sender-metadata' })
+  })
+
+  it('ignores descriptors whose account, room, or origin does not match the publisher', () => {
+    const registry = new LiveKitScreenRegistry('https://app.example.test', 'voice:channel-a')
+    const invalid = JSON.parse(descriptor('P720_60', 4, 12))
+    invalid.scope.account_id = '22222222-2222-4222-8222-222222222222'
+    registry.refresh([{ ...participant('lease-a'), accountId: '11111111-1111-4111-8111-111111111111', attributes: { 'boohtacord.screen-share.v1': JSON.stringify(invalid) } }], null)
+    expect(registry.streams()[0]).toMatchObject({ targetProfile: '1080p · 30 FPS', profileSource: 'legacy-track-name' })
   })
 })

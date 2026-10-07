@@ -33,7 +33,7 @@ describe('LiveKit screen viewer adapter', () => {
     expect(microphone.setSubscribed).toHaveBeenCalledWith(true)
     expect(video.setSubscribed).toHaveBeenCalledWith(false)
     expect(audio.setSubscribed).toHaveBeenCalledWith(false)
-    expect(binding.viewer.cards()).toEqual([{ accountId: '22222222-2222-4222-8222-222222222222', hasAudio: true, id: '22222222-2222-4222-8222-222222222222:screen', participantId: '22222222-2222-4222-8222-222222222222', participantName: 'Alice' }])
+    expect(binding.viewer.cards()).toEqual([{ accountId: '22222222-2222-4222-8222-222222222222', hasAudio: true, id: '22222222-2222-4222-8222-222222222222:screen', participantId: '22222222-2222-4222-8222-222222222222', participantName: 'Alice', profileSource: 'unknown' }])
     expect(binding.participants.cards()[0]?.microphoneMuted).toBe(false)
     microphone.isMuted = true
     listeners.get('track-muted')!(microphone)

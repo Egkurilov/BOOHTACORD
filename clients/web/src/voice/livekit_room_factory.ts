@@ -12,6 +12,7 @@ import { bindVoiceAudioDiagnostics } from './audio_diagnostics/bind'
 import { bindNetworkDiagnostics } from './network_diagnostics/bind'
 import { bindLiveKitScreenPublisher } from './screen_publisher/livekit_port'
 import { screenPublisherEventHandlers } from './screen_publisher/events'
+import { bindLiveKitScreenMetadata } from './screen_profile_metadata/livekit_binding'
 
 export function wireLiveKitRoom(
   room: VoiceRoom,
@@ -26,6 +27,7 @@ export function wireLiveKitRoom(
   }
   room.disconnect = async () => {
     await room.stopScreenPreview?.()
+    await room.clearScreenProfileMetadata?.().catch(() => undefined)
     const microphoneCleanup = room.disposeMicrophone?.()
     viewer.clear()
     try { await disconnect() } finally { await microphoneCleanup }
@@ -39,6 +41,7 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   const liveKitRoom = new Room({ ...adaptiveMediaRoomOptions, reconnectPolicy: new BoundedVoiceReconnectPolicy() })
   const viewer = bindLiveKitScreenViewer(liveKitRoom as unknown as LiveKitScreenViewerRoom, {
     activeSpeakersChanged: RoomEvent.ActiveSpeakersChanged,
+    attributesChanged: RoomEvent.ParticipantAttributesChanged,
     localTrackPublished: RoomEvent.LocalTrackPublished,
     localTrackUnpublished: RoomEvent.LocalTrackUnpublished,
     participantConnected: RoomEvent.ParticipantConnected,
@@ -77,7 +80,6 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     diagnosticsTrack = undefined
   })
   const room = wireLiveKitRoom(liveKitRoom as unknown as VoiceRoom, viewer)
-  room.bindScreenPreviewLease = preview.bindLease
   room.stopScreenPreview = preview.stop
   room.applyScreenPreview = preview.apply
   room.clearScreenPreview = preview.clear
@@ -87,8 +89,7 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   room.setDeafened = viewer.setDeafened
   const audioProfile = selectedVoiceAudioProfile()
   bindLiveKitMicrophone(room, liveKitRoom, sdk, audioProfile)
-  bindVoiceAudioDiagnostics(room, liveKitRoom, audioProfile)
-  bindNetworkDiagnostics(room, liveKitRoom)
+  bindVoiceAudioDiagnostics(room, liveKitRoom, audioProfile); bindNetworkDiagnostics(room, liveKitRoom)
   room.readScreenDiagnostics = async () => {
     const video = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack as LiveKitScreenVideoTrack | undefined
     diagnosticsTrack = video
@@ -104,13 +105,18 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   const profileGuard = bindScreenProfile(room, () => liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack)
   const screenPublisher = bindLiveKitScreenPublisher(liveKitRoom.localParticipant, () => room.readScreenDiagnostics!(),
     profile => room.adoptScreenProfile?.(profile), (profile, action, current) => profileGuard.repair(profile, action, current))
+  const metadata = bindLiveKitScreenMetadata(liveKitRoom, Track.Source.ScreenShare, () => screenPublisher.generation())
   room.screenPublisher = screenPublisher
+  room.bindScreenPreviewLease = async leaseId => {
+    await metadata.bindLease(leaseId)
+    await preview.bindLease(leaseId)
+  }
+  room.publishScreenProfileMetadata = metadata.publish
+  room.clearScreenProfileMetadata = metadata.clear
+  liveKitRoom.on(RoomEvent.Reconnected, metadata.reconnected)
   const screenPublisherEvents = screenPublisherEventHandlers(screenPublisher, Track.Source.ScreenShare, profileGuard)
-  liveKitRoom.on(RoomEvent.LocalTrackPublished, screenPublisherEvents.published)
-  liveKitRoom.on(RoomEvent.LocalTrackUnpublished, screenPublisherEvents.unpublished)
-  liveKitRoom.on(RoomEvent.Reconnecting, screenPublisherEvents.reconnecting)
-  liveKitRoom.on(RoomEvent.SignalReconnecting, screenPublisherEvents.reconnecting)
-  liveKitRoom.on(RoomEvent.Reconnected, screenPublisherEvents.reconnected)
-  liveKitRoom.on(RoomEvent.Disconnected, screenPublisherEvents.disconnected)
+  liveKitRoom.on(RoomEvent.LocalTrackPublished, screenPublisherEvents.published); liveKitRoom.on(RoomEvent.LocalTrackUnpublished, screenPublisherEvents.unpublished)
+  liveKitRoom.on(RoomEvent.Reconnecting, screenPublisherEvents.reconnecting); liveKitRoom.on(RoomEvent.SignalReconnecting, screenPublisherEvents.reconnecting)
+  liveKitRoom.on(RoomEvent.Reconnected, screenPublisherEvents.reconnected); liveKitRoom.on(RoomEvent.Disconnected, screenPublisherEvents.disconnected)
   return room
 }

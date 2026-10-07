@@ -28,7 +28,7 @@ describe('selected-stream toolbar layout', () => {
     expect(viewer).toContain('function changeQuality()')
     expect(viewer).toContain("emit('changeQuality')")
     expect(panel).toContain('aria-label="Статистика"')
-    expect(panel).toContain('Нет свежих данных')
+    expect(panel).toContain('screenSampleAge(props.sampledAt)')
     expect(panel).toContain('Потери пакетов за 10 с')
     expect(panel).toContain('alignLeft: window.innerWidth <= 1100')
     expect(css).toContain('.stream-diagnostics-backdrop')

@@ -23,7 +23,7 @@ describe('LiveKit local screen preview', () => {
     listeners.get('local-track-published')!({ source: 'screen-video' })
     expect(binding.viewer.cards()).toEqual([{
       accountId: '33333333-3333-4333-8333-333333333333', hasAudio: false, id: 'local:33333333-3333-4333-8333-333333333333:screen', isLocal: true,
-      participantId: '33333333-3333-4333-8333-333333333333', participantName: 'Ваш экран',
+      participantId: '33333333-3333-4333-8333-333333333333', participantName: 'Ваш экран', profileSource: 'unknown',
     }])
     expect(getLocalPublication).toHaveBeenCalledWith('screen-video')
     expect(getLocalPublication).not.toHaveBeenCalledWith('screen-audio')
