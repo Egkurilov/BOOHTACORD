@@ -1,6 +1,6 @@
 # Web screen-share publisher lifecycle (#160)
 
-- Date: 2026-10-07
+- Initial review date: 2026-10-07; follow-up: 2026-10-08
 - Branch: `codex/ss-publisher-web-160`
 - Base commit: `222e3e6755d3433166514c7bf5428517595ab222` (#157)
 - Leaf: `clients/web/src/voice/screen_publisher`
@@ -14,7 +14,8 @@
 - Pinned package: `livekit-client@2.22.3`; npm lock integrity `sha512-jw9zBKXY5Gtr5MZ7vEON3QhMNccuDvYHck1PFSyG1aaateQPqgKZFBMgZkFZaXHIf9RV4MDW5xpTK2b/+qbwOg==`.
 - Installed SDK ESM SHA-256: `23E6B0966C20CCABA8D39343035FCC49E64AA46C93E772CA0A3F1B5A6D30B573`.
 - `LocalParticipant.d.ts` SHA-256: `D9D9A61F27A0252DD3E03E56879E304588974089A00A37A90BE823F59D09C468`.
-- The pinned `TrackPublishOptions` has no v1 per-publication descriptor field. `LocalParticipant.setAttributes` is participant-level and permission-gated by `canUpdateOwnMetadata`, which the current room contract does not guarantee. No metadata transport is claimed; descriptor visibility/parity on another client remains an explicit API/integration gap.
+- The pinned `TrackPublishOptions` has no v1 per-publication descriptor field. The current implementation therefore sends the descriptor to the authenticated same-origin API (`PUT /api/v1/voice/leases/{leaseID}/screen-profile/v1`). The API validates the session, Origin, lease ownership, room state, descriptor shape and monotonic revision; its server-side LiveKit writer updates the lease participant attribute `boohtacord.screen-share.v1`. The viewer reads that participant attribute and validates origin/account/room plus publication generation. This uses the server's LiveKit management credential; the browser does not call participant `setAttributes` or need `canUpdateOwnMetadata`.
+- Repository tests cover the authenticated endpoint, lease-scoped persistence, operation replay/conflict rules, LiveKit writer request, descriptor parsing and viewer registry. They do not prove that a real viewer receives the updated attribute through the pinned LiveKit server/SDK combination. Cross-client metadata round-trip and race behavior remain runtime acceptance gates.
 
 ## Checks
 
@@ -29,4 +30,16 @@
 
 ## Runtime acceptance
 
-`NOT_RUN`: isolated LiveKit/SFU with a second viewer, cross-client descriptor observation, reconnect and Dynacast races on a real session, OS picker/capture behavior, and physical capture FPS/audio continuity. Unit tests and build do not establish these runtime properties. Keep issue #160 open until these gates have evidence and descriptor transport is resolved.
+`NOT_RUN`: isolated LiveKit/SFU with a second viewer, cross-client descriptor observation, reconnect and Dynacast races on a real session, OS picker/capture behavior, and physical capture FPS/audio continuity. Unit tests and build do not establish these runtime properties. The descriptor transport is implemented in source; keep issue #160 open until its real round-trip and lifecycle/device gates have evidence.
+
+## Current-master follow-up (2026-10-08)
+
+Reviewed on GitHub `origin/master` source `9b524569bb2b46b95afbb1f5040c32ceefda7214` (review branch adds evidence only). These checks passed locally:
+
+| Check | Result |
+|---|---|
+| Web descriptor/viewer focused tests | PASS — 7 files, 26 tests |
+| Go descriptor/API/LiveKit/Postgres packages | PASS — all packages |
+| Screen-profile browser suite | PASS — 7 passed, 1 skipped (isolated LiveKit credentials/target absent) |
+| Vue typecheck and production build | PASS with `VITE_PUBLIC_ORIGIN=https://v.bootybay.ru`; existing LiveKit chunking and >500 kB warnings remain |
+| Real-SFU descriptor round-trip and physical device checks | NOT_RUN |
