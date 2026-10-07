@@ -27,6 +27,7 @@ def main():
         run("npm", "run", "test:audio:browser", cwd=client("web"))
     run(sys.executable, "-m", "tools.network.restricted.run")
     run("npm", "run", "build", cwd=client("web"))
+    run("npm", "run", "verify:social-preview", cwd=client("web"))
 
 
 if __name__ == "__main__":

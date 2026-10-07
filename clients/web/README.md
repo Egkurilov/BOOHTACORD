@@ -25,3 +25,10 @@ npm run build
 ```
 
 Для API/realtime используйте [канонические контракты](../../contracts/openapi.yaml) и [realtime schema](../../contracts/realtime.schema.json). Не обходите серверные ACL и не обращайтесь к private LiveKit management API.
+Из clients/web/:
+
+- npm run dev оставляет social URLs относительными, если VITE_PUBLIC_ORIGIN не задан.
+- Production Vite и Docker builds требуют публичный HTTPS origin через VITE_PUBLIC_ORIGIN.
+- Локальный Docker Compose задаёт http://localhost:8088 только для dev-сборки.
+- Исходник баннера расположен в social-preview/boohtacord-og.html; после изменения его перерендерите командой npm run render:social-preview.
+- После production build проверьте HTML/PNG командой npm run verify:social-preview.

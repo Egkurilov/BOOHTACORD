@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;width:1200px;height:630px;overflow:hidden}
+    body{font-family:Arial,"Segoe UI",sans-serif;color:#f7f7ff;background:#10102a}
+    .canvas{position:relative;width:1200px;height:630px;padding:58px 76px 54px;background:radial-gradient(720px 470px at 91% 8%,rgba(110,82,230,.38),transparent 69%),radial-gradient(620px 390px at 9% 98%,rgba(0,204,194,.16),transparent 73%),linear-gradient(130deg,#12132f 0%,#19183e 56%,#111329 100%);overflow:hidden}
+    .ring{position:absolute;right:-130px;top:85px;width:540px;height:540px;border:1px solid rgba(190,176,255,.17);border-radius:50%;box-shadow:0 0 0 34px rgba(190,176,255,.035),0 0 0 72px rgba(190,176,255,.025)}
+    .brand{position:relative;display:flex;align-items:center;gap:17px;height:70px}
+    .brand img{width:66px;height:64px;object-fit:contain;image-rendering:auto}
+    .brand-name{font-size:24px;font-weight:800;letter-spacing:2.8px}
+    .brand-note{margin-top:5px;color:#a8a7c5;font-size:11px;font-weight:700;letter-spacing:2.2px}
+    .badge{position:absolute;right:4px;top:13px;padding:10px 16px;border:1px solid rgba(213,207,255,.22);border-radius:999px;color:#c5c1e5;font-size:13px;letter-spacing:.5px}
+    .main{position:relative;margin-top:47px}
+    .eyebrow{margin:0 0 14px;color:#76e4d6;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+    h1{margin:0;font-size:61px;line-height:1.04;letter-spacing:-1.9px;font-weight:800}
+    h1 span{color:#b9a8ff}
+    .description{max-width:650px;margin:17px 0 0;color:#c7c6dc;font-size:20px;line-height:1.4}
+    .footer{position:relative;display:flex;align-items:center;gap:25px;margin-top:32px}
+    .cta{display:inline-flex;align-items:center;gap:20px;padding:14px 20px;border-radius:13px;background:#6752d9;color:#fff;font-size:17px;font-weight:700;box-shadow:0 8px 28px rgba(74,56,189,.32)}
+    .arrow{font-size:22px;color:#d8d1ff}
+    .features{color:#aaa9c8;font-size:14px;letter-spacing:.4px}
+    .spark{position:absolute;right:65px;top:255px;color:#72dfd3;font-size:38px;opacity:.9}
+    .spark small{display:block;position:absolute;left:38px;top:82px;color:#b5a5ff;font-size:20px}
+  </style>
+</head>
+<body>
+  <main class="canvas">
+    <div class="ring" aria-hidden="true"></div>
+    <header class="brand">
+      <img src="../public/brand.png" alt="">
+      <div><div class="brand-name">BOOHTACORD</div><div class="brand-note">ПЛАТФОРМА ВАШЕЙ ГИЛЬДИИ</div></div>
+      <div class="badge">Частное пространство</div>
+    </header>
+    <section class="main">
+      <p class="eyebrow">Будьте на связи</p>
+      <h1>Голос и чаты<br><span>вашей гильдии</span></h1>
+      <p class="description">Всё для общения команды — в одном удобном месте.</p>
+    </section>
+    <div class="spark" aria-hidden="true">✳<small>✦</small></div>
+    <footer class="footer">
+      <div class="cta">Присоединяйтесь к BOOHTACORD <span class="arrow">↗</span></div>
+      <div class="features">Чаты&nbsp; · &nbsp;Голос&nbsp; · &nbsp;Демонстрация экрана</div>
+    </footer>
+  </main>
+</body>
+</html>

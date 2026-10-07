@@ -6,3 +6,5 @@ services:
     build:
       context: ..
       dockerfile: clients/web/Dockerfile
+      args:
+        VITE_PUBLIC_ORIGIN: ${VITE_PUBLIC_ORIGIN:-http://localhost:8088}
