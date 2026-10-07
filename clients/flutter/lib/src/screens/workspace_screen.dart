@@ -5705,7 +5705,6 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                     ),
                 ),
               ),
-            ),
             onClose: () => Navigator.of(dialogContext).pop(),
           );
         },
