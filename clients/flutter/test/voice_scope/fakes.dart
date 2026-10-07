@@ -41,6 +41,9 @@ class VoiceHarness {
         room.roomOptions = options;
         return room;
       },
+      audioOutputDeviceSetter: (candidate, device) async {
+        if (candidate is PendingVoiceRoom) candidate.selectedOutput = device;
+      },
     );
   }
   final api = DelayedVoiceApi();

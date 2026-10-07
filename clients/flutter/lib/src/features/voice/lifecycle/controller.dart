@@ -46,9 +46,14 @@ class VoiceController extends VoiceState {
     required super.reportError,
     required super.formatError,
     Room Function(RoomOptions)? roomFactory,
-  }) : super(
+    Future<void> Function(Room, MediaDevice)? audioOutputDeviceSetter,
+  }) : audioOutputDeviceSetter =
+           audioOutputDeviceSetter ??
+           ((room, device) => room.setAudioOutputDevice(device)),
+       super(
          createRoom: roomFactory ?? ((options) => Room(roomOptions: options)),
        );
+  final Future<void> Function(Room, MediaDevice) audioOutputDeviceSetter;
   static const voiceStreamSoundPreferenceKey = 'voice-screen-start-sound:v1';
   @override
   void dispose() {

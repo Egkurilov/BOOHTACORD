@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart';
 
@@ -55,16 +54,8 @@ void main() {
 
   test('post-connect fallback reapplies output on platforms without bootstrap', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
-    const webrtcChannel = MethodChannel('FlutterWebRTC.Method');
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(webrtcChannel, (call) async {
-          expect({'initialize', 'selectAudioOutput'}, contains(call.method));
-          return null;
-        });
     final h = VoiceHarness();
     addTearDown(() async {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(webrtcChannel, null);
       debugDefaultTargetPlatformOverride = null;
       await h.dispose();
     });

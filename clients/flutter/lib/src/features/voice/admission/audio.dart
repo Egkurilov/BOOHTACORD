@@ -82,6 +82,6 @@ extension VoiceAdmissionAudio on VoiceController {
     final device = audio.audioOutputDevices
         .where((candidate) => candidate.deviceId == outputId)
         .firstOrNull;
-    if (device != null) await candidate.setAudioOutputDevice(device);
+    if (device != null) await audioOutputDeviceSetter(candidate, device);
   }
 }
