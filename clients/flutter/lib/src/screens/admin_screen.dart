@@ -19,6 +19,7 @@ import '../features/admin/audit/panel.dart';
 import '../features/admin/layout/width_class.dart';
 import '../features/admin/media_metrics/panel.dart';
 import '../features/admin/members/panel.dart';
+import '../features/admin/members/conflict_review.dart';
 import '../features/admin/shell/section_tabs.dart';
 import '../features/admin/shell/workspace_header.dart';
 import '../features/admin/topology/mutation_controller.dart';
@@ -27,6 +28,12 @@ class _AdminAccountDraft {
   _AdminAccountDraft({required this.role, required this.blocked});
   String role;
   bool blocked;
+}
+
+class _AdminAccountConflict {
+  _AdminAccountConflict({required this.before});
+  final AdminAccount before;
+  AdminAccount? current;
 }
 
 class AdminScreen extends StatefulWidget {
@@ -76,6 +83,8 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   );
   String? _accountCursor;
   final Map<String, _AdminAccountDraft> _accountDrafts = {};
+  final Map<String, AdminAccount> _accountBaselines = {};
+  final Map<String, _AdminAccountConflict> _accountConflicts = {};
   final Map<String, FocusNode> _accountSaveFocusNodes = {};
   final Set<String> _busyAccountIds = {};
   bool _accountsLoading = false;
@@ -258,7 +267,10 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     actor: _auditActor.text,
   );
 
-  Future<void> _loadAccounts({String? cursor}) async {
+  Future<void> _loadAccounts({
+    String? cursor,
+    bool acceptDrafts = false,
+  }) async {
     if (_accountsLoading) return;
     setState(() {
       _accountsLoading = true;
@@ -273,13 +285,33 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
             : [..._adminAccounts, ...page.accounts];
         _accountCursor = page.nextCursor;
         for (final account in page.accounts) {
-          _accountDrafts.putIfAbsent(
-            account.accountId,
-            () => _AdminAccountDraft(
+          final baseline = _accountBaselines[account.accountId];
+          final draft = _accountDrafts[account.accountId];
+          if (baseline == null || acceptDrafts) {
+            _accountBaselines[account.accountId] = account;
+            _accountDrafts[account.accountId] = _AdminAccountDraft(
               role: account.role,
               blocked: account.blocked,
-            ),
-          );
+            );
+            _accountConflicts.remove(account.accountId);
+            continue;
+          }
+          if (draft == null || !_draftChanged(baseline, draft)) {
+            _accountBaselines[account.accountId] = account;
+            _accountDrafts[account.accountId] = _AdminAccountDraft(
+              role: account.role,
+              blocked: account.blocked,
+            );
+          } else if (baseline.updatedAt != account.updatedAt) {
+            final conflict = _accountConflicts.putIfAbsent(
+              account.accountId,
+              () => _AdminAccountConflict(before: baseline),
+            );
+            conflict.current = account;
+          } else if (_accountConflicts[account.accountId]
+              case final conflict?) {
+            conflict.current = account;
+          }
         }
       });
     } catch (cause) {
@@ -311,7 +343,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         blocked: draft.blocked,
         expectedUpdatedAt: account.updatedAt,
       );
-      await _loadAccounts();
+      await _loadAccounts(acceptDrafts: true);
       if (mounted) {
         setState(
           () => _accountsStatus = 'Изменения для @${account.login} сохранены.',
@@ -319,6 +351,11 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       }
     } catch (cause) {
       if (cause is ApiFailure && cause.status == 409) {
+        final conflict = _accountConflicts.putIfAbsent(
+          account.accountId,
+          () => _AdminAccountConflict(before: account),
+        );
+        conflict.current = null;
         await _loadAccounts();
         if (mounted) {
           setState(
@@ -1377,6 +1414,10 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       onRoleChanged: (value) => setState(() => _accountRoleFilter = value),
     ),
     resetCard: _resetLink == null ? null : _buildResetLinkCard(),
+    conflictCards: [
+      for (final entry in _accountConflicts.entries)
+        _buildAccountConflictCard(entry.key, entry.value),
+    ],
     accountCards: [
       for (final account in _visibleAdminAccounts)
         _buildAdminAccountCard(account),
@@ -1508,6 +1549,53 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       ),
     );
   }
+
+  Widget _buildAccountConflictCard(
+    String accountId,
+    _AdminAccountConflict conflict,
+  ) {
+    final account = _adminAccounts
+        .where((item) => item.accountId == accountId)
+        .firstOrNull;
+    final draft = _accountDrafts[accountId];
+    if (account == null || draft == null) return const SizedBox.shrink();
+    return AdminMemberConflictReview(
+      login: account.login,
+      before: _accountSummary(conflict.before.role, conflict.before.blocked),
+      current: conflict.current == null
+          ? null
+          : _accountSummary(conflict.current!.role, conflict.current!.blocked),
+      proposed: _accountSummary(draft.role, draft.blocked),
+      busy: _busyAccountIds.contains(accountId) || _accountsLoading,
+      onRefresh: _loadAccounts,
+      onDiscard: () => setState(() {
+        final current = conflict.current;
+        if (current == null) return;
+        _accountBaselines[accountId] = current;
+        _accountDrafts[accountId] = _AdminAccountDraft(
+          role: current.role,
+          blocked: current.blocked,
+        );
+        _accountConflicts.remove(accountId);
+        _accountsStatus = 'Приняты актуальные данные @$account.login.';
+      }),
+      onApply: () => setState(() {
+        final current = conflict.current;
+        if (current == null) return;
+        _accountBaselines[accountId] = current;
+        _accountConflicts.remove(accountId);
+        _accountsStatus =
+            'Сравнение @${account.login} подтверждено. Нажмите «Сохранить».';
+      }),
+    );
+  }
+
+  bool _draftChanged(AdminAccount baseline, _AdminAccountDraft draft) =>
+      baseline.role != draft.role || baseline.blocked != draft.blocked;
+
+  String _accountSummary(String role, bool blocked) =>
+      '${role == 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь'}; '
+      '${blocked ? 'заблокирован' : 'доступ открыт'}';
 
   Widget _buildResetLinkCard() => Container(
     margin: const EdgeInsets.only(bottom: 12),

@@ -1,0 +1,37 @@
+{
+  "id": "QA-ADMIN-MEMBERS-CONFLICT-2026-10-07-001",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #191 — Flutter admin Members conflict review",
+  "source_revision": "edf23598",
+  "checks": [
+    {
+      "name": "HTTP optimistic concurrency",
+      "result": "PASS",
+      "observation": "Member updates retain expected_updated_at and a 409 response preserves the local role/block draft."
+    },
+    {
+      "name": "Conflict review widget",
+      "result": "PASS",
+      "observation": "Before/current/proposed summaries expose refresh, accept-server and apply-draft actions; apply remains gated until current data is loaded."
+    },
+    {
+      "name": "Focused Members regression",
+      "result": "PASS",
+      "observation": "Search/filter geometry and a simulated 409 flow pass at a 390 px viewport."
+    },
+    {
+      "name": "Flutter analyzer and dependency guard",
+      "result": "PASS",
+      "observation": "Members/AdminScreen analyzer reports no issues and the Dart feature/UI boundary guard passes for 729 files."
+    },
+    {
+      "name": "Android release build",
+      "result": "PASS",
+      "observation": "Split APK release build produced armv7 (17.9 MB), arm64 (20.0 MB) and x86_64 (21.4 MB) artifacts; generated APKs remain ignored."
+    }
+  ],
+  "limitations": [
+    "Desktop table/card parity, reset-link focus runtime and native platform acceptance remain open parts of #191/#198."
+  ],
+  "status": "PARTIAL IMPLEMENTATION PASS"
+}
