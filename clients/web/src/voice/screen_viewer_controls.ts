@@ -82,12 +82,12 @@ export function createScreenViewerControls(
     controller?.clear()
   }
 
-  function retry(): boolean {
+  function retry(automatic = false): boolean {
     if (!controller?.selectedId) return false
     const selectedId = controller.selectedId
-    if (!controller.retry()) {
+    if (!controller.retry(automatic)) {
       observation.fail()
-      error.value = 'Не удалось восстановить демонстрацию. Выберите её снова.'
+      error.value = automatic ? 'Автоматическое восстановление исчерпано. Повторите подключение вручную.' : 'Не удалось восстановить демонстрацию. Выберите её снова.'
       return false
     }
     observeSelection(selectedId, selectedVideo)

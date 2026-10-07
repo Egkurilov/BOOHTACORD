@@ -93,6 +93,9 @@ export function bindLiveKitScreenViewer(
     }
     refresh()
   })
+  room.on(events.trackSubscribed, (_track: unknown, publication: ScreenViewerPublication & { source?: unknown }, participant: LiveKitRemoteParticipant) => {
+    if (publication.source === sources.screenVideo && publication.trackSid) viewer.markSubscriptionSucceeded(publication.trackSid, participantId(participant))
+  })
   if (events.trackSubscriptionFailed) room.on(events.trackSubscriptionFailed, (trackSid: string, participant: LiveKitRemoteParticipant) => {
     viewer.markSubscriptionFailed(trackSid, participantId(participant))
   })

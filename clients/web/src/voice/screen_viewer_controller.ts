@@ -43,8 +43,9 @@ export class ScreenViewerController {
   reconcile(): void { this.lifecycle.reconcile() }
   select(id: string | null, video: HTMLVideoElement | null, audio: HTMLAudioElement | null): void { this.lifecycle.select(id, video, audio) }
   rebindElements(video: HTMLVideoElement | null, audio: HTMLAudioElement | null): void { this.lifecycle.rebindElements(video, audio) }
-  retry(): boolean { return this.lifecycle.retry() }
+  retry(automatic = false): boolean { return this.lifecycle.retry(automatic) }
   markSubscriptionFailed(trackSid: string, participantId: string): boolean { return this.lifecycle.markSubscriptionFailed(trackSid, participantId) }
+  markSubscriptionSucceeded(trackSid: string, participantId: string): boolean { return this.lifecycle.markSubscriptionSucceeded(trackSid, participantId) }
 
   setThumbnail(participantId: string, bytes: Uint8Array): void {
     if (!participantId || !validScreenThumbnail(bytes)) return

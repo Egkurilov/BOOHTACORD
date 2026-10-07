@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { participantAudioMessage, screenAudioMessage } from './screen_audio_copy'
 import ScreenViewerAudioControl from './ScreenViewerAudioControl.vue'
@@ -14,7 +14,7 @@ import { useScreenPlaybackQuality } from './screen_playback_quality'
 import { useScreenReceiverDiagnostics } from './use_screen_receiver_diagnostics'
 import { buildScreenClientReport, startScreenClientReporting, webPlatform } from './screen_client_reporter'
 const props = defineProps<{ audioMuted: boolean; cards: ScreenViewerCard[]; deafened: boolean; ended: boolean; error: string | null; expanded: boolean; mini?: boolean; ownScreenSharing?: boolean; pinned?: boolean; participantCount: number; selectedAudioVolume: number; selectedId: string | null; sourceDiagnostics?:ScreenDiagnostics }>()
-const emit = defineEmits<{ changeQuality: []; clear: []; pin: []; retry: []; returnVoice: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
+const emit = defineEmits<{ changeQuality: []; clear: []; pin: []; retry: [automatic?: boolean]; returnVoice: []; select: [id: string, video: HTMLVideoElement | null, audio: HTMLAudioElement | null]; setAudioVolume: [percent: number]; toggleAudio: []; 'update:expanded': [expanded: boolean] }>()
 const video = ref<HTMLVideoElement | null>(null)
 const audio = ref<HTMLAudioElement | null>(null)
 const stage = ref<HTMLDivElement | null>(null)
@@ -22,31 +22,31 @@ const moreActions = ref<HTMLDetailsElement | null>(null)
 const fullscreenActive = ref(false)
 const fullscreenFeedback = ref('')
 const playbackFeedback = ref('')
+const playbackBlocked = ref(false)
+let playbackRequestGeneration=0,requestedSelectionId:string|null=null
 const { actualVideoQuality, markVideoReady,playbackFps,presentedFrames,refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
 let fullscreenControls: ReturnType<typeof createScreenFullscreenControls> | null = null
 let stopReporting: (() => void) | null = null
 const selectedStream = computed(() => props.cards.find((stream) => stream.id === props.selectedId) ?? null)
 const {metrics:receiverMetrics,sampledAt:receiverSampledAt,refresh:refreshReceiverMetrics}=useScreenReceiverDiagnostics(selectedStream,()=>props.ended)
 const adjustable = computed(() => Boolean(selectedStream.value?.hasAudio && selectedStream.value.accountId && !selectedStream.value.isLocal))
-const audioMessage = computed(() => selectedStream.value ? screenAudioMessage({
-  isLocal: Boolean(selectedStream.value.isLocal), hasAudio: selectedStream.value.hasAudio,
-  adjustable: adjustable.value, deafened: props.deafened,
-}) : '')
-function select(id: string): void { if (id === props.selectedId) return; markScreenSelected(video.value); emit('select',id,video.value,audio.value) }
-function retry(): void {
+const audioMessage = computed(() => selectedStream.value ? screenAudioMessage({ isLocal: Boolean(selectedStream.value.isLocal), hasAudio: selectedStream.value.hasAudio, adjustable: adjustable.value, deafened: props.deafened }) : '')
+function reportPlaybackError(cause:unknown,audioOutput=false):void {if(cause instanceof DOMException&&cause.name==='NotAllowedError'){if(audioOutput){playbackFeedback.value='Браузер заблокировал звук. Нажмите «Повторить» ещё раз после разрешения звука.';return}playbackBlocked.value=true;playbackFeedback.value='Браузер заблокировал воспроизведение. Нажмите «Повторить» после разрешения.'}}
+function playFromGesture():void {const generation=++playbackRequestGeneration;if(video.value)void video.value.play().then(()=>{if(generation===playbackRequestGeneration)playbackBlocked.value=false}).catch(cause=>{if(generation===playbackRequestGeneration)reportPlaybackError(cause)});void audio.value?.play().catch(cause=>{if(generation===playbackRequestGeneration)reportPlaybackError(cause,true)})}
+function select(id: string): void { if (id === props.selectedId) return; requestedSelectionId=id;playbackBlocked.value=false;markScreenSelected(video.value);emit('select',id,video.value,audio.value);playFromGesture() }
+function retry(automatic=false): void {
   playbackFeedback.value = ''
+  if(!automatic&&playbackBlocked.value){markScreenSelected(video.value);resetVideoFrame();playFromGesture();return}
   markScreenSelected(video.value)
   resetVideoFrame()
-  emit('retry')
-  for (const element of [video.value, audio.value]) {
-    void element?.play().catch((cause: unknown) => {
-      if (cause instanceof DOMException && cause.name === 'NotAllowedError') playbackFeedback.value = 'Браузер заблокировал воспроизведение. Нажмите «Повторить» ещё раз после разрешения звука.'
-    })
-  }
+  emit('retry',automatic)
+  if(!automatic)playFromGesture()
 }
 function changeQuality(): void { if (moreActions.value) moreActions.value.open = false; emit('changeQuality') }
 function selectStream(id: string): void { select(id) }
 defineExpose({ selectStream })
+function stageVisible():boolean {const box=stage.value?.getBoundingClientRect();return Boolean(document.visibilityState==='visible'&&box&&box.width>0&&box.height>0&&box.bottom>0&&box.right>0&&box.top<innerHeight&&box.left<innerWidth)}
+watch(()=>props.selectedId,id=>{if(requestedSelectionId===id){requestedSelectionId=null;return}requestedSelectionId=null;playbackRequestGeneration+=1;playbackBlocked.value=false})
 function handleKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.expanded) emit('update:expanded', false)
 }
@@ -103,7 +103,7 @@ async function toggleFullscreen(): Promise<void> {
       <p v-if="playbackFeedback" class="screen-fullscreen-feedback" role="status" aria-live="polite">{{ playbackFeedback }}</p>
     </div>
     <audio ref="audio" autoplay></audio>
-    <DiagnosisPanel v-if="selectedStream && !mini" :selected-id="selectedId" :ended="ended" :has-audio="selectedStream.hasAudio" :local="Boolean(selectedStream.isLocal)" :publisher-paused="Boolean(selectedStream.videoMuted)" :video-ready="videoReady"  :presented-fps="playbackFps" :presented-frames="presentedFrames" :sampled-at="receiverSampledAt" :metrics="receiverMetrics" :source="sourceDiagnostics" @refresh="refreshReceiverMetrics" @retry="retry" @choose="emit('clear')" />
+    <DiagnosisPanel v-if="selectedStream" v-show="!mini" :selected-id="selectedId" :ended="ended" :has-audio="selectedStream.hasAudio" :local="Boolean(selectedStream.isLocal)" :publisher-paused="Boolean(selectedStream.videoMuted)" :autoplay-blocked="playbackBlocked" :subscription-failed="error === 'Не удалось подписаться на демонстрацию.'" :stage-visible="stageVisible" :video-ready="videoReady" :presented-fps="playbackFps" :presented-frames="presentedFrames" :sampled-at="receiverSampledAt" :metrics="receiverMetrics" :source="sourceDiagnostics" @refresh="refreshReceiverMetrics" @retry="retry(false)" @auto-retry="retry(true)" @choose="emit('clear')" />
     <div v-if="selectedStream" class="stream-quality-row">
       <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio')" @set-volume="emit('setAudioVolume', $event)" />
       <p v-if="audioMessage" class="stream-audio-status gc-sr-only" role="status">{{ audioMessage }}</p>

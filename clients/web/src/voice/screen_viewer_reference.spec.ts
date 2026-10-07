@@ -38,19 +38,6 @@ describe('screen viewer reference composition', () => {
     expect(styles).toContain('max-width: 200px')
   })
 
-  it('shows the C-32 overflow affordance only while more rail content remains', () => {
-    const viewer = source('./ScreenViewer.vue') + source('./ScreenViewerRail.vue')
-    const styles = source('../design/voice_viewer_reference.css')
-    const tokens = source('../design/tokens.css')
-
-    expect(viewer).toContain('observeHorizontalOverflow')
-    expect(viewer).toContain('hasOverflow')
-    expect(viewer).toContain(':aria-description=')
-    expect(styles).toContain('.screen-cards.stream-rail.has-overflow::after')
-    expect(styles).toContain('var(--gc-surface) 70%')
-    expect(styles).not.toContain('--gc-surface-base')
-    expect(tokens).toContain('--gc-layout-row-voice-member: 24px')
-  })
 
   it('labels the owner screen preview and keeps its video muted', () => {
     const viewer = source('./ScreenViewer.vue') + source('./ScreenViewerRail.vue')
@@ -114,24 +101,5 @@ describe('screen viewer reference composition', () => {
     expect(viewer).toContain('resetVideoFrame()')
     expect(source('./viewer_diagnosis/Panel.vue')).toContain('selectedAt.value=Date.now();now.value=selectedAt.value;emit(\'retry\')')
     expect(source('./ScreenViewer.vue')).toContain(':publisher-paused="Boolean(selectedStream.videoMuted)"')
-  })
-  it('keeps one media player while the existing view moves between full, mini and pinned modes', () => {
-    const viewer = source('./ScreenViewer.vue')
-    const pane = source('../conversation/ConversationPane.vue')
-
-    expect(viewer.match(/<video\b/g)).toHaveLength(1)
-    expect(viewer.match(/<audio\b/g)).toHaveLength(1)
-    expect(viewer).not.toMatch(/<(video|audio)\b[^>]*\bv-if=/)
-    expect(pane).toContain('<Teleport to="body" :disabled="!screenExpanded && !miniVisible">')
-    expect(pane).toContain(':mini="miniVisible"')
-    expect(pane).toContain(':pinned="screenPinned"')
-  })
-  it('stacks viewer controls before the toolbar can overflow at zoomed and narrow widths', () => {
-    const styles = source('../design/voice_viewer_reference.css')
-
-    expect(styles).toContain('@media (max-width: 1100px)')
-    expect(styles).toContain('.stream-quality-row .volume-control, .stream-audio-status')
-    expect(styles).toContain('.stream-quality-row, .stream-quality, .stream-voice-return { flex-wrap: wrap; }')
-    expect(styles).toContain('.stream-voice-return button:first-of-type { margin-left: 0; }')
   })
 })

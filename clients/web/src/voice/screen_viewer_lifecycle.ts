@@ -1,7 +1,7 @@
 import { AudioMixer, normalizeAudioVolume } from './audio_gain'
 import { ScreenViewerMediaBinding } from './screen_viewer_media_binding'
 import { samePublicationGeneration, setScreenSubscribed } from './screen_viewer_subscription'
-import type { ScreenViewerStream } from './screen_viewer_types'
+import type { ScreenViewerPublication, ScreenViewerStream } from './screen_viewer_types'
 export class ScreenViewerLifecycle {
   private readonly media: ScreenViewerMediaBinding
   private selected: ScreenViewerStream | null = null
@@ -13,6 +13,7 @@ export class ScreenViewerLifecycle {
   private hasEnded = false
   private operation = 0
   private retryUsed = false
+  private readonly automaticRetries = new WeakSet<ScreenViewerPublication>()
   private failedTrackSid: string | null = null
   private stopped = false
 
@@ -31,19 +32,9 @@ export class ScreenViewerLifecycle {
     if (!this.selected || this.selected.isLocal || this.selected.participantId !== participantId || this.selected.video.trackSid !== trackSid) return false
     this.failedTrackSid = trackSid; this.changed(); return true
   }
-  clear(): void {
-    if (this.selected || this.hasEnded) this.release(false)
-    this.changed()
-  }
-  stop(): void {
-    if (this.stopped) return
-    this.clear()
-    this.media.stop()
-    this.video = null
-    this.audio = null
-    this.stopped = true
-    this.operation += 1
-  }
+  markSubscriptionSucceeded(trackSid: string, participantId: string): boolean { if (!this.selected || this.selected.isLocal || this.selected.participantId !== participantId || this.selected.video.trackSid !== trackSid || this.failedTrackSid !== trackSid) return false; this.failedTrackSid = null; this.changed(); return true }
+  clear(): void { if (this.selected || this.hasEnded) this.release(false); this.changed() }
+  stop(): void { if (this.stopped) return; this.clear(); this.media.stop(); this.video = null; this.audio = null; this.stopped = true; this.operation += 1 }
   reconcile(): void {
     if (this.stopped) return
     const previous = this.selected
@@ -85,16 +76,22 @@ export class ScreenViewerLifecycle {
     if (changed.videoChanged) this.operation += 1
     if (changed.changed) this.changed()
   }
-  retry(): boolean {
+  retry(automatic = false): boolean {
     const selected = this.selected
     if (!selected || selected.isLocal || this.stopped) return false
     const current = this.source().find((stream) => stream.id === selected.id)
     if (!current || !samePublicationGeneration(selected, current)) { this.reconcile(); return false }
     if (current.video.isMuted) return false
     this.selected = current
-    if (this.media.reattachVideo(current.video.track ?? null, this.video)) { this.failedTrackSid = null; this.operation += 1; this.changed(); return true }
-    if (this.retryUsed || !current.video.setSubscribed) return false
-    this.retryUsed = true; this.failedTrackSid = null; this.operation += 1
+    const alreadyRetried = automatic ? this.automaticRetries.has(current.video) : this.retryUsed
+    if (alreadyRetried) return false
+    if (this.media.reattachVideo(current.video.track ?? null, this.video)) {
+      if (automatic) this.automaticRetries.add(current.video); else this.retryUsed = true
+      this.failedTrackSid = null; this.operation += 1; this.changed(); return true
+    }
+    if (!current.video.setSubscribed) return false
+    if (automatic) this.automaticRetries.add(current.video); else this.retryUsed = true
+    this.failedTrackSid = null; this.operation += 1
     current.video.setSubscribed(false); current.video.setSubscribed(true)
     this.changed()
     return true

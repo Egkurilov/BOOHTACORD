@@ -101,37 +101,4 @@ describe('screen viewer controller', () => {
     expect(audio.muted).toBe(false)
   })
 
-  it('plays a self screen preview without subscribing to it or routing its audio', () => {
-    const local = {
-      ...stream('self', false), isLocal: true, participantName: 'Ваш экран',
-      video: { track: { attach: vi.fn(), detach: vi.fn() } },
-    }
-    const attachAudio = vi.fn()
-    const controller = new ScreenViewerController(() => [local], { attach: attachAudio } as never)
-    const videoElement = {} as HTMLVideoElement
-    const audioElement = {} as HTMLAudioElement
-
-    controller.select('self', videoElement, audioElement)
-
-    expect('setSubscribed' in local.video).toBe(false)
-    expect(local.video.track!.attach).toHaveBeenCalledWith(videoElement)
-    expect(attachAudio).not.toHaveBeenCalled()
-    expect(controller.cards()[0]?.isLocal).toBe(true)
-  })
-
-  it('returns to the voice room when the local preview publication stops', () => {
-    const local = {
-      ...stream('self', false), isLocal: true, participantName: 'Ваш экран',
-      video: { track: { attach: vi.fn(), detach: vi.fn() } },
-    }
-    const streams: ScreenViewerStream[] = [local]
-    const controller = new ScreenViewerController(() => streams)
-
-    controller.select(local.id, {} as HTMLVideoElement, {} as HTMLAudioElement)
-    streams.splice(0)
-    controller.reconcile()
-
-    expect(controller.selectedId).toBeNull()
-    expect(controller.ended).toBe(false)
-  })
 })

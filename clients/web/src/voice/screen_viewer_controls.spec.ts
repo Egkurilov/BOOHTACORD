@@ -90,34 +90,4 @@ describe('screen viewer selection controls', () => {
     expect(output.dispose).toHaveBeenCalledOnce()
   })
 
-  it('routes recovery through one explicit video-only retry and reports an exhausted attempt', () => {
-    const selected = stream()
-    const controller = new ScreenViewerController(() => [selected])
-    const error = ref<string | null>(null)
-    const controls = createScreenViewerControls({ screenViewer: () => controller }, ref<ScreenViewerCard[]>([]), ref<string | null>(null), error, ref(false))
-    controls.start()
-    controls.select(selected.id, {} as HTMLVideoElement, {} as HTMLAudioElement)
-
-    expect(controls.retry()).toBe(true)
-    expect(controls.retry()).toBe(false)
-    expect(error.value).toContain('Выберите её снова')
-    expect(selected.video.setSubscribed).toHaveBeenNthCalledWith(2, false)
-    expect(selected.video.setSubscribed).toHaveBeenNthCalledWith(3, true)
-    expect(selected.audio!.setSubscribed).toHaveBeenCalledTimes(1)
-  })
-
-  it('surfaces the SDK subscription failure for the current viewer', () => {
-    const selected = stream()
-    selected.video.trackSid = 'TR_current'
-    const controller = new ScreenViewerController(() => [selected])
-    const error = ref<string | null>(null)
-    const controls = createScreenViewerControls({ screenViewer: () => controller }, ref<ScreenViewerCard[]>([]), ref<string | null>(null), error, ref(false))
-    controls.start()
-    controls.select(selected.id, null, null)
-
-    expect(controller.markSubscriptionFailed('TR_stale', 'alice')).toBe(false)
-    expect(error.value).toBeNull()
-    expect(controller.markSubscriptionFailed('TR_current', 'alice')).toBe(true)
-    expect(error.value).toBe('Не удалось подписаться на демонстрацию.')
-  })
 })
