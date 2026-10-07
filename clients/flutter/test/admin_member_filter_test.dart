@@ -225,6 +225,17 @@ void main() {
       findsOneWidget,
       reason: 'the web desktop select keeps its native dropdown arrow',
     );
+    expect(
+      find.byKey(const ValueKey('admin-member-row:a')),
+      findsOneWidget,
+      reason: 'expanded members use a compact table-like row',
+    );
+    expect(
+      find.byKey(const ValueKey('admin-member-actions:a')),
+      findsOneWidget,
+      reason: 'expanded members expose contextual actions without a full form',
+    );
+    expect(find.text('Роль: alice'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

@@ -1449,7 +1449,153 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     ),
   );
 
-  Widget _buildAdminAccountCard(AdminAccount account) {
+  Widget _buildAdminAccountCard(AdminAccount account) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth >= 720) {
+        return _buildAdminAccountDesktopRow(account);
+      }
+      return _buildAdminAccountCompactCard(account);
+    },
+  );
+
+  Widget _buildAdminAccountDesktopRow(AdminAccount account) {
+    final draft = _accountDrafts[account.accountId];
+    final busy = _busyAccountIds.contains(account.accountId);
+    final sameVoiceParticipant =
+        widget.state.voiceChannel != null &&
+        widget.state.room?.remoteParticipants.values.any((participant) {
+              return participant.metadata == 'account:${account.accountId}';
+            }) ==
+            true;
+    final avatarColor = _adminMemberAvatarColor(account.accountId);
+    final initials = _adminMemberInitials(account.displayName);
+    return Container(
+      key: ValueKey('admin-member-row:${account.accountId}'),
+      constraints: const BoxConstraints(minHeight: 72),
+      margin: const EdgeInsets.only(bottom: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: GcColors.borderSubtle)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: avatarColor,
+            child: Text(
+              initials,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 5,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  account.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  '@${account.login}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: GcColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Text(
+              draft?.role == 'ADMINISTRATOR' ? 'Администратор' : 'Участник',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          _adminAccessBadge(draft?.blocked ?? account.blocked),
+          PopupMenuButton<String>(
+            key: ValueKey('admin-member-actions:${account.accountId}'),
+            tooltip: 'Действия с участником ${account.displayName}',
+            enabled: !busy,
+            onSelected: (action) {
+              switch (action) {
+                case 'role':
+                  if (draft != null) {
+                    setState(
+                      () => draft.role = draft.role == 'ADMINISTRATOR'
+                          ? 'MEMBER'
+                          : 'ADMINISTRATOR',
+                    );
+                  }
+                  break;
+                case 'blocked':
+                  if (draft != null) {
+                    setState(() => draft.blocked = !draft.blocked);
+                  }
+                  break;
+                case 'save':
+                  _saveAccount(account);
+                  break;
+                case 'reset':
+                  _createResetLink(account);
+                  break;
+                case 'kick':
+                  _kickVoiceParticipant(account);
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'role',
+                child: Text(
+                  draft?.role == 'ADMINISTRATOR'
+                      ? 'Назначить участником'
+                      : 'Назначить администратором',
+                ),
+              ),
+              PopupMenuItem(
+                value: 'blocked',
+                child: Text(
+                  draft?.blocked == true ? 'Снять блокировку' : 'Заблокировать',
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'save',
+                enabled: draft != null && _draftChanged(account, draft),
+                child: const Text('Сохранить'),
+              ),
+              const PopupMenuItem(
+                value: 'reset',
+                child: Text('Сбросить пароль'),
+              ),
+              if (sameVoiceParticipant &&
+                  account.accountId != widget.state.user?.accountId)
+                const PopupMenuItem(
+                  value: 'kick',
+                  child: Text('Отключить от голоса'),
+                ),
+            ],
+            child: const SizedBox.square(
+              dimension: 44,
+              child: Center(child: Icon(Icons.more_horiz)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminAccountCompactCard(AdminAccount account) {
     final draft = _accountDrafts[account.accountId];
     final busy = _busyAccountIds.contains(account.accountId);
     final sameVoiceParticipant =
@@ -1596,6 +1742,47 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   String _accountSummary(String role, bool blocked) =>
       '${role == 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь'}; '
       '${blocked ? 'заблокирован' : 'доступ открыт'}';
+
+  Widget _adminAccessBadge(bool blocked) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: blocked ? GcColors.dangerBackground : GcColors.successBackground,
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Text(
+        blocked ? 'Заблокирован' : 'Активен',
+        style: TextStyle(
+          color: blocked ? GcColors.danger : GcColors.success,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  );
+
+  Color _adminMemberAvatarColor(String id) {
+    const colors = [
+      GcColors.avatarBlue,
+      GcColors.avatarGreen,
+      GcColors.avatarViolet,
+      GcColors.avatarOrange,
+      GcColors.avatarGray,
+    ];
+    var hash = 2166136261;
+    for (final rune in id.runes) {
+      hash = ((hash ^ rune) * 16777619) & 0xFFFFFFFF;
+    }
+    return colors[hash % colors.length];
+  }
+
+  String _adminMemberInitials(String value) {
+    final matches = RegExp(
+      r'\p{L}',
+      unicode: true,
+    ).allMatches(value).take(2).map((match) => match.group(0)!).join();
+    return matches.isEmpty ? 'У' : matches.toUpperCase();
+  }
 
   Widget _buildResetLinkCard() => Container(
     margin: const EdgeInsets.only(bottom: 12),
