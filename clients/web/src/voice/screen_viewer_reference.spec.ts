@@ -110,5 +110,7 @@ describe('screen viewer reference composition', () => {
     expect(viewer).toContain('audio.value?.play()')
     expect(viewer).toContain(':autoplay-blocked="playbackBlocked"')
     expect(viewer).toContain('@retry="retry(false)"')
+    expect(viewer).toContain('@click="emit(\'toggleAudio\');audioPlaybackBlocked&&playFromGesture()"')
+    expect(viewer).toContain('@toggle="emit(\'toggleAudio\');audioPlaybackBlocked&&playFromGesture()"')
   })
 })

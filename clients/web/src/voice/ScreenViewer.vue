@@ -85,7 +85,7 @@ async function toggleFullscreen(): Promise<void> {
       <div v-if="mini && selectedStream" class="screen-mini-toolbar">
         <strong>{{ selectedStream.participantName || 'Демонстрация' }}</strong>
         <button type="button" @click="emit('returnVoice')">К голосу</button>
-        <button v-if="selectedStream.hasAudio && !selectedStream.isLocal" type="button" :aria-pressed="!audioMuted" @click="emit('toggleAudio')">{{ audioMuted ? 'Включить звук' : 'Выключить звук' }}</button>
+        <button v-if="selectedStream.hasAudio && !selectedStream.isLocal" type="button" :aria-pressed="!audioMuted" @click="emit('toggleAudio');audioPlaybackBlocked&&playFromGesture()">{{ audioMuted ? 'Включить звук' : 'Выключить звук' }}</button>
         <button type="button" @click="emit('clear')">Остановить просмотр</button>
       </div>
       <p v-if="error" class="state state-error" role="alert">{{ error }}</p>
@@ -106,7 +106,7 @@ async function toggleFullscreen(): Promise<void> {
     <audio ref="audio" autoplay></audio>
     <DiagnosisPanel v-if="selectedStream" v-show="!mini" :selected-id="selectedId" :ended="ended" :has-audio="selectedStream.hasAudio" :local="Boolean(selectedStream.isLocal)" :publisher-paused="Boolean(selectedStream.videoMuted)" :autoplay-blocked="playbackBlocked" :subscription-failed="error === 'Не удалось подписаться на демонстрацию.'" :stage-visible="stageVisible" :video-ready="videoReady" :presented-fps="playbackFps" :presented-frames="presentedFrames" :sampled-at="receiverSampledAt" :metrics="receiverMetrics" :source="sourceDiagnostics" @refresh="refreshReceiverMetrics" @retry="retry(false)" @auto-retry="retry(true)" @choose="emit('clear')" />
     <div v-if="selectedStream" class="stream-quality-row">
-      <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio')" @set-volume="emit('setAudioVolume', $event)" />
+      <ScreenViewerAudioControl v-if="selectedStream.hasAudio && !selectedStream.isLocal" :adjustable="adjustable" :deafened="deafened" :muted="audioMuted" :volume="selectedAudioVolume" @toggle="emit('toggleAudio');audioPlaybackBlocked&&playFromGesture()" @set-volume="emit('setAudioVolume', $event)" />
       <p v-if="audioMessage" class="stream-audio-status gc-sr-only" role="status">{{ audioMessage }}</p>
       <div class="stream-toolbar-actions">
         <button type="button" class="stream-tool-button" :aria-label="pinned ? 'Открепить просмотр' : 'Закрепить просмотр'" :aria-pressed="Boolean(pinned)" @click="emit('pin')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-4 2-3 5-2 1-4-4 1-2 5-3 2-4ZM8 16l-5 5"/></svg></button>
