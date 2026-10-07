@@ -60,8 +60,17 @@ class ScreenSenderLayerSampler {
       final gap = prior == null ? 0.0 : receivedAtMs - prior.receivedAtMs;
       final stale = prior != null && (!gap.isFinite || gap > _maximumAgeMs || elapsed > _maximumAgeMs);
       final interval = prior != null && gap > 0 && gap <= _maximumAgeMs && elapsed > 0 && elapsed <= _maximumAgeMs;
-      double? delta(num? current, num? before) => interval && _counter(current) &&
-          _counter(before) && current! >= before! ? current!.toDouble() - before!.toDouble() : null;
+      double? delta(num? current, num? before) {
+        if (!interval ||
+            current == null ||
+            before == null ||
+            !_counter(current) ||
+            !_counter(before) ||
+            current < before) {
+          return null;
+        }
+        return current.toDouble() - before.toDouble();
+      }
       final frames = delta(row.framesSent, previous?.framesSent);
       final bytes = delta(row.bytesSent, previous?.bytesSent);
       final sent = delta(row.packetsSent, previous?.packetsSent);
