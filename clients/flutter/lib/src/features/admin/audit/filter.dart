@@ -23,30 +23,49 @@ class AdminAuditFilters {
       to != null ||
       eventType?.trim().isNotEmpty == true ||
       actor?.trim().isNotEmpty == true;
+
+  AdminAuditFilters copyWith({
+    AdminAuditScope? scope,
+    DateTime? from,
+    DateTime? to,
+    String? eventType,
+    String? actor,
+    bool clearFrom = false,
+    bool clearTo = false,
+    bool clearEventType = false,
+    bool clearActor = false,
+  }) =>
+      AdminAuditFilters(
+        scope: scope ?? this.scope,
+        from: clearFrom ? null : from ?? this.from,
+        to: clearTo ? null : to ?? this.to,
+        eventType: clearEventType ? null : eventType ?? this.eventType,
+        actor: clearActor ? null : actor ?? this.actor,
+      );
 }
 
 List<AdminAuditEvent> filterAdminAuditEvents(
   List<AdminAuditEvent> events,
   AdminAuditFilters filters,
 ) {
-  final actor = filters.actor?.trim().toLowerCase();
+  final actor = filters.actor?.trim();
   final type = filters.eventType?.trim();
+  final from = filters.from == null
+      ? null
+      : DateTime(filters.from!.year, filters.from!.month, filters.from!.day);
+  final toExclusive = filters.to == null
+      ? null
+      : DateTime(filters.to!.year, filters.to!.month, filters.to!.day + 1);
   return events
       .where((event) {
         final date = event.createdAt.toLocal();
-        if (filters.from != null && date.isBefore(filters.from!)) return false;
-        if (filters.to != null && date.isAfter(filters.to!)) return false;
+        if (from != null && date.isBefore(from)) return false;
+        if (toExclusive != null && !date.isBefore(toExclusive)) return false;
         if (type != null && type.isNotEmpty && event.eventType != type) {
           return false;
         }
-        if (actor != null && actor.isNotEmpty) {
-          final haystack = [
-            event.actorLogin,
-            event.actorDisplayName,
-            event.actorUserId,
-          ].whereType<String>().join(' ').toLowerCase();
-          if (!haystack.contains(actor)) return false;
-        }
+        if (actor != null && actor.isNotEmpty &&
+            (event.actorUserId ?? 'system') != actor) return false;
         if (filters.scope == AdminAuditScope.voice &&
             !event.eventType.startsWith('VOICE_')) {
           return false;
@@ -58,6 +77,18 @@ List<AdminAuditEvent> filterAdminAuditEvents(
         return true;
       })
       .toList(growable: false);
+}
+
+List<AdminAuditEvent> appendAdminAuditEvents(
+  List<AdminAuditEvent> current,
+  List<AdminAuditEvent> next,
+) {
+  final ids = current.map((event) => event.id).toSet();
+  return [
+    ...current,
+    for (final event in next)
+      if (ids.add(event.id)) event,
+  ];
 }
 
 Map<DateTime, List<AdminAuditEvent>> groupAdminAuditByDay(
