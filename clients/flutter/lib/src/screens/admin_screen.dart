@@ -1515,13 +1515,57 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
           const SizedBox(width: 12),
           Expanded(
             flex: 3,
-            child: Text(
-              draft?.role == 'ADMINISTRATOR' ? 'Администратор' : 'Участник',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: DropdownButtonFormField<String>(
+              key: ValueKey('role:${account.accountId}:${draft?.role}'),
+              initialValue: draft?.role,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              items: const [
+                DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
+                DropdownMenuItem(
+                  value: 'ADMINISTRATOR',
+                  child: Text('Администратор'),
+                ),
+              ],
+              onChanged: busy || draft == null
+                  ? null
+                  : (value) {
+                      if (value != null) setState(() => draft.role = value);
+                    },
             ),
           ),
+          Switch(
+            value: draft?.blocked ?? account.blocked,
+            onChanged: busy || draft == null
+                ? null
+                : (value) => setState(() => draft.blocked = value),
+          ),
           _adminAccessBadge(draft?.blocked ?? account.blocked),
+          const SizedBox(width: 4),
+          FilledButton.tonal(
+            key: ValueKey('save-account:${account.accountId}'),
+            focusNode: _accountSaveFocusNodes.putIfAbsent(
+              account.accountId,
+              FocusNode.new,
+            ),
+            onPressed: busy ? null : () => _saveAccount(account),
+            child: busy
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Сохранить'),
+          ),
+          const SizedBox(width: 4),
+          TextButton(
+            key: ValueKey('reset-account:${account.accountId}'),
+            onPressed: busy ? null : () => _createResetLink(account),
+            child: const Text('Сбросить пароль'),
+          ),
           PopupMenuButton<String>(
             key: ValueKey('admin-member-actions:${account.accountId}'),
             tooltip: 'Действия с участником ${account.displayName}',
