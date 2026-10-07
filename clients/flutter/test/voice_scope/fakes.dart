@@ -15,6 +15,8 @@ class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
   bool connectCalled = false;
   MediaDevice? selectedOutput;
   @override
+  String? get selectedAudioOutputDeviceId => selectedOutput?.deviceId;
+  @override
   final PendingMicrophone localParticipant = PendingMicrophone();
   @override
   UnmodifiableMapView<String, RemoteParticipant> get remoteParticipants =>

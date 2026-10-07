@@ -80,6 +80,7 @@ void main() {
 
     h.room.connecting.complete();
     await joining;
+    expect(h.error, isNull);
     expect(h.audio.selectedAudioInputId, 'usb-mic');
     expect(h.audio.captureOptions.deviceId, 'usb-mic');
     expect(h.audio.selectedAudioOutputId, 'usb-speaker');
