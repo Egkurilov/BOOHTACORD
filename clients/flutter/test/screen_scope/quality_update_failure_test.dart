@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart';
 import 'package:boohtacord_desktop/src/features/screen/profile/quality.dart';
 
 import 'fakes.dart';
