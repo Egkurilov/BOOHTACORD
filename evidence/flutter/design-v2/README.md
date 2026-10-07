@@ -52,3 +52,17 @@ seven tabs remained visible without clipping and each opened successfully before
 returning to portrait. The post-run logcat had no fatal app crash. Details are in
 [`qa-admin-android-runtime-2026-10-07-001.json`](../qa-admin-android-runtime-2026-10-07-001.json).
 IME, TalkBack, iOS and Windows acceptance remain open under #198.
+
+## Accessibility and large-text hardening — 2026-10-07
+
+The admin geometry regression now covers phone portrait/landscape, tablet and
+desktop viewports from `360x844` through `1920x1080`, including the compact
+thresholds at `844x390` and `1024x768`. A text-scale `2.0` traversal opens every
+admin section without a Flutter exception. The run also fixed real large-text
+overflows: Channels dropdown labels now expand, while Audit, Media and Readiness
+use a scrollable large-text path instead of clipping their primary content.
+The full Flutter suite passed 795 tests with one expected skip and the release
+APK split build passed. Details are in
+[`qa-admin-accessibility-hardening-2026-10-07-001.json`](../qa-admin-accessibility-hardening-2026-10-07-001.json).
+This is implementation/widget evidence; native IME, TalkBack, iOS, Windows,
+focus-loop and live-resize acceptance remain open under #197/#198.

@@ -38,6 +38,15 @@ checks are recorded separately; Windows and iOS acceptance remain `NOT_RUN`
 until those runtimes are available. This implementation record therefore does
 not claim the parent platform gate is closed.
 
+The follow-up accessibility pass adds regression coverage for the full admin
+viewport matrix, including phone landscape and tablet landscape, plus a
+text-scale 2.0 traversal through every section. That run exposed and fixed
+large-text clipping in Channels dropdowns and the Audit, Media and Readiness
+panels. The full Flutter suite passed 795 tests with one expected skip and a
+release APK split build completed; native IME, TalkBack, focus-loop and
+cross-platform runtime acceptance remain open —
+[QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-001](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-001.json).
+
 ## Компактный composer — проверка 2026-10-05
 
 В Flutter шириной до 720 px действия attach, paste, mention и emoji собраны под одним `+` menu для TEXT и DM; в wide composer emoji picker остаётся отдельным действием. Picker содержит шесть быстрых emoji, searchable полный каталог с русскими/английскими подписями, recents и вставку/замену текущего выделения в draft. Service/widget suite — 72/72, полный suite — 592/592, changed-file analyzer чистый; подписанный Android r47 и Mac Debug визуально проверены после DevTools hot restart. На Android API 35 системная floating IME-панель перекрывает часть левого края каталога, а часть новых Unicode glyphs отсутствует в системном шрифте. Web не изменялся; update catalog не менялся — [QA-279](../evidence/flutter/qa279-flutter-compact-composer-actions-2026-10-05-001.json), [QA-280](../evidence/flutter/qa280-flutter-emoji-picker-design-v2-2026-10-05-001.json).

@@ -12,6 +12,11 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   completed on `codex/issue-188-flutter-admin-completion`; full Flutter suite,
   analyzer, dependency guard and split APK gate pass — [Members evidence](../evidence/flutter/qa-admin-members-responsive-2026-10-07-001.json),
   [Roles evidence](../evidence/flutter/qa-admin-roles-conflict-2026-10-07-001.json).
+- [x] Cross-cutting large-text/resize regression hardening: the admin geometry
+  matrix now covers phone portrait/landscape, tablet and desktop widths, and a
+  text-scale 2.0 traversal opens every section. Channels dropdowns, Audit,
+  Media and Readiness no longer overflow at that scale — [accessibility
+  evidence](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-001.json).
 - [ ] Runtime acceptance across Android, iOS, macOS and Windows. Android and
   macOS checks may be recorded when the clients are available; iOS and Windows
   remain open until a real runtime is supplied. Do not mark this item PASS from

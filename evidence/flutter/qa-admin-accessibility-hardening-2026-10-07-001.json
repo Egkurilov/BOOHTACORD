@@ -1,0 +1,47 @@
+{
+  "id": "QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-001",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #197 — Flutter admin accessibility and resize hardening",
+  "source_revision": "a5d1d83d",
+  "app_version": {
+    "source": "1.0.38+71",
+    "release_apk": "flutter build apk --release --split-per-abi"
+  },
+  "checks": [
+    {
+      "name": "Admin viewport geometry matrix",
+      "result": "PASS",
+      "observation": "Widget regressions cover 360x844, 390x844, 430x932, 844x390, 600x900, 768x900, 840x900, 900x900, 1024x768, 1024x900, 1440x900 and 1920x1080; every admin section remains reachable and the centered content panel stays within its bounds."
+    },
+    {
+      "name": "Text scale 2.0 admin navigation",
+      "result": "PASS",
+      "observation": "All AdminSection tabs open at a 390x844 viewport with MediaQuery text scale 2.0 and no Flutter test exception. Channels dropdowns expand their labels; Audit, Media and Readiness switch to a scrollable large-text layout so primary content is not clipped."
+    },
+    {
+      "name": "Focused admin regression suite",
+      "result": "PASS",
+      "observation": "The extended admin suite completed with 35 passing tests across geometry, topology, media, readiness, member filters, roles and guild settings."
+    },
+    {
+      "name": "Flutter analyzer",
+      "result": "PASS",
+      "observation": "Changed admin source files and the geometry regression test report no analyzer issues."
+    },
+    {
+      "name": "Full Flutter suite",
+      "result": "PASS",
+      "observation": "flutter test --no-pub completed with 795 passing tests and one expected skip."
+    },
+    {
+      "name": "Android release APK",
+      "result": "PASS",
+      "observation": "The release build produced armv7 (17.9 MB), arm64 (20.0 MB) and x86_64 (21.4 MB) APKs. They remain ignored build artifacts and are not committed to Git."
+    }
+  ],
+  "not_run": [
+    "Native IME, TalkBack, iOS and Windows accessibility acceptance were not captured in this record.",
+    "Focus-loop and live-resize behavior still require native runtime evidence beyond widget tests."
+  ],
+  "status": "IMPLEMENTATION PASS; native accessibility/runtime gate remains open"
+}
