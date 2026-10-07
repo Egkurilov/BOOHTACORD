@@ -59,7 +59,7 @@ func validateJPEGContainer(body []byte) bool {
 			if code == 0x00 || code >= 0xd0 && code <= 0xd7 {
 				continue
 			}
-			marker, position = code, position
+			marker = code
 			if marker == 0xd9 {
 				return position == len(body)
 			}

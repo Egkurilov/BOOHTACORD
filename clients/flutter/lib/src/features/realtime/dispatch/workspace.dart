@@ -6,6 +6,7 @@ import '../lifecycle/event.dart';
 import '../../session/own_sessions/hint.dart';
 import '../../telemetry/realtime/process.dart';
 import 'conversation_events.dart';
+import 'direct_message.dart';
 import 'screen_preview_event.dart';
 
 class WorkspaceRealtimeDispatch {
@@ -71,7 +72,7 @@ class WorkspaceRealtimeDispatch {
           processEffect(
             event,
             conversation.api.transport.session.telemetry,
-            () => Future.wait([
+            () => Future.wait<void>([
               workspace.refreshTopology(),
               workspace.refreshMembers(),
               if (workspace.selectedChannel?.kind == ChannelKind.text)
