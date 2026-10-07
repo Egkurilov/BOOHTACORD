@@ -10,7 +10,7 @@ class AdminMembersLoadingState extends StatelessWidget {
       children: [
         const CircularProgressIndicator(),
         const SizedBox(height: 12),
-        const Semantics(
+        Semantics(
           key: ValueKey('admin-members-loading'),
           liveRegion: true,
           child: Text('Загружаем список участников…'),
