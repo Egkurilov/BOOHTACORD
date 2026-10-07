@@ -98,6 +98,7 @@ export class VoiceSession {
       const current = this.current
       if (!current) return
       await this.monitor.whileLeaving(async () => {
+        this.screen.cancel()
         await current.room.disconnect()
         this.stopInputSelection?.()
         this.stopInputSelection = undefined
@@ -112,6 +113,7 @@ export class VoiceSession {
     const current = this.current
     if (!current || current.leaseId !== leaseId) return false
     await this.monitor.whileLeaving(async () => {
+      this.screen.cancel()
       await current.room.disconnect()
       this.stopInputSelection?.()
       this.stopInputSelection = undefined
@@ -168,6 +170,7 @@ export class VoiceSession {
   private async handleDisconnected(room: JoinedVoiceRoom['room']): Promise<void> {
     const current = this.current
     if (!current || current.room !== room) return
+    this.screen.cancel()
     this.stopInputSelection?.()
     this.stopInputSelection = undefined
     this.current = null

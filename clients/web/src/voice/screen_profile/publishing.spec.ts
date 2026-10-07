@@ -1,29 +1,48 @@
-import { expect, it, vi } from 'vitest'
-import { startScreenShare, stopScreenShare } from '../media_publishing'
+import { describe, expect, it, vi } from 'vitest'
+import type { LocalVideoTrack } from 'livekit-client'
+import type { ScreenDiagnostics } from '../screen_diagnostics'
 import type { VoiceRoom } from '../livekit_gateway'
+import { VoiceScreenSession } from '../voice_screen_session'
+import type { ScreenPublisherPort } from '../screen_publisher/types'
 
-it('configures the actual sender before returning first diagnostics', async () => {
-  const calls: string[] = []
-  const room = { localParticipant: {
-    setScreenShareEnabled: vi.fn(async () => { calls.push('publish') }),
-    updateScreenShareProfile: vi.fn(async () => { calls.push('apply') }),
-  }, readScreenDiagnostics: vi.fn(async () => { calls.push('read'); return {} }) } as unknown as VoiceRoom
-  await startScreenShare(room, 'P1080_60')
-  expect(calls).toEqual(['publish', 'apply', 'read'])
-})
+function setup() {
+  const track = { id: 'screen' } as unknown as LocalVideoTrack, calls: string[] = []
+  let published: LocalVideoTrack | undefined, generation = 0
+  let ended: () => void = () => {}
+  const diagnostics: ScreenDiagnostics = { audioTrack: 'PRESENT', connectionQuality: 'GOOD', measured: null, source: 'ACTIVE' }
+  const port: ScreenPublisherPort<LocalVideoTrack> = {
+    generation: () => generation, isLive: () => true, currentTrack: () => published,
+    start: vi.fn(async () => { calls.push('start'); published = track; generation++; return track }),
+    capture: vi.fn(async () => { calls.push('capture') }),
+    unpublish: vi.fn(async (_track, stopCapture) => { calls.push(`unpublish:${stopCapture}`); published = undefined; generation++ }),
+    publish: vi.fn(async () => { calls.push('publish'); published = track; generation++ }),
+    stop: vi.fn(async () => { calls.push('stop'); published = undefined; generation++ }),
+    diagnostics: vi.fn(async () => diagnostics), repair: vi.fn(async () => true),
+    onEnded: vi.fn(listener => { ended = listener; return () => {} }),
+  }
+  const room = { screenPublisher: port, readScreenDiagnostics: vi.fn(async () => diagnostics), adoptScreenProfile: vi.fn(), stopScreenProfileChecks: vi.fn() } as unknown as VoiceRoom
+  const active = { room, screenProfile: null as import('../screen_profile/policy').ScreenProfile | null }
+  const session = new VoiceScreenSession(() => active)
+  return { session, room, port, calls, active, track, diagnostics, end: () => { published = undefined; generation++; ended() } }
+}
 
-it('unpublishes an initial share if the selected profile cannot be applied', async () => {
-  const room = { localParticipant: { setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
-    updateScreenShareProfile: vi.fn().mockRejectedValue(new Error('rejected')) } } as unknown as VoiceRoom
-  await expect(startScreenShare(room, 'P1080_60')).rejects.toThrow('rejected')
-  expect(room.localParticipant.setScreenShareEnabled).toHaveBeenLastCalledWith(false)
-})
-
-it('invalidates profile checks before awaiting unpublication', async () => {
-  const calls: string[] = []
-  const room = { stopScreenProfileChecks: () => calls.push('stop'), localParticipant: {
-    setScreenShareEnabled: async () => { calls.push('unpublish') },
-  } } as unknown as VoiceRoom
-  await stopScreenShare(room)
-  expect(calls).toEqual(['stop', 'unpublish'])
+describe('screen session uses the operation adapter', () => {
+  it('routes start, profile update and stop through one publisher boundary', async () => {
+    const f = setup(); await f.session.startScreen('P1080_30'); await f.session.updateScreenProfile('P720_30'); await f.session.stopScreen()
+    expect(f.calls).toEqual(['start', 'capture', 'unpublish:false', 'publish', 'stop'])
+    expect(f.room.adoptScreenProfile).toHaveBeenCalledWith('P720_30')
+    expect(f.active.screenProfile).toBeNull()
+  })
+  it('keeps an explicit diagnostics read side-effect free even when drift is present', async () => {
+    const f = setup(); await f.session.startScreen('P1080_30')
+    f.room.readScreenDiagnostics = vi.fn(async () => ({ ...f.diagnostics, profileCheck: { status: 'drift' as const, reason: 'configuration' as const, attempts: 0 } }))
+    await expect(f.session.readScreenDiagnostics()).resolves.toMatchObject({ profileCheck: { status: 'drift' } })
+    expect(f.port.repair).not.toHaveBeenCalled(); expect(f.port.publish).not.toHaveBeenCalled()
+    await f.session.stopScreen()
+  })
+  it('cancels the active adapter and cleans the screen publication after an SDK ended event', async () => {
+    const f = setup(); await f.session.startScreen('P1080_30'); f.end()
+    await vi.waitFor(() => expect(f.port.stop).toHaveBeenCalledWith(f.track))
+    expect(f.active.screenProfile).toBeNull()
+  })
 })

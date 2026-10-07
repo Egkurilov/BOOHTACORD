@@ -20,7 +20,6 @@ function room(microphone: () => Promise<unknown>): VoiceRoom {
     switchActiveDevice: vi.fn().mockResolvedValue(true),
     localParticipant: {
       setMicrophoneEnabled: vi.fn(microphone),
-      setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
     },
   }
 }

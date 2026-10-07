@@ -247,7 +247,7 @@ class Utils {
             150 * 1000,
             (originalEncoding.maxBitrate / math.pow(scale, 2)).floor(),
           ),
-          maxFramerate: originalEncoding.maxFramerate,
+          maxFramerate: math.min(15, originalEncoding.maxFramerate).toInt(),
           bitratePriority: originalEncoding.bitratePriority,
           networkPriority: originalEncoding.networkPriority,
         ),

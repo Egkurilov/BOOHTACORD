@@ -13,7 +13,6 @@ function makeRoom(): VoiceRoom {
     switchActiveDevice: vi.fn().mockResolvedValue(true),
     localParticipant: {
       setMicrophoneEnabled: vi.fn().mockResolvedValue(undefined),
-      setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
     },
   }
 }

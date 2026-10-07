@@ -101,6 +101,14 @@ class TrackPublishException extends LiveKitException {
   TrackPublishException([String msg = 'Failed to publish track']) : super._(msg);
 }
 
+/// A screen-share profile replacement failed after its prior publish plan was
+/// either restored or found unrecoverable.
+class ScreenShareProfileUpdateException extends LiveKitException {
+  final bool restored;
+
+  ScreenShareProfileUpdateException(String message, {required this.restored}) : super._(message);
+}
+
 /// Failed to publish data.
 /// Common reasons:
 /// - Token does not have data publish permission.

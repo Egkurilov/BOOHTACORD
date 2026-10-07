@@ -6,6 +6,8 @@ extension ScreenShareStop on ScreenShareController {
   Future<void> stopScreenShare() {
     final previous = closing;
     if (previous != null) return previous;
+    qualityIntentRevision++;
+    pendingQualityUpdate = null;
     final operation = closeCapture(++revision);
     closing = operation;
     return operation.whenComplete(() {
@@ -18,7 +20,9 @@ extension ScreenShareStop on ScreenShareController {
     final room = readRoom();
     final pending = starting;
     final wasIdle = phase == ScreenSharePhase.idle;
+    final track = activeTrack;
     activeTrack = null;
+    sourceDimensions = null;
     capturedContentVisibility.track(null);
     stopSampling();
     phase = ScreenSharePhase.stopping;
@@ -26,6 +30,7 @@ extension ScreenShareStop on ScreenShareController {
     try {
       await pending;
       if (room != null && !wasIdle) await driver.stop(room);
+      await track?.stop();
       await driver.disableBackground();
       if (expected != revision) return;
       phase = ScreenSharePhase.idle;
@@ -36,6 +41,9 @@ extension ScreenShareStop on ScreenShareController {
         failure.outcome,
         reason: failure.reason == 'network' ? 'dependency' : failure.reason,
       );
+      try {
+        await track?.stop();
+      } catch (_) {}
       if (expected != revision) return;
       phase = ScreenSharePhase.error;
       error =

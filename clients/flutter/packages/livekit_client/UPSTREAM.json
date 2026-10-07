@@ -14,8 +14,13 @@
     "lib/src/core/engine.dart",
     "lib/src/core/room.dart",
     "lib/src/hardware/hardware.dart",
+    "lib/src/participant/local.dart",
+    "lib/src/publication/local.dart",
+    "lib/src/publication/track_publication.dart",
     "lib/src/stats/stats.dart",
     "lib/src/track/local/audio.dart",
+    "lib/src/track/local/video.dart",
+    "lib/src/utils.dart",
     "lib/src/track/remote/video.dart",
     "lib/src/types/video_encoding.dart",
     "lib/src/widgets/video_track_renderer.dart",
@@ -24,8 +29,12 @@
   ],
   "added_patch_files": [
     "lib/src/utils/voice_reconnect_policy.dart",
+    "lib/src/track/local/sender_parameters.dart",
     "lib/src/widgets/video_track_renderer_frame_callback.dart",
     "test/core/voice_reconnect_policy_test.dart",
+    "test/mock/video_sender.dart",
+    "test/track/sender_encoding_profile_test.dart",
+    "test/track/sender_parameter_retirement_test.dart",
     "test/track/local_audio_rtt_test.dart",
     "test/widgets/video_track_renderer_frame_callback_test.dart"
   ]

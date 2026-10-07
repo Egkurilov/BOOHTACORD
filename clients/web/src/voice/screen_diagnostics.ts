@@ -9,6 +9,7 @@ export interface ScreenMeasurement {
 }
 
 export interface ScreenDiagnostics {
+  layers?: import('./screen_sender_layers').ScreenLayerDiagnostics[]
   capturedFrames?:number|null
   encodedFrames?:number|null
   profileCheck?: import('./screen_profile/types').ProfileSnapshot

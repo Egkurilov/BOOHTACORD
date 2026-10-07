@@ -18,6 +18,16 @@ const measured = computed(() => props.diagnostics.measured
 const audioTrack = computed(() => ({ PRESENT: 'есть', ABSENT: 'нет', UNKNOWN: 'неизвестно' }[props.diagnostics.audioTrack]))
 const quality = computed(() => ({ EXCELLENT: 'отличное', GOOD: 'хорошее', POOR: 'низкое', LOST: 'потеряно', UNKNOWN: 'нет данных' }[props.diagnostics.connectionQuality]))
 const source = computed(() => ({ ACTIVE: 'активен', ENDED: 'завершён', UNKNOWN: 'неизвестно' }[props.diagnostics.source]))
+const layers = computed(() => (props.diagnostics.layers ?? []).map(layer => ({
+  label: `${layer.rid ?? 'без RID'} · ${layer.codec ?? 'кодек неизвестен'} · ${layer.frameWidth ?? '?'} × ${layer.frameHeight ?? '?'}`,
+  state: ({ ACTIVE: 'активен', INACTIVE: 'неактивен', STALE: 'устарел', UNKNOWN: 'нет данных' } as const)[layer.state],
+  fps: layer.framesPerSecond === null ? 'нет данных' : `${layer.framesPerSecond.toFixed(1)} FPS`,
+  bitrate: layer.bitrateBps === null ? 'нет данных' : `${Math.round(layer.bitrateBps / 1000)} кбит/с`,
+  retransmitted: layer.retransmittedBps === null ? 'нет данных' : `${Math.round(layer.retransmittedBps / 1000)} кбит/с`,
+  loss: layer.packetLossPercent === null ? 'нет данных' : `${layer.packetLossPercent.toFixed(2)}%`,
+  control: `NACK ${layer.nackPerSecond?.toFixed(1) ?? '—'} · PLI ${layer.pliPerSecond?.toFixed(1) ?? '—'} · FIR ${layer.firPerSecond?.toFixed(1) ?? '—'}`,
+  encode: layer.encodeMsPerFrame === null ? 'encode: нет данных' : `encode ${layer.encodeMsPerFrame.toFixed(2)} мс/кадр`,
+})))
 const technical = computed(() => [
   `Bitrate: ${props.diagnostics.bitrateBps === undefined ? 'нет данных' : `${Math.round(props.diagnostics.bitrateBps / 1000)} кбит/с`}`,
   `Потери: ${props.diagnostics.packetsLost ?? 'нет данных'}`,
@@ -36,6 +46,10 @@ const technical = computed(() => [
   <details>
     <summary>Технические данные</summary>
     <p>{{ technical }}</p>
+  </details>
+  <details v-if="layers.length">
+    <summary>Слои видеопотока</summary>
+    <ul><li v-for="layer in layers" :key="layer.label">{{ layer.label }} · {{ layer.state }} · {{ layer.fps }} · {{ layer.bitrate }} · повторы {{ layer.retransmitted }} · потери {{ layer.loss }} · {{ layer.control }} · {{ layer.encode }}</li></ul>
   </details>
   <button class="voice-join" type="button" @click="emit('refresh')">Обновить измерения</button>
 </template>

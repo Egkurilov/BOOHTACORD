@@ -1,68 +1,93 @@
+import 'dart:async';
+
 import 'package:livekit_client/livekit_client.dart';
 
-import '../../../services/screen_share_quality.dart';
-import '../capture/dimensions.dart';
+import '../../../core/session/scope.dart';
+import '../profile/quality.dart';
 import '../lifecycle/controller.dart';
 
+bool _isCurrentSession(
+  ScreenShareController owner,
+  SessionTicket ticket,
+  int expected,
+  Room? room,
+) =>
+    !owner.disposed &&
+    ticket.isActive &&
+    expected == owner.revision &&
+    room != null &&
+    identical(owner.readRoom(), room);
+
 extension ScreenShareQualityUpdate on ScreenShareController {
-  Future<void> updateScreenShareQuality(ScreenShareQuality quality) async {
-    final ticket = scope.capture();
-    final expected = revision;
-    final room = readRoom();
-    if (!ticket.isActive || disposed) return;
-    if (phase != ScreenSharePhase.sharing) return;
-    final track = readRoom()?.localParticipant
-        ?.getTrackPublicationBySource(TrackSource.screenShareVideo)
-        ?.track;
-    if (track is! LocalVideoTrack || track.sender == null) {
+  Future<void> updateScreenShareQuality(ScreenShareQuality requested) {
+    if (disposed || phase != ScreenSharePhase.sharing) return Future.value();
+    final track = activeTrack;
+    if (track == null) {
       error = 'Активная видеодорожка демонстрации недоступна.';
       changed();
-      return;
+      return Future.value();
     }
-    try {
-      final sender = track.sender!;
-      final parameters = sender.parameters;
-      final encodings = parameters.encodings;
-      if (encodings == null || encodings.isEmpty) {
-        throw StateError('Видеоэнкодер не предоставил параметры качества.');
+    qualityIntentRevision++;
+    pendingQualityUpdate = requested;
+    pendingQualityTicket = scope.capture();
+    pendingQualityRoom = readRoom();
+    pendingQualityLifecycleRevision = revision;
+    final current = qualityUpdateOperation;
+    if (current != null) return current;
+    final operation = Future<void>.microtask(_drainQualityUpdates);
+    qualityUpdateOperation = operation;
+    unawaited(operation.whenComplete(() {
+      if (identical(qualityUpdateOperation, operation)) {
+        qualityUpdateOperation = null;
       }
-      final source = screenShareCaptureDimensions(track);
-      final baseScale = encodings
-          .map((encoding) => encoding.scaleResolutionDownBy ?? 1.0)
-          .reduce((left, right) => left < right ? left : right);
-      for (final encoding in encodings) {
-        final relativeScale =
-            (encoding.scaleResolutionDownBy ?? 1.0) / baseScale;
-        encoding.maxBitrate =
-            (quality.maxBitrate * 1000 / (relativeScale * relativeScale))
-                .round()
-                .clamp(200000, quality.maxBitrate * 1000);
-        encoding.maxFramerate = quality.frameRate;
-        encoding.scaleResolutionDownBy = source == null
-            ? relativeScale
-            : quality.scaleResolutionDownBy(source) * relativeScale;
-      }
-      final applied = await sender.setParameters(parameters);
-      if (!ticket.isActive ||
-          expected != revision ||
-          !identical(readRoom(), room) ||
-          !identical(activeTrack, track)) {
-        return;
-      }
-      if (applied == false) {
-        throw StateError('Энкодер отклонил новые параметры.');
-      }
-      this.quality = quality;
-      error = null;
-    } catch (cause) {
-      if (!ticket.isActive ||
-          expected != revision ||
-          !identical(activeTrack, track)) {
-        return;
-      }
-      error =
-          'Не удалось изменить качество: ${screenShareFailureDetail(cause)}';
-    }
-    changed();
+    }));
+    return operation;
   }
+
+  Future<void> _drainQualityUpdates() async {
+    while (pendingQualityUpdate != null) {
+      final requested = pendingQualityUpdate!;
+      final ticket = pendingQualityTicket!;
+      final room = pendingQualityRoom;
+      final lifecycleRevision = pendingQualityLifecycleRevision;
+      final intentRevision = qualityIntentRevision;
+      pendingQualityUpdate = null;
+      final track = activeTrack;
+      bool current() =>
+          !disposed &&
+          intentRevision == qualityIntentRevision &&
+          _isCurrentSession(this, ticket, lifecycleRevision, room) &&
+          phase == ScreenSharePhase.sharing &&
+          identical(activeTrack, track);
+      if (track == null || room == null || !current()) continue;
+      try {
+        final applied = await driver.updateQuality(
+          room,
+          track,
+          requested,
+          sourceDimensions,
+          current,
+        );
+        if (!current()) continue;
+        if (!applied) throw StateError('Новый профиль не был опубликован.');
+        quality = requested;
+        error = null;
+      } catch (cause) {
+        if (current()) {
+          if (cause is ScreenShareProfileUpdateException && !cause.restored) {
+            final detail = 'Профиль не восстановлен; демонстрация остановлена: ${screenShareFailureDetail(cause)}';
+            await stopScreenShare();
+            if (!disposed) {
+              phase = ScreenSharePhase.error;
+              error = detail;
+            }
+          } else {
+            error = 'Не удалось изменить качество: ${screenShareFailureDetail(cause)}';
+          }
+        }
+      }
+      changed();
+    }
+  }
+
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
-import '../../../services/screen_share_quality.dart';
+import '../profile/quality.dart';
+import '../profile/update.dart';
 import 'android.dart';
 import 'dimensions.dart';
 
@@ -13,6 +14,13 @@ abstract class ScreenShareDriver {
     LocalVideoTrack track,
     ScreenShareQuality quality,
     VideoDimensions? dimensions,
+  );
+  Future<bool> updateQuality(
+    Room room,
+    LocalVideoTrack track,
+    ScreenShareQuality quality,
+    VideoDimensions? dimensions,
+    bool Function() isCurrent,
   );
   Future<void> discard(Room room, LocalVideoTrack track);
   Future<void> stop(Room room);
@@ -48,6 +56,15 @@ class NativeScreenShareDriver implements ScreenShareDriver {
       ),
     );
   }
+
+  @override
+  Future<bool> updateQuality(
+    Room room,
+    LocalVideoTrack track,
+    ScreenShareQuality quality,
+    VideoDimensions? dimensions,
+    bool Function() isCurrent,
+  ) => updateScreenShareProfile(room, track, quality, dimensions, isCurrent);
 
   @override
   Future<void> discard(Room room, LocalVideoTrack track) async {

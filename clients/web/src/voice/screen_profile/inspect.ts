@@ -1,13 +1,15 @@
 import { profileDimensions, profileScale, screenProfile, type ScreenProfile } from './policy'
 import type { ProfileSnapshot, ProfileTrack } from './types'
+import { screenSenderStatsSampler } from '../screen_stats_sampler'
 
 export async function inspectScreenProfile(track: ProfileTrack, profile: ScreenProfile, previousFrames: Map<string, number>): Promise<ProfileSnapshot> {
   const settings = track.mediaStreamTrack.getSettings(), target = screenProfile(profile)
   const result: ProfileSnapshot = { status: 'checking', reason: 'unavailable', attempts: 0,
     captureWidth: settings.width, captureHeight: settings.height, captureFps: settings.frameRate }
-  const encodings = track.sender?.getParameters().encodings ?? []
+  const encodings = track.sender?.getParameters().encodings
+  if (!encodings?.length) return result
   const active = encodings.filter(e => e.active !== false)
-  if (encodings.length && !active.length) return { ...result, status: 'inactive', reason: 'none' }
+  if (!active.length) return { ...result, status: 'inactive', reason: 'none' }
   const dimensions = profileDimensions(profile, settings)
   if ((settings.width ?? 0) > dimensions.width + 2 || (settings.height ?? 0) > dimensions.height + 2 || (settings.frameRate ?? 0) > target.frameRate + 1) {
     return { ...result, status: 'drift', reason: 'capture' }
@@ -16,7 +18,7 @@ export async function inspectScreenProfile(track: ProfileTrack, profile: ScreenP
   if (!active.length || active.some(e => e.maxFramerate === undefined || e.maxFramerate > target.frameRate || e.maxBitrate === undefined || e.maxBitrate > target.bitrate || (e.scaleResolutionDownBy ?? 1) + .001 < scale)) {
     return { ...result, status: 'drift', reason: 'configuration' }
   }
-  const report = await track.sender?.getStats()
+  const report = track.sender ? await screenSenderStatsSampler.read(track.sender) : undefined
   let progressing = false, adapted = false, oversized = false
   const seen = new Set<string>()
   report?.forEach((row) => {

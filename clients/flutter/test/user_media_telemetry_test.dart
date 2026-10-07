@@ -5,7 +5,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:boohtacord_desktop/src/telemetry/report_media/sender_sample.dart';
 import 'package:boohtacord_desktop/src/telemetry/report_media/sender.dart';
 import 'package:boohtacord_desktop/src/telemetry/report_media/connection.dart';
-import 'package:boohtacord_desktop/src/services/screen_share_quality.dart';
+import 'package:boohtacord_desktop/src/features/screen/profile/quality.dart';
 import 'package:boohtacord_desktop/src/services/screen_share_metrics.dart';
 
 void main() {

@@ -23,6 +23,7 @@ import 'dart:typed_data' show Uint8List;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:async/async.dart';
+import 'package:collection/collection.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:meta/meta.dart';
@@ -276,6 +277,59 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
     return result! as LocalTrackPublication<LocalVideoTrack>;
   }
 
+  /// Replaces a screen share publication while keeping its capture alive.
+  ///
+  /// A new AddTrack request is required when the profile changes because its
+  /// dimensions and layer descriptors are part of the publish metadata.
+  Future<LocalTrackPublication<LocalVideoTrack>?> updateScreenShareTrackProfile(
+    LocalVideoTrack track, {
+    required VideoPublishOptions publishOptions,
+    required bool Function() isCurrent,
+  }) => _publishRunner.run(() async {
+    if (track.source != TrackSource.screenShareVideo || track.processor != null) {
+      throw ArgumentError('Only an unprocessed screen share can change profile.');
+    }
+    if (!isCurrent()) return null;
+    final existing = videoTrackPublications.firstWhereOrNull((publication) => identical(publication.track, track));
+    final previousOptions = track.lastPublishOptions;
+    if (existing != null) {
+      track.invalidateSenderParameterOperations();
+      await track.waitForSenderParameterOperations();
+      if (!isCurrent()) return null;
+      await removePublishedTrack(existing.sid, notify: false, stopOnUnpublish: false);
+    } else if (previousOptions == null) {
+      throw StateError('Screen share has no previous publish profile to restore.');
+    }
+    if (!isCurrent()) return null;
+    try {
+      final publication = await _publishVideoTrack(track, publishOptions: publishOptions);
+      if (!isCurrent() && publication != null) {
+        await removePublishedTrack(publication.sid, notify: false, stopOnUnpublish: false);
+        track.lastPublishOptions = previousOptions;
+        return null;
+      }
+      return publication;
+    } catch (error) {
+      if (!isCurrent() || previousOptions == null) rethrow;
+      try {
+        final restored = await _publishVideoTrack(track, publishOptions: previousOptions);
+        if (!isCurrent() && restored != null) {
+          await removePublishedTrack(restored.sid, notify: false, stopOnUnpublish: false);
+          track.lastPublishOptions = previousOptions;
+          return null;
+        }
+      } catch (restoreError) {
+        if (!isCurrent()) rethrow;
+        throw ScreenShareProfileUpdateException(
+          'Screen share profile failed and rollback failed: $restoreError',
+          restored: false,
+        );
+      }
+      if (!isCurrent()) return null;
+      throw ScreenShareProfileUpdateException('$error', restored: true);
+    }
+  });
+
   Future<LocalTrackPublication<LocalVideoTrack>?> _publishVideoTrack(
     LocalVideoTrack track, {
     VideoPublishOptions? publishOptions,
@@ -386,6 +440,7 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
 
     Future<lk_models.TrackInfo> negotiate(VideoPublishOptions options) async {
       track.transceiver = await room.engine.createTransceiverRTCRtpSender(track, options, encodings);
+      track.resumeSenderParameterOperations();
 
       track.codec = options.videoCodec;
       if (lkBrowser() != BrowserType.firefox) {
@@ -488,6 +543,7 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
         kind: rtc.RTCRtpMediaType.RTCRtpMediaTypeVideo,
         init: transceiverInit,
       );
+      track.resumeSenderParameterOperations();
 
       track.codec = publishOptions.videoCodec;
       if (lkBrowser() != BrowserType.firefox) {
@@ -553,7 +609,7 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
     return pub;
   }
 
-  Future<void> removePublishedTrack(String trackSid, {bool notify = true}) async {
+  Future<void> removePublishedTrack(String trackSid, {bool notify = true, bool? stopOnUnpublish}) async {
     logger.finer('Unpublish track sid: $trackSid, notify: $notify');
     final pub = trackPublications.remove(trackSid);
     if (pub == null) {
@@ -562,8 +618,15 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
     }
     final track = pub.track;
     if (track != null) {
-      if (room.roomOptions.stopLocalTrackOnUnpublish) {
+      final shouldStop = stopOnUnpublish ?? room.roomOptions.stopLocalTrackOnUnpublish;
+      if (track is LocalVideoTrack) {
+        track.invalidateSenderParameterOperations();
+        await track.waitForSenderParameterOperations();
+      }
+      if (shouldStop) {
         await track.stop();
+      } else {
+        pub.preserveTrackOnDispose();
       }
 
       final sender = track.transceiver?.sender;
@@ -629,7 +692,7 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
   Future<void> unpublishAllTracks({bool notify = true, bool? stopOnUnpublish}) async {
     final trackSids = trackPublications.keys.toSet();
     for (final trackid in trackSids) {
-      await removePublishedTrack(trackid, notify: notify);
+      await removePublishedTrack(trackid, notify: notify, stopOnUnpublish: stopOnUnpublish);
     }
   }
 
@@ -643,6 +706,8 @@ class LocalParticipant extends Participant<LocalTrackPublication> {
         final videoTrack = track.track as LocalVideoTrack;
         // a full reconnect replaced the peer connection, so any simulcast
         // codec senders the track still holds belong to the old one
+        videoTrack.invalidateSenderParameterOperations();
+        await videoTrack.waitForSenderParameterOperations();
         videoTrack.clearSimulcastState();
         await publishVideoTrack(videoTrack);
       }

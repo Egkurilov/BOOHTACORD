@@ -4,7 +4,8 @@ import '../../services/screen_share_metrics.dart';
 
 import 'package:livekit_client/livekit_client.dart';
 
-import '../../services/screen_share_quality.dart';
+import '../../features/screen/profile/quality.dart';
+import '../../features/screen/metrics/layers.dart';
 import '../../features/screen/lifecycle/controller.dart';
 import '../composition/owners.dart';
 
@@ -13,6 +14,9 @@ mixin AppScreenAccess on AppOwners {
 
   ScreenShareSenderReport? get screenShareSenderReport => screen.metrics.report;
   DateTime? get screenShareSenderSampledAt => screen.metrics.sampledAt;
+  num? get screenShareTotalOutgoingBitrateBps => screen.metrics.totalBitrateBps;
+  List<ScreenSenderLayerMetrics> get screenShareSenderLayers =>
+      screen.metrics.layerDiagnostics;
   bool? get screenCapturedContentVisible => screen.capturedContentVisible;
 
   set screenSharePhase(ScreenSharePhase value) => screen.phase = value;

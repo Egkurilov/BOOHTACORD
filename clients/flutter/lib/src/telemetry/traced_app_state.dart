@@ -4,7 +4,7 @@ import 'package:livekit_client/livekit_client.dart';
 
 import '../app_state.dart';
 import '../services/client_telemetry.dart';
-import '../services/screen_share_quality.dart';
+import '../features/screen/profile/quality.dart';
 
 class TracedAppState extends AppState {
   TracedAppState(super.api, {super.audioDeviceBootstrap}) {

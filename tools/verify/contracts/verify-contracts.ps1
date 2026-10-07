@@ -5,6 +5,9 @@ $realtimePath = Join-Path $PSScriptRoot '..\..\..\contracts\realtime.schema.json
 $mobileContractPath = Join-Path $PSScriptRoot '..\..\..\contracts\mobile-client-contract.md'
 $clientUpdateSchemaPath = Join-Path $PSScriptRoot '..\..\..\contracts\client-release-catalog.schema.json'
 $clientUpdateFixturesPath = Join-Path $PSScriptRoot '..\..\..\contracts\client-update-evaluator.fixtures.json'
+$screenShareProfileSchemaPath = Join-Path $PSScriptRoot '..\..\..\contracts\screen-share-profile-v1.schema.json'
+$screenShareProfileCatalogPath = Join-Path $PSScriptRoot '..\..\..\contracts\screen-share-profile-v1.catalog.json'
+$screenShareProfileFixturesPath = Join-Path $PSScriptRoot '..\..\..\contracts\screen-share-profile-v1.fixtures.json'
 
 foreach ($path in @($openApiPath, $realtimePath)) {
     if (-not (Test-Path -LiteralPath $path)) {
@@ -12,7 +15,7 @@ foreach ($path in @($openApiPath, $realtimePath)) {
     }
 }
 
-foreach ($path in @($clientUpdateSchemaPath, $clientUpdateFixturesPath)) {
+foreach ($path in @($clientUpdateSchemaPath, $clientUpdateFixturesPath, $screenShareProfileSchemaPath, $screenShareProfileCatalogPath, $screenShareProfileFixturesPath)) {
     if (-not (Test-Path -LiteralPath $path)) { throw "Client update contract is unavailable: $path" }
     Get-Content -Raw -LiteralPath $path | ConvertFrom-Json | Out-Null
 }

@@ -1,0 +1,59 @@
+import { Track, type LocalParticipant, type LocalVideoTrack } from 'livekit-client'
+import { applyScreenProfile } from '../screen_profile/apply'
+import type { ScreenDiagnostics } from '../screen_diagnostics'
+import { screenCapturePlan, screenPublishPlan } from './plan'
+import type { ScreenProfile } from '../screen_profile/policy'
+import type { ScreenPublisherPort } from './types'
+
+export function bindLiveKitScreenPublisher(participant: LocalParticipant, diagnostics: () => Promise<ScreenDiagnostics>, adopt: (profile: ScreenProfile) => void, repair: (profile: ScreenProfile, action: () => Promise<void>, current: () => boolean) => Promise<boolean>) {
+  let generation = 0
+  const expectedUnpublish = new WeakSet<LocalVideoTrack>(), ended = new Set<() => void>()
+  const currentTrack = () => participant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack
+  async function unpublish(track: LocalVideoTrack, stopCapture: boolean): Promise<void> {
+    expectedUnpublish.add(track)
+    try { await participant.unpublishTrack(track, stopCapture) }
+    catch (cause) { expectedUnpublish.delete(track); throw cause }
+    expectedUnpublish.delete(track)
+  }
+  const port: ScreenPublisherPort<LocalVideoTrack> = {
+    generation: () => generation,
+    isLive: track => track.mediaStreamTrack.readyState === 'live',
+    currentTrack,
+    start: async profile => (await participant.setScreenShareEnabled(true, screenCapturePlan(profile), screenPublishPlan(profile)))?.videoTrack ?? currentTrack(),
+    capture: (track, profile) => applyScreenProfile(track, profile),
+    unpublish,
+    publish: async (track, profile) => { await participant.publishTrack(track, { ...screenPublishPlan(profile), source: Track.Source.ScreenShare }) },
+    stop: async track => {
+      let failure: unknown
+      const published = currentTrack(), staleTrack = Boolean(track && published && published !== track)
+      const video = track ? (published === track ? track : undefined) : published
+      try {
+        if (video) await unpublish(video, true)
+        else if (track && track.mediaStreamTrack.readyState === 'live') track.stop()
+      } catch (cause) { failure = cause }
+      const audio = staleTrack ? undefined : participant.getTrackPublication(Track.Source.ScreenShareAudio)?.audioTrack
+      try { if (audio) await participant.unpublishTrack(audio, true) } catch (cause) { failure ??= cause }
+      if (!video && !audio && !track) void participant.setScreenShareEnabled(false).catch(() => {})
+      if (failure) throw failure
+    },
+    diagnostics,
+    adopt,
+    repair: (track, profile, current) => repair(profile, async () => {
+      if (!current()) throw new Error('Операция восстановления отменена.')
+      await applyScreenProfile(track, profile)
+      await unpublish(track, false)
+      if (!current()) throw new Error('Операция восстановления отменена.')
+      await participant.publishTrack(track, { ...screenPublishPlan(profile), source: Track.Source.ScreenShare })
+      if (currentTrack() !== track) throw new Error('LiveKit не подтвердил восстановленную публикацию.')
+    }, current),
+    onEnded: listener => { ended.add(listener); return () => ended.delete(listener) },
+    trackPublished: () => { ++generation },
+    trackUnpublished: track => {
+      ++generation
+      if (track && expectedUnpublish.delete(track)) return true
+      for (const listener of ended) listener()
+      return false
+    },
+  }
+  return port
+}

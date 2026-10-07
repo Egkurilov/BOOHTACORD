@@ -23,8 +23,10 @@ describe('screen sender reporting', () => {
     scope.run(() => installScreenSenderReporting(state, diagnostics, refresh, 'android_web'))
 
     state.value = 'SHARING'
-    await vi.advanceTimersByTimeAsync(5000)
-    expect(refresh).toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(refresh).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(4000)
+    expect(refresh).toHaveBeenCalledTimes(6)
     expect(request).toHaveBeenCalledOnce()
     const [, init] = request.mock.calls[0] as unknown as [string, RequestInit]
     expect(JSON.parse(String(init.body))).toMatchObject({ direction: 'sender', platform: 'android_web', encoded_fps: 18 })
