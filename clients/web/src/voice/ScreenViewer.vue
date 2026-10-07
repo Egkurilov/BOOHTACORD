@@ -25,7 +25,7 @@ const playbackFeedback = ref('')
 const videoPlaybackBlocked=ref(false),audioPlaybackBlocked=ref(false)
 const playbackBlocked = computed(() => videoPlaybackBlocked.value || audioPlaybackBlocked.value)
 let playbackRequestGeneration=0,requestedSelectionId:string|null=null
-const { actualVideoQuality, markVideoReady,playbackFps,presentedFrames,refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
+const { firstFrameMs, presentationSource, actualVideoQuality, markVideoReady,playbackFps,presentedFrames,refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
 let fullscreenControls: ReturnType<typeof createScreenFullscreenControls> | null = null
 let stopReporting: (() => void) | null = null
 const selectedStream = computed(() => props.cards.find((stream) => stream.id === props.selectedId) ?? null)
@@ -57,7 +57,7 @@ onMounted(() => {
   stopReporting = startScreenClientReporting(() => buildScreenClientReport({
     platform, selected: Boolean(selectedStream.value && !selectedStream.value.isLocal && !props.ended),
     hasTrack: Boolean(selectedStream.value?.readReceiverStats), videoReady: videoReady.value,
-    playbackFps: playbackFps.value, receiverMetrics: receiverMetrics.value,
+    firstFrameMs: firstFrameMs.value, presentationSource: presentationSource.value, playbackFps: playbackFps.value, receiverMetrics: receiverMetrics.value,
     sampledAt: receiverSampledAt.value ?? undefined,
     frameWidth: video.value?.videoWidth, frameHeight: video.value?.videoHeight,
   }), () => document.visibilityState === 'visible')

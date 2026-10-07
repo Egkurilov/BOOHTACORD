@@ -44,7 +44,7 @@ void main() {
     expect(metrics.droppedFrames, 3);
     expect(metrics.jitterMs, 12);
     expect(metrics.packetsLost, 3);
-    expect(metrics.presentedFps, 30);
+    expect(metrics.presentedFps, isNull);
   });
 
   test('maps native codec and decoder details into receiver stats', () async {
@@ -191,7 +191,7 @@ void main() {
           ..decoderImplementation = 'c2.android.avc.decoder',
       ];
       var nextSample = 0;
-      final track = _StatsTrack(() async => samples[nextSample++]);
+      final track = _StatsTrack(() async => samples[nextSample < samples.length ? nextSample++ : samples.length - 1]);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -211,7 +211,7 @@ void main() {
 
       expect(find.text('60 FPS'), findsOneWidget);
       expect(find.text('80 FPS'), findsOneWidget);
-      expect(find.text('20 FPS'), findsOneWidget);
+      expect(find.text('20 FPS'), findsNothing);
       expect(find.text('Получено кадров'), findsOneWidget);
       expect(find.text('Декодер'), findsOneWidget);
       expect(find.text('video/H264'), findsOneWidget);
@@ -261,7 +261,7 @@ void main() {
         ..framesPerSecond = 14,
     ];
     var nextSample = 0;
-    final track = _StatsTrack(() async => samples[nextSample++]);
+    final track = _StatsTrack(() async => samples[nextSample < samples.length ? nextSample++ : samples.length - 1]);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -290,7 +290,8 @@ void main() {
     expect(reports.single, containsPair('frame_width', 576));
     expect(reports.single, containsPair('frame_height', 1280));
     expect(reports.single, containsPair('decoded_fps', 60.0));
-    expect(reports.single, containsPair('presented_fps', 20.0));
+    expect(reports.single, isNot(contains('presented_fps')));
+    expect(reports.single, containsPair('presentation_source', 'unsupported'));
     expect(reports.single, containsPair('bitrate_kbps', 4000.0));
     expect(reports.single, containsPair('jitter_ms', 12.0));
     expect(reports.single, containsPair('packets_lost', 6));
@@ -395,6 +396,9 @@ void main() {
         'platform': 'android_native',
         'direction': 'receiver',
         'state': 'waiting_subscription',
+        'presentation_source': 'unsupported',
+        'stats_source': 'unsupported',
+        'collection_state': 'unavailable',
       },
     ]);
 

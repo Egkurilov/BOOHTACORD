@@ -20,6 +20,7 @@ func recordMediaSample(ctx context.Context, report httpmetrics.ClientScreenRepor
 		return
 	}
 	attrs := correlation.NamedAttributes(principal.AccountID, principal.SessionDigest, principal.DisplayName)
+	attrs = append(attrs, measurementAttributes(report.Measurement)...)
 	attrs = append(attrs, attribute.String("media.platform", report.Platform),
 		attribute.String("media.direction", report.Direction), attribute.String("media.state", report.State),
 		attribute.String("media.measurement_source", "client_webrtc"))

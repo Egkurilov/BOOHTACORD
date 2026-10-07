@@ -7,150 +7,16 @@ import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../services/screen_share_metrics.dart';
+import '../features/screen/receiver_metrics/models.dart';
+import '../features/screen/receiver_metrics/compare.dart';
+import '../features/screen/receiver_metrics/read.dart';
+import '../features/screen/metrics/stats_poller.dart';
 import '../services/screen_receiver_report.dart';
 import '../theme.dart';
 import 'screen_packet_loss.dart';
 
-class ScreenReceiverSnapshot {
-  const ScreenReceiverSnapshot({
-    required this.timestampMs,
-    this.bytesReceived,
-    this.framesDecoded,
-    this.framesRendered,
-    this.framesReceived,
-    this.framesDropped,
-    this.jitterSeconds,
-    this.packetsLost,
-    this.packetsReceived,
-    this.frameWidth,
-    this.frameHeight,
-    this.framesPerSecond,
-    this.codec,
-    this.decoderImplementation,
-  });
-
-  final double timestampMs;
-  final double? bytesReceived;
-  final double? framesDecoded;
-  final double? framesRendered;
-  final double? framesReceived;
-  final double? framesDropped;
-  final double? jitterSeconds;
-  final double? packetsLost;
-  final double? packetsReceived;
-  final double? frameWidth;
-  final double? frameHeight;
-  final double? framesPerSecond;
-  final String? codec;
-  final String? decoderImplementation;
-}
-
-class ScreenReceiverMetrics {
-  const ScreenReceiverMetrics({
-    this.bitrateKbps,
-    this.receivedFps,
-    this.decodedFps,
-    this.presentedFps,
-    this.droppedFrames,
-    this.jitterMs,
-    this.packetsLost,
-    this.packetLossPercent,
-  });
-
-  final double? bitrateKbps;
-  final double? receivedFps;
-  final double? decodedFps;
-  final double? presentedFps;
-  final double? droppedFrames;
-  final double? jitterMs;
-  final double? packetsLost;
-  final double? packetLossPercent;
-}
-
-ScreenReceiverMetrics compareScreenReceiverStats(
-  ScreenReceiverSnapshot? previous,
-  ScreenReceiverSnapshot current,
-) {
-  final elapsedMs = previous == null
-      ? null
-      : current.timestampMs - previous.timestampMs;
-  return ScreenReceiverMetrics(
-    receivedFps: _rate(
-      previous?.framesReceived,
-      current.framesReceived,
-      elapsedMs,
-      1000,
-    ),
-    bitrateKbps: _rate(
-      previous?.bytesReceived,
-      current.bytesReceived,
-      elapsedMs,
-      8,
-    ),
-    decodedFps: _rate(
-      previous?.framesDecoded,
-      current.framesDecoded,
-      elapsedMs,
-      1000,
-    ),
-    presentedFps: _rate(
-      previous?.framesRendered,
-      current.framesRendered,
-      elapsedMs,
-      1000,
-    ),
-    droppedFrames: _delta(
-      previous?.framesDropped,
-      current.framesDropped,
-      elapsedMs,
-    ),
-    jitterMs: _finiteNonNegative(current.jitterSeconds)
-        ? current.jitterSeconds! * 1000
-        : null,
-    packetsLost: _finiteNonNegative(current.packetsLost)
-        ? current.packetsLost
-        : null,
-  );
-}
-
-double? _rate(
-  double? previous,
-  double? current,
-  double? elapsedMs,
-  double multiplier,
-) {
-  if (!_finiteNonNegative(previous) ||
-      !_finiteNonNegative(current) ||
-      !_finiteNonNegative(elapsedMs) ||
-      elapsedMs == 0 ||
-      current! < previous!) {
-    return null;
-  }
-  return _round((current - previous) * multiplier / elapsedMs!, 1);
-}
-
-double? _delta(double? previous, double? current, double? elapsedMs) {
-  if (!_finiteNonNegative(previous) ||
-      !_finiteNonNegative(current) ||
-      !_finiteNonNegative(elapsedMs) ||
-      elapsedMs == 0 ||
-      current! < previous!) {
-    return null;
-  }
-  return current - previous;
-}
-
-bool _finiteNonNegative(double? value) =>
-    value != null && value.isFinite && value >= 0;
-
-double _round(double value, int places) {
-  final multiplier = switch (places) {
-    0 => 1.0,
-    1 => 10.0,
-    _ => 100.0,
-  };
-  return (value * multiplier).round() / multiplier;
-}
+export '../features/screen/receiver_metrics/models.dart';
+export '../features/screen/receiver_metrics/compare.dart';
 
 class ScreenReceiverDiagnostics extends StatefulWidget {
   const ScreenReceiverDiagnostics({
@@ -228,6 +94,9 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
     WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _reportTimer?.cancel();
+    final receiver = widget.track?.receiver;
+    if (receiver != null) screenStatsPoller(receiver).clear();
+    _samplingGeneration++;
     _focusNode.dispose();
     super.dispose();
   }
@@ -254,6 +123,8 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
   }
 
   void _restartSampling() {
+    final receiver = widget.track?.receiver;
+    if (receiver != null) screenStatsPoller(receiver).clear();
     final generation = ++_samplingGeneration;
     _timer?.cancel();
     _sampling = false;
@@ -279,7 +150,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
     if (track == null || widget.isLocal) return;
     unawaited(_sample(track, generation));
     _timer = Timer.periodic(
-      const Duration(seconds: 2),
+      const Duration(seconds: 1),
       (_) => unawaited(_sample(track, generation)),
     );
   }
@@ -322,7 +193,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
     if (_sampling || generation != _samplingGeneration) return;
     _sampling = true;
     try {
-      final stats = await track.getReceiverStats();
+      final stats = await readScreenReceiverSnapshot(track);
       if (!mounted ||
           generation != _samplingGeneration ||
           !identical(track, widget.track)) {
@@ -339,24 +210,15 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
         });
         return;
       }
-      final next = ScreenReceiverSnapshot(
-        timestampMs: webRtcStatsTimestampMs(stats.timestamp),
-        bytesReceived: stats.bytesReceived?.toDouble(),
-        framesDecoded: stats.framesDecoded?.toDouble(),
-        framesRendered: stats.framesRendered?.toDouble(),
-        framesReceived: stats.framesReceived?.toDouble(),
-        framesDropped: stats.framesDropped?.toDouble(),
-        jitterSeconds: stats.jitter?.toDouble(),
-        packetsLost: stats.packetsLost?.toDouble(),
-        packetsReceived: stats.packetsReceived?.toDouble(),
-        frameWidth: stats.frameWidth?.toDouble(),
-        frameHeight: stats.frameHeight?.toDouble(),
-        framesPerSecond: stats.framesPerSecond?.toDouble(),
-        codec: stats.mimeType,
-        decoderImplementation: stats.decoderImplementation,
-      );
+      final next = stats;
+      if (_previous?.timestampMs == next.timestampMs) return;
+      if (_previous?.streamId != next.streamId || _previous?.ssrc != next.ssrc) _lossWindow.clear();
       final measured = compareScreenReceiverStats(_previous, next);
       final metrics = ScreenReceiverMetrics(
+        statsWindowMs: measured.statsWindowMs, collectionState: measured.collectionState,
+        decodeMsPerFrame: measured.decodeMsPerFrame, jitterBufferMsPerFrame: measured.jitterBufferMsPerFrame,
+        nackPerSecond: measured.nackPerSecond, pliPerSecond: measured.pliPerSecond, firPerSecond: measured.firPerSecond,
+        freezeCount: measured.freezeCount, freezeDurationMs: measured.freezeDurationMs,
         bitrateKbps: measured.bitrateKbps,
         receivedFps: measured.receivedFps,
         decodedFps: measured.decodedFps,
@@ -752,3 +614,5 @@ String? _boundedReceiverDetail(String? value) {
       ? normalized
       : '${normalized.substring(0, 61)}…';
 }
+
+bool _finiteNonNegative(double? value) => value != null && value.isFinite && value >= 0;

@@ -12,7 +12,8 @@ export function lossFields(percent: number | null | undefined, duration: number 
   return loss !== undefined && window !== undefined && window >= 9000 ? { packet_loss_percent: loss, packet_loss_window_ms: window } : {}
 }
 export function sampleAge(sampledAt: number | undefined): number | undefined {
-  return sampledAt === undefined ? undefined : Math.max(0, Date.now() - sampledAt)
+  const age = sampledAt === undefined ? undefined : Date.now() - sampledAt
+  return age !== undefined && Number.isFinite(age) && age >= 0 ? age : undefined
 }
 export function senderFields(diagnostics: ScreenDiagnostics, profile?: string | null) {
   const target = /^P(720|1080|1440)_(15|30|60)$/.exec(profile ?? '')

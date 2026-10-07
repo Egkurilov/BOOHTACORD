@@ -6,6 +6,7 @@ import type { ScreenDiagnostics } from './screen_diagnostics'
 
 export type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from './report_media/types'
 import type { ScreenClientReport, ScreenClientReportInput, WebPlatform } from './report_media/types'
+import { senderMeasurements, receiverMeasurements } from './report_media/measurements'
 import { bounded, pixelDimension, lossFields, sampleAge, senderFields } from './report_media/fields'
 
 export function webPlatform(userAgent: string): WebPlatform {
@@ -15,8 +16,9 @@ export function webPlatform(userAgent: string): WebPlatform {
 }
 
 export function buildScreenClientReport(input: ScreenClientReportInput): ScreenClientReport | null {
+  if (input.sampledAt !== undefined && sampleAge(input.sampledAt) === undefined) return null
   if (!input.selected || (sampleAge(input.sampledAt) ?? 0) > 15000) return null
-  const presented = bounded(input.playbackFps, 240)
+  const presented = input.presentationSource === 'unsupported' ? undefined : bounded(input.playbackFps, 240)
   const decoded = bounded(input.receiverMetrics?.decodedFps, 240)
   const bitrate = bounded(input.receiverMetrics?.bitrateKbps, 100000)
   const jitter = bounded(input.receiverMetrics?.jitterMs, 60000)
@@ -26,7 +28,7 @@ export function buildScreenClientReport(input: ScreenClientReportInput): ScreenC
   const frameHeight = pixelDimension(input.frameHeight)
   const state = !input.hasTrack ? 'waiting_subscription' : !input.videoReady ? 'waiting_first_frame' : presented === 0 ? 'stalled' : 'playing'
   return {
-    platform: input.platform, direction: 'receiver', state,
+    platform: input.platform, direction: 'receiver', state, ...receiverMeasurements(input),
     ...lossFields(input.receiverMetrics?.packetLossPercent, input.packetLossWindowMs ?? input.receiverMetrics?.packetLossWindowMs),
     ...(input.sampledAt === undefined ? {} : { sample_age_ms: sampleAge(input.sampledAt) }),
     ...(frameWidth === undefined || frameHeight === undefined ? {} : { frame_width: frameWidth, frame_height: frameHeight }),
@@ -40,15 +42,16 @@ export function buildScreenClientReport(input: ScreenClientReportInput): ScreenC
 }
 
 export function buildSenderScreenReport(platform: WebPlatform, diagnostics: ScreenDiagnostics, profile?: string | null): ScreenClientReport | null {
+  if (diagnostics.sampledAt !== undefined && sampleAge(diagnostics.sampledAt) === undefined) return null
   if (diagnostics.source === 'ENDED' || (sampleAge(diagnostics.sampledAt) ?? 0) > 15000) return null
-  if (diagnostics.senderStatsAvailable === false) return { platform, direction: 'sender', state: 'waiting_first_frame', ...senderFields(diagnostics, profile) }
+  if (diagnostics.senderStatsAvailable === false) return { platform, direction: 'sender', state: 'waiting_first_frame', ...senderFields(diagnostics, profile), ...senderMeasurements(diagnostics) }
   const encoded = bounded(diagnostics.measured?.framesPerSecond, 240)
   const bitrate = bounded(diagnostics.bitrateBps === undefined ? undefined : diagnostics.bitrateBps / 1000, 100000)
   const rtt = bounded(diagnostics.roundTripTimeMs, 60000)
   const frameWidth = diagnostics.senderDimensionsAvailable === false ? undefined : pixelDimension(diagnostics.measured?.width)
   const frameHeight = diagnostics.senderDimensionsAvailable === false ? undefined : pixelDimension(diagnostics.measured?.height)
   return {
-    ...senderFields(diagnostics, profile),
+    ...senderFields(diagnostics, profile), ...senderMeasurements(diagnostics),
     platform, direction: 'sender', state: diagnostics.source === 'ACTIVE' ? 'playing' : 'waiting_first_frame',
     ...(frameWidth === undefined || frameHeight === undefined ? {} : { frame_width: frameWidth, frame_height: frameHeight }),
     ...(encoded === undefined ? {} : { encoded_fps: encoded }),

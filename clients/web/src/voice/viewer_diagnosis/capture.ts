@@ -1,3 +1,4 @@
+import { screenSenderStatsSampler } from '../screen_stats_sampler'
 const unknown={capturedFrames:null,encodedFrames:null}
 function counter(value:unknown):number|null {return typeof value==='number'&&Number.isSafeInteger(value)&&value>=0?value:null}
 export function sourceCountersFromReport(reports:RTCStatsReport):{capturedFrames:number|null;encodedFrames:number|null} {
@@ -11,5 +12,5 @@ export function sourceCountersFromReport(reports:RTCStatsReport):{capturedFrames
 }
 export async function readSourceCounters(sender:Pick<RTCRtpSender,'getStats'>|undefined):Promise<{capturedFrames:number|null;encodedFrames:number|null}> {
   if(!sender) return {...unknown}
-  try {return sourceCountersFromReport(await sender.getStats())} catch{return {...unknown}}
+  try {return sourceCountersFromReport(await screenSenderStatsSampler.read(sender))} catch{return {...unknown}}
 }

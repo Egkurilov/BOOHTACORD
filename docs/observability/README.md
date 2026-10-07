@@ -51,6 +51,10 @@ the domain for HTTPS certificate validation.
 
 ## Dashboards and incident use
 
+Start with the [on-call integration map](../operations/oncall-integrations.md)
+for dependency boundaries, exact timeout/retry behavior, administrator readiness,
+safe recovery and the distinction between source proof and live acceptance.
+
 - [Runtime](https://grafana.fa.shaneque.ru/d/boohtacord-runtime/boohtacord-7c-runtime): three target health checks, API request totals and 5xx share for the selected time range, span rate, route traffic and p95 latency, status and route tables, Tempo live traces and storage process memory.
 - [Traces](https://grafana.fa.shaneque.ru/d/boohtacord-traces/boohtacord-7c-traces): HTTP requests, errors, slow requests, client actions and application event searches. Trace IDs open the full waterfall and its event timeline.
 

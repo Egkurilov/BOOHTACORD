@@ -20,9 +20,11 @@ export function useScreenReceiverDiagnostics(selected: Ref<ScreenViewerCard | nu
       const current = await card.readReceiverStats()
       if (version !== generation) return
       if (!current) { metrics.value = null; sampledAt.value = null; previous = null; lossWindow.clear(); return }
+      if (previous?.streamId !== current.streamId || previous?.ssrc !== current.ssrc) lossWindow.clear()
+      if (previous?.timestamp === current.timestamp) return
       const packetLossPercent = lossWindow.add(current)
       metrics.value = { ...compareScreenReceiverStats(previous, current), packetLossPercent, packetLossWindowMs: lossWindow.durationMs }
-      sampledAt.value = Date.now()
+      sampledAt.value = current.timestamp
       previous = current
     } catch {
       if (version === generation) { metrics.value = null; sampledAt.value = null; previous = null; lossWindow.clear() }
@@ -44,7 +46,7 @@ export function useScreenReceiverDiagnostics(selected: Ref<ScreenViewerCard | nu
     if (!card?.readReceiverStats || ended()) return
     const version = generation
     void sample(card, version)
-    timer = setInterval(() => { void sample(card, version) }, 2000)
+    timer = setInterval(() => { void sample(card, version) }, 1000)
   }
 
   watch([() => selected.value?.id, () => selected.value?.readReceiverStats, ended], restart, { immediate: true })

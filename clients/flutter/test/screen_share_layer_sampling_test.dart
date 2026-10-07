@@ -83,6 +83,14 @@ void main() {
     expect(result.selected?.rid, 'q');
   });
 
+  test('signed loss correction does not reset frame and byte progress', () {
+    final sampler = ScreenSenderLayerSampler();
+    sampler.sample([layer(lost: 4)], 1000);
+    final next = sampler.sample([layer(timestamp: 2000, frames: 30, bytes: 1000, packets: 10, lost: 2)], 2000);
+    expect(next.selected?.framesPerSecond, 30);
+    expect(next.selected?.packetLossPercent, isNull);
+  });
+
   test('invalidates all rates for an interval with a counter reset', () {
     final sampler = ScreenSenderLayerSampler();
     sampler.sample([layer(frames: 10, bytes: 1000, packets: 20)], 1000);
