@@ -7,6 +7,7 @@ export interface ScreenViewerTrack {
 export interface ScreenViewerPublication {
   isMuted?: boolean
   name?: string
+  trackSid?: string
   setSubscribed?(subscribed: boolean): void
   track?: ScreenViewerTrack
 }
@@ -25,5 +26,6 @@ export interface ScreenViewerStream {
 
 export type ScreenViewerCard = Pick<ScreenViewerStream, 'accountId' | 'hasAudio' | 'id' | 'isLocal' | 'participantId' | 'participantName' | 'targetProfile'> & {
   thumbnailUrl?: string
+  videoMuted?: boolean
   readReceiverStats?: () => Promise<import('./screen_receiver_diagnostics').ScreenReceiverSnapshot | undefined>
 }

@@ -90,6 +90,7 @@ const emit = defineEmits<{ openSearch: []; returnVoice: [channelId: string]; tog
     @leave="leaveVoice"
     @refresh-screen="voiceConnection.refreshScreenDiagnostics"
     @return-voice="emit('returnVoice', $event)"
+    @retry-screen-stream="voiceConnection.retryScreenStream"
     @select-screen-stream="voiceConnection.selectScreenStream"
     @set-participant-volume="voiceConnection.setParticipantVolume"
     @set-screen-volume="voiceConnection.setScreenVolume"

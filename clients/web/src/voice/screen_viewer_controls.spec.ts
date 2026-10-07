@@ -74,7 +74,8 @@ describe('screen viewer selection controls', () => {
 
   it('clears selected media and stops observing the room on leave', () => {
     const selected = stream()
-    const controller = new ScreenViewerController(() => [selected])
+    const output = { dispose: vi.fn(), setMuted: vi.fn(), setVolume: vi.fn() }
+    const controller = new ScreenViewerController(() => [selected], { attach: vi.fn(() => output) } as never)
     const controls = createScreenViewerControls(
       { screenViewer: () => controller }, ref<ScreenViewerCard[]>([]), ref<string | null>(null), ref<string | null>(null), ref(false),
     )
@@ -86,5 +87,7 @@ describe('screen viewer selection controls', () => {
     expect(controller.selectedId).toBeNull()
     expect(selected.video.setSubscribed).toHaveBeenLastCalledWith(false)
     expect(selected.audio!.setSubscribed).toHaveBeenLastCalledWith(false)
+    expect(output.dispose).toHaveBeenCalledOnce()
   })
+
 })

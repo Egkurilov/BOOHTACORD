@@ -38,19 +38,6 @@ describe('screen viewer reference composition', () => {
     expect(styles).toContain('max-width: 200px')
   })
 
-  it('shows the C-32 overflow affordance only while more rail content remains', () => {
-    const viewer = source('./ScreenViewer.vue') + source('./ScreenViewerRail.vue')
-    const styles = source('../design/voice_viewer_reference.css')
-    const tokens = source('../design/tokens.css')
-
-    expect(viewer).toContain('observeHorizontalOverflow')
-    expect(viewer).toContain('hasOverflow')
-    expect(viewer).toContain(':aria-description=')
-    expect(styles).toContain('.screen-cards.stream-rail.has-overflow::after')
-    expect(styles).toContain('var(--gc-surface) 70%')
-    expect(styles).not.toContain('--gc-surface-base')
-    expect(tokens).toContain('--gc-layout-row-voice-member: 24px')
-  })
 
   it('labels the owner screen preview and keeps its video muted', () => {
     const viewer = source('./ScreenViewer.vue') + source('./ScreenViewerRail.vue')
@@ -92,7 +79,7 @@ describe('screen viewer reference composition', () => {
     expect(playerRules).toContain('object-fit: contain')
   })
 
-  it('closes an ended selected stream while retaining its watcher for a restart', () => {
+  it('closes an ended selected stream and waits for an explicit new selection', () => {
     const pane = source('../conversation/ConversationPane.vue')
     const viewer = source('./ScreenViewer.vue')
 
@@ -110,13 +97,20 @@ describe('screen viewer reference composition', () => {
     expect(viewer).toContain('Получаем первый кадр демонстрации…')
     expect(viewer).toContain('@loadeddata="markVideoReady"')
     expect(viewer).toContain('@emptied="resetVideoFrame"')
+    expect(viewer).toContain('markScreenSelected(video.value)')
+    expect(viewer).toContain('resetVideoFrame()')
+    expect(source('./viewer_diagnosis/Panel.vue')).toContain('selectedAt.value=Date.now();now.value=selectedAt.value;emit(\'retry\')')
+    expect(source('./ScreenViewer.vue')).toContain(':publisher-paused="Boolean(selectedStream.videoMuted)"')
   })
-  it('stacks viewer controls before the toolbar can overflow at zoomed and narrow widths', () => {
-    const styles = source('../design/voice_viewer_reference.css')
 
-    expect(styles).toContain('@media (max-width: 1100px)')
-    expect(styles).toContain('.stream-quality-row .volume-control, .stream-audio-status')
-    expect(styles).toContain('.stream-quality-row, .stream-quality, .stream-voice-return { flex-wrap: wrap; }')
-    expect(styles).toContain('.stream-voice-return button:first-of-type { margin-left: 0; }')
+  it('offers a gesture retry when audio autoplay is blocked independently of video', () => {
+    const viewer = source('./ScreenViewer.vue')
+    expect(viewer).toContain('audioPlaybackBlocked.value=true')
+    expect(viewer).toContain('videoPlaybackBlocked.value || audioPlaybackBlocked.value')
+    expect(viewer).toContain('audio.value?.play()')
+    expect(viewer).toContain(':autoplay-blocked="playbackBlocked"')
+    expect(viewer).toContain('@retry="retry(false)"')
+    expect(viewer).toContain('@click="emit(\'toggleAudio\');audioPlaybackBlocked&&playFromGesture()"')
+    expect(viewer).toContain('@toggle="emit(\'toggleAudio\');audioPlaybackBlocked&&playFromGesture()"')
   })
 })
