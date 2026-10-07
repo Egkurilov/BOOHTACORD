@@ -93,4 +93,3 @@ double _round(double value, int places) {
   };
   return (value * multiplier).round() / multiplier;
 }
-

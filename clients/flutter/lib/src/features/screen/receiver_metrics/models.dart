@@ -62,4 +62,3 @@ class ScreenReceiverMetrics {
   final double? packetsLost;
   final double? packetLossPercent;
 }
-

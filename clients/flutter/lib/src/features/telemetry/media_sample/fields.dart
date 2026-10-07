@@ -51,4 +51,3 @@ Map<String, Object> mediaSampleFields(Map<String, Object> report) {
   }
   return fields;
 }
-
