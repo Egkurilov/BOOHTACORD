@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/api_client.dart';
 import '../../authorization/permissions/model.dart';
+import 'conflict_review.dart';
 import 'model.dart';
 
 class RolePermissionsPanel extends StatefulWidget {
@@ -39,6 +40,8 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
   String? error;
   String? status;
   bool conflict = false;
+  Map<GuildPermission, bool>? conflictBefore;
+  Map<GuildPermission, bool>? conflictCurrent;
   List<RolePolicy> roles = const [];
   Map<GuildPermission, bool> baseline = {};
   Map<GuildPermission, bool> draft = {};
@@ -69,7 +72,11 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
         revision = page.revision;
         baseline = Map.of(member.permissions);
         if (reset) draft = Map.of(member.permissions);
-        if (reset) conflict = false;
+        if (reset) {
+          conflict = false;
+          conflictBefore = null;
+          conflictCurrent = null;
+        }
       });
     } catch (cause) {
       if (mounted) setState(() => error = cause.toString());
@@ -85,6 +92,7 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
     status = 'Значения по умолчанию загружены в черновик.';
   });
   Future<void> _save() async {
+    final before = Map<GuildPermission, bool>.of(baseline);
     final newDeletes = deleteKeys.any(
       (key) => baseline[key] != true && draft[key] == true,
     );
@@ -108,13 +116,15 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
       if (cause is ApiFailure && cause.status == 409) {
         setState(() {
           conflict = true;
+          conflictBefore = before;
           error = 'Настройки уже изменены. Проверьте актуальные значения и решите, применять ли черновик.';
         });
         await _load(reset: false);
         if (mounted) {
-          setState(
-            () => error = 'Настройки уже изменены. Проверьте актуальные значения и решите, применять ли черновик.',
-          );
+          setState(() {
+            conflictCurrent = Map<GuildPermission, bool>.of(baseline);
+            error = 'Настройки уже изменены. Проверьте актуальные значения и решите, применять ли черновик.';
+          });
         }
       } else if (mounted) {
         setState(() => error = cause.toString());
@@ -350,6 +360,18 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
                     ),
                   ],
                 ),
+              if (role == GuildRole.member && dirty)
+                Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Semantics(
+                    liveRegion: true,
+                    label: 'Есть несохранённые изменения',
+                    child: Text(
+                      'Есть несохранённые изменения',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
               if (status != null)
                 Semantics(
                   liveRegion: true,
@@ -366,32 +388,30 @@ class _RolePermissionsPanelState extends State<RolePermissionsPanel> {
                     style: const TextStyle(color: Colors.red),
                   ),
                 ),
-              if (conflict)
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Сравнение разрешений',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const Text(
-                        'Актуальные значения загружены. Ваш черновик сохранён; проверьте изменения перед повторным сохранением.',
-                      ),
-                      TextButton(
-                        onPressed: saving ? null : () => _load(reset: false),
-                        child: const Text('Обновить актуальные значения'),
-                      ),
-                    ],
-                  ),
+              if (conflict && conflictBefore != null && conflictCurrent != null)
+                RolePermissionsConflictReview(
+                  before: conflictBefore!,
+                  current: conflictCurrent!,
+                  proposed: draft,
+                  busy: saving || loading,
+                  onRefresh: () => _load(reset: false),
+                  onAcceptCurrent: () => setState(() {
+                    baseline = Map.of(conflictCurrent!);
+                    draft = Map.of(conflictCurrent!);
+                    conflict = false;
+                    conflictBefore = null;
+                    conflictCurrent = null;
+                    error = null;
+                    status = 'Серверные значения приняты в черновик.';
+                  }),
+                  onKeepDraft: () => setState(() {
+                    baseline = Map.of(conflictCurrent!);
+                    conflict = false;
+                    conflictBefore = null;
+                    conflictCurrent = null;
+                    error = null;
+                    status = 'Черновик сохранён. Нажмите «Сохранить» ещё раз.';
+                  }),
                 ),
             ],
           );
