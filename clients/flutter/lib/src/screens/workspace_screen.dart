@@ -326,7 +326,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
         (_fullscreenScreenSelection == null && selection == null) ||
         (_fullscreenScreenSelection != null &&
             selection != null &&
-            _fullscreenScreenSelection!.identity == selection.identity)) {
+            _fullscreenScreenSelection!.identity == selection.identity &&
+            _fullscreenScreenSelection!.generation == selection.generation)) {
       return;
     }
     setState(() => _fullscreenScreenSelection = selection);
@@ -625,12 +626,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
             workspacePanelOpen:
                 widget.state.workspacePanel != WorkspacePanel.none,
           );
-          final screenRendererOwner = screenVideoRendererOwner(
-            selectedIdentity: _visibleVoiceScreenIdentity,
-            pinnedIdentity: _pinnedScreenIdentity,
-            pinnedMiniVisible: pinnedMiniVisible,
-            fullscreenSelection: _fullscreenScreenSelection,
-          );
           Widget pinnedMiniLayer() => Positioned(
             right: compact ? 12 : 16,
             bottom: 16,
@@ -646,8 +641,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                     state: widget.state,
                     identity: _pinnedScreenIdentity!,
                     selectedIdentity: _visibleVoiceScreenIdentity,
+                    pinnedMiniVisible: pinnedMiniVisible,
                     fullscreenSelection: _fullscreenScreenSelection,
-                    rendererOwner: screenRendererOwner,
                     onReturnToVoice: () => unawaited(
                       widget.state.selectChannel(activeVoiceChannel!),
                     ),
@@ -672,7 +667,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                             state: widget.state,
                             selectedScreenIdentity: _visibleVoiceScreenIdentity,
                             onSelectScreen: _selectVoiceScreen,
-                            screenRendererOwner: screenRendererOwner,
+                            pinnedMiniVisible: pinnedMiniVisible,
+                            fullscreenSelection: _fullscreenScreenSelection,
                             onFullscreenSelectionChanged:
                                 _setFullscreenScreenSelection,
                             pinnedScreenIdentity: _visiblePinnedScreenIdentity,
@@ -800,7 +796,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
                                 selectedScreenIdentity:
                                     _visibleVoiceScreenIdentity,
                                 onSelectScreen: _selectVoiceScreen,
-                                screenRendererOwner: screenRendererOwner,
+                                pinnedMiniVisible: pinnedMiniVisible,
+                                fullscreenSelection: _fullscreenScreenSelection,
                                 onFullscreenSelectionChanged:
                                     _setFullscreenScreenSelection,
                                 pinnedScreenIdentity:
@@ -1833,7 +1830,8 @@ class _MainSurface extends StatelessWidget {
     required this.state,
     required this.selectedScreenIdentity,
     required this.onSelectScreen,
-    required this.screenRendererOwner,
+    required this.pinnedMiniVisible,
+    required this.fullscreenSelection,
     required this.onFullscreenSelectionChanged,
     required this.pinnedScreenIdentity,
     required this.onToggleScreenPin,
@@ -1848,7 +1846,8 @@ class _MainSurface extends StatelessWidget {
   final AppState state;
   final String? selectedScreenIdentity;
   final ValueChanged<String?> onSelectScreen;
-  final ScreenVideoRendererOwner screenRendererOwner;
+  final bool pinnedMiniVisible;
+  final ScreenFullscreenSelection? fullscreenSelection;
   final ValueChanged<ScreenFullscreenSelection?> onFullscreenSelectionChanged;
   final String? pinnedScreenIdentity;
   final ValueChanged<String?> onToggleScreenPin;
@@ -1964,7 +1963,8 @@ class _MainSurface extends StatelessWidget {
               channel: channel,
               selectedScreenIdentity: selectedScreenIdentity,
               onSelectScreen: onSelectScreen,
-              screenRendererOwner: screenRendererOwner,
+              pinnedMiniVisible: pinnedMiniVisible,
+              fullscreenSelection: fullscreenSelection,
               onFullscreenSelectionChanged: onFullscreenSelectionChanged,
               pinnedScreenIdentity: pinnedScreenIdentity,
               onToggleScreenPin: onToggleScreenPin,
@@ -5283,7 +5283,8 @@ class _VoiceRoom extends StatefulWidget {
     required this.channel,
     required this.selectedScreenIdentity,
     required this.onSelectScreen,
-    required this.screenRendererOwner,
+    required this.pinnedMiniVisible,
+    required this.fullscreenSelection,
     required this.onFullscreenSelectionChanged,
     required this.pinnedScreenIdentity,
     required this.onToggleScreenPin,
@@ -5294,7 +5295,8 @@ class _VoiceRoom extends StatefulWidget {
   final GuildChannel channel;
   final String? selectedScreenIdentity;
   final ValueChanged<String?> onSelectScreen;
-  final ScreenVideoRendererOwner screenRendererOwner;
+  final bool pinnedMiniVisible;
+  final ScreenFullscreenSelection? fullscreenSelection;
   final ValueChanged<ScreenFullscreenSelection?> onFullscreenSelectionChanged;
   final String? pinnedScreenIdentity;
   final ValueChanged<String?> onToggleScreenPin;
@@ -5356,6 +5358,20 @@ class _VoiceRoomState extends State<_VoiceRoom> {
             : showingLocalScreen
             ? 'ваш экран'
             : null;
+        final viewerGeneration = selectedScreen == null ||
+                selectedScreenPublication == null
+            ? localScreenPublication?.sid ?? viewerTrack
+            : ScreenViewerPublicationGeneration(
+                participantIdentity: selectedScreen.identity,
+                publicationSid: selectedScreenPublication.sid,
+              );
+        final rendererOwner = screenVideoRendererOwner(
+          selectedIdentity: widget.selectedScreenIdentity,
+          selectedGeneration: viewerTrack == null ? null : viewerGeneration,
+          pinnedIdentity: widget.pinnedScreenIdentity,
+          pinnedMiniVisible: widget.pinnedMiniVisible,
+          fullscreenSelection: widget.fullscreenSelection,
+        );
         return Column(
           children: [
             _Header(
@@ -5431,18 +5447,11 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                         ? _VoiceScreenViewer(
                             state: state,
                             track: viewerTrack,
-                            rendererOwner: widget.screenRendererOwner,
+                            rendererOwner: rendererOwner,
                             publisherName: selectedName!,
                             screens: screens,
                             selectedIdentity: widget.selectedScreenIdentity,
-                            viewerGeneration: selectedScreen == null ||
-                                    selectedScreenPublication == null
-                                ? localScreenPublication?.sid ?? viewerTrack
-                                : ScreenViewerPublicationGeneration(
-                                    participantIdentity: selectedScreen.identity,
-                                    publicationSid:
-                                        selectedScreenPublication.sid,
-                                  ),
+                            viewerGeneration: viewerGeneration!,
                             onFirstFrameRendered:
                                 selectedScreen == null ||
                                     selectedScreenPublication == null
@@ -5509,15 +5518,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                               track: viewerTrack,
                               publisherName: selectedName,
                               publisherIdentity: selectedScreen?.identity,
-                              viewerGeneration: selectedScreen == null ||
-                                      selectedScreenPublication == null
-                                  ? localScreenPublication?.sid ?? viewerTrack
-                                  : ScreenViewerPublicationGeneration(
-                                      participantIdentity:
-                                          selectedScreen.identity,
-                                      publicationSid:
-                                          selectedScreenPublication.sid,
-                                    ),
+                              viewerGeneration: viewerGeneration!,
                               onFirstFrameRendered:
                                   selectedScreen == null ||
                                       selectedScreenPublication == null
@@ -5643,7 +5644,10 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     }
 
     widget.onFullscreenSelectionChanged(
-      ScreenFullscreenSelection(identity: publisherIdentity),
+      ScreenFullscreenSelection(
+        identity: publisherIdentity,
+        generation: viewerGeneration,
+      ),
     );
     try {
       await WidgetsBinding.instance.endOfFrame;
@@ -6419,8 +6423,8 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
     required this.state,
     required this.identity,
     required this.selectedIdentity,
+    required this.pinnedMiniVisible,
     required this.fullscreenSelection,
-    required this.rendererOwner,
     required this.onReturnToVoice,
     required this.onStopWatching,
   });
@@ -6428,8 +6432,8 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
   final AppState state;
   final String identity;
   final String? selectedIdentity;
+  final bool pinnedMiniVisible;
   final ScreenFullscreenSelection? fullscreenSelection;
-  final ScreenVideoRendererOwner rendererOwner;
   final VoidCallback onReturnToVoice;
   final VoidCallback onStopWatching;
 
@@ -6452,6 +6456,22 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
       final name = participant == null
           ? 'Демонстрация'
           : _participantName(participant);
+      final miniGeneration = publication == null
+          ? null
+          : ScreenViewerPublicationGeneration(
+              participantIdentity: identity,
+              publicationSid: publication.sid,
+            );
+      final miniIsSelectedPublication = selectedIdentity == identity;
+      final selectedGeneration =
+          miniIsSelectedPublication ? miniGeneration : null;
+      final rendererOwner = screenVideoRendererOwner(
+        selectedIdentity: selectedIdentity,
+        selectedGeneration: selectedGeneration,
+        pinnedIdentity: identity,
+        pinnedMiniVisible: pinnedMiniVisible,
+        fullscreenSelection: fullscreenSelection,
+      );
 
       return Material(
         color: GcColors.surface,
@@ -6544,11 +6564,12 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                         surface: ScreenVideoRendererSurface.pinnedMini,
                         owner: rendererOwner,
                         isSelectedPublication:
-                            selectedIdentity != null &&
-                            selectedIdentity == identity,
-                        isFullscreenPublication:
+                            miniGeneration != null &&
+                            miniGeneration == selectedGeneration,
+                        isFullscreenPublication: miniGeneration != null &&
                             fullscreenSelection != null &&
-                            fullscreenSelection.identity == identity,
+                            fullscreenSelection.identity == identity &&
+                            fullscreenSelection.generation == miniGeneration,
                         child: ScreenFrameGate(
                           generation:
                               '$identity:${publicationSid ?? 'unknown'}',

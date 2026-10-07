@@ -5,19 +5,25 @@ enum ScreenVideoRendererOwner { stage, pinnedMini, fullscreen }
 enum ScreenVideoRendererSurface { stage, pinnedMini, fullscreen }
 
 class ScreenFullscreenSelection {
-  const ScreenFullscreenSelection({required this.identity});
+  const ScreenFullscreenSelection({
+    required this.identity,
+    required this.generation,
+  });
 
   final String? identity;
+  final Object generation;
 }
 
 ScreenVideoRendererOwner screenVideoRendererOwner({
   required String? selectedIdentity,
+  required Object? selectedGeneration,
   required String? pinnedIdentity,
   required bool pinnedMiniVisible,
   required ScreenFullscreenSelection? fullscreenSelection,
 }) {
   if (fullscreenSelection != null &&
-      fullscreenSelection.identity == selectedIdentity) {
+      fullscreenSelection.identity == selectedIdentity &&
+      fullscreenSelection.generation == selectedGeneration) {
     return ScreenVideoRendererOwner.fullscreen;
   }
   if (pinnedMiniVisible &&
