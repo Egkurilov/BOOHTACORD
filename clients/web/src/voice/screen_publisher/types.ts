@@ -17,7 +17,8 @@ export interface ScreenPublisherPort<T> {
   stop(track?: T): Promise<void>; diagnostics(): Promise<ScreenDiagnostics>
   adopt?(profile: ScreenProfile): void
   onEnded?(listener: () => void): () => void
-  trackPublished?(): void; trackUnpublished?(track?: T): boolean | void
+  onPublished?(listener: (track: T) => void): () => void
+  trackPublished?(track: T): void; trackUnpublished?(track?: T): boolean | void
 }
 export interface ScreenPublisherScope<T> { owner: object; room: object; port: ScreenPublisherPort<T> }
 export interface ActiveScreenPublication<T> { scope: ScreenPublisherScope<T>; track: T; profile: ScreenProfile; generation: number; repairAttempts: number }

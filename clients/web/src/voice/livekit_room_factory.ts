@@ -104,9 +104,12 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   const screenPublisher = bindLiveKitScreenPublisher(liveKitRoom.localParticipant, () => room.readScreenDiagnostics!(),
     profile => room.adoptScreenProfile?.(profile), (profile, action, current) => profileGuard.repair(profile, action, current))
   room.screenPublisher = screenPublisher
-  const screenPublisherEvents = screenPublisherEventHandlers(screenPublisher, Track.Source.ScreenShare, profileGuard.stop.bind(profileGuard))
+  const screenPublisherEvents = screenPublisherEventHandlers(screenPublisher, Track.Source.ScreenShare, profileGuard)
   liveKitRoom.on(RoomEvent.LocalTrackPublished, screenPublisherEvents.published)
   liveKitRoom.on(RoomEvent.LocalTrackUnpublished, screenPublisherEvents.unpublished)
-  liveKitRoom.on(RoomEvent.Disconnected, profileGuard.stop.bind(profileGuard))
+  liveKitRoom.on(RoomEvent.Reconnecting, screenPublisherEvents.reconnecting)
+  liveKitRoom.on(RoomEvent.SignalReconnecting, screenPublisherEvents.reconnecting)
+  liveKitRoom.on(RoomEvent.Reconnected, screenPublisherEvents.reconnected)
+  liveKitRoom.on(RoomEvent.Disconnected, screenPublisherEvents.disconnected)
   return room
 }

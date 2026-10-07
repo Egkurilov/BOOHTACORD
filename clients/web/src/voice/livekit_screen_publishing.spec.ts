@@ -33,7 +33,10 @@ function setup() {
   const port = bindLiveKitScreenPublisher(participant, async () => ({ audioTrack: 'PRESENT', connectionQuality: 'UNKNOWN', measured: null, source: 'ACTIVE' }),
     profile => guard.adopt(profile), (profile, action, current) => guard.repair(profile, action, current))
   let guardStops = 0, ended = 0
-  handlers = screenPublisherEventHandlers(port, Track.Source.ScreenShare, () => { guardStops++; guard.stop() })
+  handlers = screenPublisherEventHandlers(port, Track.Source.ScreenShare, {
+    suspend: () => guard.suspend(), resume: () => guard.resume(),
+    stop: () => { guardStops++; guard.stop() },
+  })
   port.onEnded?.(() => { ended++ })
   return { audio, video, microphone, port, participant, publications, handlers, guard, unpublishTrack, get guardStops() { return guardStops }, get ended() { return ended } }
 }
@@ -61,6 +64,7 @@ describe('LiveKit screen publisher port', () => {
   })
   it('cleans surviving screen audio after an OS-ended video and leaves the microphone alone', async () => {
     const f = setup(); await f.port.start('P1080_30')
+    ;(f.video.mediaStreamTrack as unknown as { readyState: string }).readyState = 'ended'
     f.publications.delete(Track.Source.ScreenShare)
     f.handlers.unpublished({ source: Track.Source.ScreenShare, videoTrack: f.video })
     await f.port.stop(f.video)
@@ -68,6 +72,20 @@ describe('LiveKit screen publisher port', () => {
     expect(f.publications.has(Track.Source.ScreenShareAudio)).toBe(false)
     expect(f.publications.get(Track.Source.Microphone)?.audioTrack).toBe(f.microphone)
     expect(f.unpublishTrack).not.toHaveBeenCalledWith(f.video, true)
+  })
+  it('does not treat a still-live retained capture as an OS end during SDK republish', async () => {
+    const f = setup(); await f.port.start('P1080_30')
+    f.guard.adopt('P1080_30'); f.handlers.reconnecting()
+    f.publications.delete(Track.Source.ScreenShare)
+    f.handlers.unpublished({ source: Track.Source.ScreenShare, videoTrack: f.video })
+    await f.guard.check()
+    expect(f.video.mediaStreamTrack.readyState).toBe('live')
+    expect(f.ended).toBe(0); expect(f.guardStops).toBe(0)
+    f.publications.set(Track.Source.ScreenShare, { videoTrack: f.video })
+    f.handlers.published({ source: Track.Source.ScreenShare, videoTrack: f.video })
+    f.handlers.reconnected()
+    expect(f.guard.snapshot).toMatchObject({ status: 'checking', attempts: 0 })
+    expect(f.port.currentTrack()).toBe(f.video)
   })
   it('keeps adaptive room receive settings enabled', () => { expect(adaptiveMediaRoomOptions).toEqual({ adaptiveStream: true, dynacast: true }) })
 })

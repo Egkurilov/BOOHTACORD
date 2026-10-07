@@ -32,6 +32,13 @@ describe('screen publisher cleanup races', () => {
     expect(f.port.stop).toHaveBeenCalledWith(undefined)
     expect(f.port.currentTrack()).toBeUndefined()
   })
+  it('rebinds the same capture after the SDK republishes it during reconnect', async () => {
+    const f = setup(); await f.adapter.start('P1080_30')
+    f.republish()
+    await f.adapter.update('P720_30')
+    expect(f.port.currentTrack()).toBe(f.track)
+    expect(f.calls.slice(-3)).toEqual(['capture:P720_30', 'unpublish', 'publish:P720_30'])
+  })
   it('makes completed stop idempotent', async () => {
     const f = setup(); await f.adapter.start('P1080_30')
     await expect(f.adapter.stop()).resolves.toBe('complete'); await expect(f.adapter.stop()).resolves.toBe('complete')

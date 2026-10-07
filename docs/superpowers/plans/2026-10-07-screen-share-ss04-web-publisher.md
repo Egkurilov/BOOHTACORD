@@ -26,9 +26,10 @@ device, and cross-client acceptance remain `NOT_RUN`.
 ## SDK writer inventory
 
 - App start currently calls `LocalParticipant.setScreenShareEnabled(true, ...)`; stop calls the same public API with `false`.
-- App live-update currently mutates capture via `MediaStreamTrack.applyConstraints`, then writes `RTCRtpSender.setParameters` from `screen_profile/apply.ts`.
+- App live-update mutates capture via `MediaStreamTrack.applyConstraints`, then replaces only the video publication through public `unpublishTrack(track, false)` / `publishTrack(track, options)` calls. The app has no `sender.setParameters` writer.
 - Pinned SDK `LocalVideoTrack` owns sender parameter writes for publish, dynacast, and backup codec; `LocalParticipant` owns track publish/unpublish/reconnect. `RTCRtpSender.setParameters` stays exclusively behind SDK methods.
 - Pinned public republish methods accept `LocalVideoTrack` and `TrackPublishOptions`; `unpublishTrack(track, false)` stops monitoring but does not stop the underlying capture. The screen-audio track remains separately published.
+- SDK reconnect also unpublishes and republishes the retained capture. The Web adapter observes the matching publish event to rebind its publication generation; profile diagnostics suspend across reconnect and resume on `Reconnected`, without treating a live retained capture as an OS stop.
 - The #157 profile catalog now documents source-derived runtime topology: Web and Flutter non-Android preserve up to two SDK primary layers with the low layer capped at 15 fps; Flutter Android uses one primary layer. Catalog entries are marked `source-derived-unvalidated`, and backup-codec/SFU topology remains unvalidated.
 
 ## Task 1: Define and test the explicit publication plan
@@ -81,5 +82,6 @@ expect(screenCapturePlan('P1080_30').contentHint).toBe('text');
 
 - Unit tests can prove operation ordering, last-intent, cleanup, and that the screen-audio/microphone ports are not called during a video-only update.
 - Real LiveKit SFU behavior, metadata as observed by a second client, OS picker cancellation, audio continuity, reconnect/dynacast races, and physical FPS/audio require the isolated #158 baseline environment and device evidence. Keep these `NOT_RUN` if that environment is unavailable; do not close #160 based on mocks.
+- The pinned `TrackPublishOptions` has no v1 screen-profile descriptor field. Participant `setAttributes` is a public but permission-gated participant-level API, not a per-publication descriptor channel; the current room contract does not guarantee `canUpdateOwnMetadata`. Therefore descriptor delivery/second-client parity is not claimed by this Web implementation and remains an API/integration acceptance gap.
 - Keep SFU/device runtime and cross-client acceptance `NOT_RUN` until the isolated
   environment and hardware evidence are available; the GitHub issue stays open.
