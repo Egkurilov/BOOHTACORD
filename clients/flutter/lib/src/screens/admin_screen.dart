@@ -1694,6 +1694,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
             DropdownButtonFormField<String>(
               key: ValueKey('role:${account.accountId}:${draft?.role}'),
               initialValue: draft?.role,
+              isExpanded: true,
               decoration: InputDecoration(labelText: 'Роль: ${account.login}'),
               items: const [
                 DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
