@@ -1657,85 +1657,91 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: GcColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+      child: Material(
+        color: GcColors.surface,
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: EdgeInsets.zero,
+          leading: CircleAvatar(
+            radius: 18,
+            backgroundColor: _adminMemberAvatarColor(account.accountId),
+            child: Text(_adminMemberInitials(account.displayName)),
+          ),
+          title: Text(
             account.displayName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 20 / 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-          Text(
+          subtitle: Text(
             '@${account.login}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
           ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            key: ValueKey('role:${account.accountId}:${draft?.role}'),
-            initialValue: draft?.role,
-            decoration: InputDecoration(labelText: 'Роль: ${account.login}'),
-            items: const [
-              DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
-              DropdownMenuItem(
-                value: 'ADMINISTRATOR',
-                child: Text('Администратор'),
-              ),
-            ],
-            onChanged: busy || draft == null
-                ? null
-                : (value) {
-                    if (value != null) setState(() => draft.role = value);
-                  },
-          ),
-          Material(
-            color: GcColors.surface,
-            child: SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Заблокирован'),
-              value: draft?.blocked ?? account.blocked,
+          children: [
+            DropdownButtonFormField<String>(
+              key: ValueKey('role:${account.accountId}:${draft?.role}'),
+              initialValue: draft?.role,
+              decoration: InputDecoration(labelText: 'Роль: ${account.login}'),
+              items: const [
+                DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
+                DropdownMenuItem(
+                  value: 'ADMINISTRATOR',
+                  child: Text('Администратор'),
+                ),
+              ],
               onChanged: busy || draft == null
                   ? null
-                  : (value) => setState(() => draft.blocked = value),
+                  : (value) {
+                      if (value != null) setState(() => draft.role = value);
+                    },
             ),
-          ),
-          Wrap(
-            spacing: 8,
-            children: [
-              FilledButton.tonal(
-                key: ValueKey('save-account:${account.accountId}'),
-                focusNode: _accountSaveFocusNodes.putIfAbsent(
-                  account.accountId,
-                  FocusNode.new,
+            Material(
+              color: GcColors.surface,
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Заблокирован'),
+                value: draft?.blocked ?? account.blocked,
+                onChanged: busy || draft == null
+                    ? null
+                    : (value) => setState(() => draft.blocked = value),
+              ),
+            ),
+            Wrap(
+              spacing: 8,
+              children: [
+                FilledButton.tonal(
+                  key: ValueKey('save-account:${account.accountId}'),
+                  focusNode: _accountSaveFocusNodes.putIfAbsent(
+                    account.accountId,
+                    FocusNode.new,
+                  ),
+                  onPressed: busy ? null : () => _saveAccount(account),
+                  child: busy
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Сохранить'),
                 ),
-                onPressed: busy ? null : () => _saveAccount(account),
-                child: busy
-                    ? const SizedBox.square(
-                        dimension: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Сохранить'),
-              ),
-              OutlinedButton(
-                key: ValueKey('reset-account:${account.accountId}'),
-                onPressed: busy ? null : () => _createResetLink(account),
-                child: const Text('Сбросить пароль'),
-              ),
-              if (sameVoiceParticipant &&
-                  account.accountId != widget.state.user?.accountId)
                 OutlinedButton(
-                  onPressed: busy ? null : () => _kickVoiceParticipant(account),
-                  child: const Text('Отключить от голоса'),
+                  key: ValueKey('reset-account:${account.accountId}'),
+                  onPressed: busy ? null : () => _createResetLink(account),
+                  child: const Text('Сбросить пароль'),
                 ),
-            ],
-          ),
-        ],
+                if (sameVoiceParticipant &&
+                    account.accountId != widget.state.user?.accountId)
+                  OutlinedButton(
+                    onPressed: busy
+                        ? null
+                        : () => _kickVoiceParticipant(account),
+                    child: const Text('Отключить от голоса'),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
