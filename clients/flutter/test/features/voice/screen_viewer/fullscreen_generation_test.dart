@@ -5,7 +5,8 @@ import 'package:boohtacord_desktop/src/features/voice/screen_viewer/publication_
 import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart';
 
-class _ScreenPublication extends Fake implements RemoteTrackPublication {
+class _ScreenPublication extends Fake
+    implements RemoteTrackPublication<RemoteVideoTrack> {
   _ScreenPublication(this.sid, {this.subscriptionAllowed = true});
   @override
   final String sid;
@@ -21,7 +22,7 @@ class _RemotePeer extends Fake implements RemoteParticipant {
   @override
   final String identity;
   @override
-  final List<RemoteTrackPublication> videoTrackPublications;
+  final List<RemoteTrackPublication<RemoteVideoTrack>> videoTrackPublications;
 }
 class _Room extends Fake implements Room {
   _Room(this.localParticipant, this.remoteParticipants);
