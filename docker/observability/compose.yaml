@@ -43,6 +43,7 @@ services:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
       - ./guild-lifecycle-alerts.yaml:/etc/prometheus/guild-lifecycle-alerts.yaml:ro
       - ./livekit-network-alerts.yaml:/etc/prometheus/livekit-network-alerts.yaml:ro
+      - ./media-qoe-alerts.yaml:/etc/prometheus/media-qoe-alerts.yaml:ro
       - prometheus-data:/prometheus
     ports:
       - "127.0.0.1:9091:9090"

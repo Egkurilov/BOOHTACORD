@@ -4,6 +4,7 @@ global:
 rule_files:
   - /etc/prometheus/guild-lifecycle-alerts.yaml
   - /etc/prometheus/livekit-network-alerts.yaml
+  - /etc/prometheus/media-qoe-alerts.yaml
 
 scrape_configs:
   - job_name: boohtacord-otel-metrics

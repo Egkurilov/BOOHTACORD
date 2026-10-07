@@ -1,0 +1,95 @@
+rule_files:
+- ../../../docker/observability/media-qoe-alerts.yaml
+evaluation_interval: 1m
+tests:
+- name: empty
+  interval: 1m
+  input_series: []
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: MediaClientLossSustained
+    exp_alerts: []
+- name: single_bad_sample
+  interval: 1m
+  input_series:
+  - &id001
+    series: boohtacord_media_report_received_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 0+60x30
+  - &id002
+    series: boohtacord_media_sample_age_known{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  - &id003
+    series: boohtacord_media_sample_age_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  - series: boohtacord_media_packet_loss_percent_sum{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known"}
+    values: 0 150+0x29
+  - series: boohtacord_media_packet_loss_percent_count{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known"}
+    values: 0+30x30
+  - series: boohtacord_media_sample_age_at_receipt_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: MediaClientLossSustained
+    exp_alerts: []
+- name: legacy
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - series: boohtacord_media_packet_loss_percent_sum{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="legacy"}
+    values: 0+150x30
+  - series: boohtacord_media_packet_loss_percent_count{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="legacy"}
+    values: 0+30x30
+  - series: boohtacord_media_sample_age_at_receipt_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: MediaClientLossSustained
+    exp_alerts: []
+- name: sustained_loss
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - series: boohtacord_media_packet_loss_percent_sum{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known"}
+    values: 0+150x30
+  - series: boohtacord_media_packet_loss_percent_count{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known"}
+    values: 0+30x30
+  - series: boohtacord_media_sample_age_at_receipt_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: MediaClientLossSustained
+    exp_alerts:
+    - &id004
+      exp_labels:
+        platform: desktop_web
+        direction: sender
+        severity: info
+        policy: experimental
+      exp_annotations:
+        summary: MediaClientLossSustained
+        description: Windowed client loss above 2% over 5m with >=0.1 known samples/s, sustained3m. Diagnostic candidate, not agreed production SLO or packet-weighted loss.
+        runbook_url: https://github.com/Egkurilov/BOOHTACORD/blob/master/docs/operations/media-qoe.md
+- name: loss_recovers
+  interval: 1m
+  input_series:
+  - *id001
+  - *id002
+  - *id003
+  - series: boohtacord_media_packet_loss_percent_sum{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known"}
+    values: 0+150x8 1200+0x21
+  - series: boohtacord_media_packet_loss_percent_count{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known"}
+    values: 0+30x30
+  - series: boohtacord_media_sample_age_at_receipt_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: MediaClientLossSustained
+    exp_alerts:
+    - *id004
+  - eval_time: 19m
+    alertname: MediaClientLossSustained
+    exp_alerts: []

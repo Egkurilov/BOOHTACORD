@@ -1,0 +1,81 @@
+rule_files:
+- ../../../docker/observability/media-qoe-alerts.yaml
+evaluation_interval: 1m
+tests:
+- name: target_discrepancy_and_cpu_sustained
+  interval: 1m
+  input_series:
+  - series: boohtacord_media_report_received_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 0+60x30
+  - series: boohtacord_media_sample_age_known{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  - series: boohtacord_media_sample_age_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  - series: boohtacord_media_fps_target_ratio_sum{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known",stage="encoded"}
+    values: 0+15x30
+  - series: boohtacord_media_fps_target_ratio_count{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known",stage="encoded"}
+    values: 0+30x30
+  - series: boohtacord_media_adaptation_reports_total{platform="desktop_web",direction="sender",source="client_report",state="playing",age_provenance="known",reason="cpu"}
+    values: 0+30x30
+  - series: boohtacord_media_sample_age_at_receipt_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: 1+0x30
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: MediaClientTargetDiscrepancy
+    exp_alerts:
+    - exp_labels:
+        severity: info
+        policy: experimental
+        platform: desktop_web
+        direction: sender
+        stage: encoded
+      exp_annotations:
+        summary: MediaClientTargetDiscrepancy
+        description: Paired per-stage actual/target mean below0.9, >=0.1 samples/s, sustained3m. Static/paused/no-subscriber/moving-source context is unknown; no root-cause or paging inference.
+        runbook_url: https://github.com/Egkurilov/BOOHTACORD/blob/master/docs/operations/media-qoe.md
+  - eval_time: 8m
+    alertname: MediaClientSenderCPUReports
+    exp_alerts:
+    - exp_labels:
+        severity: info
+        policy: experimental
+        platform: desktop_web
+        direction: sender
+      exp_annotations:
+        summary: MediaClientSenderCPUReports
+        description: More than half recent sender reports name CPU adaptation, sustained5m. Client reason is not measured encoder CPU saturation.
+        runbook_url: https://github.com/Egkurilov/BOOHTACORD/blob/master/docs/operations/media-qoe.md
+- name: missing_snapshot_is_unknown_not_stale
+  interval: 1m
+  input_series: []
+  alert_rule_test:
+  - eval_time: 8m
+    alertname: MediaClientTelemetryStale
+    exp_alerts: []
+- name: active_snapshot_missing_reports_then_receipt_recovers
+  interval: 1m
+  input_series:
+  - series: boohtacord_incident_livekit_snapshot{stat="screen_streams"}
+    values: 1+0x30
+  - series: boohtacord_incident_last_successful{operation="livekit_snapshot"}
+    values: 1+0x30
+  - series: boohtacord_incident_last_success_timestamp_seconds{operation="livekit_snapshot"}
+    values: 0+60x30
+  - series: boohtacord_media_report_received_seconds{platform="desktop_web",direction="sender",source="client_report"}
+    values: _ _ _ _ _ 300+60x25
+  - series: boohtacord_incident_api_collection_timestamp_seconds
+    values: 0+60x30
+  alert_rule_test:
+  - eval_time: 4m
+    alertname: MediaClientTelemetryStale
+    exp_alerts:
+    - exp_labels:
+        severity: info
+        policy: experimental
+      exp_annotations:
+        summary: MediaClientTelemetryStale
+        description: 'LiveKit private snapshot has active screens but no client receipt within60s, sustained3m. Requires #5 snapshot bridge/native scrape; otherwise unknown and absent. Active screen does not prove subscriber or visible viewer.'
+        runbook_url: https://github.com/Egkurilov/BOOHTACORD/blob/master/docs/operations/media-qoe.md
+  - eval_time: 8m
+    alertname: MediaClientTelemetryStale
+    exp_alerts: []
