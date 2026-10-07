@@ -1,9 +1,11 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LocalAudioTrack, LocalParticipant, LocalTrackPublication, LocalVideoTrack, Track } from 'livekit-client'
 import { bindLiveKitScreenPublisher } from './screen_publisher/livekit_port'
 import { screenPublisherEventHandlers } from './screen_publisher/events'
 import { ScreenProfileGuard } from './screen_profile/guard'
 import { adaptiveMediaRoomOptions } from './media_publishing'
+
+afterEach(() => vi.unstubAllEnvs())
 
 function setup() {
   const media = { readyState: 'live', contentHint: '', getSettings: () => ({ width: 2560, height: 1440, frameRate: 60 }), applyConstraints: vi.fn(async () => {}) }
@@ -47,10 +49,20 @@ describe('LiveKit screen publisher port', () => {
     await f.port.capture(f.video, 'P720_30'); await f.port.unpublish(f.video, false); await f.port.publish(f.video, 'P720_30')
     expect(f.publications.get(Track.Source.ScreenShareAudio)?.audioTrack).toBe(f.audio)
     expect(f.publications.get(Track.Source.Microphone)?.audioTrack).toBe(f.microphone)
-    expect(f.participant.publishTrack).toHaveBeenCalledWith(f.video, expect.objectContaining({ source: Track.Source.ScreenShare, simulcast: true, screenShareSimulcastLayers: expect.any(Array) }))
+    expect(f.participant.publishTrack).toHaveBeenCalledWith(f.video, expect.objectContaining({ source: Track.Source.ScreenShare, simulcast: false }))
     expect(f.guardStops).toBe(0)
     await f.port.stop(f.video)
     expect(f.publications.has(Track.Source.ScreenShareAudio)).toBe(false)
+    expect(f.publications.get(Track.Source.Microphone)?.audioTrack).toBe(f.microphone)
+  })
+  it('preserves the optional bounded simulcast rollout through managed republish', async () => {
+    vi.stubEnv('VITE_SCREEN_SHARE_BOUNDED_SIMULCAST', 'true')
+    const f = setup(); await f.port.start('P1080_30'); f.port.adopt?.('P1080_30')
+    await f.port.unpublish(f.video, false); await f.port.publish(f.video, 'P720_30')
+    expect(f.participant.publishTrack).toHaveBeenCalledWith(f.video, expect.objectContaining({
+      source: Track.Source.ScreenShare, simulcast: true, screenShareSimulcastLayers: expect.any(Array),
+    }))
+    expect(f.publications.get(Track.Source.ScreenShareAudio)?.audioTrack).toBe(f.audio)
     expect(f.publications.get(Track.Source.Microphone)?.audioTrack).toBe(f.microphone)
   })
   it('performs one explicit repair through managed-unpublish event hooks and rebinds the sender', async () => {
