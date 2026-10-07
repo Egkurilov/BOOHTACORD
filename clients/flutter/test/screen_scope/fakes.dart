@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:livekit_client/livekit_client.dart';
 import 'package:boohtacord_desktop/src/features/screen/capture/driver.dart';
-import 'package:boohtacord_desktop/src/services/screen_share_quality.dart';
+import 'package:boohtacord_desktop/src/features/screen/profile/quality.dart';
 
 class FakeScreenRoom implements Room {
   @override
@@ -19,6 +19,12 @@ class FakeScreenParticipant implements LocalParticipant {
 }
 
 class FakeScreenTrack implements LocalVideoTrack {
+  int stopCalls = 0;
+  @override
+  Future<bool> stop() async {
+    stopCalls++;
+    return true;
+  }
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -46,6 +52,11 @@ class DelayedScreenDriver implements ScreenShareDriver {
     published++;
     await publication?.future;
   }
+
+  @override
+  Future<bool> updateQuality(Room room, LocalVideoTrack track, ScreenShareQuality quality,
+          VideoDimensions? dimensions, bool Function() isCurrent) async =>
+      isCurrent();
 
   @override
   Future<void> discard(Room room, LocalVideoTrack track) async {

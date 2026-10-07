@@ -2,7 +2,7 @@ import type { VoiceRoom } from '../livekit_gateway'
 import { ScreenProfileGuard } from './guard'
 import type { ProfileTrack } from './types'
 
-export function bindScreenProfile(room: VoiceRoom, readTrack: () => ProfileTrack | undefined): () => void {
+export function bindScreenProfile(room: VoiceRoom, readTrack: () => ProfileTrack | undefined): ScreenProfileGuard {
   const guard = new ScreenProfileGuard(readTrack)
   const read = room.readScreenDiagnostics!.bind(room), disconnect = room.disconnect.bind(room)
   room.stopScreenProfileChecks = () => guard.stop()
@@ -11,6 +11,6 @@ export function bindScreenProfile(room: VoiceRoom, readTrack: () => ProfileTrack
     await guard.check()
     return { ...await read(), profileCheck: guard.snapshot }
   }
-  room.localParticipant.updateScreenShareProfile = (profile) => guard.apply(profile)
-  return () => guard.stop()
+  room.adoptScreenProfile = (profile) => guard.adopt(profile)
+  return guard
 }

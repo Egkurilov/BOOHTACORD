@@ -5,6 +5,7 @@ import '../../../services/screen_share_diagnostics.dart';
 import '../../../services/screen_share_metrics.dart';
 import '../../../telemetry/report_media/sender_sample.dart';
 import 'controller.dart';
+import 'livekit_layers.dart';
 
 extension ScreenShareSample on ScreenShareMetricsController {
   Future<void> sample(LocalVideoTrack track, int revision) async {
@@ -18,21 +19,25 @@ extension ScreenShareSample on ScreenShareMetricsController {
     }
     try {
       final stats = await track.getSenderStats();
-      final current = screenShareSenderSnapshotFromStats(
-        stats
-            .map(
-              (item) => ScreenShareSenderStats(
-                timestampMs: webRtcStatsTimestampMs(item.timestamp),
-                frameWidth: item.frameWidth,
-                frameHeight: item.frameHeight,
-                bytesSent: item.bytesSent,
-                framesSent: item.framesSent,
-                framesPerSecond: item.framesPerSecond,
-                roundTripTimeSeconds: item.roundTripTime,
-              ),
-            )
-            .toList(growable: false),
+      totalBitrateBps = track.currentBitrate;
+      final layerSample = sampleLiveKitScreenLayers(
+        layerSampler, stats, sampleClock.elapsedMilliseconds.toDouble(),
       );
+      layerDiagnostics = layerSample.diagnostics.layers;
+      final selected = layerSample.selected;
+      if (previousLayerId != layerSample.diagnostics.selected?.id) previous = null;
+      previousLayerId = layerSample.diagnostics.selected?.id;
+      final current = selected == null ? null : screenShareSenderSnapshotFromStats([
+        ScreenShareSenderStats(
+          timestampMs: webRtcStatsTimestampMs(selected.timestamp),
+          frameWidth: selected.frameWidth,
+          frameHeight: selected.frameHeight,
+          bytesSent: selected.bytesSent,
+          framesSent: selected.framesSent,
+          framesPerSecond: selected.framesPerSecond,
+          roundTripTimeSeconds: selected.roundTripTime,
+        ),
+      ]);
       if (!ticket.isActive ||
           revision != gate.generation ||
           !identical(track, this.track) ||
@@ -59,7 +64,9 @@ extension ScreenShareSample on ScreenShareMetricsController {
       sampledAt = DateTime.now();
       changed();
       try {
-        final samples = stats
+        if (!reportCadence.isDue(sampleClock.elapsedMilliseconds.toDouble())) return;
+        final samples = stats.where((item) =>
+            '${item.streamId}:${item.rid ?? ''}' == layerSample.diagnostics.selected?.id)
             .map(
               (item) => SenderMediaSample(
                 streamId: item.streamId,
@@ -86,6 +93,11 @@ extension ScreenShareSample on ScreenShareMetricsController {
       }
     } catch (error) {
       // Some platform WebRTC implementations do not expose sender stats.
+      layerSampler.clear();
+      layerDiagnostics = const [];
+      previous = null;
+      previousLayerId = null;
+      totalBitrateBps = null;
       logScreenShareDiagnostic(
         ScreenShareDiagnosticEvent.senderStatsUnavailable,
         platform: defaultTargetPlatform,

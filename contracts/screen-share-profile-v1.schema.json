@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:boohtacord:screen-share-profile:1",
+  "title": "BOOHTACORD screen-share session descriptor v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "mode", "publisher_state", "viewer_state", "requested_profile_id", "effective_profile", "layer_topology", "profile_revision", "capabilities", "reason_codes"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin_id", "account_id", "room_id", "media_session_id", "publication_generation", "operation_revision"],
+      "properties": {
+        "origin_id": { "type": "string", "minLength": 1 },
+        "account_id": { "type": "string", "minLength": 1 },
+        "room_id": { "type": "string", "minLength": 1 },
+        "media_session_id": { "type": "string", "minLength": 1 },
+        "publication_generation": { "type": "integer", "minimum": 0 },
+        "operation_revision": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "mode": { "enum": ["motion", "text"] },
+    "publisher_state": { "enum": ["idle", "requesting", "capturing", "publishing", "sharing", "updating", "stopping", "failed"] },
+    "viewer_state": { "enum": ["idle", "subscribing", "waiting-first-frame", "playing", "suspended", "recovering", "ended", "failed"] },
+    "requested_profile_id": { "enum": ["P720_15", "P720_30", "P720_60", "P1080_15", "P1080_30", "P1080_60", "P1440_15", "P1440_30", "P1440_60", "motion-720p60-v1", "motion-1080p60-v1", "text-1080p15-v1", "text-1080p30-v1", "motion-1440p60-v1"] },
+    "effective_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capture", "encoding"],
+      "properties": {
+        "capture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_width", "max_height", "max_fps"],
+          "properties": {
+            "max_width": { "type": "integer", "minimum": 2 },
+            "max_height": { "type": "integer", "minimum": 2 },
+            "max_fps": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "encoding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["codec", "layers"],
+          "properties": {
+            "codec": { "type": ["string", "null"] },
+            "layers": {
+              "type": "array",
+              "maxItems": 2,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["rid", "width", "height", "max_fps", "max_bitrate_bps", "scale_down_by", "active"],
+                "properties": {
+                  "rid": { "type": ["string", "null"] },
+                  "width": { "type": "integer", "minimum": 2 },
+                  "height": { "type": "integer", "minimum": 2 },
+                  "max_fps": { "type": "integer", "minimum": 1 },
+                  "max_bitrate_bps": { "type": "integer", "minimum": 1 },
+                  "scale_down_by": { "type": "number", "minimum": 1 },
+                  "active": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "layer_topology": { "enum": ["single-layer", "bounded-simulcast"] },
+    "profile_revision": { "type": "integer", "minimum": 0 },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["live_update", "republish_without_recapture", "simulcast"],
+      "properties": {
+        "live_update": { "type": "boolean" },
+        "republish_without_recapture": { "type": "boolean" },
+        "simulcast": { "type": "boolean" }
+      }
+    },
+    "reason_codes": { "type": "array", "uniqueItems": true, "items": { "enum": ["user-request", "platform-constraint", "network-adaptation", "no-subscribers", "sdk-paused", "unsupported-profile", "capture-denied", "publish-failed", "superseded", "session-revoked", "unknown"] } }
+  }
+}

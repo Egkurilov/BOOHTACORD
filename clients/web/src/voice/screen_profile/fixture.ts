@@ -7,6 +7,7 @@ export function profileTrack() {
   let frames = 0
   const mediaStreamTrack = {
     readyState: 'live' as MediaStreamTrackState,
+    contentHint: '' as MediaStreamTrack['contentHint'],
     getSettings: () => settings,
     applyConstraints: vi.fn(async (constraints: MediaTrackConstraints) => {
       const width = (constraints.width as ConstrainULongRange).max!

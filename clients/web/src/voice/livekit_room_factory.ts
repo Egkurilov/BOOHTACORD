@@ -4,13 +4,15 @@ import type { VoiceRoom } from './livekit_gateway'
 import { adaptiveMediaRoomOptions } from './media_publishing'
 import { bindScreenProfile } from './screen_profile/bind'
 import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
-import { inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from './screen_livekit_diagnostics'
+import { clearLiveKitScreenDiagnostics, inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from './screen_livekit_diagnostics'
 import { readVoiceConnectionStats } from './voice_connection_quality'
 import { accountIdFromMetadata } from './participant_identity'
 import { captureLocalScreenThumbnails } from './screen_thumbnail'
 import { selectedVoiceAudioProfile } from './audio_profile/profile'
 import { bindVoiceAudioDiagnostics } from './audio_diagnostics/bind'
 import { bindNetworkDiagnostics } from './network_diagnostics/bind'
+import { bindLiveKitScreenPublisher } from './screen_publisher/livekit_port'
+import { screenPublisherEventHandlers } from './screen_publisher/events'
 
 export function wireLiveKitRoom(
   room: VoiceRoom,
@@ -54,6 +56,7 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     screenVideo: Track.Source.ScreenShare,
   })
   let stopThumbnails: (() => void) | null = null
+  let diagnosticsTrack: LiveKitScreenVideoTrack | undefined
   liveKitRoom.on(RoomEvent.LocalTrackPublished, (publication) => {
     if (publication.source !== Track.Source.ScreenShare || !publication.videoTrack) return
     stopThumbnails?.()
@@ -63,12 +66,19 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   })
   liveKitRoom.on(RoomEvent.LocalTrackUnpublished, (publication) => {
     if (publication.source !== Track.Source.ScreenShare) return
+    const unpublished = publication.videoTrack as LiveKitScreenVideoTrack | undefined
+    if (unpublished ?? diagnosticsTrack) clearLiveKitScreenDiagnostics(unpublished ?? diagnosticsTrack!)
+    diagnosticsTrack = undefined
     stopThumbnails?.()
     stopThumbnails = null
     const local = liveKitRoom.localParticipant
     viewer.viewer.removeThumbnail(accountIdFromMetadata(local.metadata) ?? local.identity)
   })
-  liveKitRoom.on(RoomEvent.Disconnected, () => { stopThumbnails?.(); stopThumbnails = null })
+  liveKitRoom.on(RoomEvent.Disconnected, () => {
+    stopThumbnails?.(); stopThumbnails = null
+    if (diagnosticsTrack) clearLiveKitScreenDiagnostics(diagnosticsTrack)
+    diagnosticsTrack = undefined
+  })
   const room = wireLiveKitRoom(liveKitRoom as unknown as VoiceRoom, viewer)
   room.screenViewer = viewer.viewer
   room.participantCards = viewer.participants
@@ -80,6 +90,7 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   bindNetworkDiagnostics(room, liveKitRoom)
   room.readScreenDiagnostics = async () => {
     const video = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack as LiveKitScreenVideoTrack | undefined
+    diagnosticsTrack = video
     const audio = liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio)?.audioTrack
     return inspectLiveKitScreenDiagnostics(video, Boolean(audio), liveKitRoom.localParticipant.connectionQuality)
   }
@@ -89,8 +100,13 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
     const samples = reports.map((report) => readVoiceConnectionStats(liveKitRoom.localParticipant.connectionQuality, report?.values()))
     return samples.find((sample) => sample.pingMs !== null) ?? samples[0]!
   }
-  const stopProfileChecks = bindScreenProfile(room, () => liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack)
-  liveKitRoom.on(RoomEvent.LocalTrackUnpublished, (publication) => { if (publication.source === Track.Source.ScreenShare) stopProfileChecks() })
-  liveKitRoom.on(RoomEvent.Disconnected, stopProfileChecks)
+  const profileGuard = bindScreenProfile(room, () => liveKitRoom.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.videoTrack)
+  const screenPublisher = bindLiveKitScreenPublisher(liveKitRoom.localParticipant, () => room.readScreenDiagnostics!(),
+    profile => room.adoptScreenProfile?.(profile), (profile, action, current) => profileGuard.repair(profile, action, current))
+  room.screenPublisher = screenPublisher
+  const screenPublisherEvents = screenPublisherEventHandlers(screenPublisher, Track.Source.ScreenShare, profileGuard.stop.bind(profileGuard))
+  liveKitRoom.on(RoomEvent.LocalTrackPublished, screenPublisherEvents.published)
+  liveKitRoom.on(RoomEvent.LocalTrackUnpublished, screenPublisherEvents.unpublished)
+  liveKitRoom.on(RoomEvent.Disconnected, profileGuard.stop.bind(profileGuard))
   return room
 }

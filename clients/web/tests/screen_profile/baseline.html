@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Screen-share baseline harness</title>
+  </head>
+  <body>
+    <main>
+      <h1>Screen-share baseline</h1>
+      <label>LiveKit server URL <input id="url" type="url" autocomplete="off"></label>
+      <label>Short-lived test token <input id="token" type="password" autocomplete="off"></label>
+      <label>Role
+        <select id="role"><option value="viewer">Viewer</option><option value="publisher">Publisher</option></select>
+      </label>
+      <button id="connect" type="button">Connect</button>
+      <button id="synthetic" type="button">Start synthetic moving source</button>
+      <button id="display" type="button">Start display capture</button>
+      <button id="report" type="button">Download 10-second numeric sample</button>
+      <button id="stop" type="button">Stop</button>
+      <p id="status" role="status">Disconnected</p>
+      <video id="remote" autoplay muted playsinline></video>
+    </main>
+    <script type="module" src="./baseline/app.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "descriptorCompatibility": [
+    { "name": "legacy-profile-id-remains-valid", "schemaVersion": 1, "mode": "motion", "requestedProfileId": "P1080_30", "accepted": true },
+    { "name": "candidate-profile-is-versioned", "schemaVersion": 1, "mode": "text", "requestedProfileId": "text-1080p30-v1", "accepted": true },
+    { "name": "unknown-profile-is-rejected", "schemaVersion": 1, "mode": "motion", "requestedProfileId": "P999_30", "accepted": false },
+    { "name": "unknown-mode-is-rejected", "schemaVersion": 1, "mode": "cinema", "requestedProfileId": "P1080_30", "accepted": false },
+    { "name": "unknown-descriptor-version-is-rejected", "schemaVersion": 99, "mode": "motion", "requestedProfileId": "P1080_30", "accepted": false }
+  ],
+  "enumValidation": [
+    { "property": "publisher_state", "value": "sharing", "accepted": true },
+    { "property": "publisher_state", "value": "publishing-ish", "accepted": false },
+    { "property": "viewer_state", "value": "playing", "accepted": true },
+    { "property": "viewer_state", "value": "waiting", "accepted": false },
+    { "property": "mode", "value": "motion", "accepted": true },
+    { "property": "mode", "value": "cinema", "accepted": false }
+  ],
+  "lifecycle": [
+    { "name": "stop-invalidates-pending-profile-update", "schemaVersion": 1, "currentRevision": 8, "completionRevision": 7, "expectedOutcome": "superseded", "mayPublish": false },
+    { "name": "revoke-wins-over-pending-start", "schemaVersion": 1, "currentRevision": 4, "completionRevision": 4, "revoked": true, "expectedOutcome": "session-revoked", "mayPublish": false },
+    { "name": "reconnect-keeps-logical-session-and-advances-publication-generation", "schemaVersion": 1, "mediaSessionId": "session-a", "oldGeneration": 3, "newGeneration": 4, "expectedOutcome": "recovered", "recapture": false }
+  ],
+  "geometry": [
+    { "name": "landscape-16-9", "resolution": 720, "frameRate": 60, "source": { "width": 3840, "height": 2160 }, "expectedEncoded": { "width": 1280, "height": 720 } },
+    { "name": "portrait", "resolution": 1080, "frameRate": 30, "source": { "width": 1440, "height": 2560 }, "expectedEncoded": { "width": 1080, "height": 1920 } },
+    { "name": "ultrawide", "resolution": 1080, "frameRate": 60, "source": { "width": 3440, "height": 1440 }, "expectedEncoded": { "width": 1918, "height": 802 } },
+    { "name": "small-source-never-upscales", "resolution": 1080, "frameRate": 30, "source": { "width": 640, "height": 360 }, "expectedEncoded": { "width": 640, "height": 360 } },
+    { "name": "odd-source-edges-round-down-to-even", "resolution": 1080, "frameRate": 30, "source": { "width": 1919, "height": 1079 }, "expectedEncoded": { "width": 1918, "height": 1078 } },
+    { "name": "square-source-preserves-geometry", "resolution": 1080, "frameRate": 30, "source": { "width": 2000, "height": 2000 }, "expectedEncoded": { "width": 1080, "height": 1080 } }
+  ]
+}

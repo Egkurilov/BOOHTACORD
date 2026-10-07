@@ -8,9 +8,6 @@ import {
   type AudioProcessingOptions,
   type MicrophonePublishOptions,
   type MicrophoneState,
-  type ScreenShareOptions,
-  type ScreenProfile,
-  type ScreenSharePublishOptions,
 } from './media_publishing'
 import type { RemoteVoicePlaybackController } from './livekit_screen_viewer_adapter'
 import type { RemoteParticipantController } from './remote_participant_controller'
@@ -23,6 +20,9 @@ import type { AudioInputSelection } from './audio_input_selection'
 import type { VoiceAudioDiagnostics } from './audio_diagnostics/model'
 import type { NetworkDiagnostics } from './network_diagnostics/model'
 import { activeAction } from '../telemetry/action_scope/scope'
+import type { LocalVideoTrack } from 'livekit-client'
+import type { ScreenPublisherPort } from './screen_publisher/types'
+import type { ScreenProfile } from './screen_profile/policy'
 
 export {
   readScreenShareDiagnostics,
@@ -30,16 +30,12 @@ export {
   defaultAudioProcessing,
   microphoneConstraints,
   setMicrophone,
-  startScreenShare,
-  stopScreenShare,
   adaptiveMediaRoomOptions,
   type AudioProcessingOptions,
   type MicrophonePublishOptions,
   type MicrophoneState,
-  type ScreenProfile,
-  type ScreenShareOptions,
-  type ScreenSharePublishOptions,
 } from './media_publishing'
+export type { ScreenProfile } from './screen_profile/policy'
 
 export interface VoiceRoom {
   connect(url: string, token: string, options?: { autoSubscribe?: boolean }): Promise<void>
@@ -47,6 +43,8 @@ export interface VoiceRoom {
   on(event: 'reconnecting' | 'reconnected' | 'disconnected', listener: () => void): VoiceRoom
   readScreenDiagnostics?(): Promise<ScreenDiagnostics>
   stopScreenProfileChecks?(): void
+  adoptScreenProfile?(profile: ScreenProfile): void
+  screenPublisher?: ScreenPublisherPort<LocalVideoTrack>
   readVoiceConnectionStats?(): Promise<VoiceConnectionStats>
   readVoiceAudioDiagnostics?(): Promise<VoiceAudioDiagnostics>
   readNetworkDiagnostics?(): Promise<NetworkDiagnostics>
@@ -66,8 +64,6 @@ export interface VoiceRoom {
   switchActiveDevice(kind: 'audioinput' | 'audiooutput', deviceId: string): Promise<boolean>
   localParticipant: {
     setMicrophoneEnabled(enabled: boolean, options: MediaTrackConstraints, publishOptions?: MicrophonePublishOptions): Promise<unknown>
-    setScreenShareEnabled(enabled: boolean, options?: ScreenShareOptions, publishOptions?: ScreenSharePublishOptions): Promise<unknown>
-    updateScreenShareProfile?(profile: ScreenProfile): Promise<void>
   }
 }
 

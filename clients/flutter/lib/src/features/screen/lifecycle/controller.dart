@@ -7,7 +7,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
 import '../../../core/session/scope.dart';
 import '../../../services/api_client.dart';
-import '../../../services/screen_share_quality.dart';
+import '../profile/quality.dart';
 import '../../../services/screen_thumbnail.dart';
 import '../capture/driver.dart';
 import '../metrics/controller.dart';
@@ -74,10 +74,17 @@ class ScreenShareController extends ChangeNotifier {
       ? ScreenShareQuality.balanced
       : ScreenShareQuality.desktopDefault;
   int revision = 0;
+  int qualityIntentRevision = 0;
+  ScreenShareQuality? pendingQualityUpdate;
+  SessionTicket? pendingQualityTicket;
+  Room? pendingQualityRoom;
+  int pendingQualityLifecycleRevision = 0;
+  Future<void>? qualityUpdateOperation;
   bool disposed = false;
   Future<void>? starting;
   Future<void>? closing;
   LocalVideoTrack? activeTrack;
+  VideoDimensions? sourceDimensions;
   bool? get capturedContentVisible => capturedContentVisibility.isVisible;
 
   void handleCapturedContentVisibility(

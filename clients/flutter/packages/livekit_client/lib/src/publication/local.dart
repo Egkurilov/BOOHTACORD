@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'package:meta/meta.dart';
+
 import '../options.dart';
 import '../participant/local.dart';
 import '../proto/livekit_models.pb.dart' as lk_models;
@@ -26,6 +28,7 @@ class LocalTrackPublication<T extends LocalTrack> extends TrackPublication<T> {
   final LocalParticipant participant;
 
   BackupVideoCodec? backupVideoCodec;
+  bool _disposeTrackWithPublication = true;
 
   LocalTrackPublication({
     required this.participant,
@@ -35,9 +38,12 @@ class LocalTrackPublication<T extends LocalTrack> extends TrackPublication<T> {
     // register dispose func
     onDispose(() async {
       // this object is responsible for disposing track
-      await this.track?.dispose();
+      if (_disposeTrackWithPublication) await this.track?.dispose();
     });
   }
+
+  @internal
+  void preserveTrackOnDispose() => _disposeTrackWithPublication = false;
 
   /// Mute the track associated with this publication
   Future<void> mute({bool stopOnMute = true}) async => await track?.mute(stopOnMute: stopOnMute);

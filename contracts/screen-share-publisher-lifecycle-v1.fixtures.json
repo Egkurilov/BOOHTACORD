@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "outcomes": ["success", "cancel", "superseded", "failure"],
+  "cases": [
+    {
+      "id": "video-profile-update",
+      "outcome": "success",
+      "assertions": { "capturePreserved": true, "screenAudioPreserved": true, "voicePreserved": true, "effectiveProfileIsRequested": true }
+    },
+    {
+      "id": "stop-during-apply",
+      "outcome": "cancel",
+      "assertions": { "staleWrites": 0, "activeCaptureAfterCleanup": false }
+    },
+    {
+      "id": "latest-profile-wins",
+      "outcome": "superseded",
+      "requestedProfiles": ["P720_30", "P1080_30", "P1440_60"],
+      "appliedProfiles": ["P1440_60"],
+      "assertions": { "finalProfile": "P1440_60" }
+    },
+    {
+      "id": "replacement-publish-failure",
+      "outcome": "failure",
+      "assertions": { "recovery": "restored", "previousCaptureAndPlanRestored": true }
+    },
+    {
+      "id": "replacement-rollback-failure",
+      "outcome": "failure",
+      "assertions": { "recovery": "cleanup-required", "publisherStopped": true }
+    }
+  ]
+}

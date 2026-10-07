@@ -1,5 +1,5 @@
 export interface ProfileTrack {
-  mediaStreamTrack: Pick<MediaStreamTrack, 'readyState' | 'getSettings' | 'applyConstraints'>
+  mediaStreamTrack: Pick<MediaStreamTrack, 'readyState' | 'getSettings' | 'applyConstraints'> & Partial<Pick<MediaStreamTrack, 'contentHint'>>
   sender?: Pick<RTCRtpSender, 'getParameters' | 'setParameters' | 'getStats'>
 }
 export type ProfileStatus = 'checking' | 'matched' | 'adapted' | 'inactive' | 'drift' | 'repairing' | 'failed'

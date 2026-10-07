@@ -56,6 +56,7 @@ export 'src/publication/local.dart';
 export 'src/publication/remote.dart';
 export 'src/publication/track_publication.dart';
 export 'src/support/platform.dart';
+export 'src/stats/stats.dart' show VideoSenderStats;
 export 'src/audio/audio_processing_state.dart';
 export 'src/track/audio_visualizer.dart';
 export 'src/track/local/audio.dart';

@@ -1,69 +1,73 @@
 import { describe, expect, it, vi } from 'vitest'
+import { LocalAudioTrack, LocalParticipant, LocalTrackPublication, LocalVideoTrack, Track } from 'livekit-client'
+import { bindLiveKitScreenPublisher } from './screen_publisher/livekit_port'
+import { screenPublisherEventHandlers } from './screen_publisher/events'
+import { ScreenProfileGuard } from './screen_profile/guard'
+import { adaptiveMediaRoomOptions } from './media_publishing'
 
-import {
-  adaptiveMediaRoomOptions,
-  startScreenShare,
-  stopScreenShare,
-  type VoiceRoom,
-} from './livekit_gateway'
-
-function screenRoom(readScreenDiagnostics?: VoiceRoom['readScreenDiagnostics']): VoiceRoom {
-  return {
-    readScreenDiagnostics,
-    localParticipant: {
-      setMicrophoneEnabled: vi.fn(),
-      setScreenShareEnabled: vi.fn().mockResolvedValue(undefined),
-    },
-  } as unknown as VoiceRoom
+function setup() {
+  const media = { readyState: 'live', contentHint: '', getSettings: () => ({ width: 2560, height: 1440, frameRate: 60 }), applyConstraints: vi.fn(async () => {}) }
+  const video = { mediaStreamTrack: media, sender: { getParameters: () => ({ encodings: [] }), setParameters: vi.fn(), getStats: vi.fn() }, stop: vi.fn() } as unknown as LocalVideoTrack
+  const audio = { stop: vi.fn() } as unknown as LocalAudioTrack, microphone = {} as LocalAudioTrack
+  const publications = new Map<Track.Source, { videoTrack?: LocalVideoTrack; audioTrack?: LocalAudioTrack }>()
+  let handlers: ReturnType<typeof screenPublisherEventHandlers<LocalVideoTrack, Track.Source.ScreenShare>>
+  const unpublishTrack = vi.fn(async (track: LocalAudioTrack | LocalVideoTrack) => {
+    const source = track === video ? Track.Source.ScreenShare : track === audio ? Track.Source.ScreenShareAudio : Track.Source.Microphone
+    publications.delete(source)
+    if (source === Track.Source.ScreenShare) handlers?.unpublished({ source, videoTrack: video })
+  })
+  const participant = {
+    getTrackPublication: (source: Track.Source) => publications.get(source) as LocalTrackPublication | undefined,
+    setScreenShareEnabled: vi.fn(async (enabled: boolean) => {
+      if (!enabled) return undefined
+      publications.set(Track.Source.ScreenShare, { videoTrack: video }); publications.set(Track.Source.ScreenShareAudio, { audioTrack: audio })
+      return { videoTrack: video } as LocalTrackPublication
+    }),
+    publishTrack: vi.fn(async (track: LocalVideoTrack) => {
+      publications.set(Track.Source.ScreenShare, { videoTrack: track }); handlers?.published({ source: Track.Source.ScreenShare, videoTrack: track })
+      return { videoTrack: track } as LocalTrackPublication
+    }), unpublishTrack,
+  } as unknown as LocalParticipant
+  publications.set(Track.Source.Microphone, { audioTrack: microphone })
+  const guard = new ScreenProfileGuard(() => video)
+  const port = bindLiveKitScreenPublisher(participant, async () => ({ audioTrack: 'PRESENT', connectionQuality: 'UNKNOWN', measured: null, source: 'ACTIVE' }),
+    profile => guard.adopt(profile), (profile, action, current) => guard.repair(profile, action, current))
+  let guardStops = 0, ended = 0
+  handlers = screenPublisherEventHandlers(port, Track.Source.ScreenShare, () => { guardStops++; guard.stop() })
+  port.onEnded?.(() => { ended++ })
+  return { audio, video, microphone, port, participant, publications, handlers, guard, unpublishTrack, get guardStops() { return guardStops }, get ended() { return ended } }
 }
 
-describe('LiveKit screen publishing policy', () => {
-  it.each([
-    ['P720_15', 1280, 720, 15, 1_500_000],
-    ['P720_30', 1280, 720, 30, 2_500_000],
-    ['P720_60', 1280, 720, 60, 4_000_000],
-    ['P1080_15', 1920, 1080, 15, 2_500_000],
-    ['P1080_30', 1920, 1080, 30, 5_000_000],
-    ['P1080_60', 1920, 1080, 60, 8_000_000],
-    ['P1440_15', 2560, 1440, 15, 5_000_000],
-    ['P1440_30', 2560, 1440, 30, 8_000_000],
-    ['P1440_60', 2560, 1440, 60, 12_000_000],
-  ] as const)('starts capture and encoding with the selected %s profile', async (profile, width, height, frameRate, maxBitrate) => {
-    const fakeRoom = screenRoom()
-    await startScreenShare(fakeRoom, profile)
-    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
-      audio: true, resolution: { width, height, frameRate },
-    }, { name: `screenshare-${height}p-${frameRate}fps`, degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate, maxFramerate: frameRate, priority: 'medium' } })
+describe('LiveKit screen publisher port', () => {
+  it('uses managed video republish, keeping screen audio and microphone published', async () => {
+    const f = setup(); await f.port.start('P1080_30'); f.port.adopt?.('P1080_30')
+    await f.port.capture(f.video, 'P720_30'); await f.port.unpublish(f.video, false); await f.port.publish(f.video, 'P720_30')
+    expect(f.publications.get(Track.Source.ScreenShareAudio)?.audioTrack).toBe(f.audio)
+    expect(f.publications.get(Track.Source.Microphone)?.audioTrack).toBe(f.microphone)
+    expect(f.participant.publishTrack).toHaveBeenCalledWith(f.video, expect.objectContaining({ source: Track.Source.ScreenShare, simulcast: true, screenShareSimulcastLayers: expect.any(Array) }))
+    expect(f.guardStops).toBe(0)
+    await f.port.stop(f.video)
+    expect(f.publications.has(Track.Source.ScreenShareAudio)).toBe(false)
+    expect(f.publications.get(Track.Source.Microphone)?.audioTrack).toBe(f.microphone)
   })
-
-  it('passes the selected capture size and degradation preference as publish options', async () => {
-    const fakeRoom = screenRoom()
-
-    await startScreenShare(fakeRoom, 'P1080_60')
-    await stopScreenShare(fakeRoom)
-
-    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(1, true, {
-      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
-    }, { name: 'screenshare-1080p-60fps', degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate: 8_000_000, maxFramerate: 60, priority: 'medium' } })
-    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenNthCalledWith(2, false)
+  it('performs one explicit repair through managed-unpublish event hooks and rebinds the sender', async () => {
+    const f = setup(); await f.port.start('P1080_30'); f.port.adopt?.('P1080_30')
+    f.guard.snapshot = { status: 'drift', reason: 'configuration', attempts: 0 }
+    const repaired = await f.port.repair?.(f.video, 'P1080_30', () => true)
+    expect(repaired).toBe(true); expect(f.guard.snapshot).toMatchObject({ status: 'checking', attempts: 1 })
+    expect(f.guardStops).toBe(0); expect(f.publications.get(Track.Source.ScreenShare)?.videoTrack).toBe(f.video)
+    expect(f.publications.get(Track.Source.ScreenShareAudio)?.audioTrack).toBe(f.audio)
+    expect(f.unpublishTrack).toHaveBeenCalledWith(f.video, false)
   })
-
-  it('returns only observed screen diagnostics after publishing', async () => {
-    const diagnostics = {
-      audioTrack: 'ABSENT' as const,
-      connectionQuality: 'GOOD' as const,
-      measured: { framesPerSecond: 30, height: 720, width: 1280 },
-      source: 'ACTIVE' as const,
-    }
-    const fakeRoom = screenRoom(vi.fn().mockResolvedValue(diagnostics))
-
-    await expect(startScreenShare(fakeRoom, 'P1080_60')).resolves.toEqual(diagnostics)
-    expect(fakeRoom.localParticipant.setScreenShareEnabled).toHaveBeenCalledWith(true, {
-      audio: true, resolution: { width: 1920, height: 1080, frameRate: 60 },
-    }, { name: 'screenshare-1080p-60fps', degradationPreference: 'maintain-framerate', screenShareEncoding: { maxBitrate: 8_000_000, maxFramerate: 60, priority: 'medium' } })
+  it('cleans surviving screen audio after an OS-ended video and leaves the microphone alone', async () => {
+    const f = setup(); await f.port.start('P1080_30')
+    f.publications.delete(Track.Source.ScreenShare)
+    f.handlers.unpublished({ source: Track.Source.ScreenShare, videoTrack: f.video })
+    await f.port.stop(f.video)
+    expect(f.ended).toBe(1); expect(f.guardStops).toBe(1)
+    expect(f.publications.has(Track.Source.ScreenShareAudio)).toBe(false)
+    expect(f.publications.get(Track.Source.Microphone)?.audioTrack).toBe(f.microphone)
+    expect(f.unpublishTrack).not.toHaveBeenCalledWith(f.video, true)
   })
-
-  it('declares adaptive receive quality and dynacast room preferences', () => {
-    expect(adaptiveMediaRoomOptions).toEqual({ adaptiveStream: true, dynacast: true })
-  })
+  it('keeps adaptive room receive settings enabled', () => { expect(adaptiveMediaRoomOptions).toEqual({ adaptiveStream: true, dynacast: true }) })
 })

@@ -31,6 +31,7 @@ import '../../utils.dart' show Utils, isSVCCodec;
 import '../options.dart';
 import 'audio.dart';
 import 'local.dart';
+import 'sender_parameters.dart';
 
 class SimulcastTrackInfo {
   String codec;
@@ -66,6 +67,9 @@ class LocalVideoTrack extends LocalTrack with VideoTrack {
 
   Map<String, SimulcastTrackInfo> simulcastCodecs = {};
   Map<(String, int), rtc.RTCRtpEncoding> encodingBackups = {};
+
+  int _senderParameterGeneration = 0;
+  bool _senderParameterOperationsRetired = false;
 
   DegradationPreference? _degradationPreference;
 
@@ -400,76 +404,70 @@ extension LocalVideoTrackExt on LocalVideoTrack {
     bool isSVC = false,
   }) async {
     logger.fine('Update publishing layers: $layers');
-
-    final params = sender.parameters;
-
-    var hasChanged = false;
-
-    // NOTE: closable spatial layer is disabled due to video blur / frozen issues
-    // with Chrome 113+ and LiveKit SFU PLI handling. See JS SDK LocalVideoTrack.ts:529-568.
-    // For SVC codecs, all layers are kept enabled and the SFU handles layer selection.
-    if (isSVC) {
-      final hasEnabledEncoding = layers.any((q) => q.enabled);
-      if (hasEnabledEncoding) {
-        for (var q in layers) {
-          q.enabled = true;
+    if (_senderParameterOperationsRetired) return;
+    final generation = _senderParameterGeneration;
+    await withSenderParametersLock(sender, () async {
+      if (_senderParameterOperationsRetired ||
+          !_ownsSender(sender) ||
+          generation != _senderParameterGeneration) {
+        return;
+      }
+      final params = sender.parameters;
+      final currentEncodings = params.encodings;
+      if (currentEncodings == null || currentEncodings.length != encodings.length) return;
+      var hasChanged = false;
+      if (isSVC && layers.any((quality) => quality.enabled)) {
+        for (final quality in layers) {
+          quality.enabled = true;
         }
       }
-    }
-    // simulcast dynacast encodings
-    var idx = 0;
-    for (var encoding in encodings) {
-      final quality = Utils.videoQualityForSenderEncoding(
-        rid: encoding.rid,
-        encodingCount: encodings.length,
-      );
-      final subscribedQuality = layers.firstWhereOrNull(
-        (q) => q.quality == quality,
-      );
-      if (subscribedQuality == null) {
-        continue;
-      }
-      if (encoding.active != subscribedQuality.enabled) {
-        hasChanged = true;
-        encoding.active = subscribedQuality.enabled;
-        logger.fine(
-          'setting layer ${subscribedQuality.quality} to ${encoding.active ? 'enabled' : 'disabled'}',
+      for (var idx = 0; idx < currentEncodings.length; idx++) {
+        final encoding = currentEncodings[idx];
+        final quality = Utils.videoQualityForSenderEncoding(
+          rid: encoding.rid,
+          encodingCount: currentEncodings.length,
         );
-
-        // FireFox does not support setting encoding.active to false, so we
-        // have a workaround of lowering its bitrate and resolution to the min.
+        final subscribed = layers.firstWhereOrNull((item) => item.quality == quality);
+        if (subscribed == null || encoding.active == subscribed.enabled) continue;
+        hasChanged = true;
+        encoding.active = subscribed.enabled;
         if (kIsWeb && lkBrowser() == BrowserType.firefox) {
-          if (subscribedQuality.enabled) {
-            final encodingBackup = encodingBackups[(sender.senderId, idx)] ?? encoding;
-            encoding.scaleResolutionDownBy = encodingBackup.scaleResolutionDownBy;
-            encoding.maxBitrate = encodingBackup.maxBitrate;
-            encoding.maxFramerate = encodingBackup.maxFramerate;
-          } else {
-            encodingBackups[(sender.senderId, idx)] = rtc.RTCRtpEncoding(
-              scaleResolutionDownBy: encoding.scaleResolutionDownBy,
-              maxBitrate: encoding.maxBitrate,
-              maxFramerate: encoding.maxFramerate,
-            );
-            encoding.scaleResolutionDownBy = 4;
-            encoding.maxBitrate = 10;
-            encoding.maxFramerate = 2;
-          }
+          _applyFirefoxLayerFallback(sender, encoding, idx, subscribed.enabled);
         }
       }
-      idx++;
-    }
-
-    if (hasChanged) {
-      params.encodings = encodings;
+      if (!hasChanged) return;
+      params.encodings = currentEncodings;
       try {
-        final result = await sender.setParameters(params);
-        if (result == false) {
+        if (await sender.setParameters(params) == false) {
           logger.warning('Failed to update sender parameters');
         }
-      } catch (e) {
-        logger.warning('Failed to update sender parameters $e');
+      } catch (error) {
+        logger.warning('Failed to update sender parameters $error');
       }
+    });
+  }
+
+  void _applyFirefoxLayerFallback(
+    rtc.RTCRtpSender sender,
+    rtc.RTCRtpEncoding encoding,
+    int index,
+    bool enabled,
+  ) {
+    if (enabled) {
+      final backup = encodingBackups[(sender.senderId, index)] ?? encoding;
+      encoding.scaleResolutionDownBy = backup.scaleResolutionDownBy;
+      encoding.maxBitrate = backup.maxBitrate;
+      encoding.maxFramerate = backup.maxFramerate;
+      return;
     }
+    encodingBackups[(sender.senderId, index)] = rtc.RTCRtpEncoding(
+      scaleResolutionDownBy: encoding.scaleResolutionDownBy,
+      maxBitrate: encoding.maxBitrate,
+      maxFramerate: encoding.maxFramerate,
+    );
+    encoding.scaleResolutionDownBy = 4;
+    encoding.maxBitrate = 10;
+    encoding.maxFramerate = 2;
   }
 
   SimulcastTrackInfo addSimulcastTrack(
@@ -521,12 +519,48 @@ extension LocalVideoTrackExt on LocalVideoTrack {
     if (sender == null || preference == null) {
       return;
     }
-    final params = sender.parameters;
-    params.degradationPreference = preference.toRTCType();
+    if (_senderParameterOperationsRetired) return;
+    final generation = _senderParameterGeneration;
     try {
-      await sender.setParameters(params);
+      await withSenderParametersLock(sender, () async {
+        if (_senderParameterOperationsRetired ||
+            !_ownsSender(sender) ||
+            generation != _senderParameterGeneration) {
+          return;
+        }
+        final params = sender.parameters;
+        params.degradationPreference = preference.toRTCType();
+        await sender.setParameters(params);
+      });
     } catch (e) {
       logger.warning('Failed to set degradation preference on sender $e');
     }
   }
+
+  @internal
+  void invalidateSenderParameterOperations() {
+    _senderParameterGeneration++;
+    _senderParameterOperationsRetired = true;
+  }
+
+  @internal
+  void resumeSenderParameterOperations() {
+    _senderParameterGeneration++;
+    _senderParameterOperationsRetired = false;
+  }
+
+  @internal
+  Future<void> waitForSenderParameterOperations() async {
+    final senders = [
+      sender,
+      ...simulcastCodecs.values.map((item) => item.sender),
+    ].nonNulls.toSet();
+    for (final currentSender in senders) {
+      await withSenderParametersLock(currentSender, () async {});
+    }
+  }
+
+  bool _ownsSender(rtc.RTCRtpSender sender) =>
+      identical(this.sender, sender) ||
+      simulcastCodecs.values.any((item) => identical(item.sender, sender));
 }

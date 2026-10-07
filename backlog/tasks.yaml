@@ -78,6 +78,36 @@ tasks:
     requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04, REQ-CAPACITY-02]
     depends_on: [T-004, T-005, T-022]
     evidence: [media-integration-tests]
+  - id: T-031
+    title: Screen-share profile contract and shared client fixtures (GitHub #157)
+    requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04, REQ-CAPACITY-02]
+    depends_on: [T-004, T-005, T-022]
+    evidence: [ADR-018, screen-share-profile-schema, screen-share-profile-catalog, web-screen-profile-contract-test, flutter-screen-profile-contract-test, flutter-screen-profile-geometry-test]
+  - id: T-032
+    title: Minimal LiveKit screen-share baseline harness (GitHub #158)
+    requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-CAPACITY-02]
+    depends_on: [T-031, T-004, T-005, T-022]
+    evidence: [screen-share-baseline-runbook, screen-share-baseline-browser-test, numeric-baseline-report]
+  - id: T-033
+    title: Web per-layer sender diagnostics (GitHub #159)
+    requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04]
+    depends_on: [T-031, T-032, T-022]
+    evidence: [screen-share-layer-sampler-web-tests, screen-share-layer-sampler-web-suite, screen-share-stats-poller-test]
+  - id: T-034
+    title: Flutter per-layer sender diagnostics (GitHub #159)
+    requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04]
+    depends_on: [T-031, T-032, T-022]
+    evidence: [screen-share-layer-sampler-flutter-tests, screen-share-sdk-native-stats-fixtures, screen-share-layer-hardware-acceptance]
+  - id: T-035
+    title: Web screen-share publisher lifecycle (GitHub #160)
+    requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04]
+    depends_on: [T-031, T-032, T-033, T-022]
+    evidence: [screen-share-web-publisher-plan, screen-share-web-publisher-unit-tests, screen-share-web-full-suite, screen-share-web-build, screen-share-publisher-lifecycle-evidence]
+  - id: T-036
+    title: Flutter screen-share publisher lifecycle (GitHub #161)
+    requirements: [REQ-SCREEN-01, REQ-SCREEN-02, REQ-SCREEN-03, REQ-SCREEN-04]
+    depends_on: [T-031, T-032, T-033, T-034, T-022]
+    evidence: [screen-share-flutter-publisher-plan, screen-share-flutter-lifecycle-tests, screen-share-publisher-lifecycle-evidence, screen-share-flutter-device-acceptance]
   - id: T-040
     title: Common chat and mentions
     requirements: [REQ-CHAT-01, REQ-CHAT-02]

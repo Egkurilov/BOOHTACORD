@@ -18,6 +18,20 @@ reported capture dimensions; see
 `clients/flutter/lib/src/services/screen_share_quality.dart` and
 [QA-88](../../../../evidence/flutter/qa88-android-screen-share-resolution-cap-2026-09-29-001.json).
 
+All local video sender parameter writes use one SDK-owned lock per
+`RTCRtpSender`, and unpublish invalidates queued writes before removing senders.
+The screen-share profile API unpublishes and republishes the same capture so
+the next `AddTrackRequest` carries matching dimensions and layer descriptors.
+Publication disposal can retain that capture only for this managed transition;
+the application stops it when the share ends. The app keeps Android simulcast
+disabled until device and receiver acceptance is recorded. Focused regressions
+are in `test/track/sender_encoding_profile_test.dart` and
+`clients/flutter/test/screen_scope/quality_update_test.dart`.
+On targets where screen-share simulcast is enabled, the SDK caps the low layer
+at 15 fps while retaining the selected frame rate on the original layer.
+The retirement gate regression in `test/track/sender_parameter_retirement_test.dart`
+covers writes queued after the drain barrier but before sender removal.
+
 ## Source and maintenance policy
 
 [UPSTREAM.json](UPSTREAM.json) pins the published upstream archive SHA-256,

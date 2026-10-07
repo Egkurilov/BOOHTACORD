@@ -125,8 +125,10 @@ abstract class TrackPublication<T extends Track> extends Disposable {
     // listen for Track's muted events
     final listener = track.createListener()
       ..on<InternalTrackMuteUpdatedEvent>((event) => _onTrackMuteUpdatedEvent(event));
-    // dispose listener when the track is disposed
+    // Release the listener when either owner goes away. Local publications can
+    // retain a capture across unpublish, so track disposal alone is not enough.
     track.onDispose(() => listener.dispose());
+    onDispose(() => listener.dispose());
   }
 
   void _onTrackMuteUpdatedEvent(InternalTrackMuteUpdatedEvent event) {

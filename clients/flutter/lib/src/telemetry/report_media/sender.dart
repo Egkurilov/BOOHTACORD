@@ -3,7 +3,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'sender_sample.dart';
 
 import '../../screens/screen_packet_loss.dart';
-import '../../services/screen_share_quality.dart';
+import '../../features/screen/profile/quality.dart';
 
 class SenderMediaTelemetry {
   final _loss = ScreenPacketLossWindow();

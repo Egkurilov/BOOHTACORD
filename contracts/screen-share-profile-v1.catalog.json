@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "descriptorSchema": "screen-share-profile-v1.schema.json",
+  "units": {
+    "bitrate": "bit/s",
+    "frameRate": "frames/s",
+    "resolution": "pixels"
+  },
+  "states": {
+    "publisher": ["idle", "requesting", "capturing", "publishing", "sharing", "updating", "stopping", "failed"],
+    "viewer": ["idle", "subscribing", "waiting-first-frame", "playing", "suspended", "recovering", "ended", "failed"]
+  },
+  "reasonCodes": ["user-request", "platform-constraint", "network-adaptation", "no-subscribers", "sdk-paused", "unsupported-profile", "capture-denied", "publish-failed", "superseded", "session-revoked", "unknown"],
+  "resolutions": [
+    { "height": 720, "width": 1280 },
+    { "height": 1080, "width": 1920 },
+    { "height": 1440, "width": 2560 }
+  ],
+  "geometry": {
+    "preserveAspectRatio": true,
+    "allowUpscale": false,
+    "requireEvenEncodedDimensions": true,
+    "rule": "Use one scale for both axes; floor encoded edges, choose the largest scale that keeps both edges even and within the selected profile."
+  },
+  "topologyPolicy": {
+    "selectedVideoSubscriptionsPerViewer": 1,
+    "baselineByRuntime": {
+      "web": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "lowLayerMaxFps": 15, "evidenceStatus": "source-derived-unvalidated" },
+      "flutterAndroid": { "simulcast": false, "primaryLayers": { "min": 1, "max": 1 }, "evidenceStatus": "source-derived-unvalidated" },
+      "flutterOther": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "lowLayerMaxFps": 15, "evidenceStatus": "source-derived-unvalidated" }
+    },
+    "simulcast": "platform-sdk-default-preserved; maximum-two-primary-layers",
+    "maximumLayers": 2,
+    "backupCodecEvidenceStatus": "sfu-negotiated-unvalidated",
+    "congestionControlOwner": "LiveKit/WebRTC SDK"
+  },
+  "existingProfiles": [
+    { "id": "P720_15", "resolution": 720, "frameRate": 15, "bitrateBps": 1500000 },
+    { "id": "P720_30", "resolution": 720, "frameRate": 30, "bitrateBps": 2500000 },
+    { "id": "P720_60", "resolution": 720, "frameRate": 60, "bitrateBps": 4000000 },
+    { "id": "P1080_15", "resolution": 1080, "frameRate": 15, "bitrateBps": 2500000 },
+    { "id": "P1080_30", "resolution": 1080, "frameRate": 30, "bitrateBps": 5000000 },
+    { "id": "P1080_60", "resolution": 1080, "frameRate": 60, "bitrateBps": 8000000 },
+    { "id": "P1440_15", "resolution": 1440, "frameRate": 15, "bitrateBps": 5000000 },
+    { "id": "P1440_30", "resolution": 1440, "frameRate": 30, "bitrateBps": 8000000 },
+    { "id": "P1440_60", "resolution": 1440, "frameRate": 60, "bitrateBps": 12000000 }
+  ],
+  "experimentCandidates": [
+    { "id": "motion-720p60-v1", "mode": "motion", "resolution": 720, "frameRate": 60, "bitrateRangeBps": { "min": 3000000, "max": 4000000 }, "selectedBitrateBps": 4000000, "evidenceStatus": "unvalidated-candidate" },
+    { "id": "motion-1080p60-v1", "mode": "motion", "resolution": 1080, "frameRate": 60, "bitrateRangeBps": { "min": 6000000, "max": 8000000 }, "selectedBitrateBps": 8000000, "evidenceStatus": "unvalidated-candidate" },
+    { "id": "text-1080p15-v1", "mode": "text", "resolution": 1080, "frameRate": 15, "bitrateRangeBps": { "min": 2500000, "max": 5000000 }, "selectedBitrateBps": 2500000, "evidenceStatus": "unvalidated-candidate" },
+    { "id": "text-1080p30-v1", "mode": "text", "resolution": 1080, "frameRate": 30, "bitrateRangeBps": { "min": 2500000, "max": 5000000 }, "selectedBitrateBps": 5000000, "evidenceStatus": "unvalidated-candidate" },
+    { "id": "motion-1440p60-v1", "mode": "motion", "resolution": 1440, "frameRate": 60, "bitrateRangeBps": null, "selectedBitrateBps": null, "evidenceStatus": "research-only" }
+  ]
+}
