@@ -11,7 +11,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     if (current == null) return recoverStaleTopology();
     await mutate(
       'Категория переименована. Топология обновлена.',
-      () => state.api.renameCategory(
+      () => api.renameCategory(
         categoryId: current.id,
         name: name,
         expectedRevision: revision,
@@ -25,21 +25,11 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     final current = currentCategory(category.id);
     if (current == null) return recoverStaleTopology();
     if (current.channels.isNotEmpty) return;
-    final approved = await showConfirmationDialog<bool>(
-      context: contextProvider(),
-      builder: (context) => AlertDialog(
-        title: const Text('Удалить категорию?'),
-        content: Text('Удалить пустую категорию «${current.name}»?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Удалить'),
-          ),
-        ],
+    final approved = await confirm(
+      TopologyConfirmation(
+        title: 'Удалить категорию?',
+        content: 'Удалить пустую категорию «${current.name}»?',
+        confirmLabel: 'Удалить',
       ),
     );
     if (approved != true || !await validateRevision(revision)) return;
@@ -48,7 +38,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     if (latest.channels.isNotEmpty) return;
     await mutate(
       'Пустая категория удалена. Топология обновлена.',
-      () => state.api.deleteEmptyCategory(
+      () => api.deleteEmptyCategory(
         categoryId: latest.id,
         expectedRevision: revision,
       ),
@@ -62,7 +52,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     int direction,
   ) async {
     if (!await validateRevision(revision)) return;
-    final topology = state.topology;
+    final topology = this.topology;
     if (topology == null) return recoverStaleTopology();
     final index = topology.categories.indexWhere(
       (item) => item.id == categoryId,
@@ -75,10 +65,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     ids[target] = moved;
     await mutate(
       'Порядок категорий сохранён. Топология обновлена.',
-      () => state.api.reorderCategories(
-        categoryIds: ids,
-        expectedRevision: revision,
-      ),
+      () => api.reorderCategories(categoryIds: ids, expectedRevision: revision),
       revisionBound: true,
     );
   }

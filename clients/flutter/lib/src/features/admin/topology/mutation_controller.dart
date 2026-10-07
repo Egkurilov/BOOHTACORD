@@ -1,9 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
-import '../../../app_state.dart';
 import '../../../models.dart';
 import '../../../services/api_client.dart';
-import '../../../widgets/confirmation_dialog.dart';
 import 'actions.dart';
 
 part 'mutation_create.dart';
@@ -13,9 +11,16 @@ part 'mutation_danger.dart';
 part 'mutation_feedback.dart';
 
 abstract class _AdminTopologyMutationBase extends ChangeNotifier {
-  _AdminTopologyMutationBase(this.state, this.contextProvider);
-  final AppState state;
-  final BuildContext Function() contextProvider;
+  _AdminTopologyMutationBase({
+    required this.api,
+    required this.topologyProvider,
+    required this.refreshTopology,
+    required this.confirm,
+  });
+  final ApiClient api;
+  final ChannelTopology? Function() topologyProvider;
+  final Future<void> Function() refreshTopology;
+  final TopologyConfirmationHandler confirm;
   bool busy = false;
   String? status;
   String? error;
@@ -36,10 +41,12 @@ abstract class _AdminTopologyMutationBase extends ChangeNotifier {
     super.dispose();
   }
 
-  ChannelCategory? currentCategory(String id) =>
-      state.topology?.categories.where((item) => item.id == id).firstOrNull;
+  ChannelTopology? get topology => topologyProvider();
 
-  GuildChannel? currentChannel(String id) => state.topology?.categories
+  ChannelCategory? currentCategory(String id) =>
+      topology?.categories.where((item) => item.id == id).firstOrNull;
+
+  GuildChannel? currentChannel(String id) => topology?.categories
       .expand((item) => item.channels)
       .where((item) => item.id == id)
       .firstOrNull;
@@ -73,7 +80,12 @@ class AdminTopologyMutationController extends _AdminTopologyMutationBase
         _TopologyCategories,
         _TopologyChannels,
         _TopologyDangerActions {
-  AdminTopologyMutationController(super.state, super.contextProvider);
+  AdminTopologyMutationController({
+    required super.api,
+    required super.topologyProvider,
+    required super.refreshTopology,
+    required super.confirm,
+  });
 
   TopologyActions get actions => TopologyActions(
     createCategory: createCategory,

@@ -3,7 +3,7 @@ part of 'mutation_controller.dart';
 mixin _TopologyFeedback on _AdminTopologyMutationBase {
   @override
   Future<bool> validateRevision(int revision) async {
-    if (state.topology?.revision == revision) return true;
+    if (topology?.revision == revision) return true;
     await recoverStaleTopology();
     return false;
   }
@@ -23,7 +23,7 @@ mixin _TopologyFeedback on _AdminTopologyMutationBase {
     begin();
     try {
       await mutation();
-      await state.refreshTopology();
+      await refreshTopology();
       if (_disposed) return;
       status = success;
       notifyListeners();
@@ -39,7 +39,7 @@ mixin _TopologyFeedback on _AdminTopologyMutationBase {
     Object cause, {
     bool revisionBound = false,
   }) async {
-    await state.refreshTopology();
+    await refreshTopology();
     if (_disposed) return;
     error = revisionBound && cause is ApiFailure && cause.status == 409
         ? 'Топология изменилась. Список обновлён — проверьте выбор и повторите действие.'

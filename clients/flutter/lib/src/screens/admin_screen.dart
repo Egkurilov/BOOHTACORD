@@ -102,8 +102,26 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     _topologyMutations = AdminTopologyMutationController(
-      widget.state,
-      () => context,
+      api: widget.state.api,
+      topologyProvider: () => widget.state.topology,
+      refreshTopology: widget.state.refreshTopology,
+      confirm: (confirmation) => showConfirmationDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(confirmation.title),
+          content: Text(confirmation.content),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Отмена'),
+            ),
+            FilledButton.tonal(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(confirmation.confirmLabel),
+            ),
+          ],
+        ),
+      ),
     )..addListener(_onTopologyMutationChanged);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {

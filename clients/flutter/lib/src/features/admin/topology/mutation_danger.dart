@@ -7,23 +7,12 @@ mixin _TopologyDangerActions on _AdminTopologyMutationBase {
     if (current == null || current.kind != ChannelKind.text) {
       return recoverStaleTopology();
     }
-    final approved = await showConfirmationDialog<bool>(
-      context: contextProvider(),
-      builder: (context) => AlertDialog(
-        title: const Text('Подтверждение архивации'),
-        content: Text(
-          'Архивировать текстовый канал «${current.name}»? История сообщений сохранится, канал исчезнет из навигации.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Архивировать канал'),
-          ),
-        ],
+    final approved = await confirm(
+      TopologyConfirmation(
+        title: 'Подтверждение архивации',
+        content:
+            'Архивировать текстовый канал «${current.name}»? История сообщений сохранится, канал исчезнет из навигации.',
+        confirmLabel: 'Архивировать канал',
       ),
     );
     if (approved != true || !await validateRevision(revision)) return;
@@ -33,7 +22,7 @@ mixin _TopologyDangerActions on _AdminTopologyMutationBase {
     }
     await mutate(
       'Канал архивирован. Топология обновлена.',
-      () => state.api.archiveTextChannel(
+      () => api.archiveTextChannel(
         channelId: latest.id,
         expectedRevision: revision,
       ),
@@ -49,23 +38,12 @@ mixin _TopologyDangerActions on _AdminTopologyMutationBase {
         current.admissionClosed) {
       return;
     }
-    final approved = await showConfirmationDialog<bool>(
-      context: contextProvider(),
-      builder: (context) => AlertDialog(
-        title: const Text('Подтверждение закрытия'),
-        content: Text(
-          'Закрыть вход в голосовой канал «${current.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Закрыть вход'),
-          ),
-        ],
+    final approved = await confirm(
+      TopologyConfirmation(
+        title: 'Подтверждение закрытия',
+        content:
+            'Закрыть вход в голосовой канал «${current.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.',
+        confirmLabel: 'Закрыть вход',
       ),
     );
     if (approved != true || !await validateRevision(revision)) return;
@@ -77,7 +55,7 @@ mixin _TopologyDangerActions on _AdminTopologyMutationBase {
     }
     await mutate(
       'Вход закрыт. Отзыв media-доступа в SFU ещё подтверждается; число отозванных leases не подтверждает отключение участников.',
-      () => state.api.closeVoiceAdmission(
+      () => api.closeVoiceAdmission(
         channelId: latest.id,
         expectedRevision: revision,
       ),

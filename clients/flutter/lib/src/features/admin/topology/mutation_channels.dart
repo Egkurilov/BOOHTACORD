@@ -11,7 +11,7 @@ mixin _TopologyChannels on _AdminTopologyMutationBase {
     if (current == null) return recoverStaleTopology();
     await mutate(
       'Канал переименован. Топология обновлена.',
-      () => state.api.renameChannel(
+      () => api.renameChannel(
         channelId: current.id,
         name: name,
         expectedRevision: revision,
@@ -30,7 +30,7 @@ mixin _TopologyChannels on _AdminTopologyMutationBase {
     if (current == null) return recoverStaleTopology();
     await mutate(
       'Описание канала сохранено. Топология обновлена.',
-      () => state.api.updateChannelDescription(
+      () => api.updateChannelDescription(
         channelId: current.id,
         description: description,
         expectedRevision: revision,
@@ -45,7 +45,7 @@ mixin _TopologyChannels on _AdminTopologyMutationBase {
     String targetId,
   ) async {
     if (!await validateRevision(revision)) return;
-    final topology = state.topology;
+    final topology = this.topology;
     final current = currentChannel(channel.id);
     final target = currentCategory(targetId);
     if (topology == null || current == null || target == null) {
@@ -59,7 +59,7 @@ mixin _TopologyChannels on _AdminTopologyMutationBase {
     if (source == null || source.id == target.id) return;
     await mutate(
       'Канал перенесён. Топология обновлена.',
-      () => state.api.moveChannel(
+      () => api.moveChannel(
         channelId: current.id,
         categoryId: target.id,
         expectedRevision: revision,
@@ -75,7 +75,7 @@ mixin _TopologyChannels on _AdminTopologyMutationBase {
     int direction,
   ) async {
     if (!await validateRevision(revision)) return;
-    final topology = state.topology;
+    final topology = this.topology;
     final category = currentCategory(categoryId);
     if (topology == null || category == null) return recoverStaleTopology();
     final index = category.channels.indexWhere((item) => item.id == channel.id);
@@ -87,7 +87,7 @@ mixin _TopologyChannels on _AdminTopologyMutationBase {
     ids[target] = moved;
     await mutate(
       'Порядок каналов сохранён. Топология обновлена.',
-      () => state.api.reorderChannels(
+      () => api.reorderChannels(
         categoryId: category.id,
         channelIds: ids,
         expectedRevision: revision,

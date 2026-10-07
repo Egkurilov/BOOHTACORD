@@ -16,6 +16,9 @@
   test/admin_readiness_test.dart test/admin_readiness_widget_test.dart` — PASS.
 - `flutter analyze --no-pub` on changed admin files — PASS.
 - `flutter test` — PASS (788 tests; one pre-existing skipped test).
+- CI dependency guard — PASS locally (`Dart local import edges and feature/UI
+  boundaries: OK`); topology controller receives application services through
+  shell callbacks and does not import `AppState` or UI widgets.
 - `flutter build apk --release --split-per-abi` — PASS after the final
   controller extraction (armv7, arm64 and x86_64 APKs built; generated
   artifacts remain ignored).

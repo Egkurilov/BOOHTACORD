@@ -1,5 +1,21 @@
 import '../../../models.dart';
 
+class TopologyConfirmation {
+  const TopologyConfirmation({
+    required this.title,
+    required this.content,
+    required this.confirmLabel,
+  });
+
+  final String title;
+  final String content;
+  final String confirmLabel;
+}
+
+typedef TopologyConfirmationHandler = Future<bool?> Function(
+  TopologyConfirmation confirmation,
+);
+
 typedef CategoryRevisionAction = Future<void> Function(ChannelCategory, int);
 typedef ChannelRevisionAction = Future<void> Function(GuildChannel, int);
 
