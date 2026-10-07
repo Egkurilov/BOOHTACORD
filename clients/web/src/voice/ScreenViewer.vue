@@ -22,7 +22,8 @@ const moreActions = ref<HTMLDetailsElement | null>(null)
 const fullscreenActive = ref(false)
 const fullscreenFeedback = ref('')
 const playbackFeedback = ref('')
-const playbackBlocked = ref(false)
+const videoPlaybackBlocked=ref(false),audioPlaybackBlocked=ref(false)
+const playbackBlocked = computed(() => videoPlaybackBlocked.value || audioPlaybackBlocked.value)
 let playbackRequestGeneration=0,requestedSelectionId:string|null=null
 const { actualVideoQuality, markVideoReady,playbackFps,presentedFrames,refreshVideoQuality, resetVideoFrame, videoReady } = useScreenPlaybackQuality(video, () => props.selectedId, () => props.ended)
 let fullscreenControls: ReturnType<typeof createScreenFullscreenControls> | null = null
@@ -31,12 +32,12 @@ const selectedStream = computed(() => props.cards.find((stream) => stream.id ===
 const {metrics:receiverMetrics,sampledAt:receiverSampledAt,refresh:refreshReceiverMetrics}=useScreenReceiverDiagnostics(selectedStream,()=>props.ended)
 const adjustable = computed(() => Boolean(selectedStream.value?.hasAudio && selectedStream.value.accountId && !selectedStream.value.isLocal))
 const audioMessage = computed(() => selectedStream.value ? screenAudioMessage({ isLocal: Boolean(selectedStream.value.isLocal), hasAudio: selectedStream.value.hasAudio, adjustable: adjustable.value, deafened: props.deafened }) : '')
-function reportPlaybackError(cause:unknown,audioOutput=false):void {if(cause instanceof DOMException&&cause.name==='NotAllowedError'){if(audioOutput){playbackFeedback.value='Браузер заблокировал звук. Нажмите «Повторить» ещё раз после разрешения звука.';return}playbackBlocked.value=true;playbackFeedback.value='Браузер заблокировал воспроизведение. Нажмите «Повторить» после разрешения.'}}
-function playFromGesture():void {const generation=++playbackRequestGeneration;if(video.value)void video.value.play().then(()=>{if(generation===playbackRequestGeneration)playbackBlocked.value=false}).catch(cause=>{if(generation===playbackRequestGeneration)reportPlaybackError(cause)});void audio.value?.play().catch(cause=>{if(generation===playbackRequestGeneration)reportPlaybackError(cause,true)})}
-function select(id: string): void { if (id === props.selectedId) return; requestedSelectionId=id;playbackBlocked.value=false;markScreenSelected(video.value);emit('select',id,video.value,audio.value);playFromGesture() }
+function reportPlaybackError(cause:unknown,audioOutput=false):void {if(cause instanceof DOMException&&cause.name==='NotAllowedError'){if(audioOutput){audioPlaybackBlocked.value=true;playbackFeedback.value='Браузер заблокировал звук. Нажмите «Повторить» ещё раз после разрешения звука.';return}videoPlaybackBlocked.value=true;playbackFeedback.value='Браузер заблокировал воспроизведение. Нажмите «Повторить» после разрешения.'}}
+function playFromGesture():void {const generation=++playbackRequestGeneration;if(video.value)void video.value.play().then(()=>{if(generation===playbackRequestGeneration){videoPlaybackBlocked.value=false;if(!audioPlaybackBlocked.value)playbackFeedback.value=''}}).catch(cause=>{if(generation===playbackRequestGeneration)reportPlaybackError(cause)});void audio.value?.play().then(()=>{if(generation===playbackRequestGeneration){audioPlaybackBlocked.value=false;if(!videoPlaybackBlocked.value)playbackFeedback.value=''}}).catch(cause=>{if(generation===playbackRequestGeneration)reportPlaybackError(cause,true)})}
+function select(id: string): void { if (id === props.selectedId) return; requestedSelectionId=id;videoPlaybackBlocked.value=false;audioPlaybackBlocked.value=false;markScreenSelected(video.value);emit('select',id,video.value,audio.value);playFromGesture() }
 function retry(automatic=false): void {
   playbackFeedback.value = ''
-  if(!automatic&&playbackBlocked.value){markScreenSelected(video.value);resetVideoFrame();playFromGesture();return}
+  if(!automatic&&playbackBlocked.value){markScreenSelected(video.value);if(videoPlaybackBlocked.value)resetVideoFrame();playFromGesture();return}
   markScreenSelected(video.value)
   resetVideoFrame()
   emit('retry',automatic)
@@ -46,7 +47,7 @@ function changeQuality(): void { if (moreActions.value) moreActions.value.open =
 function selectStream(id: string): void { select(id) }
 defineExpose({ selectStream })
 function stageVisible():boolean {const box=stage.value?.getBoundingClientRect();return Boolean(document.visibilityState==='visible'&&box&&box.width>0&&box.height>0&&box.bottom>0&&box.right>0&&box.top<innerHeight&&box.left<innerWidth)}
-watch(()=>props.selectedId,id=>{if(requestedSelectionId===id){requestedSelectionId=null;return}requestedSelectionId=null;playbackRequestGeneration+=1;playbackBlocked.value=false})
+watch(()=>props.selectedId,id=>{if(requestedSelectionId===id){requestedSelectionId=null;return}requestedSelectionId=null;playbackRequestGeneration+=1;videoPlaybackBlocked.value=false;audioPlaybackBlocked.value=false})
 function handleKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && props.expanded) emit('update:expanded', false)
 }

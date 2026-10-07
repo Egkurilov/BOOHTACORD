@@ -102,4 +102,13 @@ describe('screen viewer reference composition', () => {
     expect(source('./viewer_diagnosis/Panel.vue')).toContain('selectedAt.value=Date.now();now.value=selectedAt.value;emit(\'retry\')')
     expect(source('./ScreenViewer.vue')).toContain(':publisher-paused="Boolean(selectedStream.videoMuted)"')
   })
+
+  it('offers a gesture retry when audio autoplay is blocked independently of video', () => {
+    const viewer = source('./ScreenViewer.vue')
+    expect(viewer).toContain('audioPlaybackBlocked.value=true')
+    expect(viewer).toContain('videoPlaybackBlocked.value || audioPlaybackBlocked.value')
+    expect(viewer).toContain('audio.value?.play()')
+    expect(viewer).toContain(':autoplay-blocked="playbackBlocked"')
+    expect(viewer).toContain('@retry="retry(false)"')
+  })
 })
