@@ -40,7 +40,7 @@ void main() {
     await tester.pump();
     expect(find.byKey(const ValueKey('fullscreen-renderer')), findsOneWidget);
     expect(find.text('fullscreen route remains'), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 160));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('fullscreen-renderer')), findsNothing);
   });
 }
