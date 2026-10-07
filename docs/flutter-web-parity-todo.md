@@ -8,10 +8,29 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   roles, topology, audit, media and guild settings implemented with focused
   tests. See [parity map](flutter-web-parity.md) and
   [FV2-031 evidence](../evidence/flutter/qa-admin-parity-2026-10-07-001.json).
+- [x] Members expanded rows and Roles before/current/proposed conflict review
+  completed on `codex/issue-188-flutter-admin-completion`; full Flutter suite,
+  analyzer, dependency guard and split APK gate pass — [Members evidence](../evidence/flutter/qa-admin-members-responsive-2026-10-07-001.json),
+  [Roles evidence](../evidence/flutter/qa-admin-roles-conflict-2026-10-07-001.json).
+- [x] Cross-cutting large-text/resize regression hardening: the admin geometry
+  matrix now covers phone portrait/landscape, tablet and desktop widths, and a
+  text-scale 2.0 traversal opens every section. Channels dropdowns, Audit,
+  Media and Readiness no longer overflow at that scale — [accessibility
+  evidence](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-001.json).
 - [ ] Runtime acceptance across Android, iOS, macOS and Windows. Android and
   macOS checks may be recorded when the clients are available; iOS and Windows
   remain open until a real runtime is supplied. Do not mark this item PASS from
-  widget tests alone.
+  widget tests alone. A macOS administrator-surface pass is recorded in
+  [QA-ADMIN-MACOS-RUNTIME-2026-10-07-001](../evidence/flutter/qa-admin-macos-runtime-2026-10-07-001.json);
+  an Android portrait administrator-surface pass is recorded in
+  [QA-ADMIN-ANDROID-RUNTIME-2026-10-07-001](../evidence/flutter/qa-admin-android-runtime-2026-10-07-001.json).
+  A current-source Android portrait + landscape smoke after the accessibility
+  hardening is recorded in
+  [QA-ADMIN-ANDROID-RUNTIME-2026-10-07-002](../evidence/flutter/qa-admin-android-runtime-2026-10-07-002.json).
+  The subsequent compact identity regression and current APK launch smoke are
+  recorded in
+  [QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-002](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-002.json).
+  These records do not replace live-resize, IME/TalkBack, iOS or Windows acceptance.
 
 ## Текущий фокус: Flutter macOS и Android
 

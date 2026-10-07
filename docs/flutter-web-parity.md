@@ -17,9 +17,12 @@ Implemented slices:
   metrics.
 - Members retain drafts through an `updated_at` optimistic-concurrency save;
   a `409` refreshes server state while preserving the local draft and exposing
-  a conflict message. Long names are ellipsized in the adaptive card layout.
+  a before/current/proposed review. Expanded constraints use compact table-like
+  rows with deterministic avatars, access badges and contextual actions; long
+  names are ellipsized, while compact constraints retain expandable cards.
 - Roles expose the web permission matrix, delete-grant confirmation, dirty
-  role-switch protection and conflict recovery.
+  role-switch protection and a before/current/proposed conflict review with
+  explicit server/draft resolution actions.
 - Channels add a selectable topology tree and keep the existing revision-bound
   create/rename/reorder/description mutations behind the inspector.
 - Audit adds scope, actor, event-type and date filters, day grouping and
@@ -34,6 +37,27 @@ Focused widget/model/API tests cover the new slices. Android/macOS runtime
 checks are recorded separately; Windows and iOS acceptance remain `NOT_RUN`
 until those runtimes are available. This implementation record therefore does
 not claim the parent platform gate is closed.
+
+The follow-up accessibility pass adds regression coverage for the full admin
+viewport matrix, including phone landscape and tablet landscape, plus a
+text-scale 2.0 traversal through every section. That run exposed and fixed
+large-text clipping in Channels dropdowns and the Audit, Media and Readiness
+panels. The full Flutter suite passed 795 tests with one expected skip and a
+release APK split build completed; native IME, TalkBack, focus-loop and
+cross-platform runtime acceptance remain open —
+[QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-001](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-001.json).
+
+The current branch was installed on the Android 15/API 35 emulator after that
+hardening commit. The administrator surface passed a short portrait + landscape
+smoke with all seven tabs visible and no app fatal exception; this does not
+replace the remaining IME/TalkBack/iOS/Windows gate —
+[QA-ADMIN-ANDROID-RUNTIME-2026-10-07-002](../evidence/flutter/qa-admin-android-runtime-2026-10-07-002.json).
+
+The later compact identity follow-up added an expanded role selector for narrow
+member cards and a long display-name/login regression at text scale 2.0. The
+full suite now passes 796 tests with one expected skip; the current release APK
+also launches on Android API 35 without an app fatal exception —
+[QA-ADMIN-ACCESSIBILITY-HARDENING-2026-10-07-002](../evidence/flutter/qa-admin-accessibility-hardening-2026-10-07-002.json).
 
 ## Компактный composer — проверка 2026-10-05
 

@@ -1,0 +1,38 @@
+{
+  "id": "QA-ADMIN-MEMBERS-RESPONSIVE-2026-10-07-001",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #191 — Flutter Members responsive presentation",
+  "source_revision": "a16b17bc",
+  "checks": [
+    {
+      "name": "Expanded member rows",
+      "result": "PASS",
+      "observation": "Expanded constraints use 72 px table-like rows with deterministic avatar initials/colors, role selector, access badge, blocked switch and contextual actions; compact constraints retain expandable cards."
+    },
+    {
+      "name": "Long-name safety",
+      "result": "PASS",
+      "observation": "Display names and logins are single-line ellipsized in expanded rows; compact cards keep the same overflow policy."
+    },
+    {
+      "name": "Members and admin regression tests",
+      "result": "PASS",
+      "observation": "Focused member filter/conflict tests and the workspace admin/reset-link suite pass; full Flutter suite finished 791 tests with one expected skip."
+    },
+    {
+      "name": "Analyzer and dependency guard",
+      "result": "PASS",
+      "observation": "Flutter analyzer reports no diagnostics for the changed admin files; Dart dependency guard passes for 730 files."
+    },
+    {
+      "name": "Android release APK",
+      "result": "PASS",
+      "observation": "flutter build apk --release --split-per-abi built armv7 17.9 MB, arm64 20.0 MB and x86_64 21.4 MB for version 1.0.38+71. Generated APKs remain ignored."
+    }
+  ],
+  "limitations": [
+    "Android portrait and macOS administrator-surface runtime passes are recorded separately; live-resize/IME/TalkBack and iOS/Windows acceptance remain part of #198.",
+    "The focused implementation record does not claim a matched screenshot comparison across platforms."
+  ],
+  "status": "IMPLEMENTATION PASS; native runtime pending"
+}

@@ -1,0 +1,32 @@
+{
+  "id": "QA-ADMIN-ROLES-CONFLICT-2026-10-07-001",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #192 — Flutter Roles permission matrix and conflict review",
+  "source_revision": "6612fccf",
+  "checks": [
+    {
+      "name": "Responsive permission matrix",
+      "result": "PASS",
+      "observation": "Desktop renders object/create/delete columns; compact renders each object as a touch-friendly card while preserving all six permission semantics."
+    },
+    {
+      "name": "Dirty-state and destructive confirmation",
+      "result": "PASS",
+      "observation": "Unsaved changes are announced, role changes are guarded, and new delete grants require explicit confirmation. Administrator policy remains read-only."
+    },
+    {
+      "name": "409 before/current/proposed review",
+      "result": "PASS",
+      "observation": "Concurrent save retains the draft and presents per-permission before/current/proposed values with refresh, accept-server and apply-draft actions."
+    },
+    {
+      "name": "Roles regression tests",
+      "result": "PASS",
+      "observation": "Surface and simulated 409 conflict widget tests pass; full Flutter suite finished 791 tests with one expected skip."
+    }
+  ],
+  "limitations": [
+    "Native keyboard/screen-reader acceptance is tracked by #197/#198 and was not run in this environment."
+  ],
+  "status": "IMPLEMENTATION PASS; native runtime pending"
+}

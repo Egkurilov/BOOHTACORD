@@ -1,0 +1,43 @@
+{
+  "id": "QA-ADMIN-MACOS-RUNTIME-2026-10-07-001",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #198 — macOS Flutter admin runtime pass",
+  "source_revision": "23619dee",
+  "app_version": "1.0.38+71 (source build)",
+  "platform": "macOS 26.6.1 (darwin-arm64)",
+  "runtime": "BOOHTACORD desktop client via native macOS window",
+  "viewport": "2048x1340 logical screenshot observed after native window zoom",
+  "checks": [
+    {
+      "name": "Admin shell and section navigation",
+      "result": "PASS",
+      "observation": "Native window exposed the Design V2 admin header and opened Guild, Members, Roles, Channels, Audit, Media and Readiness sections without an overflow or crash."
+    },
+    {
+      "name": "Members runtime surface",
+      "result": "PASS",
+      "observation": "Member count, search field, role filter, member cards, role selectors, blocked switches and save/reset actions were visible in the macOS accessibility tree; the search field accepted input without leaving the page."
+    },
+    {
+      "name": "Roles runtime surface",
+      "result": "PASS",
+      "observation": "Role tabs, permission matrix checkboxes, defaults/cancel/save actions and destructive permission labels were visible and reachable."
+    },
+    {
+      "name": "Channels runtime surface",
+      "result": "PASS",
+      "observation": "Channel inspector exposed description, rename, reorder, create, move, archive and close controls."
+    },
+    {
+      "name": "Audit, Media and Readiness runtime surfaces",
+      "result": "PASS",
+      "observation": "Audit filters and day-grouped events, Media freshness state and Readiness service/storage status were rendered with accessible labels."
+    }
+  ],
+  "not_run": [
+    "Live resize through the complete 360–1920 matrix was not captured in this run.",
+    "Android installation/runtime could not be exercised because local ADB failed to start (usb_osx interface plug-in / smartsocket listener).",
+    "iOS and Windows native runtimes were not attached."
+  ],
+  "status": "MACOS ADMIN RUNTIME PASS; cross-platform gate pending"
+}

@@ -795,6 +795,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                           DropdownButtonFormField<String>(
                                             key: ValueKey(selectedId),
                                             initialValue: selectedId,
+                                            isExpanded: true,
                                             decoration: const InputDecoration(
                                               labelText: 'Категория',
                                             ),
@@ -907,6 +908,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                   )
                                                   ? _channelId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'Канал',
                                               ),
@@ -1045,6 +1047,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                           ),
                                           DropdownButtonFormField<ChannelKind>(
                                             initialValue: _channelKind,
+                                            isExpanded: true,
                                             decoration: const InputDecoration(
                                               labelText: 'Тип канала',
                                             ),
@@ -1107,6 +1110,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                       )
                                                   ? _moveChannelId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'Перенести канал',
                                               ),
@@ -1142,6 +1146,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                   )
                                                   ? _moveTargetCategoryId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'В категорию',
                                               ),
@@ -1195,6 +1200,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                   )
                                                   ? _archiveChannelId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'Текстовый канал для архивации',
                                               ),
@@ -1246,6 +1252,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                   )
                                                   ? _closeVoiceChannelId
                                                   : null,
+                                              isExpanded: true,
                                               decoration: const InputDecoration(
                                                 labelText: 'Голосовой канал для закрытия',
                                               ),
@@ -1449,7 +1456,197 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     ),
   );
 
-  Widget _buildAdminAccountCard(AdminAccount account) {
+  Widget _buildAdminAccountCard(AdminAccount account) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth >= 720) {
+        return _buildAdminAccountDesktopRow(account);
+      }
+      return _buildAdminAccountCompactCard(account);
+    },
+  );
+
+  Widget _buildAdminAccountDesktopRow(AdminAccount account) {
+    final draft = _accountDrafts[account.accountId];
+    final busy = _busyAccountIds.contains(account.accountId);
+    final sameVoiceParticipant =
+        widget.state.voiceChannel != null &&
+        widget.state.room?.remoteParticipants.values.any((participant) {
+              return participant.metadata == 'account:${account.accountId}';
+            }) ==
+            true;
+    final avatarColor = _adminMemberAvatarColor(account.accountId);
+    final initials = _adminMemberInitials(account.displayName);
+    return Container(
+      key: ValueKey('admin-member-row:${account.accountId}'),
+      constraints: const BoxConstraints(minHeight: 72),
+      margin: const EdgeInsets.only(bottom: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: GcColors.borderSubtle)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: avatarColor,
+            child: Text(
+              initials,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 5,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  account.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  '@${account.login}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: GcColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: DropdownButtonFormField<String>(
+              key: ValueKey('role:${account.accountId}:${draft?.role}'),
+              initialValue: draft?.role,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              items: const [
+                DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
+                DropdownMenuItem(
+                  value: 'ADMINISTRATOR',
+                  child: Text('Администратор'),
+                ),
+              ],
+              onChanged: busy || draft == null
+                  ? null
+                  : (value) {
+                      if (value != null) setState(() => draft.role = value);
+                    },
+            ),
+          ),
+          Switch(
+            value: draft?.blocked ?? account.blocked,
+            onChanged: busy || draft == null
+                ? null
+                : (value) => setState(() => draft.blocked = value),
+          ),
+          _adminAccessBadge(draft?.blocked ?? account.blocked),
+          const SizedBox(width: 4),
+          FilledButton.tonal(
+            key: ValueKey('save-account:${account.accountId}'),
+            focusNode: _accountSaveFocusNodes.putIfAbsent(
+              account.accountId,
+              FocusNode.new,
+            ),
+            onPressed: busy ? null : () => _saveAccount(account),
+            child: busy
+                ? const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Сохранить'),
+          ),
+          const SizedBox(width: 4),
+          TextButton(
+            key: ValueKey('reset-account:${account.accountId}'),
+            onPressed: busy ? null : () => _createResetLink(account),
+            child: const Text('Сбросить пароль'),
+          ),
+          PopupMenuButton<String>(
+            key: ValueKey('admin-member-actions:${account.accountId}'),
+            tooltip: 'Действия с участником ${account.displayName}',
+            enabled: !busy,
+            onSelected: (action) {
+              switch (action) {
+                case 'role':
+                  if (draft != null) {
+                    setState(
+                      () => draft.role = draft.role == 'ADMINISTRATOR'
+                          ? 'MEMBER'
+                          : 'ADMINISTRATOR',
+                    );
+                  }
+                  break;
+                case 'blocked':
+                  if (draft != null) {
+                    setState(() => draft.blocked = !draft.blocked);
+                  }
+                  break;
+                case 'save':
+                  _saveAccount(account);
+                  break;
+                case 'reset':
+                  _createResetLink(account);
+                  break;
+                case 'kick':
+                  _kickVoiceParticipant(account);
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'role',
+                child: Text(
+                  draft?.role == 'ADMINISTRATOR'
+                      ? 'Назначить участником'
+                      : 'Назначить администратором',
+                ),
+              ),
+              PopupMenuItem(
+                value: 'blocked',
+                child: Text(
+                  draft?.blocked == true ? 'Снять блокировку' : 'Заблокировать',
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'save',
+                enabled: draft != null && _draftChanged(account, draft),
+                child: const Text('Сохранить'),
+              ),
+              const PopupMenuItem(
+                value: 'reset',
+                child: Text('Сбросить пароль'),
+              ),
+              if (sameVoiceParticipant &&
+                  account.accountId != widget.state.user?.accountId)
+                const PopupMenuItem(
+                  value: 'kick',
+                  child: Text('Отключить от голоса'),
+                ),
+            ],
+            child: const SizedBox.square(
+              dimension: 44,
+              child: Center(child: Icon(Icons.more_horiz)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminAccountCompactCard(AdminAccount account) {
     final draft = _accountDrafts[account.accountId];
     final busy = _busyAccountIds.contains(account.accountId);
     final sameVoiceParticipant =
@@ -1467,10 +1664,18 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: GcColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+      child: Material(
+        color: GcColors.surface,
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: EdgeInsets.zero,
+          leading: CircleAvatar(
+            radius: 18,
+            backgroundColor: _adminMemberAvatarColor(account.accountId),
+            child: Text(_adminMemberInitials(account.displayName)),
+          ),
+          title: Text(
             account.displayName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1480,72 +1685,75 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
               fontWeight: FontWeight.w600,
             ),
           ),
-          Text(
+          subtitle: Text(
             '@${account.login}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
           ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            key: ValueKey('role:${account.accountId}:${draft?.role}'),
-            initialValue: draft?.role,
-            decoration: InputDecoration(labelText: 'Роль: ${account.login}'),
-            items: const [
-              DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
-              DropdownMenuItem(
-                value: 'ADMINISTRATOR',
-                child: Text('Администратор'),
-              ),
-            ],
-            onChanged: busy || draft == null
-                ? null
-                : (value) {
-                    if (value != null) setState(() => draft.role = value);
-                  },
-          ),
-          Material(
-            color: GcColors.surface,
-            child: SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Заблокирован'),
-              value: draft?.blocked ?? account.blocked,
+          children: [
+            DropdownButtonFormField<String>(
+              key: ValueKey('role:${account.accountId}:${draft?.role}'),
+              initialValue: draft?.role,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: 'Роль: ${account.login}'),
+              items: const [
+                DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
+                DropdownMenuItem(
+                  value: 'ADMINISTRATOR',
+                  child: Text('Администратор'),
+                ),
+              ],
               onChanged: busy || draft == null
                   ? null
-                  : (value) => setState(() => draft.blocked = value),
+                  : (value) {
+                      if (value != null) setState(() => draft.role = value);
+                    },
             ),
-          ),
-          Wrap(
-            spacing: 8,
-            children: [
-              FilledButton.tonal(
-                key: ValueKey('save-account:${account.accountId}'),
-                focusNode: _accountSaveFocusNodes.putIfAbsent(
-                  account.accountId,
-                  FocusNode.new,
+            Material(
+              color: GcColors.surface,
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Заблокирован'),
+                value: draft?.blocked ?? account.blocked,
+                onChanged: busy || draft == null
+                    ? null
+                    : (value) => setState(() => draft.blocked = value),
+              ),
+            ),
+            Wrap(
+              spacing: 8,
+              children: [
+                FilledButton.tonal(
+                  key: ValueKey('save-account:${account.accountId}'),
+                  focusNode: _accountSaveFocusNodes.putIfAbsent(
+                    account.accountId,
+                    FocusNode.new,
+                  ),
+                  onPressed: busy ? null : () => _saveAccount(account),
+                  child: busy
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Сохранить'),
                 ),
-                onPressed: busy ? null : () => _saveAccount(account),
-                child: busy
-                    ? const SizedBox.square(
-                        dimension: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Сохранить'),
-              ),
-              OutlinedButton(
-                key: ValueKey('reset-account:${account.accountId}'),
-                onPressed: busy ? null : () => _createResetLink(account),
-                child: const Text('Сбросить пароль'),
-              ),
-              if (sameVoiceParticipant &&
-                  account.accountId != widget.state.user?.accountId)
                 OutlinedButton(
-                  onPressed: busy ? null : () => _kickVoiceParticipant(account),
-                  child: const Text('Отключить от голоса'),
+                  key: ValueKey('reset-account:${account.accountId}'),
+                  onPressed: busy ? null : () => _createResetLink(account),
+                  child: const Text('Сбросить пароль'),
                 ),
-            ],
-          ),
-        ],
+                if (sameVoiceParticipant &&
+                    account.accountId != widget.state.user?.accountId)
+                  OutlinedButton(
+                    onPressed: busy
+                        ? null
+                        : () => _kickVoiceParticipant(account),
+                    child: const Text('Отключить от голоса'),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1596,6 +1804,47 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   String _accountSummary(String role, bool blocked) =>
       '${role == 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь'}; '
       '${blocked ? 'заблокирован' : 'доступ открыт'}';
+
+  Widget _adminAccessBadge(bool blocked) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: blocked ? GcColors.dangerBackground : GcColors.successBackground,
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Text(
+        blocked ? 'Заблокирован' : 'Активен',
+        style: TextStyle(
+          color: blocked ? GcColors.danger : GcColors.success,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  );
+
+  Color _adminMemberAvatarColor(String id) {
+    const colors = [
+      GcColors.avatarBlue,
+      GcColors.avatarGreen,
+      GcColors.avatarViolet,
+      GcColors.avatarOrange,
+      GcColors.avatarGray,
+    ];
+    var hash = 2166136261;
+    for (final rune in id.runes) {
+      hash = ((hash ^ rune) * 16777619) & 0xFFFFFFFF;
+    }
+    return colors[hash % colors.length];
+  }
+
+  String _adminMemberInitials(String value) {
+    final matches = RegExp(
+      r'\p{L}',
+      unicode: true,
+    ).allMatches(value).take(2).map((match) => match.group(0)!).join();
+    return matches.isEmpty ? 'У' : matches.toUpperCase();
+  }
 
   Widget _buildResetLinkCard() => Container(
     margin: const EdgeInsets.only(bottom: 12),

@@ -1,5 +1,4 @@
 import 'package:boohtacord_desktop/src/app_state.dart';
-import 'package:boohtacord_desktop/src/core/http/api_failure.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_member_filter.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
@@ -225,6 +224,17 @@ void main() {
       findsOneWidget,
       reason: 'the web desktop select keeps its native dropdown arrow',
     );
+    expect(
+      find.byKey(const ValueKey('admin-member-row:a')),
+      findsOneWidget,
+      reason: 'expanded members use a compact table-like row',
+    );
+    expect(
+      find.byKey(const ValueKey('admin-member-actions:a')),
+      findsOneWidget,
+      reason: 'expanded members expose contextual actions without a full form',
+    );
+    expect(find.text('Роль: alice'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -264,4 +274,45 @@ void main() {
     expect(find.text('Принять серверные данные'), findsOneWidget);
     expect(find.text('Применить мой draft'), findsOneWidget);
   });
+
+  testWidgets(
+    'compact members keep pathological identities usable at 2x text',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(tester.view.reset);
+      final api = TopologyTestApi()
+        ..accounts = [
+          account(
+            'long',
+            'Очень длинное отображаемое имя администратора с редкими символами — 0123456789',
+            'login_with_an_extremely_long_identifier_that_must_not_escape_the_card',
+            'ADMINISTRATOR',
+          ),
+        ];
+      final state = AppState(api)..topology = api.current;
+      addTearDown(state.dispose);
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: MaterialApp(
+            home: Scaffold(body: AdminScreen(state: state)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Очень длинное отображаемое имя администратора с редкими символами — 0123456789',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('@login_with_an_extremely_long_identifier'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

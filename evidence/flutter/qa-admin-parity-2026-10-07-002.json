@@ -1,0 +1,53 @@
+{
+  "id": "QA-ADMIN-PARITY-2026-10-07-002",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #188 — Flutter Design V2 administrator parity follow-up",
+  "source_revision": "7d7cb383",
+  "branch": "codex/issue-188-flutter-admin-completion",
+  "checks": [
+    {
+      "name": "Full Flutter suite",
+      "result": "PASS",
+      "observation": "791 tests passed with one expected skip, including admin, workspace, responsive geometry and accessibility regressions."
+    },
+    {
+      "name": "Flutter analyzer",
+      "result": "PASS",
+      "observation": "Changed admin screen and feature directories analyze without diagnostics."
+    },
+    {
+      "name": "Dart dependency guard",
+      "result": "PASS",
+      "observation": "tools.verify.dependencies.dart reports OK for 730 files."
+    },
+    {
+      "name": "Android release APK",
+      "result": "PASS",
+      "observation": "Version 1.0.38+71 split release artifacts built: armv7 17.9 MB, arm64 20.0 MB and x86_64 21.4 MB. APKs are generated artifacts and are not committed."
+    },
+    {
+      "name": "Admin feature evidence",
+      "result": "PASS",
+      "observation": "Readiness freshness, Members concurrency/responsive rows and Roles conflict comparison are covered by focused records; topology, audit, media and guild responsive slices retain their existing tests."
+    },
+    {
+      "name": "macOS admin runtime",
+      "result": "PASS",
+      "observation": "Native macOS 26.6.1 rendered Guild, Members, Roles, Channels, Audit, Media and Readiness at the observed desktop viewport; accessibility tree exposed the expected controls."
+    },
+    {
+      "name": "Android admin portrait runtime",
+      "result": "PASS",
+      "observation": "Android 15/API 35 emulator ran the fresh 1.0.38 arm64 APK through Members, Roles, Channels, Audit, Media and Readiness in portrait; system Back closed a transient dropdown and logcat had no fatal app crash."
+    },
+    {
+      "name": "Android admin landscape runtime",
+      "result": "PASS",
+      "observation": "The same emulator rotated to 2400x1080 landscape; all seven admin tabs were visible without clipping, each opened successfully, and returning to portrait preserved the screen and process."
+    }
+  ],
+  "limitations": [
+    "Issue #198 native acceptance is not closed: IME/TalkBack, iOS and Windows runtime evidence are still missing. Android evidence covers portrait and landscape on the emulator; macOS evidence is an administrator-surface pass."
+  ],
+  "status": "IMPLEMENTATION PASS; cross-platform gate open"
+}
