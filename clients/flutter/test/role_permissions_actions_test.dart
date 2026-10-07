@@ -17,8 +17,12 @@ void main() {
     final categoryDelete = find.byKey(
       const ValueKey('permission-checkbox:category.delete'),
     );
-    await tester.ensureVisible(categoryDelete);
-    await tester.drag(
+    final deleteCheckbox = find.descendant(
+      of: categoryDelete,
+      matching: find.byType(Checkbox),
+    );
+    await tester.dragUntilVisible(
+      deleteCheckbox,
       find.byType(SingleChildScrollView).first,
       const Offset(0, -80),
     );
@@ -29,9 +33,7 @@ void main() {
         tester.getRect(find.byKey(const ValueKey('role-permissions-action-bar'))).top,
       ),
     );
-    await tester.tap(
-      find.descendant(of: categoryDelete, matching: find.byType(Checkbox)),
-    );
+    await tester.tap(deleteCheckbox);
     await tester.pumpAndSettle();
     expect(find.text('Разрешение удаления действует на любые каналы.'), findsOneWidget);
     await tester.tap(find.text('Сохранить'));

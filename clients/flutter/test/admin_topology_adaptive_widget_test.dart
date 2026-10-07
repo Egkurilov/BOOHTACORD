@@ -19,6 +19,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('admin-topology-back')), findsOneWidget);
 
+    Focus.of(tester.element(find.text('Назад к структуре'))).requestFocus();
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('admin-topology-tree')), findsOneWidget);

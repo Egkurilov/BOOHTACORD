@@ -20,7 +20,11 @@ class AdminAuditEventList extends StatelessWidget {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 12),
-            Semantics(liveRegion: true, child: Text('Загружаем аудит…')),
+            Semantics(
+              key: const ValueKey('admin-audit-loading'),
+              liveRegion: true,
+              child: Text('Загружаем аудит…'),
+            ),
           ],
         ),
       );

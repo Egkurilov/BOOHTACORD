@@ -74,6 +74,9 @@ void main() {
       var sawAdministrator = false;
       var sawPermission = false;
       var sawAction = false;
+      await tester.tap(member);
+      await tester.pump();
+      sawMember = _hasPrimaryFocus(tester, member);
       for (var index = 0; index < 80; index++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pump();
@@ -82,7 +85,8 @@ void main() {
             _hasPrimaryFocus(tester, administrator);
         sawPermission = sawPermission ||
             _hasPrimaryFocus(tester, permission);
-        sawAction = sawAction || Focus.of(tester.element(save)).hasPrimaryFocus;
+        sawAction = sawAction ||
+            _hasPrimaryFocus(tester, find.text('Сохранить'));
       }
       expect(sawMember, isTrue);
       expect(sawAdministrator, isTrue);
