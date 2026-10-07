@@ -106,3 +106,14 @@ and macOS renderer disposal/first-frame propagation. Their JVM/Dart tests are
 listed in the upstream record. The macOS/Darwin texture renderer now emits its
 first-frame event only after copying a pixel buffer and notifying Flutter that
 the texture frame is available — [QA-206](../../../../evidence/flutter/qa206-macos-texture-first-frame-upload-2026-10-02-001.json). When an RTC video track changes, the renderer also releases a pending texture-frame gate left by the old track; otherwise an unsampled frame could block the new track. This lifecycle regression is covered by [QA-209](../../../../evidence/flutter/qa209-macos-renderer-track-replacement-2026-10-02-001.json). Compilation alone does not certify hardware.
+
+Renderer texture, srcObject and first-frame work is generation-gated so late
+native callbacks from an older publication cannot replace the selected viewer.
+The Flutter viewer pauses its bounded five-second first-frame deadline while
+the app/window is backgrounded, performs at most one automatic subscription
+retry per generation, and starts that retry immediately for a matching
+`TrackSubscriptionExceptionEvent`. If the retry does not produce a frame, the
+viewer exposes an immediate explicit retry action. The subscription lifecycle
+rebinds the selected LiveKit track through its normal renderer path.
+Focused Flutter/device acceptance remains pending; no hardware behavior is
+claimed.

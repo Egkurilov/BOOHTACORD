@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:livekit_client/livekit_client.dart';
 
 import 'publication_generation.dart';
+import 'recovery_deadline.dart';
 
 mixin VoiceScreenViewerSelectionState {
   String? _selectedRemoteScreenViewerIdentity;
@@ -14,7 +15,12 @@ mixin VoiceScreenViewerSelectionState {
     screenViewerSelectionRevision++;
     remoteScreenViewerRecoveryTimer?.cancel();
     remoteScreenViewerRecoveryTimer = null;
+    remoteScreenViewerRecoveryDeadline.pause();
     remoteScreenViewerRecoveryAttempt = 0;
+    remoteScreenViewerRecoveryDeadline.reset();
+    remoteScreenViewerRecoveryInFlightGeneration = null;
+    remoteScreenViewerRecoveryPublication = null;
+    remoteScreenViewerRecoveryIsCurrent = null;
     if (identity == null) {
       selectedRemoteScreenViewerGeneration = null;
       remoteScreenViewerFirstFrameGeneration = null;
@@ -31,5 +37,18 @@ mixin VoiceScreenViewerSelectionState {
   Future<void> remoteScreenSubscriptionTail = Future<void>.value();
   Timer? remoteScreenViewerRecoveryTimer;
   int remoteScreenViewerRecoveryAttempt = 0;
-  int remoteScreenViewerRendererRevision = 0;
+  ScreenViewerRecoveryDeadline remoteScreenViewerRecoveryDeadline =
+      ScreenViewerRecoveryDeadline();
+  bool remoteScreenViewerForeground = true;
+  RemoteTrackPublication? remoteScreenViewerRecoveryPublication;
+  bool Function()? remoteScreenViewerRecoveryIsCurrent;
+  ScreenViewerPublicationGeneration? remoteScreenViewerRecoveryInFlightGeneration;
+
+  bool get remoteScreenViewerRecoveryExhausted =>
+      remoteScreenViewerRecoveryAttempt >= 2 &&
+      selectedRemoteScreenViewerGeneration != null &&
+      remoteScreenViewerFirstFrameGeneration !=
+          selectedRemoteScreenViewerGeneration &&
+      remoteScreenViewerRecoveryInFlightGeneration !=
+          selectedRemoteScreenViewerGeneration;
 }

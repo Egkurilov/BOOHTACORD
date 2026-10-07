@@ -7,6 +7,7 @@ import '../lifecycle/controller.dart';
 import '../screen_preview/capture_policy.dart';
 import '../screen_viewer/audio_publication.dart';
 import '../screen_viewer/discovery.dart';
+import '../screen_viewer/subscription_failure.dart';
 import '../../../services/screen_share_diagnostics.dart';
 import 'remote_participants.dart';
 import 'refresh_voice_navigation.dart';
@@ -48,6 +49,14 @@ extension VoiceEventsRemoteTracks on VoiceController {
             : event.publication.source;
         unawaited(applySavedAudioVolume(event.participant, source));
       }
+    });
+    listener.on<TrackSubscriptionExceptionEvent>((event) {
+      recoverRemoteScreenViewerAfterSubscriptionFailure(
+        this,
+        room,
+        event,
+        owns,
+      );
     });
     listener.on<TrackPublishedEvent>((event) {
       if (!owns()) return;

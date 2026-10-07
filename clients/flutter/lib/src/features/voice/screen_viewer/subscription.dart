@@ -36,6 +36,10 @@ extension VoiceScreenViewerPublicationSubscription on VoiceController {
         remoteScreenViewerRecoveryTimer?.cancel();
         remoteScreenViewerRecoveryTimer = null;
         remoteScreenViewerRecoveryAttempt = 0;
+        remoteScreenViewerRecoveryDeadline.reset();
+        remoteScreenViewerRecoveryInFlightGeneration = null;
+        remoteScreenViewerRecoveryPublication = null;
+        remoteScreenViewerRecoveryIsCurrent = null;
         remoteScreenViewerFirstFrameGeneration = null;
       }
       screenViewerSelectionRevision++;

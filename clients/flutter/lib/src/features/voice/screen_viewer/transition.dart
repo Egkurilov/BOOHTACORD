@@ -38,8 +38,11 @@ void queueRemoteScreenSubscriptionTransition(
         }
         if (!isCurrent()) return;
         if (videoChanged && nextPublication != null) {
-          await voice.setRemoteTrackSubscription(nextPublication, true);
           armRemoteScreenViewerRecovery(voice, nextPublication, isCurrent);
+          await voice.setRemoteTrackSubscription(
+            nextPublication,
+            true,
+          );
         }
         if (audioChanged && nextAudioPublication != null) {
           await voice.setRemoteTrackSubscription(nextAudioPublication, true);

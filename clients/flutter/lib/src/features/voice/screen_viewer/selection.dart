@@ -22,7 +22,11 @@ extension VoiceScreenViewerSelection on VoiceController {
     }
     remoteScreenViewerRecoveryTimer?.cancel();
     remoteScreenViewerRecoveryTimer = null;
+    remoteScreenViewerRecoveryDeadline.reset();
     remoteScreenViewerRecoveryAttempt = 0;
+    remoteScreenViewerRecoveryInFlightGeneration = null;
+    remoteScreenViewerRecoveryPublication = null;
+    remoteScreenViewerRecoveryIsCurrent = null;
     remoteScreenViewerFirstFrameGeneration = generation;
   }
 
@@ -66,7 +70,11 @@ extension VoiceScreenViewerSelection on VoiceController {
     if (previousGeneration != nextGeneration) {
       remoteScreenViewerRecoveryTimer?.cancel();
       remoteScreenViewerRecoveryTimer = null;
+      remoteScreenViewerRecoveryDeadline.reset();
       remoteScreenViewerRecoveryAttempt = 0;
+      remoteScreenViewerRecoveryInFlightGeneration = null;
+      remoteScreenViewerRecoveryPublication = null;
+      remoteScreenViewerRecoveryIsCurrent = null;
       remoteScreenViewerFirstFrameGeneration = null;
     }
 

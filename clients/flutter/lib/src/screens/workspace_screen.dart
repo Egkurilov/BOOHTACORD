@@ -523,6 +523,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    widget.state.voice.setRemoteScreenViewerForeground(
+      state == AppLifecycleState.resumed,
+    );
     _setShortcutForeground(state == AppLifecycleState.resumed);
     widget.state.setNotificationAppForeground(
       state == AppLifecycleState.resumed,
@@ -536,6 +539,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   @override
   void onWindowFocus() {
+    widget.state.voice.setRemoteScreenViewerForeground(true);
     _setShortcutForeground(true);
     widget.state.setNotificationAppForeground(true);
     unawaited(widget.state.refreshNotificationStatus());
@@ -543,6 +547,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen>
 
   @override
   void onWindowBlur() {
+    widget.state.voice.setRemoteScreenViewerForeground(false);
     _setShortcutForeground(false);
     widget.state.setNotificationAppForeground(false);
     unawaited(widget.state.setPushToTalkPressed(false));
@@ -6152,16 +6157,19 @@ class _VoiceScreenViewer extends StatelessWidget {
         telemetry: showingLocalScreen
             ? null
             : state.api.transport.session.telemetry,
+        recoveryExhausted:
+            !showingLocalScreen &&
+            state.voice.remoteScreenViewerRecoveryExhausted,
+        onRecoveryRetry: showingLocalScreen
+            ? null
+            : state.voice.retryRemoteScreenViewerRecovery,
         waitingMessage:
             showingLocalScreen && state.screenCapturedContentVisible == false
             ? 'Android скрыл выбранное приложение. Вернитесь в него или выберите весь экран.'
             : null,
         builder: (context, onFirstFrameRendered) => VideoTrackRenderer(
           track,
-          key: ValueKey((
-            viewerGeneration,
-            state.voice.remoteScreenViewerRendererRevision,
-          )),
+          key: ValueKey(viewerGeneration),
           renderMode: VideoRenderMode.auto,
           onFirstFrameRendered: () {
             if (showingLocalScreen) {
@@ -6406,20 +6414,25 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
               child: ColoredBox(
                 color: Colors.black,
                 child: track == null
-                    ? Center(
-                        child: Text(
-                          participant == null || publication == null
-                              ? 'Демонстрация завершена'
-                              : 'Ожидаем кадр демонстрации…',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: GcColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
+                    ? ScreenFrameGate(
+                        generation: '$identity:${publicationSid ?? 'unknown'}',
+                        waitingMessage:
+                            participant == null || publication == null
+                            ? 'Демонстрация завершена'
+                            : 'Ожидаем кадр демонстрации…',
+                        recoveryExhausted:
+                            state.voice.remoteScreenViewerRecoveryExhausted,
+                        onRecoveryRetry:
+                            state.voice.retryRemoteScreenViewerRecovery,
+                        builder: (context, onFirstFrameRendered) =>
+                            const SizedBox.expand(),
                       )
                     : ScreenFrameGate(
                         generation: '$identity:${publicationSid ?? 'unknown'}',
+                        recoveryExhausted:
+                            state.voice.remoteScreenViewerRecoveryExhausted,
+                        onRecoveryRetry:
+                            state.voice.retryRemoteScreenViewerRecovery,
                         onFirstFrame: publicationSid == null
                             ? null
                             : () => state.voice
@@ -6430,11 +6443,9 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                         builder: (context, onFirstFrameRendered) =>
                             VideoTrackRenderer(
                               track,
-                              key: ValueKey((
-                                identity,
-                                publicationSid,
-                                state.voice.remoteScreenViewerRendererRevision,
-                              )),
+                              key: ValueKey(
+                                '$identity:${publicationSid ?? 'unknown'}',
+                              ),
                               fit: VideoViewFit.contain,
                               renderMode: VideoRenderMode.auto,
                               onFirstFrameRendered: onFirstFrameRendered,
