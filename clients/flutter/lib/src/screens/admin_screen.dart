@@ -36,6 +36,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
+  final _rolePermissionsKey = GlobalKey<RolePermissionsPanelState>();
   final _titleFocus = FocusNode(debugLabel: 'admin-screen-title');
   final _categoryName = TextEditingController();
   final _categoryRename = TextEditingController();
@@ -213,7 +214,15 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     actor: _auditActor.text,
   );
 
-  void _selectSection(_AdminSection section) {
+  Future<void> _selectSection(_AdminSection section) async {
+    if (section == _selectedAdminSection) return;
+    final roleEditor = _rolePermissionsKey.currentState;
+    if (_selectedAdminSection == _AdminSection.roles &&
+        roleEditor != null &&
+        !await roleEditor.confirmBeforeLeaving()) {
+      return;
+    }
+    if (!mounted) return;
     setState(() => _selectedAdminSection = section);
     _mediaRefreshTimer?.cancel();
     _mediaRefreshTimer = null;
@@ -234,6 +243,15 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _closeAdminPanel() async {
+    final roleEditor = _rolePermissionsKey.currentState;
+    if (roleEditor != null && !await roleEditor.confirmBeforeLeaving()) return;
+    if (!mounted) return;
+    (widget.onClose ??
+            () => widget.state.toggleWorkspacePanel(WorkspacePanel.none))
+        .call();
+  }
+
   Widget _adminSectionTab(String label, _AdminSection section) {
     final selected = _selectedAdminSection == section;
     return Semantics(
@@ -241,10 +259,10 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       button: true,
       selected: selected,
       role: SemanticsRole.tab,
-      onTap: () => _selectSection(section),
+      onTap: () => unawaited(_selectSection(section)),
       child: ExcludeSemantics(
         child: InkWell(
-          onTap: () => _selectSection(section),
+          onTap: () => unawaited(_selectSection(section)),
           child: Container(
             constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -600,9 +618,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
             compact: compact,
             titleFocus: _titleFocus,
             onToggleNavigation: widget.onToggleNavigation,
-            onClose:
-                widget.onClose ??
-                () => widget.state.toggleWorkspacePanel(WorkspacePanel.none),
+            onClose: () => unawaited(_closeAdminPanel()),
           ),
           Expanded(
             child: Align(
@@ -732,6 +748,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                 )
                               : _selectedAdminSection == _AdminSection.roles
                               ? RolePermissionsPanel(
+                                  key: _rolePermissionsKey,
                                   api: widget.state.api,
                                   onSaved: widget.state.permissions.refresh,
                                 )
