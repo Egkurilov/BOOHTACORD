@@ -29,6 +29,14 @@ void main() {
 
   test('matches sender and room scope and bounds numeric fields', () {
     final raw = jsonEncode(descriptor());
+    expect(
+      parseScreenShareDescriptor(raw, expectedOriginId: 'https://elsewhere.test'),
+      isNull,
+    );
+    expect(
+      parseScreenShareDescriptor(raw, expectedOriginId: 'https://voice.example.test'),
+      isNotNull,
+    );
     expect(parseScreenShareDescriptor(raw, expectedAccountId: 'account-b'), isNull);
     expect(parseScreenShareDescriptor(raw, expectedRoomId: 'room-b'), isNull);
     final negative = descriptor();

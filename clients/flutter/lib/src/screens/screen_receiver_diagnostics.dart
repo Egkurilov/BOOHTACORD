@@ -33,6 +33,7 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
     this.senderReport,
     this.senderSampledAt,
     this.senderDescriptorJson,
+    this.expectedSenderOrigin,
     this.expectedSenderAccountId,
     this.expectedRoomId,
   });
@@ -47,6 +48,7 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
   final ScreenShareSenderReport? senderReport;
   final DateTime? senderSampledAt;
   final String? senderDescriptorJson;
+  final String? expectedSenderOrigin;
   final String? expectedSenderAccountId;
   final String? expectedRoomId;
 
@@ -93,6 +95,7 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
     super.didUpdateWidget(oldWidget);
     final changedOwner = oldWidget.expectedSenderAccountId !=
             widget.expectedSenderAccountId ||
+        oldWidget.expectedSenderOrigin != widget.expectedSenderOrigin ||
         oldWidget.expectedRoomId != widget.expectedRoomId ||
         oldWidget.selectedStreamId != widget.selectedStreamId;
     if (changedOwner) {
@@ -115,11 +118,14 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
   }
 
   ScreenShareSenderDescriptor? _parseSenderDescriptor() {
-    if (widget.expectedSenderAccountId == null || widget.expectedRoomId == null) {
+    if (widget.expectedSenderOrigin == null ||
+        widget.expectedSenderAccountId == null ||
+        widget.expectedRoomId == null) {
       return null;
     }
     return parseScreenShareDescriptor(
       widget.senderDescriptorJson,
+      expectedOriginId: widget.expectedSenderOrigin,
       expectedAccountId: widget.expectedSenderAccountId,
       expectedRoomId: widget.expectedRoomId,
     );

@@ -8,7 +8,7 @@ ScreenShareSenderDescriptor? parse(Map<String, Object?> value) =>
 Map<String, Object?> descriptor({int generation = 4, int revision = 12}) => {
   'schema_version': 1,
   'scope': {
-    'origin_id': 'origin-a',
+    'origin_id': 'https://voice.example.test',
     'account_id': 'account-a',
     'room_id': 'room-a',
     'media_session_id': 'session-a',

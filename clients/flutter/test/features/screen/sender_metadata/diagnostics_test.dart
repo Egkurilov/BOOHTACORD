@@ -55,6 +55,7 @@ Widget _app(String? descriptor, {String? trackName, Key? key}) => MaterialApp(
       isLocal: false,
       hasAudio: false,
       senderDescriptorJson: descriptor,
+      expectedSenderOrigin: 'https://voice.example.test',
       expectedSenderAccountId: 'account-a',
       expectedRoomId: 'room-a',
       sourceTrackName: trackName,
@@ -65,7 +66,7 @@ Widget _app(String? descriptor, {String? trackName, Key? key}) => MaterialApp(
 String _descriptor({int revision = 8}) => jsonEncode({
   'schema_version': 1,
   'scope': {
-    'origin_id': 'origin-a',
+    'origin_id': 'https://voice.example.test',
     'account_id': 'account-a',
     'room_id': 'room-a',
     'media_session_id': 'session-a',

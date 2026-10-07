@@ -6367,6 +6367,7 @@ class _VoiceScreenViewer extends StatelessWidget {
             ? null
             : _selectedVoiceScreenSender(screens, selectedIdentity)
                   ?.attributes[screenShareDescriptorAttribute],
+        expectedSenderOrigin: Uri.parse(state.serverUrl).origin,
         expectedSenderAccountId: _selectedVoiceScreenSender(
                   screens,
                   selectedIdentity,

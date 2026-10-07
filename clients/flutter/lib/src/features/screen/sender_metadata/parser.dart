@@ -25,7 +25,11 @@ const _reasons = {
 };
 
 ScreenShareSenderDescriptor? parseScreenShareDescriptor(
-  String? raw, {String? expectedAccountId, String? expectedRoomId}) {
+  String? raw, {
+  String? expectedOriginId,
+  String? expectedAccountId,
+  String? expectedRoomId,
+}) {
   if (raw == null || raw.isEmpty || utf8.encode(raw).length > _maxBytes) {
     return null;
   }
@@ -35,7 +39,8 @@ ScreenShareSenderDescriptor? parseScreenShareDescriptor(
   final value = decoded as JsonMap;
   if (!_valid(value)) return null;
   final scope = value['scope'] as JsonMap;
-  if ((expectedAccountId != null && scope['account_id'] != expectedAccountId) ||
+  if ((expectedOriginId != null && scope['origin_id'] != expectedOriginId) ||
+      (expectedAccountId != null && scope['account_id'] != expectedAccountId) ||
       (expectedRoomId != null && scope['room_id'] != expectedRoomId)) {
     return null;
   }

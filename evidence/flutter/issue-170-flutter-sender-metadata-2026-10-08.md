@@ -7,8 +7,8 @@ Date: 2026-10-08. Route: Flutter screen viewer diagnostics.
 - Flutter reads `boohtacord.screen-share.v1` from the selected LiveKit remote
   participant's existing `attributes` map. No API or shared contract changed.
 - The parser accepts bounded v1 JSON only, validates the exact descriptor,
-  scope fields, counters, requested profile/mode relation and owner account/room
-  when known. Missing attributes remain compatible with older participants.
+  deployment origin, owner account/room, counters and requested profile/mode
+  relation. Missing attributes remain compatible with older participants.
 - Viewer diagnostics show sender mode and requested profile in separate rows.
   Receiver resolution/FPS remain sourced only from receiver statistics; no
   sender target is presented as actual quality.
