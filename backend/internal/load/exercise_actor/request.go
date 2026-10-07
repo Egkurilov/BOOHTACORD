@@ -42,8 +42,8 @@ func (a *Actor) Request(ctx context.Context, name, method, path string, body any
 		}
 		reader = bytes.NewReader(data)
 	}
-	if a.Budget.Add(1) > int64(a.Manifest.MaxRequests) && name != "release" && name != "logout" && name != "revoked" {
-		return errors.New("request budget exhausted")
+	if err := a.reserve(name == "release" || name == "logout" || name == "revoked"); err != nil {
+		return err
 	}
 	req, err := http.NewRequestWithContext(ctx, method, a.Manifest.Origin+"/api/v1"+path, reader)
 	if err != nil {

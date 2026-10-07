@@ -11,7 +11,7 @@ from pathlib import Path
 from tools.load.guard.server import Guard
 from tools.load.provision.dataset import provision, validate_count
 from tools.qa.client_lifecycle.services import output, ports_available, run
-from tools.qa.critical_client_acceptance.stack import Stack
+from tools.load.provision.stack import Stack
 from .report import render
 from .cleanup import cleanup
 from .outcome import outcome

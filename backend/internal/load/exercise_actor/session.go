@@ -23,7 +23,7 @@ func (a *Actor) Start(ctx context.Context) error {
 	if err := a.Read(ctx); err != nil {
 		return err
 	}
-	if err := a.Socket.Connect(ctx, a.Client, a.Manifest.Origin, false); err != nil {
+	if err := a.connect(ctx, false); err != nil {
 		return err
 	}
 	var lease struct {
@@ -48,7 +48,7 @@ func (a *Actor) Read(ctx context.Context) error {
 }
 func (a *Actor) Reconnect(ctx context.Context) error {
 	started := time.Now()
-	if err := a.Socket.Connect(ctx, a.Client, a.Manifest.Origin, true); err != nil {
+	if err := a.connect(ctx, true); err != nil {
 		a.Results.Observe("reconnect", 503, time.Since(started))
 		return err
 	}

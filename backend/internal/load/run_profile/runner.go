@@ -63,6 +63,10 @@ func (r *Runner) Run(parent context.Context) (report Report) {
 		}
 		if err := r.admit(ctx, target); err != nil {
 			report.StopReason = "actor_admission"
+			select {
+			case report.StopReason = <-stop:
+			default:
+			}
 			return report
 		}
 		phase, err := r.phase(ctx, guard, name, time.Duration(float64(r.Manifest.MaxSeconds)*.75*weights[index]*float64(time.Second)))
