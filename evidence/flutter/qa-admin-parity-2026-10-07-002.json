@@ -2,7 +2,7 @@
   "id": "QA-ADMIN-PARITY-2026-10-07-002",
   "date": "2026-10-07",
   "task": "FV2-031 / GitHub #188 — Flutter Design V2 administrator parity follow-up",
-  "source_revision": "e0c74473",
+  "source_revision": "a16b17bc",
   "branch": "codex/issue-188-flutter-admin-completion",
   "checks": [
     {
