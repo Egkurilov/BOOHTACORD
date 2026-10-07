@@ -17,7 +17,9 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
   remain open until a real runtime is supplied. Do not mark this item PASS from
   widget tests alone. A macOS administrator-surface pass is recorded in
   [QA-ADMIN-MACOS-RUNTIME-2026-10-07-001](../evidence/flutter/qa-admin-macos-runtime-2026-10-07-001.json);
-  it does not replace live-resize or full cross-platform acceptance.
+  an Android portrait administrator-surface pass is recorded in
+  [QA-ADMIN-ANDROID-RUNTIME-2026-10-07-001](../evidence/flutter/qa-admin-android-runtime-2026-10-07-001.json).
+  These records do not replace live-resize, IME/TalkBack, iOS or Windows acceptance.
 
 ## Текущий фокус: Flutter macOS и Android
 

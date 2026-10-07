@@ -40,3 +40,13 @@ member actions, freshness state and readiness status. This is recorded in
 [`qa-admin-macos-runtime-2026-10-07-001.json`](../qa-admin-macos-runtime-2026-10-07-001.json).
 It is a macOS admin-surface pass only; live resize and the Android/iOS/Windows
 runtime matrix remain open under #198.
+
+## Android admin runtime — 2026-10-07
+
+The arm64 release APK `1.0.38` was installed on the Android 15/API 35
+`sdk_gphone64_arm64` emulator at a portrait `1080x2400` physical viewport.
+Members, Roles, Channels, Audit, Media and Readiness/Status were opened from
+the admin tabs; a system Back smoke closed a transient dropdown without leaving
+the admin screen, and the post-run logcat had no fatal app crash. Details are in
+[`qa-admin-android-runtime-2026-10-07-001.json`](../qa-admin-android-runtime-2026-10-07-001.json).
+Landscape, IME, TalkBack, iOS and Windows acceptance remain open under #198.

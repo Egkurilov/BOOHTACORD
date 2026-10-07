@@ -1,0 +1,50 @@
+{
+  "id": "QA-ADMIN-ANDROID-RUNTIME-2026-10-07-001",
+  "date": "2026-10-07",
+  "task": "FV2-031 / GitHub #198 — Android Flutter admin runtime pass",
+  "source_revision": "c0bc7903",
+  "app_version": {
+    "source": "1.0.38+71",
+    "installed_version_name": "1.0.38",
+    "installed_version_code": 2071
+  },
+  "platform": "Android 15 (API 35) emulator, sdk_gphone64_arm64",
+  "viewport": "1080x2400 physical px, 420 dpi (approximately 411x914 logical px)",
+  "checks": [
+    {
+      "name": "Release APK installation and launch",
+      "result": "PASS",
+      "observation": "Fresh arm64 release APK installed over the existing app and MainActivity launched successfully without data reset."
+    },
+    {
+      "name": "Admin shell and Members",
+      "result": "PASS",
+      "observation": "Portrait admin header, horizontally scrollable section tabs, member count/search/role filter, expanded compact member cards, role selectors, blocked switches and save/reset actions rendered without overflow."
+    },
+    {
+      "name": "Roles and Channels",
+      "result": "PASS",
+      "observation": "Permission matrix cards with six controls and adaptive action row rendered; channel topology tree, category counts, type icons and create/inspector controls rendered."
+    },
+    {
+      "name": "Audit, Media and Readiness",
+      "result": "PASS",
+      "observation": "After horizontal tab navigation, Audit filters/day-grouped events, Media empty/freshness state and Readiness service/storage cards rendered in portrait."
+    },
+    {
+      "name": "Android Back transient UI",
+      "result": "PASS",
+      "observation": "Opening the Guild welcome-channel dropdown and pressing system Back closed the transient control while keeping the user on the Guild admin screen."
+    },
+    {
+      "name": "Crash smoke",
+      "result": "PASS",
+      "observation": "After installation, launch, navigation through all admin sections and Back smoke, logcat contained no FATAL EXCEPTION for the app process."
+    }
+  ],
+  "not_run": [
+    "Landscape, IME-covered form actions and TalkBack smoke were not captured in this run.",
+    "iOS and Windows native runtimes remain unavailable."
+  ],
+  "status": "ANDROID ADMIN PORTRAIT RUNTIME PASS; cross-platform gate pending"
+}
