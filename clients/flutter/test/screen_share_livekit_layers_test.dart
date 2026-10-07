@@ -3,6 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
 void main() {
+  test('does not pair remote rows with different outbound identity or SSRC', () {
+    final rows = [
+      rtc.StatsReport('out', 'outbound-rtp', 1000000, {'kind': 'video', 'ssrc': 1, 'remoteId': 'remote', 'framesEncoded': 10}),
+      rtc.StatsReport('audio', 'outbound-rtp', 1000000, {'kind': 'audio', 'packetsSent': 50}),
+      rtc.StatsReport('remote', 'remote-inbound-rtp', 1000000, {'localId': 'other', 'ssrc': 2, 'packetsLost': 10, 'roundTripTime': .5}),
+    ];
+    final samples = screenSenderSourcesFromReports(rows);
+    expect(samples, hasLength(1));
+    expect(samples.single.counters.packetsLost, isNull);
+    expect(samples.single.roundTripTimeSeconds, isNull);
+    expect(samples.single.counters.framesSent, 10);
+    expect(samples.single.counters.encodedFrames, 10);
+    expect(samples.single.counters.frameCounterSource, 'encoded');
+  });
+
   test('keeps SSRC and pairs remote loss and RTT to the matching outbound', () {
     final reports = [
       rtc.StatsReport('codec', 'codec', 1000, {'mimeType': 'video/VP8'}),
@@ -27,6 +42,8 @@ void main() {
     expect(sources.map((source) => source.counters.ssrc), [101, 202]);
     expect(sources.map((source) => source.counters.packetsLost), [3, 7]);
     expect(sources.map((source) => source.roundTripTimeSeconds), [0.04, 0.08]);
+    expect(sources.map((source) => source.counters.encodedFrames), [null, null]);
+    expect(sources.map((source) => source.counters.frameCounterSource), ['sent', 'sent']);
     expect(sources.map((source) => source.counters.codec), ['video/VP8', 'video/VP8']);
   });
 }

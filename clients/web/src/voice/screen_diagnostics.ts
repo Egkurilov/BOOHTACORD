@@ -13,6 +13,9 @@ export interface ScreenDiagnostics {
   capturedFrames?:number|null
   encodedFrames?:number|null
   profileCheck?: import('./screen_profile/types').ProfileSnapshot
+  selectedLayer?: import('./screen_sender_layers').ScreenLayerDiagnostics | null
+  totalBitrateBps?: number
+  collectionState?: 'active' | 'inactive' | 'sdk_paused' | 'hidden' | 'unavailable' | 'stale' | 'unknown'
   sampledAt?: number
   senderStatsAvailable?: boolean
   senderDimensionsAvailable?: boolean

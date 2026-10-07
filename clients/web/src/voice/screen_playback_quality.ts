@@ -8,6 +8,8 @@ export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, se
   const actualVideoQuality = ref('Определяем качество…')
   const playbackFps = ref<number | null>(null)
   const presentedFrames=ref<number|null>(null)
+  const firstFrameMs = ref<number | null>(null)
+  const presentationSource = ref<'web_rvfc' | 'unsupported'>('unsupported')
   const videoReady = ref(false)
   let stopObservingPlayback: (() => void) | null = null
 
@@ -20,6 +22,8 @@ export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, se
     stopObservingPlayback = null
     playbackFps.value = null
     presentedFrames.value=null
+    firstFrameMs.value = null
+    presentationSource.value = typeof video.value?.requestVideoFrameCallback === 'function' ? 'web_rvfc' : 'unsupported'
     videoReady.value = false
     refreshVideoQuality()
     if (video.value && selectedId() && !ended()) {
@@ -30,7 +34,7 @@ export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, se
         markScreenFrame(video.value)
         videoReady.value = true
         refreshVideoQuality()
-      },frames=>{presentedFrames.value=frames})
+      },frames=>{presentedFrames.value=frames}, elapsed=>{firstFrameMs.value=elapsed})
     }
   }
 
@@ -42,5 +46,5 @@ export function useScreenPlaybackQuality(video: Ref<HTMLVideoElement | null>, se
 
   watch([video, selectedId, ended], restartPlaybackObservation, { flush: 'post' })
   onBeforeUnmount(() => stopObservingPlayback?.())
-  return {actualVideoQuality,markVideoReady,playbackFps,presentedFrames,refreshVideoQuality,resetVideoFrame:restartPlaybackObservation,videoReady}
+  return {firstFrameMs,presentationSource,actualVideoQuality,markVideoReady,playbackFps,presentedFrames,refreshVideoQuality,resetVideoFrame:restartPlaybackObservation,videoReady}
 }

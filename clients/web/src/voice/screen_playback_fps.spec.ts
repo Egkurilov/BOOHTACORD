@@ -1,8 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
 import { observeScreenPlaybackFps } from './screen_playback_fps'
-
 function videoFrames() {
   let callback: VideoFrameRequestCallback | undefined
   const cancel = vi.fn()
@@ -12,9 +10,7 @@ function videoFrames() {
   } as unknown as HTMLVideoElement
   return { cancel, emitFrame: (presentedFrames?: number) => callback?.(0, { presentedFrames } as VideoFrameCallbackMetadata), video }
 }
-
 afterEach(() => vi.useRealTimers())
-
 describe('viewer screen playback FPS', () => {
   it('binds observation to the selected stream and releases it on unmount', () => {
     const viewer = readFileSync(new URL('./ScreenViewer.vue', import.meta.url), 'utf8')
@@ -96,7 +92,7 @@ describe('viewer screen playback FPS', () => {
     frames.emitFrame(2)
     frames.emitFrame(3)
     vi.advanceTimersByTime(2000)
-    expect(samples).toEqual([1.5])
+    expect(samples).toEqual([1])
     stop()
   })
 
@@ -105,4 +101,19 @@ describe('viewer screen playback FPS', () => {
     observeScreenPlaybackFps({} as HTMLVideoElement, (fps) => samples.push(fps))()
     expect(samples).toEqual([null])
   })
+})
+
+
+it('does not count duplicate compositor metadata and records first callback time', () => {
+  vi.useFakeTimers()
+  const frames = videoFrames(), samples: Array<number | null> = []
+  const first = vi.fn()
+  const stop = observeScreenPlaybackFps(frames.video, fps => samples.push(fps), undefined, undefined, first)
+  vi.advanceTimersByTime(250)
+  frames.emitFrame(10)
+  frames.emitFrame(10)
+  vi.advanceTimersByTime(1750)
+  expect(samples).toEqual([0.5])
+  expect(first).toHaveBeenCalledExactlyOnceWith(250)
+  stop()
 })

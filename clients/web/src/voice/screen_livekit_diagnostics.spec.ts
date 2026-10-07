@@ -4,7 +4,7 @@ import { inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from '.
 import { screenSenderStatsSampler } from './screen_stats_sampler'
 
 describe('LiveKit screen sender diagnostics', () => {
-  it('exposes active per-layer rates while keeping SDK total bitrate separate', async () => {
+  it('exposes active per-layer rates while keeping total bitrate separate', async () => {
     let sample = 0
     const sender = {
       getStats: async () => {
@@ -36,8 +36,9 @@ describe('LiveKit screen sender diagnostics', () => {
     expect(diagnostics.layers?.[1]?.framesPerSecond).toBeCloseTo(30, 0)
     expect(diagnostics.measured).toMatchObject({ width: 1920, height: 1080 })
     expect(diagnostics.measured?.framesPerSecond).toBeCloseTo(30, 0)
-    expect(diagnostics.bitrateBps).toBe(2_500_000)
-    expect(diagnostics.layers?.[1]?.packetLossPercent).toBeCloseTo(100 / 16, 1)
+    expect(diagnostics.bitrateBps).toBeCloseTo(diagnostics.layers![1]!.bitrateBps!, 0)
+    expect(diagnostics.totalBitrateBps).toBeCloseTo(diagnostics.bitrateBps! * 2, 0)
+    expect(diagnostics.layers?.[1]?.packetLossPercent).toBeCloseTo(100 / 15, 1)
     expect(diagnostics.roundTripTimeMs).toBe(45)
   })
 })

@@ -27,11 +27,11 @@ class ScreenSenderLayerSampler {
       final validWindow = prior != null && gap > 0 && gap <= _maximumAgeMs && elapsed > 0 && elapsed <= _maximumAgeMs;
       final reset = validWindow && screenCounterReset([
         (row.framesSent, previous?.framesSent), (row.bytesSent, previous?.bytesSent),
-        (row.packetsSent, previous?.packetsSent), (row.packetsLost, previous?.packetsLost),
+        (row.packetsSent, previous?.packetsSent),
         (row.retransmittedPackets, previous?.retransmittedPackets), (row.nackCount, previous?.nackCount),
         (row.pliCount, previous?.pliCount), (row.firCount, previous?.firCount),
       ]);
-      final interval = validWindow && !reset;
+      final interval = validWindow && !reset && row.active != false && previous?.active != false;
       double? delta(num? current, num? before) {
         if (!interval ||
             current == null ||
@@ -51,20 +51,26 @@ class ScreenSenderLayerSampler {
       final nacks = delta(row.nackCount, previous?.nackCount);
       final plis = delta(row.pliCount, previous?.pliCount);
       final firs = delta(row.firCount, previous?.firCount);
-      final state = stale ? 'STALE' : reset ? 'UNKNOWN' : frames != null
+      final encoded = delta(row.encodedFrames, previous?.encodedFrames);
+      final encode = delta(row.totalEncodeTime, previous?.totalEncodeTime);
+      final retransmittedBytes = delta(row.retransmittedBytes, previous?.retransmittedBytes);
+      final state = stale ? 'STALE' : row.active == false ? 'INACTIVE' : reset ? 'UNKNOWN' : frames != null
           ? frames > 0 ? 'ACTIVE' : 'INACTIVE' : 'UNKNOWN';
       double? rate(double? value, double multiplier) => state == 'ACTIVE' && interval && value != null
           ? value * multiplier / elapsed : null;
       int? dimension(num? value) => screenCounterPixelDimension(value);
-      layers.add(ScreenSenderLayerMetrics(id: id, rid: row.rid, codec: row.codec,
+      layers.add(ScreenSenderLayerMetrics(frameCounterSource: row.frameCounterSource, timestampMs: row.timestampMs, id: id, rid: row.rid, codec: row.codec,
         state: state, width: dimension(row.width), height: dimension(row.height),
-        framesPerSecond: rate(frames, 1000), bitrateBps: rate(bytes, 8000),
+        windowMs: interval ? elapsed : null, framesPerSecond: rate(frames, 1000),
+        bitrateBps: interval && bytes != null ? bytes * 8000 / elapsed : null,
+        encodeMsPerFrame: interval && encoded != null && encoded > 0 && encode != null ? encode * 1000 / encoded : null,
+        retransmittedBps: rate(retransmittedBytes, 8000),
         retransmittedPacketsPerSecond: rate(repeated, 1000),
-        packetLossPercent: state == 'ACTIVE' && sent != null && lost != null && sent + lost > 0
-            ? lost * 100 / (sent + lost) : null,
+        packetLossPercent: state == 'ACTIVE' && sent != null && lost != null && sent > 0 && lost <= sent
+            ? lost * 100 / sent : null,
         nackPerSecond: rate(nacks, 1000), pliPerSecond: rate(plis, 1000),
         firPerSecond: rate(firs, 1000), qualityLimitationReason: row.qualityLimitationReason));
-      if (row.timestampMs.isFinite && receivedAtMs.isFinite) next[id] = _PreviousScreenSenderLayer(row, receivedAtMs);
+      if (row.timestampMs.isFinite && receivedAtMs.isFinite) next[id] = previous?.timestampMs == row.timestampMs ? prior! : _PreviousScreenSenderLayer(row, receivedAtMs);
     }
     _previous = next;
     final active = layers.where((layer) => layer.state == 'ACTIVE').toList()

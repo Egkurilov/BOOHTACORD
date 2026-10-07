@@ -17,6 +17,7 @@ export interface RawScreenLayerStats {
   pliCount?: number
   firCount?: number
   totalEncodeTime?: number
+  qualityLimitationDurations?: Partial<Record<'none' | 'cpu' | 'bandwidth' | 'other', number>>
   qualityLimitationReason?: string
 }
 
@@ -27,6 +28,7 @@ export interface ScreenLayerDiagnostics {
   state: 'ACTIVE' | 'INACTIVE' | 'UNKNOWN' | 'STALE'
   frameWidth?: number
   frameHeight?: number
+  windowMs: number | null
   framesPerSecond: number | null
   bitrateBps: number | null
   retransmittedBps: number | null
@@ -36,6 +38,7 @@ export interface ScreenLayerDiagnostics {
   encodeMsPerFrame: number | null
   packetLossPercent: number | null
   roundTripTimeMs: number | null
+  qualityLimitationDurations?: Partial<Record<'none' | 'cpu' | 'bandwidth' | 'other', number>>
   qualityLimitationReason?: string
 }
 
@@ -63,11 +66,11 @@ export class ScreenSenderLayerSampler {
       const validWindow = Boolean(previous && elapsed > 0 && elapsed <= maximumAgeMs && age >= 0 && age <= maximumAgeMs)
       const reset = validWindow && [
         [row.framesEncoded, previous?.framesEncoded], [row.bytesSent, previous?.bytesSent],
-        [row.packetsSent, previous?.packetsSent], [row.packetsLost, previous?.packetsLost],
+        [row.packetsSent, previous?.packetsSent],
         [row.retransmittedBytesSent, previous?.retransmittedBytesSent], [row.nackCount, previous?.nackCount],
         [row.pliCount, previous?.pliCount], [row.firCount, previous?.firCount], [row.totalEncodeTime, previous?.totalEncodeTime],
       ].some(([current, before]) => counter(current) && counter(before) && current! < before!)
-      const validInterval = validWindow && !reset
+      const validInterval = validWindow && !reset && previous?.active !== false && row.active !== false
       const delta = (current: number | undefined, before: number | undefined): number | null =>
         validInterval && counter(current) && counter(before) && current! >= before! ? current! - before! : null
       const frames = delta(row.framesEncoded, previous?.framesEncoded)
@@ -84,14 +87,15 @@ export class ScreenSenderLayerSampler {
       const state = stale ? 'STALE' : row.active === false ? 'INACTIVE' : reset ? 'UNKNOWN'
         : frames !== null ? progressed && frames > 0 ? 'ACTIVE' : 'INACTIVE' : 'UNKNOWN'
       const rate = (value: number | null, multiplier: number): number | null => state === 'ACTIVE' && validInterval && value !== null ? value * multiplier / elapsed : null
-      const packetLossPercent = state === 'ACTIVE' && sent !== null && lost !== null && sent + lost > 0
-        ? lost * 100 / (sent + lost) : null
-      if (Number.isFinite(row.timestamp)) next.set(key, { ...row, key })
+      const packetLossPercent = state === 'ACTIVE' && sent !== null && lost !== null && sent > 0 && lost <= sent
+        ? lost * 100 / sent : null
+      if (Number.isFinite(row.timestamp)) next.set(key, previous && row.timestamp === previous.timestamp ? previous : { ...row, key })
       return {
+        qualityLimitationDurations: row.qualityLimitationDurations,
         id: key, ...(row.rid ? { rid: row.rid } : {}), ...(row.codec ? { codec: row.codec } : {}), state,
         ...(counter(row.frameWidth) && row.frameWidth! > 0 ? { frameWidth: row.frameWidth } : {}),
         ...(counter(row.frameHeight) && row.frameHeight! > 0 ? { frameHeight: row.frameHeight } : {}),
-        framesPerSecond: rate(frames, 1000), bitrateBps: rate(bytes, 8000), retransmittedBps: rate(retransmitted, 8000), packetLossPercent,
+        windowMs: validInterval ? elapsed : null, framesPerSecond: rate(frames, 1000), bitrateBps: validInterval && bytes !== null ? bytes * 8000 / elapsed : null, retransmittedBps: rate(retransmitted, 8000), packetLossPercent,
         nackPerSecond: rate(nacks, 1000), pliPerSecond: rate(plis, 1000), firPerSecond: rate(firs, 1000),
         encodeMsPerFrame: frames !== null && frames > 0 && encodeTime !== null ? encodeTime * 1000 / frames : null,
         roundTripTimeMs: counter(row.roundTripTime) && row.roundTripTime! <= 60 ? row.roundTripTime! * 1000 : null,

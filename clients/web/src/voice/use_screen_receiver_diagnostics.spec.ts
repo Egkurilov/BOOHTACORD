@@ -19,8 +19,8 @@ describe('receiver sampling lifecycle', () => {
     const readReceiverStats = vi.fn().mockImplementation(async () => {
       const index = count++
       return {
-        timestamp: index * 2000, framesDecoded: index * 60, framesDropped: 0,
-        packetsReceived: 1000 + index * 199, packetsLost: 2476 + (index > 0 ? 5 : 0),
+        timestamp: index * 1000, framesDecoded: index * 60, framesDropped: 0,
+        packetsReceived: 1000 + index * 99.5, packetsLost: 2476 + (index > 0 ? 5 : 0),
       }
     })
     const selected = ref<ScreenViewerCard | null>({ id: 'screen', hasAudio: false, participantId: 'a', participantName: 'A', readReceiverStats })
@@ -46,7 +46,7 @@ describe('receiver sampling lifecycle', () => {
     await Promise.resolve()
     expect(observed?.metrics.value?.decodedFps).toBeNull()
 
-    await vi.advanceTimersByTimeAsync(2000)
+    await vi.advanceTimersByTimeAsync(1000)
     expect(observed?.metrics.value?.decodedFps).toBe(60)
     expect(observed?.metrics.value?.bitrateKbps).toBe(4000)
 
