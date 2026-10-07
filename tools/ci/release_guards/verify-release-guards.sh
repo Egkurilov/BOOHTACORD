@@ -3,7 +3,7 @@ set -euo pipefail
 
 python3 -m venv .out/release-guards-venv
 source .out/release-guards-venv/bin/activate
-python -m pip install -r tools/requirements-ci.txt
+python -m pip install -r tools/requirements-ci.txt -r tools/verify/openapi_parity/requirements.txt
 
 bash tools/ci/powershell/install-ci-powershell.sh
 compose_cli="$(bash tools/ci/compose/install-ci-compose.sh)"
