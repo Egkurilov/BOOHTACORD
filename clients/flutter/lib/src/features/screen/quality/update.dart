@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../core/session/scope.dart';
@@ -27,7 +28,21 @@ extension ScreenShareQualityUpdate on ScreenShareController {
       changed();
       return Future.value();
     }
+    final activePlan = quality.capturePlan(defaultTargetPlatform);
+    final requestedPlan = requested.capturePlan(defaultTargetPlatform);
     qualityIntentRevision++;
+    pendingQualityUpdate = null;
+    pendingQualityTicket = null;
+    pendingQualityRoom = null;
+    if (requestedPlan.requiresRestartFrom(activePlan)) {
+      captureRestartRequired = true;
+      error = 'Чтобы применить ${requested.resolution}p${requested.frameRate}, '
+          'остановите демонстрацию и запустите её снова, выбрав этот профиль. '
+          'Текущая демонстрация продолжает работать с прежними параметрами.';
+      changed();
+      return Future<void>.value();
+    }
+    captureRestartRequired = false;
     pendingQualityUpdate = requested;
     pendingQualityTicket = scope.capture();
     pendingQualityRoom = readRoom();
