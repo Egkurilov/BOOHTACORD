@@ -5,6 +5,8 @@
 - Leaves: T-035 (Web), T-036 (Flutter)
 - Base source revision: `e4cace80`; target branch had nine newer commits at
   validation start. PR CI must rerun all checks on the rebased commit.
+- Rebased on `origin/master` at `17f27344`; Web checks below were rerun after
+  resolving upstream telemetry/lifecycle changes.
 - Environment: Windows, Node.js 24.18.0, LiveKit JS 2.22.3; Flutter SDK is
   unavailable locally.
 
@@ -27,7 +29,7 @@
 
 | Check | Result | Evidence |
 |---|---|---|
-| Web full Vitest suite | PASS | `npm test` — 381 files, 1,181 tests. |
+| Web full Vitest suite | PASS | `npm test` — 386 files, 1,193 tests after rebase. |
 | Web production build/typecheck | PASS | `npm run build` completed; Vite reports chunk-size and ineffective dynamic-import warnings but exits successfully. |
 | Web publisher focused suite | PASS | 10 files / 42 tests; profile contract and diagnostics subset 5 files / 20 tests. |
 | Contracts | PASS | `tools/verify/contracts/verify-contracts.ps1` — `Contracts OK.` |

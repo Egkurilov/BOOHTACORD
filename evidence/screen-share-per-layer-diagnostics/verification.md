@@ -30,7 +30,7 @@
 | Check | Result | Evidence |
 |---|---|---|
 | Web layer and shared-sampler tests | PASS | Focused Vitest tests cover active layers, multiple RID FPS, reset/stale/negative counters, stats dedupe and lifecycle clear. |
-| Web complete client tests | PASS | `npm test`: 381 files and 1,181 tests passed (2026-10-07, Node.js 24.18.0). |
+| Web complete client tests | PASS | `npm test`: 386 files and 1,193 tests passed after rebase (2026-10-07, Node.js 24.18.0). |
 | Web TypeScript check | PASS | `npx vue-tsc --noEmit` exited 0 after the diagnostics source split (2026-10-07). |
 | Flutter layer tests | NOT_RUN | `python -m tools.ci.native.flutter` exits because the required `flutter` executable is unavailable on this host. |
 | SDK/SFU and two-client layer comparison | NOT_RUN | Requires isolated #158 credentials and runtime baseline. |
