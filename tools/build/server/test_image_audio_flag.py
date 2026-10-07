@@ -9,15 +9,34 @@ class WebAudioFlagTests(unittest.TestCase):
     def test_release_passes_audio_flag_and_social_origin(self):
         self.assertEqual(web_build_arguments(self.origin), [
             '--build-arg', 'VITE_RNNOISE_ENABLED=true',
+            '--build-arg', 'VITE_SCREEN_SHARE_DESCRIPTOR_V1=true',
+            '--build-arg', 'VITE_SCREEN_SHARE_BOUNDED_SIMULCAST=false',
             '--build-arg', 'VITE_PUBLIC_ORIGIN=https://v.bootybay.ru',
         ])
         self.assertEqual(web_build_arguments({**self.origin, 'VITE_RNNOISE_ENABLED': 'false'}), [
             '--build-arg', 'VITE_RNNOISE_ENABLED=false',
+            '--build-arg', 'VITE_SCREEN_SHARE_DESCRIPTOR_V1=true',
+            '--build-arg', 'VITE_SCREEN_SHARE_BOUNDED_SIMULCAST=false',
+            '--build-arg', 'VITE_PUBLIC_ORIGIN=https://v.bootybay.ru',
+        ])
+        self.assertEqual(web_build_arguments({**self.origin, 'VITE_SCREEN_SHARE_BOUNDED_SIMULCAST': 'true'}), [
+            '--build-arg', 'VITE_RNNOISE_ENABLED=true',
+            '--build-arg', 'VITE_SCREEN_SHARE_DESCRIPTOR_V1=true',
+            '--build-arg', 'VITE_SCREEN_SHARE_BOUNDED_SIMULCAST=true',
+            '--build-arg', 'VITE_PUBLIC_ORIGIN=https://v.bootybay.ru',
+        ])
+        self.assertEqual(web_build_arguments({**self.origin, 'VITE_SCREEN_SHARE_DESCRIPTOR_V1': 'false'}), [
+            '--build-arg', 'VITE_RNNOISE_ENABLED=true',
+            '--build-arg', 'VITE_SCREEN_SHARE_DESCRIPTOR_V1=false',
+            '--build-arg', 'VITE_SCREEN_SHARE_BOUNDED_SIMULCAST=false',
             '--build-arg', 'VITE_PUBLIC_ORIGIN=https://v.bootybay.ru',
         ])
 
     def test_invalid_audio_flag_fails_instead_of_enabling_silently(self):
         with self.assertRaises(ValueError): web_build_arguments({**self.origin, 'VITE_RNNOISE_ENABLED': 'yes'})
+        with self.assertRaises(ValueError): web_build_arguments({**self.origin, 'VITE_SCREEN_SHARE_DESCRIPTOR_V1': 'yes'})
+        with self.assertRaises(ValueError):
+            web_build_arguments({**self.origin, 'VITE_SCREEN_SHARE_BOUNDED_SIMULCAST': 'yes'})
 
     def test_invalid_public_origin_is_rejected(self):
         invalid = ({}, {'VITE_PUBLIC_ORIGIN': 'http://v.bootybay.ru'},
@@ -34,6 +53,10 @@ class WebAudioFlagTests(unittest.TestCase):
         source = (root / 'clients/web/Dockerfile').read_text(encoding='utf-8')
         self.assertIn('ARG VITE_PUBLIC_ORIGIN', source)
         self.assertIn('ENV VITE_PUBLIC_ORIGIN=${VITE_PUBLIC_ORIGIN}', source)
+        self.assertIn('ARG VITE_SCREEN_SHARE_DESCRIPTOR_V1=true', source)
+        self.assertIn('ENV VITE_SCREEN_SHARE_DESCRIPTOR_V1=${VITE_SCREEN_SHARE_DESCRIPTOR_V1}', source)
+        self.assertIn('ARG VITE_SCREEN_SHARE_BOUNDED_SIMULCAST=false', source)
+        self.assertIn('ENV VITE_SCREEN_SHARE_BOUNDED_SIMULCAST=${VITE_SCREEN_SHARE_BOUNDED_SIMULCAST}', source)
         self.assertIn('COPY clients/web/nginx.conf /etc/nginx/conf.d/default.conf', source)
         self.assertIn('COPY --from=build /app/clients/web/dist /usr/share/nginx/html', source)
 

@@ -8,6 +8,12 @@ def web_build_arguments(environment):
     flag = environment.get("VITE_RNNOISE_ENABLED", "true")
     if flag not in ("true", "false"):
         raise ValueError("VITE_RNNOISE_ENABLED must be true or false")
+    descriptor = environment.get("VITE_SCREEN_SHARE_DESCRIPTOR_V1", "true")
+    if descriptor not in ("true", "false"):
+        raise ValueError("VITE_SCREEN_SHARE_DESCRIPTOR_V1 must be true or false")
+    simulcast = environment.get("VITE_SCREEN_SHARE_BOUNDED_SIMULCAST", "false")
+    if simulcast not in ("true", "false"):
+        raise ValueError("VITE_SCREEN_SHARE_BOUNDED_SIMULCAST must be true or false")
     value = environment.get("VITE_PUBLIC_ORIGIN", "").strip()
     try:
         origin = urlsplit(value)
@@ -22,6 +28,8 @@ def web_build_arguments(environment):
     if port and port != 443:
         authority += f":{port}"
     return ["--build-arg", "VITE_RNNOISE_ENABLED=" + flag,
+            "--build-arg", "VITE_SCREEN_SHARE_DESCRIPTOR_V1=" + descriptor,
+            "--build-arg", "VITE_SCREEN_SHARE_BOUNDED_SIMULCAST=" + simulcast,
             "--build-arg", "VITE_PUBLIC_ORIGIN=https://" + authority]
 
 
@@ -38,6 +46,8 @@ def build(source, output, revision, source_hash, environment):
                         *( ["--file", str(source / "clients/web/Dockerfile"), *web_build_arguments(environment),
                             "--build-arg", "SOURCE_REVISION=" + revision] if service == "web" else []),
                         str(source / context)], env=environment, check=True)
-        image_id = subprocess.check_output(["docker", "image", "inspect", "--format", "{{.Id}}", tag], text=True).strip()
+        image_id = subprocess.check_output(
+            ["docker", "image", "inspect", "--format", "{{.Id}}", tag], text=True
+        ).strip()
         receipts[service] = verify(archive, revision, source_hash, image_id)
     return receipts

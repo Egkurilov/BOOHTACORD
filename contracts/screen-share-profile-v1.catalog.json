@@ -56,9 +56,9 @@
     "nativeVideoOnlyGuaranteesSystemAudio": false
   },
   "rollout": {
-    "descriptorMetadata": { "featureSwitch": "screen-share.descriptor-v1", "independentlyDisableable": true },
+    "descriptorMetadata": { "featureSwitch": "screen-share.descriptor-v1", "webBuildVariable": "VITE_SCREEN_SHARE_DESCRIPTOR_V1", "defaultEnabled": true, "independentlyDisableable": true },
     "experimentProfiles": { "featureSwitch": "screen-share.experiment-profiles", "independentlyDisableable": true },
-    "boundedSimulcast": { "featureSwitch": "screen-share.bounded-simulcast", "independentlyDisableable": true },
+    "boundedSimulcast": { "featureSwitch": "screen-share.bounded-simulcast", "webBuildVariable": "VITE_SCREEN_SHARE_BOUNDED_SIMULCAST", "defaultEnabled": false, "independentlyDisableable": true },
     "fallbackAttemptsPerGeneration": 1,
     "unknownVersionNeverTriggersDowngradeLoop": true
   },

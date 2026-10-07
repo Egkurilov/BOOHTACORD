@@ -1,10 +1,14 @@
 import type { LocalVideoTrack, Room, Track } from 'livekit-client'
 import { updateScreenProfileDescriptor } from './client'
 import { SCREEN_DESCRIPTOR_ATTRIBUTE } from './descriptor'
+import { screenDescriptorMetadataEnabled } from './enabled'
 import { ScreenProfileMetadataPublisher } from './publisher'
 import type { ScreenProfile } from '../screen_profile/policy'
 
 export function bindLiveKitScreenMetadata(room: Room, screenSource: Track.Source, generation: () => number) {
+  if (!screenDescriptorMetadataEnabled()) {
+    return { bindLease: async () => undefined, publish: async () => undefined, clear: async () => undefined, reconnected: () => undefined }
+  }
   let leaseId = ''
   let activeProfile: ScreenProfile | undefined
   let publisher: ScreenProfileMetadataPublisher | undefined

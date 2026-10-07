@@ -1,5 +1,6 @@
 import type { ScreenViewerPublication, ScreenViewerStream } from './screen_viewer_controller'
 import { isNewerScreenDescriptor, parseScreenDescriptor, SCREEN_DESCRIPTOR_ATTRIBUTE } from './screen_profile_metadata/descriptor'
+import { screenDescriptorMetadataEnabled } from './screen_profile_metadata/enabled'
 import type { ScreenShareDescriptorV1 } from './screen_profile_metadata/types'
 
 export interface ScreenParticipantPublication {
@@ -17,7 +18,11 @@ export class LiveKitScreenRegistry {
   private current: ScreenViewerStream[] = []
   private descriptors = new Map<string, { trackSid?: string; descriptor?: ScreenShareDescriptorV1; floor?: { sessionId: string; generation: number } }>()
 
-  constructor(private readonly originId = '', private readonly roomId = '') {}
+  constructor(
+    private readonly originId = '',
+    private readonly roomId = '',
+    private readonly descriptorMetadataEnabled = screenDescriptorMetadataEnabled(),
+  ) {}
 
   refresh(participants: ScreenParticipantPublication[], selectedId: string | null): void {
     const activeIds = new Set(participants.map(participant => participant.identity))
@@ -45,6 +50,10 @@ export class LiveKitScreenRegistry {
   }
 
   private descriptor(participant: ScreenParticipantPublication): ScreenShareDescriptorV1 | undefined {
+    if (!this.descriptorMetadataEnabled) {
+      this.descriptors.delete(participant.identity)
+      return undefined
+    }
     const previous = this.descriptors.get(participant.identity)
     const trackSid = participant.video?.trackSid
     const changedTrack = Boolean(previous?.trackSid && trackSid && previous.trackSid !== trackSid)

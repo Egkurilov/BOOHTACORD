@@ -69,5 +69,13 @@ describe('screen-share contract acceptance fixtures', () => {
     expect(catalog.qualityAcceptance).toMatchObject({ status: 'proposed-unvalidated', warmupSeconds: 30, durationSeconds: 180, windowSeconds: 1, repeats: 5, presentedFpsP05: 55, latencyP95Ms: { firstFrame: 2000, profileSwitch: 2000 }, freezeThresholdMs: 500 })
     expect(catalog.qualityAcceptance.fpsObservation).toContain('presented')
     expect(catalog.rollout.fallbackAttemptsPerGeneration).toBe(1)
+    expect(catalog.rollout.descriptorMetadata).toMatchObject({
+      featureSwitch: 'screen-share.descriptor-v1', independentlyDisableable: true,
+      webBuildVariable: 'VITE_SCREEN_SHARE_DESCRIPTOR_V1', defaultEnabled: true,
+    })
+    expect(catalog.rollout.boundedSimulcast).toMatchObject({
+      featureSwitch: 'screen-share.bounded-simulcast', independentlyDisableable: true,
+      webBuildVariable: 'VITE_SCREEN_SHARE_BOUNDED_SIMULCAST', defaultEnabled: false,
+    })
   })
 })

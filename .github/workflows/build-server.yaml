@@ -44,6 +44,8 @@ jobs:
     timeout-minutes: 30
     env:
       VITE_PUBLIC_ORIGIN: https://v.bootybay.ru
+      VITE_SCREEN_SHARE_DESCRIPTOR_V1: ${{ vars.VITE_SCREEN_SHARE_DESCRIPTOR_V1 || 'true' }}
+      VITE_SCREEN_SHARE_BOUNDED_SIMULCAST: ${{ vars.VITE_SCREEN_SHARE_BOUNDED_SIMULCAST || 'false' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
