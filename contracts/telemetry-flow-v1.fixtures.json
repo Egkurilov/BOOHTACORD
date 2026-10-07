@@ -15,6 +15,11 @@
     "valid": false
   },
   {
+    "key": "app.visit.id",
+    "value": "111111111111111111111111111111111",
+    "valid": false
+  },
+  {
     "key": "app.schema.version",
     "value": 2,
     "valid": false
@@ -37,6 +42,11 @@
   {
     "key": "app.flow.outcome",
     "value": "secret-body",
+    "valid": false
+  },
+  {
+    "key": "app.client.version",
+    "value": "123456789012345678901234567890123",
     "valid": false
   },
   {

@@ -9,7 +9,12 @@
     "queue": 128,
     "batch": 16,
     "exportTimeoutMs": 3000,
-    "retries": 2
+    "retries": 2,
+    "spanNameBytes": 64,
+    "attributeKeyBytes": 128,
+    "attributeStringBytes": 512,
+    "maxBatchBytes": 262144,
+    "linkAttributes": 8
   },
   "operations": [
     "api.request",
@@ -39,23 +44,40 @@
       "type": "integer",
       "min": 1,
       "max": 1,
-      "owner": "contract"
+      "owner": "contract",
+      "required": true
     },
     "session.id": {
       "type": "id",
-      "owner": "server"
+      "owner": "server",
+      "required": true,
+      "minLength": 32,
+      "maxLength": 32,
+      "pattern": "^[0-9a-f]{32}$"
     },
     "app.visit.id": {
       "type": "id",
-      "owner": "client"
+      "owner": "client",
+      "required": true,
+      "minLength": 32,
+      "maxLength": 32,
+      "pattern": "^[0-9a-f]{32}$"
     },
     "app.flow.id": {
       "type": "id",
-      "owner": "client"
+      "owner": "client",
+      "required": true,
+      "minLength": 32,
+      "maxLength": 32,
+      "pattern": "^[0-9a-f]{32}$"
     },
     "app.media.session.id": {
       "type": "id",
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 32,
+      "maxLength": 32,
+      "pattern": "^[0-9a-f]{32}$"
     },
     "app.flow.name": {
       "type": "enum",
@@ -76,7 +98,10 @@
         "screen.view",
         "telemetry.export"
       ],
-      "owner": "client"
+      "owner": "client",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 18
     },
     "app.flow.stage": {
       "type": "enum",
@@ -109,7 +134,10 @@
         "authorize",
         "export"
       ],
-      "owner": "observer"
+      "owner": "observer",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 12
     },
     "app.flow.record": {
       "type": "enum",
@@ -118,7 +146,10 @@
         "checkpoint",
         "terminal"
       ],
-      "owner": "observer"
+      "owner": "observer",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 10
     },
     "app.flow.outcome": {
       "type": "enum",
@@ -131,7 +162,10 @@
         "timeout",
         "superseded"
       ],
-      "owner": "observer"
+      "owner": "observer",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 10
     },
     "app.flow.reason": {
       "type": "enum",
@@ -149,13 +183,17 @@
         "unsupported",
         "export_lost"
       ],
-      "owner": "observer"
+      "owner": "observer",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 18
     },
     "app.flow.attempt": {
       "type": "integer",
       "min": 1,
       "max": 20,
-      "owner": "client"
+      "owner": "client",
+      "required": true
     },
     "app.provenance": {
       "type": "enum",
@@ -164,71 +202,88 @@
         "server_confirmed",
         "sfu_observed"
       ],
-      "owner": "server"
+      "owner": "server",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 16
     },
     "app.client.version": {
       "type": "version",
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,31}$"
     },
     "app.sample.age_ms": {
       "type": "number",
       "min": 0,
       "max": 60000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.sample.window_ms": {
       "type": "number",
       "min": 1,
       "max": 60000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.capture_fps": {
       "type": "number",
       "min": 0,
       "max": 240,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.encoded_fps": {
       "type": "number",
       "min": 0,
       "max": 240,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.decoded_fps": {
       "type": "number",
       "min": 0,
       "max": 240,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.presented_fps": {
       "type": "number",
       "min": 0,
       "max": 240,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.bitrate_bps": {
       "type": "number",
       "min": 0,
       "max": 100000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.rtt_ms": {
       "type": "number",
       "min": 0,
       "max": 60000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.jitter_ms": {
       "type": "number",
       "min": 0,
       "max": 60000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.loss_percent": {
       "type": "number",
       "min": 0,
       "max": 100,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.direction": {
       "type": "enum",
@@ -236,7 +291,10 @@
         "sender",
         "receiver"
       ],
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 8
     },
     "app.media.source": {
       "type": "enum",
@@ -245,13 +303,17 @@
         "presentation",
         "sfu"
       ],
-      "owner": "server"
+      "owner": "server",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 12
     },
     "app.media.target_fps": {
       "type": "number",
       "min": 1,
       "max": 240,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.sample_state": {
       "type": "enum",
@@ -261,7 +323,10 @@
         "unsupported",
         "unknown"
       ],
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 11
     },
     "http.request.method": {
       "type": "enum",
@@ -275,13 +340,17 @@
         "OPTIONS",
         "OTHER"
       ],
-      "owner": "observer"
+      "owner": "observer",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 7
     },
     "http.response.status_code": {
       "type": "integer",
       "min": 100,
       "max": 599,
-      "owner": "observer"
+      "owner": "observer",
+      "required": false
     },
     "app.storage.result": {
       "type": "enum",
@@ -290,7 +359,10 @@
         "replayed",
         "rejected"
       ],
-      "owner": "server"
+      "owner": "server",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 9
     },
     "app.media.adaptation_reason": {
       "type": "enum",
@@ -300,13 +372,17 @@
         "bandwidth",
         "other"
       ],
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 9
     },
     "app.cause.truncated": {
       "type": "integer",
       "min": 0,
       "max": 1000,
-      "owner": "observer"
+      "owner": "observer",
+      "required": false
     },
     "app.voice.mode": {
       "type": "enum",
@@ -315,121 +391,143 @@
         "listener",
         "microphone_unavailable"
       ],
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 22
     },
     "app.export.queued": {
       "type": "integer",
       "min": 0,
       "max": 128,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.export.accepted": {
       "type": "integer",
       "min": 0,
       "max": 1000000000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.export.rejected": {
       "type": "integer",
       "min": 0,
       "max": 1000000000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.export.dropped": {
       "type": "integer",
       "min": 0,
       "max": 1000000000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.export.retried": {
       "type": "integer",
       "min": 0,
       "max": 1000000000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.export.age_ms": {
       "type": "integer",
       "min": 0,
       "max": 86400000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.total_bitrate_kbps": {
       "type": "number",
       "min": 0,
       "max": 100000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.selected_layer_bitrate_kbps": {
       "type": "number",
       "min": 0,
       "max": 100000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.retransmitted_bitrate_kbps": {
       "type": "number",
       "min": 0,
       "max": 100000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.encode_ms_per_frame": {
       "type": "number",
       "min": 0,
       "max": 60000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.decode_ms_per_frame": {
       "type": "number",
       "min": 0,
       "max": 60000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.jitter_buffer_ms_per_frame": {
       "type": "number",
       "min": 0,
       "max": 60000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.nack_per_second": {
       "type": "number",
       "min": 0,
       "max": 1000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.pli_per_second": {
       "type": "number",
       "min": 0,
       "max": 1000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.fir_per_second": {
       "type": "number",
       "min": 0,
       "max": 1000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.first_frame_ms": {
       "type": "number",
       "min": 0,
       "max": 86400000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.freeze_duration_ms": {
       "type": "number",
       "min": 0,
       "max": 86400000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.stats_window_ms": {
       "type": "number",
-      "min": 1e-06,
+      "min": 0.000001,
       "max": 10000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.freeze_count": {
       "type": "integer",
       "min": 0,
       "max": 1000000000,
-      "owner": "client"
+      "owner": "client",
+      "required": false
     },
     "app.media.collection_state": {
       "type": "enum",
@@ -444,7 +542,10 @@
         "unknown",
         "no_subscriber"
       ],
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 13
     },
     "app.media.presentation_source": {
       "type": "enum",
@@ -452,7 +553,10 @@
         "web_rvfc",
         "unsupported"
       ],
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 11
     },
     "app.media.stats_source": {
       "type": "enum",
@@ -460,7 +564,10 @@
         "webrtc_interval",
         "unsupported"
       ],
-      "owner": "client"
+      "owner": "client",
+      "required": false,
+      "minLength": 1,
+      "maxLength": 15
     }
   }
 }

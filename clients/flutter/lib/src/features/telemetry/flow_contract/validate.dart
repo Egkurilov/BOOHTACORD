@@ -3,16 +3,23 @@ import 'generated.dart';
 bool validFlowField(String key, Object? value) {
   final field = flowFields[key];
   if (field == null) return false;
+  bool validLength(String value) =>
+      value.length >= (field['minLength'] as int? ?? 0) &&
+      value.length <= (field['maxLength'] as int? ?? 0x7fffffff);
   switch (field['type']) {
     case 'id':
       return value is String &&
-          RegExp(r'^[0-9a-f]{32}$').hasMatch(value) &&
+          validLength(value) &&
+          RegExp(field['pattern'] as String).hasMatch(value) &&
           value != '00000000000000000000000000000000';
     case 'version':
       return value is String &&
-          RegExp(r'^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,31}$').hasMatch(value);
+          validLength(value) &&
+          RegExp(field['pattern'] as String).hasMatch(value);
     case 'enum':
-      return value is String && (field['values'] as List).contains(value);
+      return value is String &&
+          validLength(value) &&
+          (field['values'] as List).contains(value);
     default:
       return value is num &&
           value.isFinite &&

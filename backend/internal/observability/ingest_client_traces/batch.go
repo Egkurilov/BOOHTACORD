@@ -38,7 +38,7 @@ func sanitizeBatch(input *collectortrace.ExportTraceServiceRequest, platform, se
 			spans = append(spans, scope.Spans...)
 		}
 	}
-	if len(spans) == 0 || len(spans) > 32 {
+	if len(spans) == 0 || len(spans) > flow.MaxSpans {
 		return fail("size")
 	}
 	now := time.Now()
@@ -72,7 +72,7 @@ func sanitizeBatch(input *collectortrace.ExportTraceServiceRequest, platform, se
 		}
 		if versioned(span) {
 			attrs, ok := cleanFlow(span, sessionID, accountID)
-			if !ok || span.EndTimeUnixNano-span.StartTimeUnixNano > uint64(120*time.Second) {
+			if !ok || span.EndTimeUnixNano-span.StartTimeUnixNano > uint64(time.Duration(flow.MaxFlowDurationSeconds)*time.Second) {
 				result.Rejected++
 				continue
 			}

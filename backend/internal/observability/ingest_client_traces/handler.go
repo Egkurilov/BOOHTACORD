@@ -8,13 +8,14 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	flow "voice-platform/backend/internal/observability/flow_contract"
 	incident "voice-platform/backend/internal/observability/observe_incidents"
 
 	collectortrace "go.opentelemetry.io/proto/otlp/collector/trace/v1"
 	"google.golang.org/protobuf/proto"
 )
 
-const maxBodyBytes = 256 * 1024
+const maxBodyBytes = flow.MaxBatchBytes
 
 // NewHandler accepts a bounded OTLP batch from an authenticated client and strips all user-controlled metadata.
 func NewHandler(endpoint, authorization string, client *http.Client) http.Handler {

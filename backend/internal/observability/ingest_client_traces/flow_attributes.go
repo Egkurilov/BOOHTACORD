@@ -31,8 +31,11 @@ func spanField(span *tracepb.Span, key string) any {
 }
 func versioned(span *tracepb.Span) bool { return spanField(span, "app.schema.version") != nil }
 func cleanFlow(span *tracepb.Span, sessionID, accountID string) ([]*commonpb.KeyValue, bool) {
-	for _, key := range []string{"app.schema.version", "session.id", "app.visit.id", "app.flow.id", "app.flow.name", "app.flow.stage", "app.flow.record", "app.flow.outcome", "app.flow.attempt"} {
-		if !flow.Valid(key, spanField(span, key)) {
+	for key, field := range flow.Fields {
+		if field.Required && spanField(span, key) == nil {
+			return nil, false
+		}
+		if !flow.Valid(key, spanField(span, key)) && spanField(span, key) != nil {
 			return nil, false
 		}
 	}
@@ -64,7 +67,7 @@ func cleanFlow(span *tracepb.Span, sessionID, accountID string) ([]*commonpb.Key
 	} else if spanField(span, "app.media.source") != nil {
 		clean = append(clean, flowAttrValue("app.media.source", "webrtc"))
 	}
-	if len(clean) > 32 {
+	if len(clean) > flow.MaxAttributes {
 		return nil, false
 	}
 	return clean, true
