@@ -15,6 +15,7 @@ class AdminMembersPanel extends StatelessWidget {
     required this.error,
     required this.filters,
     required this.resetCard,
+    required this.conflictCards,
     required this.accountCards,
     required this.search,
     required this.roleFilter,
@@ -33,6 +34,7 @@ class AdminMembersPanel extends StatelessWidget {
   final String? error;
   final Widget filters;
   final Widget? resetCard;
+  final List<Widget> conflictCards;
   final List<Widget> accountCards;
   final String search;
   final String roleFilter;
@@ -92,6 +94,7 @@ class AdminMembersPanel extends StatelessWidget {
             padding: listPadding,
             children: [
               ?resetCard,
+              ...conflictCards,
               if (!accountsEmpty && accountCards.isEmpty)
                 const Text('По запросу участники не найдены.'),
               ...accountCards,

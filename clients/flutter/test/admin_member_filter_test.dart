@@ -1,7 +1,9 @@
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/core/http/api_failure.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_member_filter.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
+import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,6 +18,44 @@ AdminAccount account(String id, String name, String login, String role) =>
       blocked: false,
       createdAt: DateTime.utc(2026, 10, 1),
     );
+
+class _ConflictMemberApi extends ApiClient {
+  int loads = 0;
+
+  @override
+  Future<AdminAccountPage> listAdminAccounts({
+    String? cursor,
+    int limit = 100,
+  }) async {
+    loads++;
+    return AdminAccountPage(
+      accounts: [
+        AdminAccount(
+          accountId: 'conflict-account',
+          login: 'alice',
+          displayName: 'Алиса',
+          role: 'MEMBER',
+          blocked: loads > 1,
+          createdAt: DateTime.utc(2026, 10, 1),
+          updatedAt: DateTime.utc(2026, 10, loads),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<void> updateAdminAccount({
+    required String accountId,
+    required String role,
+    required bool blocked,
+    DateTime? expectedUpdatedAt,
+  }) async {
+    throw const ApiFailure(
+      'Участник изменён другим администратором.',
+      status: 409,
+    );
+  }
+}
 
 void main() {
   final accounts = [
@@ -120,10 +160,12 @@ void main() {
     expect(
       tester
           .widget<FittedBox>(
-            find.ancestor(
-              of: find.text('Участ.'),
-              matching: find.byType(FittedBox),
-            ).first,
+            find
+                .ancestor(
+                  of: find.text('Участ.'),
+                  matching: find.byType(FittedBox),
+                )
+                .first,
           )
           .fit,
       BoxFit.scaleDown,
@@ -148,10 +190,12 @@ void main() {
     expect(
       tester
           .widget<FittedBox>(
-            find.ancestor(
-              of: find.text('Админ.'),
-              matching: find.byType(FittedBox),
-            ).first,
+            find
+                .ancestor(
+                  of: find.text('Админ.'),
+                  matching: find.byType(FittedBox),
+                )
+                .first,
           )
           .fit,
       BoxFit.scaleDown,
@@ -182,5 +226,42 @@ void main() {
       reason: 'the web desktop select keeps its native dropdown arrow',
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('member conflict keeps draft and exposes comparison actions', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final api = _ConflictMemberApi();
+    final state = AppState(api);
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AdminScreen(state: state)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('role:conflict-account:MEMBER')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Администратор').last);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('save-account:conflict-account')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Другой администратор изменил @alice'), findsOneWidget);
+    expect(
+      find.textContaining('Ваше изменение: Администратор'),
+      findsOneWidget,
+    );
+    expect(find.text('Принять серверные данные'), findsOneWidget);
+    expect(find.text('Применить мой draft'), findsOneWidget);
   });
 }
