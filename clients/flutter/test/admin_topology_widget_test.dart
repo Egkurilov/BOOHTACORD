@@ -36,6 +36,67 @@ Future<AppState> _openChannels(WidgetTester tester, TopologyTestApi api) async {
   return state;
 }
 
+class _DescriptionTopologyApi extends TopologyTestApi {
+  _DescriptionTopologyApi() {
+    current = const ChannelTopology(
+      revision: 1,
+      categories: [
+        ChannelCategory(
+          id: 'first',
+          name: 'Основная',
+          channels: [
+            GuildChannel(
+              id: 'text-1',
+              name: 'Общее',
+              description: 'Старое описание',
+              kind: ChannelKind.text,
+              admissionClosed: false,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String? savedDescription;
+
+  @override
+  Future<void> updateChannelDescription({
+    required String channelId,
+    required String description,
+    required int expectedRevision,
+  }) async {
+    savedDescription = description;
+    revisions.add(expectedRevision);
+    current = ChannelTopology(
+      revision: expectedRevision + 1,
+      categories: current.categories
+          .map(
+            (category) => ChannelCategory(
+              id: category.id,
+              name: category.name,
+              channels: category.channels
+                  .map(
+                    (channel) => channel.id == channelId
+                        ? GuildChannel(
+                            id: channel.id,
+                            name: channel.name,
+                            description: description,
+                            kind: channel.kind,
+                            admissionClosed: channel.admissionClosed,
+                            unreadCount: channel.unreadCount,
+                            mentionCount: channel.mentionCount,
+                          )
+                        : channel,
+                  )
+                  .toList(growable: false),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+}
+
 void main() {
   testWidgets('compact member directory matches web typography and targets', (
     tester,
@@ -285,6 +346,57 @@ void main() {
           .widget<IconButton>(find.widgetWithIcon(IconButton, Icons.refresh))
           .onPressed,
       isNotNull,
+    );
+  });
+
+  testWidgets('edits and saves a channel description in the inspector', (
+    tester,
+  ) async {
+    final api = _DescriptionTopologyApi();
+    final state = AppState(api)..topology = api.current;
+    addTearDown(state.dispose);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1200, 900);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AdminScreen(state: state)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('admin-section-tab-channels')));
+    await tester.pumpAndSettle();
+
+    final channelPicker = find.byWidgetPredicate(
+      (widget) =>
+          widget is DropdownButtonFormField<String> &&
+          widget.decoration?.labelText == 'Канал',
+    );
+    await tester.ensureVisible(channelPicker);
+    await tester.tap(channelPicker);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Общее').last);
+    await tester.pumpAndSettle();
+
+    final descriptionField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.labelText == 'Описание канала',
+    );
+    expect(descriptionField, findsOneWidget);
+    expect(
+      tester.widget<TextField>(descriptionField).controller!.text,
+      'Старое описание',
+    );
+    await tester.enterText(descriptionField, 'Новое описание');
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Сохранить описание'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(api.savedDescription, 'Новое описание');
+    expect(
+      state.topology!.categories.single.channels.single.description,
+      'Новое описание',
     );
   });
 

@@ -6,7 +6,6 @@ export 'features/text/message_model/message.dart';
 
 enum ChannelKind { text, voice }
 
-
 class VoiceRosterMember {
   const VoiceRosterMember({
     required this.accountId,
@@ -66,8 +65,6 @@ class VoiceRoomRoster {
     return VoiceRoomRoster(channelId: channelId, participants: participants);
   }
 }
-
-
 
 class SessionUser {
   const SessionUser({required this.accountId, required this.role});
@@ -362,6 +359,7 @@ class GuildChannel {
     required this.name,
     required this.kind,
     required this.admissionClosed,
+    this.description,
     this.unreadCount = 0,
     this.mentionCount = 0,
   });
@@ -369,6 +367,7 @@ class GuildChannel {
   final String name;
   final ChannelKind kind;
   final bool admissionClosed;
+  final String? description;
   final int unreadCount;
   final int mentionCount;
 
@@ -378,17 +377,24 @@ class GuildChannel {
         name: name,
         kind: kind,
         admissionClosed: admissionClosed,
+        description: description,
         unreadCount: unread,
         mentionCount: mentions,
       );
 
   factory GuildChannel.fromJson(Map<String, dynamic> json) {
     final kind = json['kind'] == 'VOICE' ? ChannelKind.voice : ChannelKind.text;
+    final description = json['description'];
+    if (description != null &&
+        (description is! String || description.runes.length > 200)) {
+      throw const FormatException('Invalid channel description.');
+    }
     return GuildChannel(
       id: json['id'] as String,
       name: json['name'] as String,
       kind: kind,
       admissionClosed: json['admission_closed'] as bool? ?? false,
+      description: description as String?,
       unreadCount: kind == ChannelKind.text
           ? _nonNegativeCount(json['unread_count'])
           : 0,

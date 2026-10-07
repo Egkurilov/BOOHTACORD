@@ -333,6 +333,36 @@ void main() {
     state.dispose();
   });
 
+  testWidgets(
+    'shows a server-authored text channel description in its header',
+    (tester) async {
+      final state = AppState(_PortraitApi());
+      await state.initialize();
+      state.selectedChannel = const GuildChannel(
+        id: 'channel-1',
+        name: 'общий',
+        description: 'Общение на любые темы',
+        kind: ChannelKind.text,
+        admissionClosed: false,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AnimatedBuilder(
+            animation: state,
+            builder: (_, _) => WorkspaceScreen(state: state),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Общение на любые темы'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    },
+  );
+
   testWidgets('opens native audio settings and processing controls', (
     tester,
   ) async {

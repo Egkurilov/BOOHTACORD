@@ -44,6 +44,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   final _categoryRename = TextEditingController();
   final _channelName = TextEditingController();
   final _channelRename = TextEditingController();
+  final _channelDescription = TextEditingController();
   final _accountSearch = TextEditingController();
   String? _categoryId;
   String? _channelId;
@@ -102,6 +103,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     _categoryRename.dispose();
     _channelName.dispose();
     _channelRename.dispose();
+    _channelDescription.dispose();
     _accountSearch.dispose();
     for (final focusNode in _accountSaveFocusNodes.values) {
       focusNode.dispose();
@@ -427,6 +429,18 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
       () => widget.state.api.renameChannel(
         channelId: channel.id,
         name: _channelRename.text,
+        expectedRevision: widget.state.topology!.revision,
+      ),
+      revisionBound: true,
+    );
+  }
+
+  Future<void> _saveChannelDescription(GuildChannel channel) async {
+    await _mutate(
+      'Описание канала сохранено. Топология обновлена.',
+      () => widget.state.api.updateChannelDescription(
+        channelId: channel.id,
+        description: _channelDescription.text,
         expectedRevision: widget.state.topology!.revision,
       ),
       revisionBound: true,
@@ -877,6 +891,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                         category?.name ?? '';
                                                     _channelId = null;
                                                     _channelRename.clear();
+                                                    _channelDescription.clear();
                                                   }),
                                           ),
                                           if (selectedCategory != null) ...[
@@ -988,6 +1003,16 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                               .firstOrNull
                                                               ?.name ??
                                                           '';
+                                                      _channelDescription.text =
+                                                          channels
+                                                              .where(
+                                                                (item) =>
+                                                                    item.id ==
+                                                                    value,
+                                                              )
+                                                              .firstOrNull
+                                                              ?.description ??
+                                                          '';
                                                     }),
                                             ),
                                             if (selectedChannel != null) ...[
@@ -1001,6 +1026,18 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                           'Новое имя канала',
                                                     ),
                                               ),
+                                              TextField(
+                                                controller: _channelDescription,
+                                                enabled: !_busy,
+                                                maxLength: 200,
+                                                maxLines: 2,
+                                                decoration:
+                                                    const InputDecoration(
+                                                      labelText:
+                                                          'Описание канала',
+                                                      hintText: 'Кратко объясните назначение канала',
+                                                    ),
+                                              ),
                                               Align(
                                                 alignment: Alignment.centerLeft,
                                                 child: OutlinedButton(
@@ -1011,6 +1048,20 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
                                                         ),
                                                   child: const Text(
                                                     'Переименовать канал',
+                                                  ),
+                                                ),
+                                              ),
+                                              Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: OutlinedButton(
+                                                  onPressed: _busy
+                                                      ? null
+                                                      : () =>
+                                                            _saveChannelDescription(
+                                                              selectedChannel,
+                                                            ),
+                                                  child: const Text(
+                                                    'Сохранить описание',
                                                   ),
                                                 ),
                                               ),

@@ -52,6 +52,32 @@ class AdminChannelsApi {
     );
   }
 
+  Future<void> updateDescription({
+    required String channelId,
+    required String description,
+    required int expectedRevision,
+  }) async {
+    if (channelId.isEmpty ||
+        description.runes.length > 200 ||
+        expectedRevision < 1) {
+      throw const ApiFailure(
+        'Введите описание канала до 200 символов и обновите список.',
+      );
+    }
+    await transport.checked(
+      await transport.client.patch(
+        transport.uri(
+          '/admin/channels/${Uri.encodeComponent(channelId)}/description',
+        ),
+        headers: await transport.headers(jsonBody: true),
+        body: jsonEncode({
+          'description': description,
+          'expected_revision': expectedRevision,
+        }),
+      ),
+    );
+  }
+
   Future<void> archiveTextChannel({
     required String channelId,
     required int expectedRevision,

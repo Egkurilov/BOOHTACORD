@@ -124,6 +124,63 @@ void main() {
   );
 
   test(
+    'updates a channel description with the expected topology revision',
+    () async {
+      late http.Request request;
+      final api = ApiClient(
+        client: MockClient((value) async {
+          request = value;
+          return http.Response.bytes(
+            utf8.encode(
+              '{"id":"channel/one","description":"Общение на любые темы","revision":15}',
+            ),
+            200,
+          );
+        }),
+      );
+
+      await api.updateChannelDescription(
+        channelId: 'channel/one',
+        description: 'Общение на любые темы',
+        expectedRevision: 14,
+      );
+
+      expect(request.method, 'PATCH');
+      expect(
+        request.url.path,
+        '/api/v1/admin/channels/channel%2Fone/description',
+      );
+      expect(jsonDecode(request.body), {
+        'description': 'Общение на любые темы',
+        'expected_revision': 14,
+      });
+    },
+  );
+
+  test(
+    'rejects an oversized channel description before making a request',
+    () async {
+      var requestCount = 0;
+      final api = ApiClient(
+        client: MockClient((_) async {
+          requestCount++;
+          return http.Response('{}', 200);
+        }),
+      );
+
+      await expectLater(
+        api.updateChannelDescription(
+          channelId: 'channel-1',
+          description: '😀' * 201,
+          expectedRevision: 1,
+        ),
+        throwsA(isA<ApiFailure>()),
+      );
+      expect(requestCount, 0);
+    },
+  );
+
+  test(
     'preserves conflict status for topology recovery in the admin screen',
     () async {
       final api = ApiClient(

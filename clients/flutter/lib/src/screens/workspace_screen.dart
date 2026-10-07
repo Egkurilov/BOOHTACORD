@@ -2531,7 +2531,9 @@ class _ConversationState extends State<_Conversation>
         _Header(
           icon: Icons.tag_rounded,
           title: widget.channel.name,
-          subtitle: 'Текстовый канал',
+          subtitle: widget.channel.description?.trim().isNotEmpty == true
+              ? widget.channel.description!.trim()
+              : 'Текстовый канал',
           mobileConversationLayout: true,
           onToggleNavigation: widget.onToggleNavigation,
           onOpenMembers: widget.onOpenMembers,

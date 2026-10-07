@@ -29,6 +29,18 @@ mixin AdminChannelsFacade on ApiFacadeBase {
     ),
   );
 
+  Future<void> updateChannelDescription({
+    required String channelId,
+    required String description,
+    required int expectedRevision,
+  }) => transport.run(
+    () => _adminChannels.updateDescription(
+      channelId: channelId,
+      description: description,
+      expectedRevision: expectedRevision,
+    ),
+  );
+
   Future<void> archiveTextChannel({
     required String channelId,
     required int expectedRevision,
