@@ -29,6 +29,7 @@ import '../features/voice/screen_viewer/audio_controls.dart';
 import '../features/voice/screen_viewer/discovery.dart';
 import '../features/voice/screen_viewer/fullscreen_generation.dart';
 import '../features/voice/screen_viewer/publication_generation.dart';
+import '../features/screen/sender_metadata/descriptor.dart';
 import '../features/voice/shortcuts/capture.dart';
 import '../features/voice/lifecycle/controller.dart';
 import '../widgets/voice_shortcuts/keyboard.dart';
@@ -1784,6 +1785,17 @@ String? _voiceParticipantAccountId(RemoteParticipant participant) {
   if (metadata == null || !metadata.startsWith('account:')) return null;
   final id = metadata.substring('account:'.length);
   return id.isEmpty ? null : id;
+}
+
+RemoteParticipant? _selectedVoiceScreenSender(
+  List<RemoteParticipant> screens,
+  String? selectedIdentity,
+) {
+  if (selectedIdentity == null) return null;
+  for (final participant in screens) {
+    if (participant.identity == selectedIdentity) return participant;
+  }
+  return null;
 }
 
 Color _voiceAvatarColor(String value) {
@@ -6351,6 +6363,20 @@ class _VoiceScreenViewer extends StatelessWidget {
         senderSampledAt: showingLocalScreen
             ? state.screenShareSenderSampledAt
             : null,
+        senderDescriptorJson: showingLocalScreen
+            ? null
+            : _selectedVoiceScreenSender(screens, selectedIdentity)
+                  ?.attributes[screenShareDescriptorAttribute],
+        expectedSenderAccountId: _selectedVoiceScreenSender(
+                  screens,
+                  selectedIdentity,
+                ) ==
+                null
+            ? null
+            : _voiceParticipantAccountId(
+                _selectedVoiceScreenSender(screens, selectedIdentity)!,
+              ),
+        expectedRoomId: state.room?.name,
       ),
     ),
     audioControls: _audioControls,

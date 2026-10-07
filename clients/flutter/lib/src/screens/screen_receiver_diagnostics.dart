@@ -10,6 +10,8 @@ import '../services/screen_share_metrics.dart';
 import '../features/screen/receiver_metrics/models.dart';
 import '../features/screen/receiver_metrics/compare.dart';
 import '../features/screen/receiver_metrics/read.dart';
+import '../features/screen/sender_metadata/descriptor.dart';
+import '../features/screen/sender_metadata/presentation.dart';
 import '../features/screen/metrics/stats_poller.dart';
 import '../services/screen_receiver_report.dart';
 import '../theme.dart';
@@ -30,6 +32,9 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
     this.sourceTrackName,
     this.senderReport,
     this.senderSampledAt,
+    this.senderDescriptorJson,
+    this.expectedSenderAccountId,
+    this.expectedRoomId,
   });
 
   final RemoteVideoTrack? track;
@@ -41,6 +46,9 @@ class ScreenReceiverDiagnostics extends StatefulWidget {
   final String? sourceTrackName;
   final ScreenShareSenderReport? senderReport;
   final DateTime? senderSampledAt;
+  final String? senderDescriptorJson;
+  final String? expectedSenderAccountId;
+  final String? expectedRoomId;
 
   @override
   State<ScreenReceiverDiagnostics> createState() =>
@@ -70,23 +78,51 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
   bool _appVisible = true;
   bool _popoverOpen = false;
   String _sampleStatus = 'Ожидание статистики приёмника';
+  ScreenShareSenderDescriptor? _senderDescriptor;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _senderDescriptor = _parseSenderDescriptor();
     _restartSampling();
   }
 
   @override
   void didUpdateWidget(covariant ScreenReceiverDiagnostics oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final changedOwner = oldWidget.expectedSenderAccountId !=
+            widget.expectedSenderAccountId ||
+        oldWidget.expectedRoomId != widget.expectedRoomId ||
+        oldWidget.selectedStreamId != widget.selectedStreamId;
+    if (changedOwner) {
+      _senderDescriptor = _parseSenderDescriptor();
+    } else if (oldWidget.senderDescriptorJson != widget.senderDescriptorJson) {
+      final candidate = _parseSenderDescriptor();
+      if (candidate == null) {
+        _senderDescriptor = null;
+      } else if (_senderDescriptor == null ||
+          isNewerScreenShareDescriptor(candidate, _senderDescriptor!)) {
+        _senderDescriptor = candidate;
+      }
+    }
     if (oldWidget.track != widget.track ||
         oldWidget.isLocal != widget.isLocal ||
         oldWidget.reportEnabled != widget.reportEnabled ||
         oldWidget.selectedStreamId != widget.selectedStreamId) {
       _restartSampling();
     }
+  }
+
+  ScreenShareSenderDescriptor? _parseSenderDescriptor() {
+    if (widget.expectedSenderAccountId == null || widget.expectedRoomId == null) {
+      return null;
+    }
+    return parseScreenShareDescriptor(
+      widget.senderDescriptorJson,
+      expectedAccountId: widget.expectedSenderAccountId,
+      expectedRoomId: widget.expectedRoomId,
+    );
   }
 
   @override
@@ -363,6 +399,18 @@ class _ScreenReceiverDiagnosticsState extends State<ScreenReceiverDiagnostics>
                                 widget.sourceTrackName,
                               ),
                             ),
+                            if (!widget.isLocal) ...[
+                              _DiagnosticRow(
+                                label: 'Режим отправителя',
+                                value: senderModeLabel(_senderDescriptor?.mode),
+                              ),
+                              _DiagnosticRow(
+                                label: 'Выбрано отправителем',
+                                value: senderRequestedProfileLabel(
+                                  _senderDescriptor?.requestedProfileId,
+                                ),
+                              ),
+                            ],
                             if (widget.isLocal)
                               ..._senderRows(widget.senderReport)
                             else ...[
