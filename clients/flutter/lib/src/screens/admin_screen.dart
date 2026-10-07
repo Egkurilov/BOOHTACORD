@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' show SemanticsRole;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../app_state.dart';
 import '../models.dart';
@@ -11,20 +10,14 @@ import '../theme.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../features/admin/role_permissions/panel.dart';
 import '../features/admin/guild_settings/panel.dart';
-import 'admin_member_filter.dart';
-import 'admin_member_filters.dart';
 import '../features/admin/readiness/panel.dart';
 import '../features/admin/topology/panel.dart';
 import '../features/admin/audit/filter.dart';
 import '../features/admin/layout/width_class.dart';
+import '../features/admin/members/controller.dart';
+import '../features/admin/members/panel.dart';
 
 enum _AdminSection { members, roles, channels, audit, media, guild, readiness }
-
-class _AdminAccountDraft {
-  _AdminAccountDraft({required this.role, required this.blocked});
-  String role;
-  bool blocked;
-}
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({
@@ -49,7 +42,6 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   final _channelName = TextEditingController();
   final _channelRename = TextEditingController();
   final _channelDescription = TextEditingController();
-  final _accountSearch = TextEditingController();
   final _auditActor = TextEditingController();
   String? _categoryId;
   final _collapsedTopologyCategories = <String>{};
@@ -63,22 +55,7 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   String? _status;
   String? _error;
   _AdminSection _selectedAdminSection = _AdminSection.members;
-  List<AdminAccount> _adminAccounts = const [];
-  String _accountRoleFilter = 'ALL';
-  List<AdminAccount> get _visibleAdminAccounts => filterAdminMembers(
-    _adminAccounts,
-    search: _accountSearch.text,
-    role: _accountRoleFilter,
-  );
-  String? _accountCursor;
-  final Map<String, _AdminAccountDraft> _accountDrafts = {};
-  final Map<String, FocusNode> _accountSaveFocusNodes = {};
-  final Set<String> _busyAccountIds = {};
-  bool _accountsLoading = false;
-  String? _accountsError;
-  String? _accountsStatus;
-  AdminPasswordResetLink? _resetLink;
-  String? _resetLogin;
+  late final AdminMembersController _members;
   List<AdminAuditEvent> _auditEvents = const [];
   String? _auditCursor;
   bool _auditLoading = false;
@@ -97,11 +74,12 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    _members = AdminMembersController(widget.state.api);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _titleFocus.requestFocus();
-        _loadAccounts();
+        unawaited(_members.load());
       }
     });
   }
@@ -116,11 +94,8 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     _channelName.dispose();
     _channelRename.dispose();
     _channelDescription.dispose();
-    _accountSearch.dispose();
+    _members.dispose();
     _auditActor.dispose();
-    for (final focusNode in _accountSaveFocusNodes.values) {
-      focusNode.dispose();
-    }
     super.dispose();
   }
 
@@ -238,171 +213,12 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     actor: _auditActor.text,
   );
 
-  Future<void> _loadAccounts({String? cursor}) async {
-    if (_accountsLoading) return;
-    setState(() {
-      _accountsLoading = true;
-      _accountsError = null;
-    });
-    try {
-      final page = await widget.state.api.listAdminAccounts(cursor: cursor);
-      if (!mounted) return;
-      setState(() {
-        _adminAccounts = cursor == null
-            ? page.accounts
-            : [..._adminAccounts, ...page.accounts];
-        _accountCursor = page.nextCursor;
-        for (final account in page.accounts) {
-          _accountDrafts.putIfAbsent(
-            account.accountId,
-            () => _AdminAccountDraft(
-              role: account.role,
-              blocked: account.blocked,
-            ),
-          );
-        }
-      });
-    } catch (cause) {
-      if (mounted) setState(() => _accountsError = cause.toString());
-    } finally {
-      if (mounted) setState(() => _accountsLoading = false);
-    }
-  }
-
-  Future<void> _saveAccount(AdminAccount account) async {
-    final draft = _accountDrafts[account.accountId];
-    if (draft == null || _busyAccountIds.contains(account.accountId)) return;
-    if (account.updatedAt == null) {
-      setState(
-        () => _accountsError =
-            'Обновите список участников: серверная версия аккаунта недоступна.',
-      );
-      return;
-    }
-    setState(() {
-      _busyAccountIds.add(account.accountId);
-      _accountsStatus = null;
-      _accountsError = null;
-    });
-    try {
-      await widget.state.api.updateAdminAccount(
-        accountId: account.accountId,
-        role: draft.role,
-        blocked: draft.blocked,
-        expectedUpdatedAt: account.updatedAt,
-      );
-      await _loadAccounts();
-      if (mounted) {
-        setState(
-          () => _accountsStatus = 'Изменения для @${account.login} сохранены.',
-        );
-      }
-    } catch (cause) {
-      if (cause is ApiFailure && cause.status == 409) {
-        await _loadAccounts();
-        if (mounted) {
-          setState(
-            () => _accountsError = 'Участник изменён другим администратором. Черновик сохранён; сравните данные и повторите действие.',
-          );
-        }
-      } else if (mounted) {
-        setState(() => _accountsError = cause.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _busyAccountIds.remove(account.accountId));
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final focusNode = _accountSaveFocusNodes[account.accountId];
-          if (mounted && focusNode?.context != null) focusNode!.requestFocus();
-        });
-      }
-    }
-  }
-
-  Future<void> _createResetLink(AdminAccount account) async {
-    setState(() {
-      _resetLink = null;
-      _resetLogin = null;
-      _busyAccountIds.add(account.accountId);
-      _accountsError = null;
-    });
-    try {
-      final result = await widget.state.api.createAdminPasswordResetLink(
-        account.accountId,
-      );
-      if (mounted) {
-        setState(() {
-          _resetLink = result;
-          _resetLogin = account.login;
-        });
-      }
-    } catch (cause) {
-      if (mounted) setState(() => _accountsError = cause.toString());
-    } finally {
-      if (mounted) setState(() => _busyAccountIds.remove(account.accountId));
-    }
-  }
-
-  Future<void> _kickVoiceParticipant(AdminAccount account) async {
-    if (_busyAccountIds.contains(account.accountId)) return;
-    final confirmed = await showConfirmationDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Отключить от голоса?'),
-        content: const Text('Отключить участника от голосового канала?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Отключить'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    setState(() {
-      _busyAccountIds.add(account.accountId);
-      _accountsStatus = null;
-      _accountsError = null;
-    });
-    try {
-      final revoked = await widget.state.api.kickAdminVoiceParticipant(
-        account.accountId,
-      );
-      if (mounted) {
-        setState(
-          () => _accountsStatus = revoked > 0
-              ? 'Подключение отозвано.'
-              : 'Активное голосовое подключение не найдено.',
-        );
-      }
-    } catch (cause) {
-      if (mounted) setState(() => _accountsError = cause.toString());
-    } finally {
-      if (mounted) setState(() => _busyAccountIds.remove(account.accountId));
-    }
-  }
-
-  Future<void> _copyResetLink() async {
-    final link = _resetLink;
-    if (link == null) return;
-    try {
-      await Clipboard.setData(ClipboardData(text: link.url));
-      if (mounted) setState(() => _accountsStatus = 'Ссылка скопирована.');
-    } catch (cause) {
-      if (mounted) setState(() => _accountsError = cause.toString());
-    }
-  }
-
   void _selectSection(_AdminSection section) {
     setState(() => _selectedAdminSection = section);
     _mediaRefreshTimer?.cancel();
     _mediaRefreshTimer = null;
-    if (section == _AdminSection.members && _adminAccounts.isEmpty) {
-      _loadAccounts();
+    if (section == _AdminSection.members && !_members.hasLoadedDirectory) {
+      unawaited(_members.load());
     }
     if (section == _AdminSection.audit && _auditEvents.isEmpty) {
       _loadAudit();
@@ -2055,110 +1871,23 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
     return '${day.day.toString().padLeft(2, '0')}.${day.month.toString().padLeft(2, '0')}.${day.year}';
   }
 
-  Widget _buildMembersPanel() => Column(
-    children: [
-      Padding(
-        padding: _adminSectionHeaderPadding,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Участники ${_adminAccounts.length}',
-                    key: ValueKey('admin-members-section-title'),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      height: 28 / 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Text(
-                    'Роли и доступ к этой гильдии',
-                    style: TextStyle(
-                      color: GcColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            TextButton.icon(
-              onPressed: _accountsLoading ? null : () => _loadAccounts(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Обновить'),
-            ),
-          ],
-        ),
-      ),
-      AdminMemberFilters(
-        search: _accountSearch,
-        role: _accountRoleFilter,
-        onSearchChanged: () => setState(() {}),
-        onRoleChanged: (value) => setState(() => _accountRoleFilter = value),
-      ),
-      if (_accountsLoading && _adminAccounts.isEmpty)
-        _adminLoadingState(
-          'Загружаем список участников…',
-          'admin-members-loading',
-        )
-      else if (!_accountsLoading &&
-          _adminAccounts.isEmpty &&
-          _accountsError == null)
-        const Expanded(child: Center(child: Text('Участников пока нет.')))
-      else
-        Expanded(
-          child: ListView(
-            key: ValueKey(
-              'admin-member-list:${_accountSearch.text}:$_accountRoleFilter',
-            ),
-            padding: _adminSectionListPadding,
-            children: [
-              if (_resetLink != null) _buildResetLinkCard(),
-              if (_adminAccounts.isNotEmpty && _visibleAdminAccounts.isEmpty)
-                const Text('По запросу участники не найдены.'),
-              for (final account in _visibleAdminAccounts)
-                _buildAdminAccountCard(account),
-              if (_accountsLoading)
-                const Center(child: CircularProgressIndicator()),
-              if (_accountCursor != null)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: _accountsLoading
-                        ? null
-                        : () => _loadAccounts(cursor: _accountCursor),
-                    child: const Text('Загрузить ещё'),
-                  ),
-                ),
-              if (_accountsStatus != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      _accountsStatus!,
-                      style: const TextStyle(color: GcColors.success),
-                    ),
-                  ),
-                ),
-              if (_accountsError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      _accountsError!,
-                      style: const TextStyle(color: GcColors.danger),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-    ],
+  Widget _buildMembersPanel() => AdminMembersPanel(
+    controller: _members,
+    currentAccountId: widget.state.user?.accountId,
+    voiceParticipantIds: _voiceParticipantIds,
   );
+
+  Set<String> get _voiceParticipantIds {
+    if (widget.state.voiceChannel == null) return const {};
+    final participants = widget.state.room?.remoteParticipants.values;
+    if (participants == null) return const {};
+    return participants
+        .map((participant) => participant.metadata)
+        .whereType<String>()
+        .where((metadata) => metadata.startsWith('account:'))
+        .map((metadata) => metadata.substring('account:'.length))
+        .toSet();
+  }
 
   Widget _adminLoadingState(String message, String key) => Expanded(
     child: Center(
@@ -2172,150 +1901,6 @@ class _AdminScreenState extends State<AdminScreen> with WidgetsBindingObserver {
           style: const TextStyle(color: GcColors.textSecondary),
         ),
       ),
-    ),
-  );
-
-  Widget _buildAdminAccountCard(AdminAccount account) {
-    final draft = _accountDrafts[account.accountId];
-    final busy = _busyAccountIds.contains(account.accountId);
-    final sameVoiceParticipant =
-        widget.state.voiceChannel != null &&
-        widget.state.room?.remoteParticipants.values.any((participant) {
-              final metadata = participant.metadata;
-              return metadata == 'account:${account.accountId}';
-            }) ==
-            true;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: GcColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: GcColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            account.displayName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 20 / 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Text(
-            '@${account.login}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            key: ValueKey('role:${account.accountId}:${draft?.role}'),
-            initialValue: draft?.role,
-            decoration: InputDecoration(labelText: 'Роль: ${account.login}'),
-            items: const [
-              DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
-              DropdownMenuItem(
-                value: 'ADMINISTRATOR',
-                child: Text('Администратор'),
-              ),
-            ],
-            onChanged: busy || draft == null
-                ? null
-                : (value) {
-                    if (value != null) setState(() => draft.role = value);
-                  },
-          ),
-          Material(
-            color: GcColors.surface,
-            child: SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Заблокирован'),
-              value: draft?.blocked ?? account.blocked,
-              onChanged: busy || draft == null
-                  ? null
-                  : (value) => setState(() => draft.blocked = value),
-            ),
-          ),
-          Wrap(
-            spacing: 8,
-            children: [
-              FilledButton.tonal(
-                key: ValueKey('save-account:${account.accountId}'),
-                focusNode: _accountSaveFocusNodes.putIfAbsent(
-                  account.accountId,
-                  FocusNode.new,
-                ),
-                onPressed: busy ? null : () => _saveAccount(account),
-                child: busy
-                    ? const SizedBox.square(
-                        dimension: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Сохранить'),
-              ),
-              OutlinedButton(
-                key: ValueKey('reset-account:${account.accountId}'),
-                onPressed: busy ? null : () => _createResetLink(account),
-                child: const Text('Сбросить пароль'),
-              ),
-              if (sameVoiceParticipant &&
-                  account.accountId != widget.state.user?.accountId)
-                OutlinedButton(
-                  onPressed: busy ? null : () => _kickVoiceParticipant(account),
-                  child: const Text('Отключить от голоса'),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResetLinkCard() => Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: GcColors.surface,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: GcColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Одноразовая ссылка для @$_resetLogin',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-            IconButton(
-              tooltip: 'Закрыть и удалить ссылку',
-              onPressed: () => setState(() {
-                _resetLink = null;
-                _resetLogin = null;
-              }),
-              icon: const Icon(Icons.close),
-            ),
-          ],
-        ),
-        const Text('После закрытия ссылка будет удалена с этого экрана.'),
-        const SizedBox(height: 8),
-        SelectableText(_resetLink!.url),
-        const SizedBox(height: 8),
-        Text('Истекает: ${_auditDate(_resetLink!.expiresAt)}'),
-        TextButton.icon(
-          onPressed: _copyResetLink,
-          icon: const Icon(Icons.copy),
-          label: const Text('Скопировать ссылку'),
-        ),
-      ],
     ),
   );
 
