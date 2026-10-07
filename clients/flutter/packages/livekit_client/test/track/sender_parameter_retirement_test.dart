@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/src/proto/livekit_rtc.pb.dart' as lk_rtc;
 import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk_models;
+import 'package:livekit_client/src/track/local/video.dart';
 
 import '../mock/video_sender.dart';
 

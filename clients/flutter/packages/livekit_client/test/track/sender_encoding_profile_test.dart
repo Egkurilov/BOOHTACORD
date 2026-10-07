@@ -17,6 +17,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/src/options.dart';
 import 'package:livekit_client/src/types/video_dimensions.dart';
 import 'package:livekit_client/src/types/video_encoding.dart';
+import 'package:livekit_client/src/track/local/video.dart';
 import 'package:livekit_client/src/utils.dart';
 import 'package:livekit_client/src/proto/livekit_rtc.pb.dart' as lk_rtc;
 import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk_models;
@@ -65,7 +66,7 @@ void main() {
     expect(encodings.map((encoding) => encoding.maxFramerate), [null, null, null]);
     expect(encodings.map((encoding) => encoding.maxBitrate), [8000000, 2500000, 800000]);
     expect(encodings.map((encoding) => encoding.scaleResolutionDownBy), [1, 2, 4]);
-    expect(sender.parameters.degradationPreference, rtc.RTCDegradationPreference.maintainResolution);
+    expect(sender.parameters.degradationPreference, rtc.RTCDegradationPreference.MAINTAIN_RESOLUTION);
   });
 
   test('republish invalidation drops queued dynacast work for the old sender', () async {
