@@ -27,6 +27,7 @@ import '../services/screen_thumbnail.dart';
 import '../features/voice/screen_viewer/audio_publication.dart';
 import '../features/voice/screen_viewer/audio_controls.dart';
 import '../features/voice/screen_viewer/discovery.dart';
+import '../features/voice/screen_viewer/fullscreen_generation.dart';
 import '../features/voice/screen_viewer/publication_generation.dart';
 import '../features/voice/shortcuts/capture.dart';
 import '../features/voice/lifecycle/controller.dart';
@@ -5518,7 +5519,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                               track: viewerTrack,
                               publisherName: selectedName,
                               publisherIdentity: selectedScreen?.identity,
-                              viewerGeneration: viewerGeneration!,
+                              viewerGeneration: viewerGeneration,
                               onFirstFrameRendered:
                                   selectedScreen == null ||
                                       selectedScreenPublication == null
@@ -5622,44 +5623,13 @@ class _VoiceRoomState extends State<_VoiceRoom> {
     BuildContext? overlayContext;
     var closing = false;
     final capturedRoom = widget.state.room;
-    bool stillPublished() {
-      Object? currentGeneration;
-      String? currentIdentity;
-      if (publisherIdentity == null) {
-        if (widget.state.screenSharePhase != ScreenSharePhase.sharing) {
-          return false;
-        }
-        final publication = widget.state.room?.localParticipant
-            ?.getTrackPublicationBySource(TrackSource.screenShareVideo);
-        currentGeneration =
-            publication?.sid ?? (publication?.track as VideoTrack?);
-      } else {
-        final participant = widget
-            .state
-            .room
-            ?.remoteParticipants[publisherIdentity];
-        if (participant != null) {
-          final publication = firstDiscoverableRemoteScreenPublication(
-            participant,
-          );
-          if (publication != null) {
-            currentIdentity = participant.identity;
-            currentGeneration = ScreenViewerPublicationGeneration(
-              participantIdentity: participant.identity,
-              publicationSid: publication.sid,
-            );
-          }
-        }
-      }
-      return screenFullscreenGenerationIsCurrent(
-        selection: ScreenFullscreenSelection(
-          identity: publisherIdentity,
-          generation: viewerGeneration,
-        ),
-        currentIdentity: currentIdentity,
-        currentGeneration: currentGeneration,
-      );
-    }
+    bool stillPublished() => screenFullscreenGenerationIsPublished(
+      room: widget.state.room,
+      publisherIdentity: publisherIdentity,
+      viewerGeneration: viewerGeneration,
+      localCaptureActive:
+          widget.state.screenSharePhase == ScreenSharePhase.sharing,
+    );
 
     void closeWhenEnded() {
       final target = overlayContext;

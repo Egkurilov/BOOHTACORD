@@ -3,13 +3,11 @@ import 'dart:async';
 import 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, voiceReconnectAttemptLimit;
 
-import '../../../services/screen_thumbnail.dart';
 import '../lifecycle/controller.dart';
 import '../screen_preview/capture_policy.dart';
 import 'audio_publication.dart';
 import 'discovery.dart';
 import 'publication_generation.dart';
-import 'recovery.dart';
 import 'transition.dart';
 
 extension VoiceScreenViewerPublicationSubscription on VoiceController {

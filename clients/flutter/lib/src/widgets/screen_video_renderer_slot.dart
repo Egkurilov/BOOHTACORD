@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import '../features/voice/screen_viewer/fullscreen_generation.dart';
+
 enum ScreenVideoRendererOwner { stage, pinnedMini, fullscreen }
 
 enum ScreenVideoRendererSurface { stage, pinnedMini, fullscreen }
@@ -23,7 +25,8 @@ ScreenVideoRendererOwner screenVideoRendererOwner({
 }) {
   if (fullscreenSelection != null &&
       screenFullscreenGenerationIsCurrent(
-        selection: fullscreenSelection,
+        selectionIdentity: fullscreenSelection.identity,
+        selectionGeneration: fullscreenSelection.generation,
         currentIdentity: selectedIdentity,
         currentGeneration: selectedGeneration,
       )) {
@@ -36,14 +39,6 @@ ScreenVideoRendererOwner screenVideoRendererOwner({
   }
   return ScreenVideoRendererOwner.stage;
 }
-
-bool screenFullscreenGenerationIsCurrent({
-  required ScreenFullscreenSelection selection,
-  required String? currentIdentity,
-  required Object? currentGeneration,
-}) =>
-    selection.identity == currentIdentity &&
-    selection.generation == currentGeneration;
 
 bool _shouldMountRenderer({
   required ScreenVideoRendererSurface surface,

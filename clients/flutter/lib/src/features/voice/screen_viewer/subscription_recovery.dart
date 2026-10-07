@@ -6,8 +6,6 @@ import 'package:livekit_client/livekit_client.dart'
 import '../lifecycle/controller.dart';
 import 'publication_current.dart';
 
-const _screenViewerRecoveryDelay = Duration(seconds: 5);
-
 void scheduleRemoteScreenViewerRecovery(
   VoiceController voice,
   RemoteTrackPublication publication,

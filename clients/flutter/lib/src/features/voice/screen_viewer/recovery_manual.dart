@@ -1,6 +1,3 @@
-import 'package:livekit_client/livekit_client.dart'
-    hide ChatMessage, voiceReconnectAttemptLimit;
-
 import '../lifecycle/controller.dart';
 import 'subscription_recovery.dart';
 

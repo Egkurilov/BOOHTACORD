@@ -1,13 +1,9 @@
 import 'dart:async';
 
-import 'package:livekit_client/livekit_client.dart'
-    hide ChatMessage, voiceReconnectAttemptLimit;
-
 import '../lifecycle/controller.dart';
 import 'audio_publication.dart';
 import 'discovery.dart';
 import 'publication_generation.dart';
-import 'subscription.dart';
 import 'transition.dart';
 import '../../telemetry/observe_render/view.dart';
 
