@@ -78,7 +78,8 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
       final compact = constraints.maxWidth < 840;
       final result = _result;
       final stale = result?.isStaleAt(_now) ?? true;
-      final status = result == null || stale
+      final freshnessLost = result == null || stale || _error != null;
+      final status = freshnessLost
           ? 'Нет свежего подтверждения готовности'
           : result.status == 'ready' && !result.hasFailedProbe
           ? 'Сервисы готовы'
@@ -127,7 +128,7 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
                   child: Text(
                     status,
                     style: TextStyle(
-                      color: stale || _error != null
+                      color: freshnessLost
                           ? GcColors.warning
                           : GcColors.success,
                       fontWeight: FontWeight.w600,
@@ -145,13 +146,17 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      _probeCard('PostgreSQL', result.database, stale),
-                      _probeCard('LiveKit', result.sfu, stale),
-                      _probeCard('Хранилище', result.storage, stale),
+                      _probeCard('PostgreSQL', result.database, freshnessLost),
+                      _probeCard('LiveKit', result.sfu, freshnessLost),
+                      _probeCard('Хранилище', result.storage, freshnessLost),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _storageCard(result.storage, compact),
+                  _storageCard(
+                    result.storage,
+                    result.database.pendingRevocations,
+                    compact,
+                  ),
                 ] else if (_busy)
                   const Center(child: CircularProgressIndicator()),
                 if (_error != null) ...[
@@ -204,7 +209,11 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
     );
   }
 
-  Widget _storageCard(AdminReadinessProbe storage, bool compact) => Container(
+  Widget _storageCard(
+    AdminReadinessProbe storage,
+    int? pendingRevocations,
+    bool compact,
+  ) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
       color: GcColors.surface,
@@ -220,13 +229,16 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
         _metric('Зарезервировано', storage.reservedBytes),
         _metric('Защищённый запас', storage.protectedBytes),
         _metric('После резервов', storage.headroomBytes),
-        _metric('Ожидают отзыва SFU', storage.pendingRevocations),
+        _countMetric('Ожидают отзыва SFU', pendingRevocations),
       ],
     ),
   );
 
   Widget _metric(String label, int? value) =>
       SizedBox(width: 170, child: Text('$label · ${_formatBytes(value)}'));
+
+  Widget _countMetric(String label, int? value) =>
+      SizedBox(width: 170, child: Text('$label · ${value ?? 'Неизвестно'}'));
 
   String _formatBytes(int? value) {
     if (value == null) return 'Неизвестно';

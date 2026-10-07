@@ -32,6 +32,19 @@ class _ReadinessApi extends ApiClient {
   }
 }
 
+class _SequenceReadinessApi extends ApiClient {
+  _SequenceReadinessApi(this.result);
+  final AdminReadiness result;
+  int loads = 0;
+
+  @override
+  Future<AdminReadiness> inspectAdminReadiness() async {
+    loads++;
+    if (loads > 1) throw StateError('Проверка недоступна');
+    return result;
+  }
+}
+
 AdminReadiness _result({String status = 'ready'}) => AdminReadiness(
   status: status,
   checkedAt: DateTime.now().toUtc(),
@@ -61,6 +74,7 @@ void main() {
     expect(find.text('PostgreSQL'), findsOneWidget);
     expect(find.text('LiveKit'), findsOneWidget);
     expect(find.text('Хранилище'), findsOneWidget);
+    expect(find.text('Ожидают отзыва SFU · 3'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -83,5 +97,28 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Обновить'));
     await tester.pumpAndSettle();
     expect(api.loads, 2);
+  });
+
+  testWidgets('refresh error never presents the previous result as fresh', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final api = _SequenceReadinessApi(_result());
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AdminReadinessPanel(api: api)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, 'Обновить'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Нет свежего подтверждения готовности'), findsOneWidget);
+    expect(find.text('Сервисы готовы'), findsNothing);
+    expect(find.text('устарело'), findsNWidgets(3));
   });
 }
