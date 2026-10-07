@@ -66,7 +66,15 @@ class _AdminTopologyPanelState extends State<AdminTopologyPanel> {
   @override
   Widget build(BuildContext context) => CallbackShortcuts(
     bindings: {const SingleActivator(LogicalKeyboardKey.escape): _back},
-    child: Focus(child: LayoutBuilder(builder: (context, constraints) {
+    child: Focus(onKeyEvent: (node, event) {
+      if (event is KeyDownEvent &&
+          event.logicalKey == LogicalKeyboardKey.escape &&
+          _compactDrillIn) {
+        _back();
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }, child: LayoutBuilder(builder: (context, constraints) {
       final previousWidth = _panelWidth;
       _panelWidth = constraints.maxWidth;
       if (previousWidth > 720 && _panelWidth <= 720 && _category != null) {

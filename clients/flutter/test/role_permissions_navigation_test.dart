@@ -98,8 +98,5 @@ void main() {
 }
 
 bool _hasPrimaryFocus(WidgetTester tester, Finder target) =>
-    tester
-        .widgetList<Focus>(
-          find.ancestor(of: target, matching: find.byType(Focus)),
-        )
-        .any((focus) => focus.focusNode?.hasPrimaryFocus == true);
+    Focus.maybeOf(tester.element(target), scopeOk: true)?.hasPrimaryFocus ??
+    false;

@@ -58,11 +58,8 @@ void main() {
     expect(find.textContaining('Размер кадра · 540 × 1170'), findsOneWidget);
     expect(find.textContaining('Декодировано · 14.5 FPS'), findsOneWidget);
     final extraMetrics = find.text('Дополнительные измерения');
-    await tester.dragUntilVisible(
-      extraMetrics,
-      find.byType(ListView).last,
-      const Offset(0, -240),
-    );
+    await tester.ensureVisible(extraMetrics);
+    await tester.pumpAndSettle();
     await tester.tap(extraMetrics);
     await tester.pumpAndSettle();
     expect(find.textContaining('Битрейт · 109.5 кбит/с'), findsOneWidget);

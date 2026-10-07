@@ -21,11 +21,7 @@ void main() {
       of: categoryDelete,
       matching: find.byType(Checkbox),
     );
-    await tester.dragUntilVisible(
-      deleteCheckbox,
-      find.byType(SingleChildScrollView).first,
-      const Offset(0, -80),
-    );
+    await tester.ensureVisible(categoryDelete);
     await tester.pumpAndSettle();
     expect(
       tester.getRect(categoryDelete).bottom,
