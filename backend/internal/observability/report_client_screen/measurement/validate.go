@@ -10,6 +10,9 @@ func (r Report) Valid(direction string) bool {
 		if value == nil {
 			continue
 		}
+		if direction != "sender" && direction != "receiver" {
+			return false
+		}
 		maximum := 60000.0
 		switch key {
 		case "total_bitrate_kbps", "selected_layer_bitrate_kbps", "retransmitted_bitrate_kbps":
@@ -35,6 +38,9 @@ func (r Report) Valid(direction string) bool {
 		return false
 	}
 	if !slices.Contains([]string{"", "web_rvfc", "unsupported"}, r.PresentationSource) || !slices.Contains([]string{"", "webrtc_interval", "unsupported"}, r.StatsSource) {
+		return false
+	}
+	if r.PresentationSource != "" && direction != "receiver" {
 		return false
 	}
 	interval := []*float64{r.TotalBitrateKbps, r.SelectedLayerBitrateKbps, r.RetransmittedBitrateKbps, r.EncodeMsPerFrame, r.DecodeMsPerFrame, r.JitterBufferMsPerFrame, r.NackPerSecond, r.PliPerSecond, r.FirPerSecond}

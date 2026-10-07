@@ -57,3 +57,34 @@ func TestDurationsAreBoundedAndPresentationIsHonest(t *testing.T) {
 		t.Fatal("fictional provenance accepted")
 	}
 }
+
+func TestFeedbackIntervalsRequireAnExplicitMediaDirection(t *testing.T) {
+	r := Report{StatsSource: "webrtc_interval", StatsWindowMs: ptr(1000), NackPerSecond: ptr(10), PliPerSecond: ptr(2), FirPerSecond: ptr(1)}
+	for _, direction := range []string{"", "connection", "arbitrary"} {
+		if r.Valid(direction) {
+			t.Fatalf("new interval accepted direction %q", direction)
+		}
+	}
+	for _, direction := range []string{"sender", "receiver"} {
+		if !r.Valid(direction) {
+			t.Fatalf("valid feedback interval rejected direction %q", direction)
+		}
+	}
+	if !(Report{}).Valid("") || !(Report{}).Valid("connection") || !(Report{StatsSource: "unsupported", CollectionState: "unknown"}).Valid("") {
+		t.Fatal("legacy or enum-only metadata compatibility lost")
+	}
+}
+
+func TestPresentationProvenanceBelongsOnlyToReceiver(t *testing.T) {
+	for _, source := range []string{"web_rvfc", "unsupported"} {
+		r := Report{PresentationSource: source}
+		if !r.Valid("receiver") {
+			t.Fatalf("receiver metadata rejected: %s", source)
+		}
+		for _, direction := range []string{"", "sender", "connection"} {
+			if r.Valid(direction) {
+				t.Fatalf("presentation metadata accepted for %q", direction)
+			}
+		}
+	}
+}
