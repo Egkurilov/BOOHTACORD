@@ -1,0 +1,70 @@
+{
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/4",
+  "recorded_at": "2026-10-07",
+  "base_revision": "6b8ffa5e5c266d42a534f294c18e5a282139bfa9",
+  "contract_sha256": "0c7879a3c5ad30a688a20ae3cbaf6bb8dba06a1b617853c46523ae8a4e48fdfd",
+  "baseline": {
+    "native_private_routes": 3,
+    "native_public_operations": 89,
+    "openapi_operations": 86
+  },
+  "requirements": [
+    "REQ-AUTH-01",
+    "REQ-AUTH-02",
+    "REQ-AUTH-03",
+    "REQ-SECURITY-01",
+    "REQ-SECURITY-02",
+    "REQ-ARCH-01",
+    "REQ-QUALITY-02"
+  ],
+  "checks": [
+    {
+      "result": "PASS",
+      "command": "python -m unittest tools.verify.openapi_parity.test_parity tools.verify.openapi_parity.test_source tools.contracts.swagger_view.test_viewer",
+      "tests": 20,
+      "name": "native route/security/parameter parity and mutation regressions"
+    },
+    {
+      "result": "PASS",
+      "command": "tools/verify/contracts/verify-contracts.ps1",
+      "name": "OpenAPI 3.1 schema lint and contract gate"
+    },
+    {
+      "result": "PASS",
+      "command": "tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "name": "requirement traceability"
+    },
+    {
+      "result": "PASS",
+      "command": "tools/verify/github_workflows/verify-github-workflows.ps1",
+      "name": "CI workflow registration"
+    },
+    {
+      "detail": "Exact contract bytes, pinned UI config, only loopback resources; private routes/path traversal return 404.",
+      "result": "PASS",
+      "name": "Swagger local HTTP smoke"
+    },
+    {
+      "detail": "Local HTTP and OpenAPI schema acceptance are automated; no browser visual claim.",
+      "result": "NOT_RUN",
+      "name": "Swagger browser visual review"
+    },
+    {
+      "detail": "No deployment or runtime app behavior change; contract-only implementation.",
+      "result": "NOT_RUN",
+      "name": "live production cookie/media acceptance"
+    }
+  ],
+  "findings": [
+    "Three missing public operations added: administrator readiness, voice closure phase and screen profile descriptor.",
+    "Cookie required for 79 operations; ten accept anonymous requests, including optional session and idempotent logout.",
+    "All public mutations require exact configured Origin; realtime allows omitted Origin and otherwise checks host via websocket.Accept.",
+    "Relay 400/413/415/503 and screen-metrics 400 are intentionally empty; relay 401/429 use JSON Error.",
+    "Client update 400/503/500 use flat error string; shared Error allows compact code-only handler details.",
+    "Private /metrics and LiveKit hooks remain excluded from client paths."
+  ],
+  "limitations": [
+    "Parameter extraction covers explicit handler constructors and local helper request reads, with documented cross-cutting transport/diagnostic headers.",
+    "Issue remains open for owner acceptance; this record does not close a release or physical gate."
+  ]
+}
