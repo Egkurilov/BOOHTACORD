@@ -17,3 +17,16 @@ The administrator parity implementation is tracked in
 [`qa-admin-parity-2026-10-07-001.json`](../qa-admin-parity-2026-10-07-001.json).
 It records the focused Flutter evidence and explicitly leaves unavailable
 platform runtime acceptance as `NOT_RUN`; it does not close FV2-006.
+
+## Administration parity follow-up — 2026-10-07
+
+The dedicated branch `codex/issue-188-flutter-admin-completion` now records
+responsive Members rows and a Roles before/current/proposed conflict review.
+The full Flutter suite passed 791 tests (one expected skip), the changed admin
+files analyze cleanly, the dependency guard passed, and version `1.0.38+71`
+split APKs were built. Details are in
+[`qa-admin-members-responsive-2026-10-07-001.json`](../qa-admin-members-responsive-2026-10-07-001.json)
+and
+[`qa-admin-roles-conflict-2026-10-07-001.json`](../qa-admin-roles-conflict-2026-10-07-001.json).
+These are implementation results; native Android/macOS/iOS/Windows runtime
+acceptance remains open under #198. ADB was unavailable during this run.

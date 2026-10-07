@@ -17,9 +17,12 @@ Implemented slices:
   metrics.
 - Members retain drafts through an `updated_at` optimistic-concurrency save;
   a `409` refreshes server state while preserving the local draft and exposing
-  a conflict message. Long names are ellipsized in the adaptive card layout.
+  a before/current/proposed review. Expanded constraints use compact table-like
+  rows with deterministic avatars, access badges and contextual actions; long
+  names are ellipsized, while compact constraints retain expandable cards.
 - Roles expose the web permission matrix, delete-grant confirmation, dirty
-  role-switch protection and conflict recovery.
+  role-switch protection and a before/current/proposed conflict review with
+  explicit server/draft resolution actions.
 - Channels add a selectable topology tree and keep the existing revision-bound
   create/rename/reorder/description mutations behind the inspector.
 - Audit adds scope, actor, event-type and date filters, day grouping and
