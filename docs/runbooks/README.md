@@ -4,6 +4,7 @@
 - [Подписанный выпуск, установка и откат](releases.md).
 - [Администратор, recovery и maintenance](administrator.md).
 - [Трейсы](traces.md).
+- [On-call: интеграции, readiness и отказные режимы](../operations/oncall-integrations.md).
 - [Захват игры и звука](game-capture.md).
 - [Профили качества медиа](media-profiles.md).
 - [Ограниченные сети и решение о TURN](restricted-networks.md).

@@ -1,0 +1,25 @@
+{
+  "id": "issue-7-oncall-integrations-2026-10-07",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/7",
+  "source_base": "319fa06ce219e493f10d43b1fb54ff732f1b4d34",
+  "observed_at": "2026-10-07",
+  "scope": "Operator integration table, source-drift regression and existing readiness authorization/privacy; no runtime behavior, topology or deployment change",
+  "status": "NOT_RUN",
+  "source_verification": "PASS",
+  "document": "docs/operations/oncall-integrations.md",
+  "checks": [
+    {"name": "focused_readiness_and_health", "status": "PASS", "command": "cd backend; go test ./internal/observability/inspect_readiness ./internal/health", "detail": "Existing service deadlines and safe missing values plus new anonymous/member/moderator denial, administrator 200/503, no-store and private error redaction; public health stays status-only under a failed dependency fixture."},
+    {"name": "table_and_source_drift", "status": "PASS", "command": "python -m unittest tools.verify.oncall_map.test_check -v; python -m tools.verify.oncall_map.check", "detail": "Four focused tests pass, including missing/duplicate boundaries, bad documented deadlines, promoted NOT_RUN/BLOCKED claims, missing source and added timeout settings. Seven integration rows and thirty exact source anchors match."},
+    {"name": "links_topology_native_contracts", "status": "PASS", "command": "python -m tools.verify.links.check; python -m tools.verify.writer_topology.check; python -m tools.ci.native.contracts", "detail": "198 Python regressions execute: 197 pass and one existing upstream downloader test skips; 19 OpenAPI tests pass; schema/parity (89 public + 3 private), 397 document links, Dart import topology (729 files), Compose config, single writer, 39-requirement traceability, workflows and SBOM gates pass."},
+    {"name": "production_outage_matrix", "status": "NOT_RUN", "detail": "No live service fault, collector/proxy/DB/SFU/storage/WS interruption, infrastructure secret access or recovery was performed."},
+    {"name": "connected_media_and_old_token_replay", "status": "BLOCKED", "detail": "Existing POC-03 preflight has connected media and both old-token replay classes NOT_RUN; source/HTTP/outbox assertions do not prove media revocation."},
+    {"name": "physical_media_and_capacity", "status": "NOT_RUN", "detail": "No hardware, network matrix, distribution build, load claim or media capacity measurement is included."}
+  ],
+  "limits": [
+    "Administrator authentication still depends on PostgreSQL and can fail before bounded readiness probes.",
+    "Readiness does not measure media playback, writable attachment fsync, proxy TLS, telemetry export or full journal continuity.",
+    "Literal source anchors detect the documented explicit settings and added selected timeout/retry/TURN configuration; they do not measure SDK/OS/Caddy defaults or production config drift.",
+    "New incident/media dashboards are source handoff; production import and access/installed-version verification remain separate.",
+    "Application administrator does not gain infrastructure credentials or direct-message reading access."
+  ]
+}
