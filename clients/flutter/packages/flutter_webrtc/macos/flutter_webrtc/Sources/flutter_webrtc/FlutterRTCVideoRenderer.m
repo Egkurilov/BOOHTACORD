@@ -20,6 +20,7 @@
   bool _isFirstFrameRendered;
   bool _frameAvailable;
   NSUInteger _trackGeneration;
+  int64_t _sourceGeneration;
   os_unfair_lock _lock;
 }
 
@@ -35,6 +36,7 @@
     _lock = OS_UNFAIR_LOCK_INIT;
     _isFirstFrameRendered = false;
     _frameAvailable = false;
+    _sourceGeneration = 0;
     _trackGeneration = 0;
     _frameSize = CGSizeZero;
     _renderSize = CGSizeZero;
@@ -51,6 +53,21 @@
     [_eventChannel setStreamHandler:self];
   }
   return self;
+}
+
+- (BOOL)updateSourceGeneration:(int64_t)sourceGeneration {
+  os_unfair_lock_lock(&_lock);
+  if (sourceGeneration < _sourceGeneration) {
+    os_unfair_lock_unlock(&_lock);
+    return NO;
+  }
+  if (sourceGeneration > _sourceGeneration) {
+    _sourceGeneration = sourceGeneration;
+    _isFirstFrameRendered = false;
+    _frameAvailable = false;
+  }
+  os_unfair_lock_unlock(&_lock);
+  return YES;
 }
 
 - (CVPixelBufferRef)copyPixelBuffer {
@@ -203,17 +220,19 @@
 
   BOOL didUploadFrame = NO;
   NSUInteger frameGeneration = 0;
+  int64_t sourceGeneration = 0;
   os_unfair_lock_lock(&_lock);
   if(_videoTrack == nil) {
     os_unfair_lock_unlock(&_lock);
     return;
   }
+  frameGeneration = _trackGeneration;
+  sourceGeneration = _sourceGeneration;
   if(!_frameAvailable && _pixelBufferRef) {
     [self copyI420ToCVPixelBuffer:_pixelBufferRef withFrame:frame];
     if(_textureId != -1) {
       [_registry textureFrameAvailable:_textureId];
       _frameAvailable = true;
-      frameGeneration = _trackGeneration;
       didUploadFrame = YES;
     }
   }
@@ -223,10 +242,16 @@
   if (_renderSize.width != frame.width || _renderSize.height != frame.height) {
     dispatch_async(dispatch_get_main_queue(), ^{
       FlutterRTCVideoRenderer* strongSelf = weakSelf;
-      if (strongSelf.eventSink) {
+      if (!strongSelf) return;
+      os_unfair_lock_lock(&strongSelf->_lock);
+      BOOL isCurrentGeneration = strongSelf->_trackGeneration == frameGeneration &&
+          strongSelf->_sourceGeneration == sourceGeneration;
+      os_unfair_lock_unlock(&strongSelf->_lock);
+      if (isCurrentGeneration && strongSelf.eventSink) {
         strongSelf.eventSink(@{
           @"event" : @"didTextureChangeVideoSize",
           @"id" : @(strongSelf.textureId),
+          @"sourceGeneration" : @(sourceGeneration),
           @"width" : @(frame.width),
           @"height" : @(frame.height),
         });
@@ -238,10 +263,16 @@
   if (frame.rotation != _rotation) {
     dispatch_async(dispatch_get_main_queue(), ^{
       FlutterRTCVideoRenderer* strongSelf = weakSelf;
-      if (strongSelf.eventSink) {
+      if (!strongSelf) return;
+      os_unfair_lock_lock(&strongSelf->_lock);
+      BOOL isCurrentGeneration = strongSelf->_trackGeneration == frameGeneration &&
+          strongSelf->_sourceGeneration == sourceGeneration;
+      os_unfair_lock_unlock(&strongSelf->_lock);
+      if (isCurrentGeneration && strongSelf.eventSink) {
         strongSelf.eventSink(@{
           @"event" : @"didTextureChangeRotation",
           @"id" : @(strongSelf.textureId),
+          @"sourceGeneration" : @(sourceGeneration),
           @"rotation" : @(frame.rotation),
         });
       }
@@ -260,13 +291,17 @@
       BOOL isCurrentFirstFrame = NO;
       os_unfair_lock_lock(&strongSelf->_lock);
       if (strongSelf->_trackGeneration == frameGeneration &&
+          strongSelf->_sourceGeneration == sourceGeneration &&
           !strongSelf->_isFirstFrameRendered && strongSelf.eventSink) {
         strongSelf->_isFirstFrameRendered = true;
         isCurrentFirstFrame = YES;
       }
       os_unfair_lock_unlock(&strongSelf->_lock);
       if (isCurrentFirstFrame) {
-        strongSelf.eventSink(@{@"event" : @"didFirstFrameRendered"});
+        strongSelf.eventSink(@{
+          @"event" : @"didFirstFrameRendered",
+          @"sourceGeneration" : @(sourceGeneration),
+        });
       }
     });
   }

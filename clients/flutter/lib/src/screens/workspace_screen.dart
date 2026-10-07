@@ -26,6 +26,8 @@ import '../services/voice_participant_presentation.dart';
 import '../services/screen_thumbnail.dart';
 import '../features/voice/screen_viewer/audio_publication.dart';
 import '../features/voice/screen_viewer/audio_controls.dart';
+import '../features/voice/screen_viewer/discovery.dart';
+import '../features/voice/screen_viewer/publication_generation.dart';
 import '../features/voice/shortcuts/capture.dart';
 import '../features/voice/lifecycle/controller.dart';
 import '../widgets/voice_shortcuts/keyboard.dart';
@@ -5275,9 +5277,7 @@ class _VoiceRoomState extends State<_VoiceRoom> {
         final screens = participants
             .where(
               (participant) => participant.videoTrackPublications.any(
-                (publication) =>
-                    publication.source == TrackSource.screenShareVideo &&
-                    !publication.muted,
+                isDiscoverableRemoteScreenPublication,
               ),
             )
             .toList(growable: false);
@@ -5287,12 +5287,9 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                   participant.identity == widget.selectedScreenIdentity,
             )
             .firstOrNull;
-        final selectedScreenPublication = selectedScreen?.videoTrackPublications
-            .where(
-              (publication) =>
-                  publication.source == TrackSource.screenShareVideo,
-            )
-            .firstOrNull;
+        final selectedScreenPublication = selectedScreen == null
+            ? null
+            : firstDiscoverableRemoteScreenPublication(selectedScreen);
         final selectedTrack = selectedScreenPublication?.track as VideoTrack?;
         final localScreenPublication =
             state.screenSharePhase == ScreenSharePhase.sharing
@@ -5394,6 +5391,23 @@ class _VoiceRoomState extends State<_VoiceRoom> {
                             publisherName: selectedName!,
                             screens: screens,
                             selectedIdentity: widget.selectedScreenIdentity,
+                            viewerGeneration: selectedScreen == null ||
+                                    selectedScreenPublication == null
+                                ? localScreenPublication?.sid ?? viewerTrack
+                                : ScreenViewerPublicationGeneration(
+                                    participantIdentity: selectedScreen.identity,
+                                    publicationSid:
+                                        selectedScreenPublication.sid,
+                                  ),
+                            onFirstFrameRendered:
+                                selectedScreen == null ||
+                                    selectedScreenPublication == null
+                                ? null
+                                : () => state.voice
+                                    .markRemoteScreenFirstFrameRendered(
+                                      selectedScreen.identity,
+                                      selectedScreenPublication.sid,
+                                    ),
                             pinned:
                                 widget.pinnedScreenIdentity != null &&
                                 widget.pinnedScreenIdentity ==
@@ -6075,6 +6089,8 @@ class _VoiceScreenViewer extends StatelessWidget {
     required this.publisherName,
     required this.screens,
     required this.selectedIdentity,
+    required this.viewerGeneration,
+    required this.onFirstFrameRendered,
     required this.pinned,
     required this.localScreenAvailable,
     required this.showingLocalScreen,
@@ -6101,6 +6117,8 @@ class _VoiceScreenViewer extends StatelessWidget {
   final String publisherName;
   final List<RemoteParticipant> screens;
   final String? selectedIdentity;
+  final Object viewerGeneration;
+  final VoidCallback? onFirstFrameRendered;
   final bool pinned;
   final bool localScreenAvailable;
   final bool showingLocalScreen;
@@ -6129,7 +6147,8 @@ class _VoiceScreenViewer extends StatelessWidget {
       isLocal: showingLocalScreen,
       reservedTrailingWidth: selectedIdentity == null ? 124 : 172,
       video: ScreenFrameGate(
-        generation: track,
+        generation: viewerGeneration,
+        onFirstFrame: onFirstFrameRendered,
         telemetry: showingLocalScreen
             ? null
             : state.api.transport.session.telemetry,
@@ -6139,6 +6158,10 @@ class _VoiceScreenViewer extends StatelessWidget {
             : null,
         builder: (context, onFirstFrameRendered) => VideoTrackRenderer(
           track,
+          key: ValueKey((
+            viewerGeneration,
+            state.voice.remoteScreenViewerRendererRevision,
+          )),
           renderMode: VideoRenderMode.auto,
           onFirstFrameRendered: () {
             if (showingLocalScreen) {
@@ -6294,9 +6317,10 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
     animation: state.room ?? state,
     builder: (context, _) {
       final participant = state.room?.remoteParticipants[identity];
-      final publication = participant?.videoTrackPublications
-          .where((item) => item.source == TrackSource.screenShareVideo)
-          .firstOrNull;
+      final publication = participant == null
+          ? null
+          : firstDiscoverableRemoteScreenPublication(participant);
+      final publicationSid = publication?.sid;
       final track = publication?.track as VideoTrack?;
       final hasAudio =
           participant != null &&
@@ -6394,10 +6418,27 @@ class _PinnedScreenMiniPlayer extends StatelessWidget {
                           ),
                         ),
                       )
-                    : VideoTrackRenderer(
-                        track,
-                        fit: VideoViewFit.contain,
-                        renderMode: VideoRenderMode.auto,
+                    : ScreenFrameGate(
+                        generation: '$identity:${publicationSid ?? 'unknown'}',
+                        onFirstFrame: publicationSid == null
+                            ? null
+                            : () => state.voice
+                                .markRemoteScreenFirstFrameRendered(
+                                  identity,
+                                  publicationSid,
+                                ),
+                        builder: (context, onFirstFrameRendered) =>
+                            VideoTrackRenderer(
+                              track,
+                              key: ValueKey((
+                                identity,
+                                publicationSid,
+                                state.voice.remoteScreenViewerRendererRevision,
+                              )),
+                              fit: VideoViewFit.contain,
+                              renderMode: VideoRenderMode.auto,
+                              onFirstFrameRendered: onFirstFrameRendered,
+                            ),
                       ),
               ),
             ),

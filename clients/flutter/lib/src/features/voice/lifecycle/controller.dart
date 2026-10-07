@@ -24,6 +24,7 @@ export '../admission/join.dart';
 export '../room_events/bind.dart';
 export '../remote_tracks/subscriptions.dart';
 export '../screen_viewer/selection.dart';
+export '../screen_viewer/subscription.dart';
 export '../screen_preview/capture.dart';
 export '../connection_stats/poll.dart';
 export '../volumes/read.dart';

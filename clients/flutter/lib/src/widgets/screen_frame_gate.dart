@@ -14,6 +14,7 @@ class ScreenFrameGate extends StatefulWidget {
     required this.builder,
     this.waitingMessage,
     this.telemetry,
+    this.onFirstFrame,
   });
 
   final Object generation;
@@ -21,6 +22,7 @@ class ScreenFrameGate extends StatefulWidget {
   final Widget Function(BuildContext context, VoidCallback onFirstFrameRendered)
   builder;
   final String? waitingMessage;
+  final VoidCallback? onFirstFrame;
 
   @override
   State<ScreenFrameGate> createState() => _ScreenFrameGateState();
@@ -61,6 +63,7 @@ class _ScreenFrameGateState extends State<ScreenFrameGate> {
     if (_action != null && !_action!.session.current(_action!.snapshot)) return;
     if (widget.waitingMessage != null) return;
     setState(() => _hasRenderedFirstFrame = true);
+    widget.onFirstFrame?.call();
     _action?.step('first_frame');
     _action?.finish('success');
   }

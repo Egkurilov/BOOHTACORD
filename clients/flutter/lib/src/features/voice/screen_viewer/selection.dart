@@ -3,91 +3,98 @@ import 'dart:async';
 import 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, voiceReconnectAttemptLimit;
 
-import '../../../services/screen_thumbnail.dart';
 import '../lifecycle/controller.dart';
-import '../screen_preview/capture_policy.dart';
 import 'audio_publication.dart';
+import 'discovery.dart';
+import 'publication_generation.dart';
+import 'subscription.dart';
 import '../../telemetry/observe_render/view.dart';
 
 extension VoiceScreenViewerSelection on VoiceController {
-  Future<void> selectRemoteScreenForViewing(String? participantIdentity) async {
-    final ticket = scope.capture();
-    final revision = operationRevision;
-    if (!active(ticket, revision)) return;
-    final nextIdentity = participantIdentity?.trim();
-    final next = nextIdentity == null || nextIdentity.isEmpty
-        ? null
-        : nextIdentity;
-    final previous = selectedRemoteScreenViewerIdentity;
-    if (previous == next) return;
-    if (next == null) {
-      stopView(api.transport.session.telemetry);
-    } else {
-      beginView(api.transport.session.telemetry);
-    }
-    selectedRemoteScreenViewerIdentity = next;
-    final room = this.room;
-    if (room == null) return;
-
-    if (previous != null) {
-      final participant = room.remoteParticipants[previous];
-      if (participant != null) {
-        for (final publication in participant.videoTrackPublications.where(
-          (item) => item.source == TrackSource.screenShareVideo,
-        )) {
-          await setRemoteTrackSubscription(publication, false);
-          if (!active(ticket, revision)) return;
-          if (selectedRemoteScreenViewerIdentity == previous) {
-            subscribeRemoteScreenForViewing(room, previous);
-            return;
-          }
-        }
-        final audioPublication = screenShareAudioPublication(participant);
-        if (audioPublication != null) {
-          await setRemoteTrackSubscription(audioPublication, false);
-          if (!active(ticket, revision)) return;
-        }
-      }
-    }
-
-    if (next == null ||
-        !isCurrentScreenViewerSelection(
-          next,
-          selectedRemoteScreenViewerIdentity,
-        )) {
+  void markRemoteScreenFirstFrameRendered(
+    String identity,
+    String publicationSid,
+  ) {
+    final generation = selectedRemoteScreenViewerGeneration;
+    if (generation?.participantIdentity != identity ||
+        generation?.publicationSid != publicationSid) {
       return;
     }
-    subscribeRemoteScreenForViewing(room, next);
+    remoteScreenViewerRecoveryTimer?.cancel();
+    remoteScreenViewerRecoveryTimer = null;
+    remoteScreenViewerRecoveryAttempt = 0;
+    remoteScreenViewerFirstFrameGeneration = generation;
   }
 
-  void subscribeRemoteScreenForViewing(Room room, String identity) {
-    final participant = room.remoteParticipants[identity];
-    if (participant == null) return;
-    for (final publication in participant.videoTrackPublications.where(
-      (item) => item.source == TrackSource.screenShareVideo,
-    )) {
-      final subscribedTrack = publication.track;
-      if (subscribedTrack is RemoteVideoTrack) {
-        unawaited(
-          captureSelectedRemoteScreenThumbnail(
-            capture: () => captureRemoteThumbnail(
-              room,
-              participant,
-              publication,
-              subscribedTrack,
-            ),
-            source: publication.source,
-            isRemoteVideoTrack: true,
-            participantIdentity: participant.identity,
-            selectedIdentity: selectedRemoteScreenViewerIdentity,
-          ),
-        );
+  Future<void> selectRemoteScreenForViewing(String? participantIdentity) async {
+    final ticket = scope.capture();
+    final operationRevision = this.operationRevision;
+    if (!active(ticket, operationRevision)) return;
+    final normalized = participantIdentity?.trim();
+    final nextIdentity = normalized == null || normalized.isEmpty
+        ? null
+        : normalized;
+    final room = this.room;
+    final nextParticipant = nextIdentity == null
+        ? null
+        : room?.remoteParticipants[nextIdentity];
+    final nextPublication = nextParticipant == null
+        ? null
+        : firstDiscoverableRemoteScreenPublication(nextParticipant);
+    final nextAudioPublication = nextParticipant == null
+        ? null
+        : screenShareAudioPublication(nextParticipant);
+    final nextGeneration = nextPublication == null || nextIdentity == null
+        ? null
+        : ScreenViewerPublicationGeneration(
+            participantIdentity: nextIdentity,
+            publicationSid: nextPublication.sid,
+          );
+    final previousIdentity = selectedRemoteScreenViewerIdentity;
+    final previousGeneration = selectedRemoteScreenViewerGeneration;
+    final previousPublication = selectedRemoteScreenViewerPublication;
+    final previousAudioPublication =
+        selectedRemoteScreenViewerAudioPublication;
+    if (previousIdentity == nextIdentity &&
+        previousGeneration == nextGeneration &&
+        previousAudioPublication?.sid == nextAudioPublication?.sid) {
+      selectedRemoteScreenViewerPublication = nextPublication;
+      selectedRemoteScreenViewerAudioPublication = nextAudioPublication;
+      return;
+    }
+
+    if (previousGeneration != nextGeneration) {
+      remoteScreenViewerRecoveryTimer?.cancel();
+      remoteScreenViewerRecoveryTimer = null;
+      remoteScreenViewerRecoveryAttempt = 0;
+      remoteScreenViewerFirstFrameGeneration = null;
+    }
+
+    if (previousIdentity != nextIdentity) {
+      if (nextIdentity == null) {
+        stopView(api.transport.session.telemetry);
+      } else {
+        beginView(api.transport.session.telemetry);
       }
-      unawaited(setRemoteTrackSubscription(publication, true));
     }
-    final audioPublication = screenShareAudioPublication(participant);
-    if (audioPublication != null) {
-      unawaited(setRemoteTrackSubscription(audioPublication, true));
+    final previousRevision = screenViewerSelectionRevision;
+    selectedRemoteScreenViewerIdentity = nextIdentity;
+    if (screenViewerSelectionRevision == previousRevision) {
+      screenViewerSelectionRevision++;
     }
+    final selectionRevision = screenViewerSelectionRevision;
+    selectedRemoteScreenViewerGeneration = nextGeneration;
+    selectedRemoteScreenViewerPublication = nextPublication;
+    selectedRemoteScreenViewerAudioPublication = nextAudioPublication;
+    queueRemoteScreenSubscriptionTransition(
+      this,
+      previousPublication: previousPublication,
+      previousAudioPublication: previousAudioPublication,
+      nextPublication: nextPublication,
+      nextAudioPublication: nextAudioPublication,
+      isCurrent: () =>
+          active(ticket, operationRevision) &&
+          selectionRevision == screenViewerSelectionRevision,
+    );
   }
 }
