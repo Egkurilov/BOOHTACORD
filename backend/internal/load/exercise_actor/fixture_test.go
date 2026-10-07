@@ -26,7 +26,7 @@ type fixture struct {
 func newFixture(t *testing.T) *fixture {
 	f := &fixture{sockets: map[*websocket.Conn]bool{}}
 	f.server = httptest.NewTLSServer(http.HandlerFunc(f.serve))
-	f.manifest = validate_target.Manifest{Origin: f.server.URL, Guard: "http://127.0.0.1:4890", Nonce: strings.Repeat("x", 32), Dataset: "qa", Owner: "qa-client-0123456789abcdef", Commit: strings.Repeat("a", 40), Text: uuid.NewString(), Voice: []string{uuid.NewString()}, Accounts: []validate_target.Account{{Login: "qa_load_000", Password: "secret", ID: uuid.NewString()}}, UploadBytes: 1024, MaxRequests: 1000, MaxSeconds: 60}
+	f.manifest = validate_target.Manifest{Origin: f.server.URL, Guard: "http://127.0.0.1:4890", Nonce: strings.Repeat("x", 32), Dataset: "qa", Owner: "qa-client-0123456789abcdef", Commit: strings.Repeat("a", 40), Text: uuid.NewString(), PrivateDM: uuid.NewString(), Voice: []string{uuid.NewString()}, Accounts: []validate_target.Account{{Login: "qa_load_000", Password: "secret", ID: uuid.NewString()}}, UploadBytes: 1024, MaxRequests: 1000, MaxSeconds: 60}
 	return f
 }
 func (f *fixture) close() {
@@ -84,7 +84,11 @@ func (f *fixture) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if strings.HasPrefix(path, "/direct-messages/") {
-		w.WriteHeader(404)
+		if path == "/direct-messages/"+f.manifest.PrivateDM+"/messages" {
+			w.Write([]byte(`{"messages":[]}`))
+		} else {
+			w.WriteHeader(404)
+		}
 		return
 	}
 	if strings.Contains(path, "/attachments") {

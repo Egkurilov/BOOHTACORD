@@ -34,8 +34,9 @@ def provision(stack, nonce, count):
     category = client('/admin/categories', 'POST', dict(name='LoadLab'), 201)
     create = lambda name, kind: client('/admin/categories/'+category['id']+'/channels',
                                       'POST', dict(name=name, kind=kind), 201)['id']
+    private_dm = client('/direct-messages', 'POST', dict(participant_id=rows[0]['ID']), 201)['id']
     text = create('LoadText', 'TEXT')
     voice = [create(f'LoadVoice{index}', 'VOICE') for index in range((count+19)//20)]
     for row in rows:
         row['Password'] = stack.password
-    return dict(Text=text, Voice=voice, Accounts=rows)
+    return dict(Text=text, Voice=voice, Accounts=rows, PrivateDM=private_dm)

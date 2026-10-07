@@ -40,7 +40,8 @@ its cadence and observed request rate; these are offered workload settings,
 not a product capacity claim. Every actor
 retains its own authenticated socket/lease. A write waits for identifier-only
 fanout on every active socket, then advances its read cursor. History, search,
-topology/members, cookie owner, forbidden admin/foreign DM, wrong Origin,
+topology/members, cookie owner, forbidden admin and a known existing private
+DM (admin/member0 pair: member0 allowed; every other actor denied), wrong Origin,
 credential issuance, voluntary release, logout and subsequent 401 are exercised.
 Normal error/ACL mismatches fail immediately. Request budget is 100,000 per run;
 time budget 10–7200 seconds, plus at most 15 seconds for final cleanup.

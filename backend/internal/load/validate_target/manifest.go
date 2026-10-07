@@ -11,10 +11,10 @@ import (
 
 type Account struct{ Login, Password, ID string }
 type Manifest struct {
-	Origin, Guard, Nonce, Dataset, Owner, Commit, Text string
-	Voice                                              []string
-	Accounts                                           []Account
-	UploadBytes, MaxRequests, MaxSeconds               int
+	Origin, Guard, Nonce, Dataset, Owner, Commit, Text, PrivateDM string
+	Voice                                                         []string
+	Accounts                                                      []Account
+	UploadBytes, MaxRequests, MaxSeconds                          int
 }
 
 func Loopback(value string, secure bool) error {
@@ -52,7 +52,7 @@ func (m Manifest) Validate() error {
 		}
 		seen[a.ID] = true
 	}
-	for _, id := range append(append([]string{}, m.Voice...), m.Text) {
+	for _, id := range append(append([]string{}, m.Voice...), m.Text, m.PrivateDM) {
 		if uuid.Validate(id) != nil || seen[id] {
 			return errors.New("invalid or duplicate fixture resource")
 		}

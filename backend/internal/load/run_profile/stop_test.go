@@ -33,7 +33,7 @@ func TestGuardStopCancelsAdmissionAndStillRestoresAndLogsOut(t *testing.T) {
 		}
 	}))
 	defer api.Close()
-	m := validate_target.Manifest{Origin: api.URL, Dataset: "qa", Nonce: strings.Repeat("a", 32), Owner: "qa-client-0123456789abcdef", Commit: strings.Repeat("a", 40), Text: uuid.NewString(), Voice: []string{uuid.NewString()}, Accounts: []validate_target.Account{{Login: "qa_load_000", Password: "private", ID: uuid.NewString()}}, UploadBytes: 1, MaxRequests: 100, MaxSeconds: 10}
+	m := validate_target.Manifest{Origin: api.URL, Dataset: "qa", Nonce: strings.Repeat("a", 32), Owner: "qa-client-0123456789abcdef", Commit: strings.Repeat("a", 40), Text: uuid.NewString(), PrivateDM: uuid.NewString(), Voice: []string{uuid.NewString()}, Accounts: []validate_target.Account{{Login: "qa_load_000", Password: "private", ID: uuid.NewString()}}, UploadBytes: 1, MaxRequests: 100, MaxSeconds: 10}
 	guard := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("X-Load-Nonce") != m.Nonce {
 			w.WriteHeader(403)

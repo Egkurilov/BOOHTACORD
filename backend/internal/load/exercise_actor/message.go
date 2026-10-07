@@ -40,7 +40,11 @@ func (a *Actor) ACL(ctx context.Context) error {
 	if err := a.Request(ctx, "acl", "GET", "/admin/audit", nil, 403, nil); err != nil {
 		return err
 	}
-	if err := a.Request(ctx, "acl", "GET", "/direct-messages/"+uuid.NewString()+"/messages", nil, 404, nil); err != nil {
+	expected := 404
+	if a.Account.ID == a.Manifest.Accounts[0].ID {
+		expected = 200
+	}
+	if err := a.Request(ctx, "acl", "GET", "/direct-messages/"+a.Manifest.PrivateDM+"/messages", nil, expected, nil); err != nil {
 		return err
 	}
 	return a.Request(ctx, "origin_acl", "POST", "/channels/"+a.Manifest.Text+"/messages", map[string]string{"client_message_id": uuid.NewString(), "body": "synthetic load message"}, 403, nil)
