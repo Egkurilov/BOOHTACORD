@@ -2,7 +2,7 @@
   "id": "QA-ADMIN-ROLES-CONFLICT-2026-10-07-001",
   "date": "2026-10-07",
   "task": "FV2-031 / GitHub #192 — Flutter Roles permission matrix and conflict review",
-  "source_revision": "d23196b9",
+  "source_revision": "6612fccf",
   "checks": [
     {
       "name": "Responsive permission matrix",
