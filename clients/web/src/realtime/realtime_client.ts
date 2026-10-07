@@ -1,6 +1,6 @@
 import { apiBaseUrl } from '../config/runtime'
 import { isVoiceLeaseRevocationReason } from '../voice/voice_lease_revocation_reason'
-import { parseScreenPreviewHint } from '../voice/screen_preview_client'
+import { parseScreenPreviewHint } from '../voice/screen_preview/client'
 
 export type RealtimeKind = 'connection.ready' | 'connection.resync_required' | 'voice.lease_revoked' | 'channel.updated' | 'presence.snapshot' | 'presence.changed' | 'message.created' | 'message.updated' | 'message.deleted' | 'direct_message.message_created' | 'direct_message.message_updated' | 'direct_message.message_deleted' | 'role.permissions.updated' | 'auth.permissions.invalidated' | 'session.state_changed' | 'guild.profile.updated' | 'screen_preview.updated' | 'screen_preview.invalidated'
 export interface RealtimeEvent {

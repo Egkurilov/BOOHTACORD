@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { apiBaseUrl } from '../config/runtime'
-import { beginScreenPreview, readScreenPreview, uploadScreenPreview, type ScreenPreviewHint, type ScreenPreviewRequest } from './screen_preview_client'
-import { LatestScreenPreviewReader } from './screen_preview_reader'
-import { LatestScreenPreviewUploader } from './screen_preview_uploader'
+import { apiBaseUrl } from '../../config/runtime'
+import { beginScreenPreview, readScreenPreview, uploadScreenPreview, type ScreenPreviewHint, type ScreenPreviewRequest } from './client'
+import { LatestScreenPreviewReader } from './reader'
+import { LatestScreenPreviewUploader } from './uploader'
 
 const lease = '11111111-1111-4111-8111-111111111111'
 const generation = '22222222-2222-4222-8222-222222222222'
@@ -74,5 +74,34 @@ describe('private screen preview client', () => {
     await secondSeen
     await uploader.stop()
     expect(uploaded).toEqual([1, 3])
+  })
+
+  it('makes concurrent stop callers wait for generation invalidation', async () => {
+    let finishDelete!: () => void
+    let deleteStarted!: () => void
+    const deleting = new Promise<void>(resolve => { finishDelete = resolve })
+    const deleted = new Promise<void>(resolve => { deleteStarted = resolve })
+    const request: ScreenPreviewRequest = async (_input, init) => {
+      if (init.method === 'POST') return Response.json({ schema_version: 1, generation_id: generation })
+      if (init.method === 'DELETE') {
+        deleteStarted()
+        await deleting
+      }
+      return new Response(null, { status: 204 })
+    }
+    const uploader = new LatestScreenPreviewUploader(request)
+    await uploader.start(lease)
+    let completed = 0
+    const first = uploader.stop().then(() => { completed++ })
+    await deleted
+    const second = uploader.stop().then(() => { completed++ })
+    await expect(Promise.race([
+      second.then(() => true),
+      new Promise<boolean>(resolve => setTimeout(() => resolve(false), 10)),
+    ])).resolves.toBe(false)
+    expect(completed).toBe(0)
+    finishDelete()
+    await Promise.all([first, second])
+    expect(completed).toBe(2)
   })
 })

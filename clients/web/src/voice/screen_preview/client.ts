@@ -1,5 +1,5 @@
-import { apiBaseUrl } from '../config/runtime'
-import { validScreenThumbnail } from './screen_thumbnail'
+import { apiBaseUrl } from '../../config/runtime'
+import { validScreenThumbnail } from '../screen_thumbnail'
 
 export const maxScreenPreviewBytes = 14 * 1024
 export type ScreenPreviewRequest = (input: string, init: RequestInit) => Promise<Response>

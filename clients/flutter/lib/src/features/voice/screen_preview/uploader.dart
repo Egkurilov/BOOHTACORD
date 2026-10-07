@@ -10,7 +10,7 @@ class LatestScreenPreviewUploader {
   String? _lease, _generation;
   int _epoch = 0, _revision = 0;
   Uint8List? _pending;
-  Future<void>? _running, _beginning;
+  Future<void>? _running, _beginning, _stopping;
 
   void offer(String lease, Uint8List jpeg) {
     if (!validScreenPreviewJpeg(jpeg)) return;
@@ -51,7 +51,19 @@ class LatestScreenPreviewUploader {
     }
   }
 
-  Future<void> stop() async {
+  Future<void> stop() {
+    final existing = _stopping;
+    if (existing != null) return existing;
+    final operation = _stop();
+    late final Future<void> shared;
+    shared = operation.whenComplete(() {
+      if (identical(_stopping, shared)) _stopping = null;
+    });
+    _stopping = shared;
+    return shared;
+  }
+
+  Future<void> _stop() async {
     final lease = _lease, generation = _generation;
     final epoch = ++_epoch;
     _lease = _generation = null;

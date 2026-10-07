@@ -1,4 +1,4 @@
-package mediaroutes
+package screenpreviewapp
 
 import (
 	"context"

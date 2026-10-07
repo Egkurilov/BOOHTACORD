@@ -1,5 +1,5 @@
-import { readScreenPreview, ScreenPreviewMissing, type ScreenPreviewFrame, type ScreenPreviewHint } from './screen_preview_client'
-import type { ScreenPreviewRequest } from './screen_preview_client'
+import { readScreenPreview, ScreenPreviewMissing, type ScreenPreviewFrame, type ScreenPreviewHint } from './client'
+import type { ScreenPreviewRequest } from './client'
 
 interface State { hint: ScreenPreviewHint; revision: number; pending: number; running: boolean; poll: boolean; timer?: ReturnType<typeof setTimeout> }
 export interface ScreenPreviewSink { apply(hint: ScreenPreviewHint, bytes: Uint8Array): void; clear(leaseId: string): void }

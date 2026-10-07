@@ -18,8 +18,8 @@ import { coalesceStores } from './protected_refresh/stores'
 import { refreshEditedHints } from './protected_refresh/revisions'
 import { deliverProtectedHintBatch } from './protected_refresh/batch'
 import { processRealtime } from '../telemetry/realtime_flow/process'
-import { LatestScreenPreviewReader } from '../voice/screen_preview_reader'
-import { parseScreenPreviewHint } from '../voice/screen_preview_client'
+import { LatestScreenPreviewReader } from '../voice/screen_preview/reader'
+import { parseScreenPreviewHint } from '../voice/screen_preview/client'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
 interface TextHistory extends Refreshable { channelId: string | null; refreshMessages?(ids: string[]): Promise<unknown> }

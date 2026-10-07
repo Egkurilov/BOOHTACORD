@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
@@ -20,7 +22,7 @@ extension ScreenShareEvents on ScreenShareController {
     if (nativeScreenMetricsPlatform(defaultTargetPlatform) != null) {
       metrics.start(track);
     }
-    thumbnail.start(room, track);
+    unawaited(thumbnail.start(room, track));
     changed();
   }
 
@@ -32,7 +34,6 @@ extension ScreenShareEvents on ScreenShareController {
     }
     activeTrack = null;
     capturedContentVisibility.track(null);
-    stopSampling();
     if (phase == ScreenSharePhase.stopping) return;
     phase = ScreenSharePhase.idle;
     final identity = room.localParticipant?.identity;

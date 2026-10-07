@@ -24,6 +24,7 @@ export class VoiceSessionShutdown {
       const current = this.state.current()
       if (!current) return
       await this.state.monitor.whileLeaving(async () => {
+        await current.room.stopScreenPreview?.()
         this.state.screen.cancel()
         await current.room.disconnect()
         this.state.stopInputSelection()?.()
@@ -40,6 +41,7 @@ export class VoiceSessionShutdown {
     const current = this.state.current()
     if (!current || current.leaseId !== leaseId) return false
     await this.state.monitor.whileLeaving(async () => {
+      await current.room.stopScreenPreview?.()
       this.state.screen.cancel()
       await current.room.disconnect()
       this.state.stopInputSelection()?.()

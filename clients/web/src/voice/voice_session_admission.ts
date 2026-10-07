@@ -36,6 +36,7 @@ export class VoiceSessionAdmission {
     return tracedOperation('voice.join', async (within) => {
       if (this.state.current()) throw new Error('Сначала завершите текущее голосовое подключение.')
       let lease: Awaited<ReturnType<VoiceAdmission['acquire']>> | null = null
+      let joinedRoom: ActiveVoiceSession['room'] | null = null
       try {
         const action = activeAction()
         if (action) telemetrySession.bindMediaFlow(action.id)
@@ -52,6 +53,7 @@ export class VoiceSessionAdmission {
           joinMode,
           this.state.inputDeviceId(),
         ))
+        joinedRoom = joined.room
         const current: ActiveVoiceSession = {
           listenerOnly: joinMode === 'listener',
           channelId: acquired.channelId,
@@ -60,7 +62,7 @@ export class VoiceSessionAdmission {
           ...joined,
         }
         this.state.setCurrent(current)
-        joined.room.bindScreenPreviewLease?.(acquired.id)
+        await joined.room.bindScreenPreviewLease?.(acquired.id)
         const observeInput = (selection: AudioInputSelection) => {
           if (this.state.current()?.room !== joined.room) return
           this.state.setInputDeviceId(selection.deviceId)
@@ -87,6 +89,7 @@ export class VoiceSessionAdmission {
         return current
       } catch (cause) {
         telemetrySession.endMedia()
+        try { await joinedRoom?.stopScreenPreview?.() } catch { /* Release follows settled local cleanup. */ }
         if (lease) await within(() => this.state.admission.release(lease!.id)).catch(() => undefined)
         throw cause
       }
@@ -96,6 +99,7 @@ export class VoiceSessionAdmission {
   async handleDisconnected(room: ActiveVoiceSession['room']): Promise<void> {
     const current = this.state.current()
     if (!current || current.room !== room) return
+    try { await room.stopScreenPreview?.() } catch { /* Lease release follows settled local cleanup. */ }
     this.state.screen.cancel()
     this.state.stopInputSelection()?.()
     this.state.setStopInputSelection(undefined)

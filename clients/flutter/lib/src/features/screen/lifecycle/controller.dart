@@ -102,12 +102,13 @@ class ScreenShareController extends ChangeNotifier {
     if (!disposed) notifyListeners();
   }
 
-  void stopSampling() {
+  Future<void> stopSampling() async {
     metrics.stop();
-    thumbnail.stop();
+    await thumbnail.stop();
   }
 
-  void previewLeaseChanged(String? leaseId) => thumbnail.changeLease(leaseId);
+  Future<void> previewLeaseChanged(String? leaseId) =>
+      thumbnail.changeLease(leaseId);
 
   @override
   void dispose() {

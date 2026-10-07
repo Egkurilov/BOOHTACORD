@@ -1,6 +1,6 @@
-import { accountIdFromMetadata } from './participant_identity'
-import { captureLocalScreenThumbnails, type LocalScreenThumbnailTrack } from './screen_thumbnail'
-import { LatestScreenPreviewUploader } from './screen_preview_uploader'
+import { accountIdFromMetadata } from '../participant_identity'
+import { captureLocalScreenThumbnails, type LocalScreenThumbnailTrack } from '../screen_thumbnail'
+import { LatestScreenPreviewUploader } from './uploader'
 
 interface PreviewPublication {
   source: string
@@ -37,36 +37,51 @@ export function bindLiveKitScreenPreview(
   const uploader = new LatestScreenPreviewUploader()
   let leaseId: string | null = null
   let stopCapture: (() => void) | null = null
+  let cleanup: Promise<void> | null = null
   const localId = () => accountIdFromMetadata(room.localParticipant.metadata) ?? room.localParticipant.identity
-  const stop = () => {
+  const stop = (): Promise<void> => {
     stopCapture?.()
     stopCapture = null
-    void uploader.stop()
+    if (cleanup) return cleanup
+    const operation = uploader.stop()
+    let shared!: Promise<void>
+    shared = operation.finally(() => { if (cleanup === shared) cleanup = null })
+    cleanup = shared
+    return shared
   }
-  const start = (track: LocalScreenThumbnailTrack, participantId: string) => {
+  const start = async (track: LocalScreenThumbnailTrack, participantId: string) => {
     stopCapture?.()
+    stopCapture = null
+    const requestedLease = leaseId
+    await cleanup
+    if (requestedLease !== leaseId) return
     stopCapture = captureLocalScreenThumbnails(track, (bytes) => {
       viewer.viewer.setThumbnail(participantId, bytes)
       if (leaseId) uploader.offer(bytes)
     })
-    if (leaseId) void uploader.start(leaseId).catch(() => undefined)
+    if (requestedLease) void uploader.start(requestedLease).catch(() => undefined)
   }
   room.on(events.trackPublished, (publication) => {
     if (publication?.source !== screenSource || !publication.videoTrack) return
-    start(publication.videoTrack, localId())
+    void start(publication.videoTrack, localId())
   })
   room.on(events.trackUnpublished, (publication) => {
     if (publication?.source !== screenSource) return
-    stop()
+    void stop()
     viewer.viewer.removeThumbnail(localId())
   })
-  room.on(events.disconnected, stop)
+  room.on(events.disconnected, () => { void stop() })
   return {
-    bindLease(value: string) {
-      leaseId = value
+    async bindLease(value: string) {
+      if (leaseId !== value) {
+        leaseId = null
+        await stop()
+        leaseId = value
+      }
       const publication = room.localParticipant.getTrackPublication(screenSource)
-      if (publication?.videoTrack) start(publication.videoTrack, localId())
+      if (publication?.videoTrack) await start(publication.videoTrack, localId()).catch(() => undefined)
     },
+    stop,
     apply(lease: string, bytes: Uint8Array) {
       const participant = room.remoteParticipants.get(`voice-lease:${lease}`)
       if (!participant?.getTrackPublication(screenSource)) return

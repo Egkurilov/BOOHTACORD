@@ -36,32 +36,49 @@ class ScreenThumbnailController {
   int? busy;
   ScreenThumbnailCaptureResult? lastLoggedResult;
   String? leaseId;
+  Future<void>? cleanup;
   static Future<Uint8List> captureTrack(LocalVideoTrack track) async =>
       (await track.mediaStreamTrack.captureFrame()).asUint8List();
   static Future<Uint8List?> encodeFrame(Uint8List frame) =>
       compute(encodeScreenThumbnail, frame);
-  void start(Room room, LocalVideoTrack track) {
-    stop();
+  Future<void> start(Room room, LocalVideoTrack track) async {
+    final expected = revision + 1;
+    final stopped = stop();
+    final startRevision = revision;
+    if (startRevision != expected) return;
     this.track = track;
+    await stopped;
+    if (revision != startRevision || !identical(this.track, track)) return;
     timer = Timer.periodic(const Duration(seconds: 4), (_) {
       unawaited(sample(room, track));
     });
     unawaited(sample(room, track));
   }
 
-  void stop() {
+  Future<void> stop() {
     revision++;
     timer?.cancel();
     timer = null;
     track = null;
     busy = null;
     lastLoggedResult = null;
-    unawaited(previewUploader.stop());
+    return _invalidatePreview();
   }
 
-  void changeLease(String? value) {
-    if (leaseId == value) return;
+  Future<void> changeLease(String? value) {
+    if (leaseId == value) return cleanup ?? Future<void>.value();
     leaseId = value;
-    unawaited(previewUploader.stop());
+    return _invalidatePreview();
+  }
+
+  Future<void> _invalidatePreview() {
+    final existing = cleanup;
+    if (existing != null) return existing;
+    late final Future<void> operation;
+    operation = previewUploader.stop().whenComplete(() {
+      if (identical(cleanup, operation)) cleanup = null;
+    });
+    cleanup = operation;
+    return operation;
   }
 }

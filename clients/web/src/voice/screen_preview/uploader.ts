@@ -1,5 +1,5 @@
-import { beginScreenPreview, invalidateScreenPreview, uploadScreenPreview, type ScreenPreviewRequest } from './screen_preview_client'
-import { validScreenThumbnail } from './screen_thumbnail'
+import { beginScreenPreview, invalidateScreenPreview, uploadScreenPreview, type ScreenPreviewRequest } from './client'
+import { validScreenThumbnail } from '../screen_thumbnail'
 
 export class LatestScreenPreviewUploader {
   private leaseId = ''
@@ -8,6 +8,7 @@ export class LatestScreenPreviewUploader {
   private pending: Uint8Array | null = null
   private pumping: Promise<void> | null = null
   private beginning: Promise<void> | null = null
+  private stopping: Promise<void> | null = null
   private epoch = 0
 
   constructor(private readonly request: ScreenPreviewRequest = fetch) {}
@@ -48,7 +49,17 @@ export class LatestScreenPreviewUploader {
     this.drain()
   }
 
-  async stop(): Promise<void> {
+  stop(): Promise<void> {
+    if (this.stopping) return this.stopping
+    let shared!: Promise<void>
+    shared = this.stopCurrent().finally(() => {
+      if (this.stopping === shared) this.stopping = null
+    })
+    this.stopping = shared
+    return shared
+  }
+
+  private async stopCurrent(): Promise<void> {
     ++this.epoch
     this.pending = null
     const leaseId = this.leaseId, generationId = this.generationId

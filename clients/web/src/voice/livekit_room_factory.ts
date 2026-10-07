@@ -6,7 +6,7 @@ import { bindScreenProfile } from './screen_profile/bind'
 import { BoundedVoiceReconnectPolicy } from './bounded_voice_reconnect_policy'
 import { clearLiveKitScreenDiagnostics, inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from './screen_livekit_diagnostics'
 import { readVoiceConnectionStats } from './voice_connection_quality'
-import { bindLiveKitScreenPreview } from './screen_preview_capture'
+import { bindLiveKitScreenPreview } from './screen_preview/capture'
 import { selectedVoiceAudioProfile } from './audio_profile/profile'
 import { bindVoiceAudioDiagnostics } from './audio_diagnostics/bind'
 import { bindNetworkDiagnostics } from './network_diagnostics/bind'
@@ -25,6 +25,7 @@ export function wireLiveKitRoom(
     viewer.refresh()
   }
   room.disconnect = async () => {
+    await room.stopScreenPreview?.()
     const microphoneCleanup = room.disposeMicrophone?.()
     viewer.clear()
     try { await disconnect() } finally { await microphoneCleanup }
@@ -76,6 +77,7 @@ export async function defaultLiveKitRoomFactory(): Promise<VoiceRoom> {
   })
   const room = wireLiveKitRoom(liveKitRoom as unknown as VoiceRoom, viewer)
   room.bindScreenPreviewLease = preview.bindLease
+  room.stopScreenPreview = preview.stop
   room.applyScreenPreview = preview.apply
   room.clearScreenPreview = preview.clear
   room.screenViewer = viewer.viewer

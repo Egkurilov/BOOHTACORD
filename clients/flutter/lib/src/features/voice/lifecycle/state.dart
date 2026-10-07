@@ -89,7 +89,9 @@ abstract class VoiceState extends ChangeNotifier
   String? _leaseId;
   String? get leaseId => _leaseId;
   set leaseId(String? value) {
-    if (_leaseId != value) screen.previewLeaseChanged(_leaseId = value);
+    if (_leaseId != value) {
+      unawaited(screen.previewLeaseChanged(_leaseId = value));
+    }
   }
   bool listenerOnly = false;
   bool voiceAdmissionPending = false;

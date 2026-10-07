@@ -6,10 +6,12 @@ import 'controller.dart';
 
 extension ScreenThumbnailSample on ScreenThumbnailController {
   Future<void> sample(Room room, LocalVideoTrack track) async {
+    await cleanup;
     final ticket = scope.capture();
     final expected = revision;
     final previewLease = leaseId;
     bool active() =>
+        cleanup == null &&
         ticket.isActive &&
         expected == revision &&
         identical(this.track, track) &&

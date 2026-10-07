@@ -13,6 +13,7 @@ extension VoiceAdmissionFinalize on VoiceController {
     required int revision,
   }) async {
     if (!connected) {
+      await screen.stopScreenShare();
       try {
         await candidate?.disconnect();
       } catch (_) {}
