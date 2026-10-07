@@ -8,6 +8,7 @@ $clientUpdateFixturesPath = Join-Path $PSScriptRoot '..\..\..\contracts\client-u
 $screenShareProfileSchemaPath = Join-Path $PSScriptRoot '..\..\..\contracts\screen-share-profile-v1.schema.json'
 $screenShareProfileCatalogPath = Join-Path $PSScriptRoot '..\..\..\contracts\screen-share-profile-v1.catalog.json'
 $screenShareProfileFixturesPath = Join-Path $PSScriptRoot '..\..\..\contracts\screen-share-profile-v1.fixtures.json'
+$screenShareSfuSmokeEvidenceSchemaPath = Join-Path $PSScriptRoot '..\..\..\contracts\screen-share-sfu-smoke-evidence-v1.schema.json'
 
 foreach ($path in @($openApiPath, $realtimePath)) {
     if (-not (Test-Path -LiteralPath $path)) {
@@ -15,8 +16,8 @@ foreach ($path in @($openApiPath, $realtimePath)) {
     }
 }
 
-foreach ($path in @($clientUpdateSchemaPath, $clientUpdateFixturesPath, $screenShareProfileSchemaPath, $screenShareProfileCatalogPath, $screenShareProfileFixturesPath)) {
-    if (-not (Test-Path -LiteralPath $path)) { throw "Client update contract is unavailable: $path" }
+foreach ($path in @($clientUpdateSchemaPath, $clientUpdateFixturesPath, $screenShareProfileSchemaPath, $screenShareProfileCatalogPath, $screenShareProfileFixturesPath, $screenShareSfuSmokeEvidenceSchemaPath)) {
+    if (-not (Test-Path -LiteralPath $path)) { throw "Client or screen-share contract is unavailable: $path" }
     Get-Content -Raw -LiteralPath $path | ConvertFrom-Json | Out-Null
 }
 

@@ -16,11 +16,11 @@ def client(name):
     return path
 
 
-def run(*args, cwd=ROOT, stdout=None, check=True):
+def run(*args, cwd=ROOT, stdout=None, check=True, env=None):
     executable = shutil.which(args[0])
     if not executable:
         raise RuntimeError(f"Required executable is unavailable: {args[0]}")
-    return subprocess.run([executable, *args[1:]], cwd=cwd, stdout=stdout, check=check)
+    return subprocess.run([executable, *args[1:]], cwd=cwd, stdout=stdout, check=check, env=env)
 
 
 def output(*args, cwd=ROOT):
