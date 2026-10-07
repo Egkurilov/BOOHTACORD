@@ -35,9 +35,12 @@ List<ScreenSenderLayerSource> screenSenderSourcesFromReports(
 ) {
   final codecs = {for (final row in reports.where((row) => row.type == 'codec')) row.id: _text(row, 'mimeType')};
   final remotes = {for (final row in reports.where((row) => row.type == 'remote-inbound-rtp')) row.id: row};
-  return reports.where((row) => row.type == 'outbound-rtp').take(8).map((row) {
+  return reports.where((row) => row.type == 'outbound-rtp' && (_text(row, 'kind') ?? _text(row, 'mediaType') ?? 'video') == 'video').take(8).map((row) {
     final remoteId = _text(row, 'remoteId');
-    final remote = remoteId == null ? null : remotes[remoteId];
+    final candidate = remoteId == null ? null : remotes[remoteId];
+    final remote = candidate != null &&
+        (_text(candidate, 'localId') == null || _text(candidate, 'localId') == row.id) &&
+        (_number(candidate, 'ssrc') == null || _number(candidate, 'ssrc') == _number(row, 'ssrc')) ? candidate : null;
     final codecId = _text(row, 'codecId');
     final counters = ScreenSenderLayerCounters(
       streamId: row.id,
@@ -47,7 +50,11 @@ List<ScreenSenderLayerSource> screenSenderSourcesFromReports(
       timestampMs: webRtcStatsTimestampMs(row.timestamp),
       width: _number(row, 'frameWidth'),
       height: _number(row, 'frameHeight'),
-      framesSent: _number(row, 'framesSent'),
+      encodedFrames: _number(row, 'framesEncoded'),
+      framesSent: _number(row, 'framesEncoded') ?? _number(row, 'framesSent'),
+      active: row.values['active'] is bool ? row.values['active'] as bool : null,
+      totalEncodeTime: _number(row, 'totalEncodeTime'),
+      retransmittedBytes: _number(row, 'retransmittedBytesSent'),
       bytesSent: _number(row, 'bytesSent'),
       packetsSent: _number(row, 'packetsSent'),
       packetsLost: remote == null ? null : _number(remote, 'packetsLost'),
@@ -56,6 +63,7 @@ List<ScreenSenderLayerSource> screenSenderSourcesFromReports(
       pliCount: _number(row, 'pliCount'),
       firCount: _number(row, 'firCount'),
       qualityLimitationReason: _text(row, 'qualityLimitationReason'),
+      qualityLimitationDurations: _durations(row.values['qualityLimitationDurations']),
     );
     final rtt = remote == null ? null : _number(remote, 'roundTripTime')?.toDouble();
     return ScreenSenderLayerSource(counters, rtt);
@@ -79,4 +87,10 @@ LiveKitScreenLayerSample sampleLiveKitScreenLayers(
     }
   }
   return LiveKitScreenLayerSample(diagnostics, sources, selected);
+}
+
+Map<String, double>? _durations(Object? raw) {
+  if (raw is! Map) return null;
+  return {for (final key in ['none', 'cpu', 'bandwidth', 'other'])
+    if (raw[key] is num && (raw[key] as num).isFinite && (raw[key] as num) >= 0) key: (raw[key] as num).toDouble()};
 }

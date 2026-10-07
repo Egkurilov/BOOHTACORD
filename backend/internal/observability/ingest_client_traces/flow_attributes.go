@@ -4,6 +4,7 @@ import (
 	commonpb "go.opentelemetry.io/proto/otlp/common/v1"
 	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 	flow "voice-platform/backend/internal/observability/flow_contract"
+	"voice-platform/backend/internal/observability/report_client_screen/measurement"
 )
 
 func attributeValue(value *commonpb.AnyValue) any {
@@ -37,6 +38,7 @@ func cleanFlow(span *tracepb.Span, sessionID, accountID string) ([]*commonpb.Key
 	}
 	clean := []*commonpb.KeyValue{}
 	seen := map[string]bool{}
+	mediaFields := map[string]any{}
 	for _, attr := range span.Attributes {
 		if attr == nil || seen[attr.Key] {
 			return nil, false
@@ -47,9 +49,14 @@ func cleanFlow(span *tracepb.Span, sessionID, accountID string) ([]*commonpb.Key
 		}
 		if flow.Valid(attr.Key, attributeValue(attr.Value)) {
 			clean = append(clean, attr)
+			mediaFields[attr.Key] = attributeValue(attr.Value)
 		} else if _, known := flow.Fields[attr.Key]; known {
 			return nil, false
 		}
+	}
+	direction, _ := spanField(span, "app.media.direction").(string)
+	if !measurement.FlowValid(direction, mediaFields) {
+		return nil, false
 	}
 	clean = append(clean, flowAttrValue("app.provenance", "client_observed"), flowAttrValue("user.id", accountID))
 	if spanField(span, "app.media.source") == "presentation" {

@@ -69,3 +69,25 @@ describe('screen sender layer sampling', () => {
     expect(reset.layers[0]).toMatchObject({ state: 'UNKNOWN', framesPerSecond: null, bitrateBps: null })
   })
 })
+
+
+describe('signed loss and encoding lifecycle', () => {
+  it('does not reset frame/byte windows for late signed loss correction', () => {
+    const sampler = new ScreenSenderLayerSampler()
+    sampler.sample([layer({ packetsLost: 4 })], 1000)
+    const next = sampler.sample([layer({ timestamp: 2000, framesEncoded: 30, bytesSent: 1000, packetsSent: 10, packetsLost: 2 })], 2000)
+    expect(next.selected).toMatchObject({ state: 'ACTIVE', framesPerSecond: 30, bitrateBps: 8000, packetLossPercent: null })
+  })
+  it('does not bridge a disabled encoding into the first reactivated window', () => {
+    const sampler = new ScreenSenderLayerSampler()
+    sampler.sample([layer({ active: false })], 1000)
+    expect(sampler.sample([layer({ timestamp: 2000, framesEncoded: 30, bytesSent: 1000 })], 2000).selected).toBeNull()
+    expect(sampler.sample([layer({ timestamp: 3000, framesEncoded: 60, bytesSent: 2000 })], 3000).selected?.framesPerSecond).toBe(30)
+  })
+  it('does not poison a baseline when the same cached report is read twice', () => {
+    const sampler = new ScreenSenderLayerSampler()
+    sampler.sample([layer()], 1000)
+    sampler.sample([layer()], 1500)
+    expect(sampler.sample([layer({ timestamp: 2000, framesEncoded: 30, bytesSent: 1000 })], 2000).selected?.framesPerSecond).toBe(30)
+  })
+})

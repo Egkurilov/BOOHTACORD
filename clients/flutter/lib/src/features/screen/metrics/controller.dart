@@ -11,6 +11,7 @@ import '../../../telemetry/report_media/sender.dart';
 import 'layers.dart';
 import 'report_cadence.dart';
 import 'sample.dart';
+import 'stats_poller.dart';
 
 class ScreenShareMetricsController {
   ScreenShareMetricsController(
@@ -35,6 +36,7 @@ class ScreenShareMetricsController {
   String? previousLayerId;
   num? totalBitrateBps;
   List<ScreenSenderLayerMetrics> layerDiagnostics = const [];
+  ScreenStatsPoller? statsPoller;
   final layerSampler = ScreenSenderLayerSampler();
   final gate = ScreenShareMetricsGenerationGate();
   final telemetry = SenderMediaTelemetry();
@@ -54,6 +56,8 @@ class ScreenShareMetricsController {
     gate.nextGeneration();
     timer?.cancel();
     timer = null;
+    statsPoller?.clear();
+    statsPoller = null;
     track = null;
     previous = null;
     previousLayerId = null;

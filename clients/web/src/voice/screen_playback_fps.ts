@@ -1,7 +1,7 @@
 const sampleWindowMs = 2000
 
 /** Measures frames presented by this viewer, not the publisher's target FPS. */
-export function observeScreenPlaybackFps(video: HTMLVideoElement, onSample: (fps: number | null) => void, onFirstFrame?: () => void,onCounter?:(frames:number|null)=>void): () => void {
+export function observeScreenPlaybackFps(video: HTMLVideoElement, onSample: (fps: number | null) => void, onFirstFrame?: () => void,onCounter?:(frames:number|null)=>void, onFirstFrameTime?: (elapsedMs: number) => void): () => void {
   if (typeof video.requestVideoFrameCallback !== 'function' || typeof video.cancelVideoFrameCallback !== 'function') {
     onSample(null)
     return () => {}
@@ -12,15 +12,17 @@ export function observeScreenPlaybackFps(video: HTMLVideoElement, onSample: (fps
   let observedFrame = false
   let framesInWindow = 0
   let previousPresentedFrames: number | null = null
-  let windowStartedAt = performance.now()
+  const startedAt = performance.now()
+  let windowStartedAt = startedAt
 
   function onFrame(_now: DOMHighResTimeStamp, metadata: VideoFrameCallbackMetadata): void {
     if (stopped) return
-    if (!observedFrame) onFirstFrame?.()
+    if (!observedFrame) { onFirstFrame?.(); onFirstFrameTime?.(Math.max(0, performance.now() - startedAt)) }
     observedFrame = true
     const presentedFrames = metadata.presentedFrames
     const validCounter = Number.isFinite(presentedFrames) && presentedFrames >= 0
-    framesInWindow += validCounter && previousPresentedFrames !== null && presentedFrames > previousPresentedFrames
+    if (validCounter && previousPresentedFrames !== null && presentedFrames < previousPresentedFrames) { framesInWindow = 0; windowStartedAt = performance.now() }
+    framesInWindow += validCounter && previousPresentedFrames !== null && presentedFrames >= previousPresentedFrames
       ? presentedFrames - previousPresentedFrames
       : 1
     previousPresentedFrames = validCounter ? presentedFrames : null

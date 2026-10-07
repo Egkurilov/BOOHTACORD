@@ -4,7 +4,7 @@ import { inspectLiveKitScreenDiagnostics, type LiveKitScreenVideoTrack } from '.
 import { screenSenderStatsSampler } from './screen_stats_sampler'
 
 describe('LiveKit screen sender diagnostics', () => {
-  it('exposes active per-layer rates while keeping SDK total bitrate separate', async () => {
+  it('exposes active per-layer rates while keeping total bitrate separate', async () => {
     let sample = 0
     const sender = {
       getStats: async () => {
@@ -36,8 +36,32 @@ describe('LiveKit screen sender diagnostics', () => {
     expect(diagnostics.layers?.[1]?.framesPerSecond).toBeCloseTo(30, 0)
     expect(diagnostics.measured).toMatchObject({ width: 1920, height: 1080 })
     expect(diagnostics.measured?.framesPerSecond).toBeCloseTo(30, 0)
-    expect(diagnostics.bitrateBps).toBe(2_500_000)
-    expect(diagnostics.layers?.[1]?.packetLossPercent).toBeCloseTo(100 / 16, 1)
+    expect(diagnostics.bitrateBps).toBeCloseTo(diagnostics.layers![1]!.bitrateBps!, 0)
+    expect(diagnostics.totalBitrateBps).toBeCloseTo(diagnostics.bitrateBps! * 2, 0)
+    expect(diagnostics.layers?.[1]?.packetLossPercent).toBeCloseTo(100 / 15, 1)
     expect(diagnostics.roundTripTimeMs).toBe(45)
   })
+})
+
+
+it('pairs capture and encode counters to the selected progressing layer rather than frozen pixels', async () => {
+  let sample = 0
+  const sender = { getStats: async () => {
+    sample++
+    const timestamp = Date.now() - (sample === 1 ? 1000 : 0)
+    return new Map([
+      ['source', { id: 'source', type: 'media-source', frames: sample * 30 }],
+      ['high', { id: 'high', type: 'outbound-rtp', kind: 'video', active: true, timestamp, frameWidth: 1920, frameHeight: 1080,
+        framesEncoded: 100, bytesSent: sample * 1000, packetsSent: sample * 10, mediaSourceId: 'source' }],
+      ['low', { id: 'low', type: 'outbound-rtp', kind: 'video', active: true, timestamp, frameWidth: 640, frameHeight: 360,
+        framesEncoded: sample * 30, bytesSent: sample * 1000, packetsSent: sample * 10, mediaSourceId: 'source' }],
+    ]) as unknown as RTCStatsReport
+  } }
+  const video: LiveKitScreenVideoTrack = { sender, getSenderStats: async () => [], getSourceTrackSettings: () => ({}), mediaStreamTrack: { readyState: 'live' } }
+  await inspectLiveKitScreenDiagnostics(video, false, 'good')
+  screenSenderStatsSampler.clear(sender)
+  const value = await inspectLiveKitScreenDiagnostics(video, false, 'good')
+  expect(value.measured).toMatchObject({ width: 640, height: 360 })
+  expect(value.encodedFrames).toBe(60)
+  expect(value.capturedFrames).toBe(60)
 })

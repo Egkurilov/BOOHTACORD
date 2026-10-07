@@ -1,6 +1,7 @@
 import type { ScreenShareDescriptorV1 } from './screen_profile_metadata/types'
 
 export interface ScreenViewerTrack {
+  receiver?: Pick<RTCRtpReceiver, 'getStats'>
   attach(element: HTMLMediaElement): HTMLMediaElement
   detach(element: HTMLMediaElement): HTMLMediaElement[]
   getReceiverStats?(): Promise<import('./screen_receiver_diagnostics').ScreenReceiverSnapshot | undefined>

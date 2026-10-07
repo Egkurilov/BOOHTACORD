@@ -1,0 +1,16 @@
+{
+  "issue": 159,
+  "base_sha": "319fa06ce219e493f10d43b1fb54ff732f1b4d34",
+  "scope": "Server numeric report and versioned flow allowlist; client collection is integrated separately before delivery",
+  "tests": [
+    {"command": "go test ./internal/observability/flow_contract ./internal/observability/ingest_client_traces ./internal/observability/report_client_screen/... ./internal/observability/http_metrics", "result": "PASS", "packages": 7},
+    {"command": "python -m tools.ci.native.contracts", "result": "PASS", "python_tests": 194, "existing_skipped_tests": 1},
+    {"command": "node tools/observability/flow_contract/generate.mjs --check", "result": "PASS"}
+  ],
+  "preservation": "Legacy absent fields valid; 2 KiB strict report decoder and existing secure-cookie, Origin and server ACL remain; 32 OTLP attribute ceiling unchanged",
+  "new_checks": "Same-interval window/source; directional fields; finite bounds; integer freeze count; first-frame callback provenance; unknown RID rejected; safe values survive relay while user identity is replaced by trusted server identity",
+  "interpretation": "Optional WebRTC freeze counters are cumulative SDK values. First frame is first rVFC callback since observation began, not proof of scanout or unique-image throughput. Missing values are omitted, never synthesized as zero.",
+  "hardware_capacity": "NOT_RUN",
+  "production_pipeline": "NOT_RUN",
+  "release_gate": "NOT_RUN"
+}

@@ -13,8 +13,11 @@ bindings, not proof that deployment has provisioned the new dashboard.
 2. Check requested target separately from capture settings in private samples.
    Capture FPS settings are not measured capture or encoder FPS. Sender frame
    dimensions come from client diagnostics; receiver dimensions are video-element
-   geometry. Exact capture/encode/delivery provenance awaits #159.
-3. Compare encoded FPS and sender total bitrate, then loss/window, RTT to SFU and
+   geometry. #159 now pairs selected-layer FPS/bitrate with its interval; capture settings
+   remain requested/configured intent. Measured native capture callback/scanout counters
+   and requested/applied/delivered revision proof remain unavailable.
+3. Compare encoded FPS with selected_layer_bitrate_kbps; total_bitrate_kbps separately
+   sums comparable outgoing layer byte intervals. Then inspect loss/window, RTT to SFU and
    jitter. The client adaptation reason `cpu` is not measured SFU saturation.
 4. Compare receiver decoded and presented stages. Decoded frames with poor
    presentation are a render symptom; low encode at sender and all receivers is
@@ -78,7 +81,18 @@ Check freshness first, then publisher/receiver symptoms and SFU transport panels
 SFU RTT/jitter/loss have separate server provenance and `up`/timestamp gating;
 snapshot counts publications, not viewers. Preserve voice first and use existing
 bounded user recovery. Page only after an agreed baseline and eligible population
-denominator exist. No freeze/first-frame/SFU resource rule is fabricated.
+denominator exist. No freeze/first-frame/SFU resource rule is fabricated. #159 supplies optional private
+first_frame_ms from the first observed Web rVFC callback (observation-start origin),
+SDK cumulative freeze_count/freeze_duration_ms, interval decode/encode and jitter-buffer
+per-frame averages, retransmission bytes and NACK/PLI/FIR rates. These fields are
+validated report/trace fields, not new aggregate metrics or SLO alerts.
+stats_window_ms/stats_source pair interval measurements; collection_state describes
+collection eligibility, not a network diagnosis. Missing SDK counters stay absent.
+presentation_source=unsupported suppresses native presented_fps; framesRendered or
+texture uploads do not establish monitor scanout. Web rVFC is compositor observation,
+not proof of unique content. Detailed RID/SSRC remains local diagnostics only.
+Legacy reports without these optional fields remain accepted. Physical paired-client
+and before/after collector overhead acceptance remain NOT_RUN for this packet.
 
 ## Delivery, rollback and #155 integration
 

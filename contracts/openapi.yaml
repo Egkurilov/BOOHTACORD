@@ -5347,7 +5347,23 @@
           "capture_fps": { "type": "number", "minimum": 0, "maximum": 240, "description": "MediaStreamTrack settings frameRate, not measured captured-frame throughput; requires guard state." },
           "sample_age_ms": { "type": "number", "minimum": 0, "maximum": 15000 },
           "connection_quality": { "type": "string", "enum": ["UNKNOWN", "EXCELLENT", "GOOD", "POOR", "LOST"] },
-          "adaptation_reason": { "type": "string", "enum": ["none", "cpu", "bandwidth", "other"] }
+          "adaptation_reason": { "type": "string", "enum": ["none", "cpu", "bandwidth", "other"] },
+          "total_bitrate_kbps": {"type": "number", "minimum": 0, "maximum": 100000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "selected_layer_bitrate_kbps": {"type": "number", "minimum": 0, "maximum": 100000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "retransmitted_bitrate_kbps": {"type": "number", "minimum": 0, "maximum": 100000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "encode_ms_per_frame": {"type": "number", "minimum": 0, "maximum": 60000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "decode_ms_per_frame": {"type": "number", "minimum": 0, "maximum": 60000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "jitter_buffer_ms_per_frame": {"type": "number", "minimum": 0, "maximum": 60000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "nack_per_second": {"type": "number", "minimum": 0, "maximum": 1000000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "pli_per_second": {"type": "number", "minimum": 0, "maximum": 1000000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "fir_per_second": {"type": "number", "minimum": 0, "maximum": 1000000, "description": "Same bounded WebRTC interval; requires stats_window_ms and stats_source=webrtc_interval. Sender-only totals/encoding, receiver-only decoding/jitter buffer."},
+          "first_frame_ms": {"type": "number", "minimum": 0, "maximum": 86400000, "description": "Receiver first requestVideoFrameCallback observation since observation start; requires presentation_source=web_rvfc. Not scanout or unique-image proof."},
+          "freeze_duration_ms": {"type": "number", "minimum": 0, "maximum": 86400000, "description": "Optional SDK cumulative freeze measurement; absence is unsupported, never inferred from low FPS."},
+          "stats_window_ms": {"type": "number", "minimum": 0, "maximum": 10000, "exclusiveMinimum": 0},
+          "freeze_count": {"type": "integer", "minimum": 0, "maximum": 1000000000, "description": "Optional SDK cumulative freeze measurement; absence is unsupported, never inferred from low FPS."},
+          "collection_state": {"type": "string", "enum": ["active", "inactive", "sdk_paused", "hidden", "reconnecting", "unavailable", "stale", "unknown", "no_subscriber"]},
+          "presentation_source": {"type": "string", "enum": ["web_rvfc", "unsupported"]},
+          "stats_source": {"type": "string", "enum": ["webrtc_interval", "unsupported"]}
         }
       },
       "ClientScreenSample": {

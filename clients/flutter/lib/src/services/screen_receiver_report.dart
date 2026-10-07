@@ -32,6 +32,20 @@ Map<String, Object>? buildScreenReceiverReport({
   return {
     'platform': platform,
     'direction': 'receiver',
+    'presentation_source': 'unsupported',
+    'stats_source': metrics?.statsWindowMs == null && metrics?.freezeCount == null && metrics?.freezeDurationMs == null ? 'unsupported' : 'webrtc_interval',
+    'collection_state': metrics?.collectionState ?? 'unavailable',
+    'freeze_count': ?_boundedInt(metrics?.freezeCount, 1000000000),
+    'freeze_duration_ms': ?_bounded(metrics?.freezeDurationMs, 86400000),
+    if (metrics?.statsWindowMs != null) ...{
+      'stats_window_ms': metrics!.statsWindowMs!,
+      'decode_ms_per_frame': ?_bounded(metrics.decodeMsPerFrame, 60000),
+      'jitter_buffer_ms_per_frame': ?_bounded(metrics.jitterBufferMsPerFrame, 60000),
+      'nack_per_second': ?_bounded(metrics.nackPerSecond, 1000000),
+      'pli_per_second': ?_bounded(metrics.pliPerSecond, 1000000),
+      'fir_per_second': ?_bounded(metrics.firPerSecond, 1000000),
+
+    },
     'sample_age_ms': ?sampleAgeMs,
     if (loss != null &&
         packetLossWindowMs != null &&
@@ -46,7 +60,7 @@ Map<String, Object>? buildScreenReceiverReport({
       'frame_height': height,
     },
     'decoded_fps': ?decodedFps,
-    'presented_fps': ?presentedFps,
+    // Native renderer counters are not proof of presentation; keep absent.
     'bitrate_kbps': ?_bounded(metrics?.bitrateKbps, 100000),
     'jitter_ms': ?_bounded(metrics?.jitterMs, 60000),
     'packets_lost': ?_boundedInt(metrics?.packetsLost, 1000000000),

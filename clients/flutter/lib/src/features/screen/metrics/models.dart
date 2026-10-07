@@ -6,18 +6,21 @@ class ScreenSenderLayerCounters {
     required this.height, required this.framesSent, required this.bytesSent,
     required this.packetsSent, required this.packetsLost,
     required this.retransmittedPackets, this.nackCount, this.pliCount,
-    this.firCount, this.qualityLimitationReason});
+    this.firCount, this.encodedFrames, this.qualityLimitationDurations, this.active, this.totalEncodeTime, this.retransmittedBytes, this.qualityLimitationReason});
   final String streamId;
   final num? ssrc;
   final String? rid;
   final String? codec;
   final double timestampMs;
   final num? width, height, framesSent, bytesSent, packetsSent, packetsLost;
-  final num? retransmittedPackets;
-  final num? nackCount, pliCount, firCount;
+  final num? retransmittedPackets, encodedFrames;
+  String get frameCounterSource => encodedFrames != null ? 'encoded' : framesSent != null ? 'sent' : 'unsupported';
+  final num? nackCount, pliCount, firCount, totalEncodeTime, retransmittedBytes;
+  final bool? active;
+  final Map<String, double>? qualityLimitationDurations;
   final String? qualityLimitationReason;
 
-  String get id => '${streamId}:${ssrc ?? ''}:${rid ?? ''}';
+  String get id => '$streamId:${ssrc ?? ''}:${rid ?? ''}';
 }
 
 class ScreenSenderLayerMetrics {
@@ -26,14 +29,16 @@ class ScreenSenderLayerMetrics {
     required this.height, required this.framesPerSecond, required this.bitrateBps,
     required this.retransmittedPacketsPerSecond, required this.packetLossPercent,
     required this.nackPerSecond, required this.pliPerSecond, required this.firPerSecond,
-    required this.qualityLimitationReason});
+    this.frameCounterSource = 'unsupported', this.timestampMs, this.windowMs, this.encodeMsPerFrame, this.retransmittedBps, required this.qualityLimitationReason});
+  final String frameCounterSource;
+  final double? timestampMs;
   final String id;
   final String? rid, codec;
   final String state;
   final int? width, height;
   final double? framesPerSecond, bitrateBps, retransmittedPacketsPerSecond;
   final double? packetLossPercent;
-  final double? nackPerSecond, pliPerSecond, firPerSecond;
+  final double? nackPerSecond, pliPerSecond, firPerSecond, windowMs, encodeMsPerFrame, retransmittedBps;
   final String? qualityLimitationReason;
 }
 

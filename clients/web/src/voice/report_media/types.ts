@@ -1,7 +1,25 @@
 import type { ScreenReceiverMetrics } from '../screen_receiver_diagnostics'
 
 export type WebPlatform = 'ios_web' | 'android_web' | 'desktop_web'
-export interface ScreenClientReport {
+export interface ScreenMeasurementFields {
+  total_bitrate_kbps?: number
+  selected_layer_bitrate_kbps?: number
+  retransmitted_bitrate_kbps?: number
+  encode_ms_per_frame?: number
+  decode_ms_per_frame?: number
+  jitter_buffer_ms_per_frame?: number
+  nack_per_second?: number
+  pli_per_second?: number
+  fir_per_second?: number
+  first_frame_ms?: number
+  freeze_duration_ms?: number
+  freeze_count?: number
+  stats_window_ms?: number
+  stats_source?: 'webrtc_interval' | 'unsupported'
+  presentation_source?: 'web_rvfc' | 'unsupported'
+  collection_state?: 'active' | 'inactive' | 'sdk_paused' | 'hidden' | 'reconnecting' | 'unavailable' | 'stale' | 'unknown' | 'no_subscriber'
+}
+export interface ScreenClientReport extends ScreenMeasurementFields {
   profile_check_status?: import('../screen_profile/types').ProfileStatus
   profile_check_reason?: import('../screen_profile/types').ProfileReason
   profile_repair_attempts?: number
@@ -37,6 +55,8 @@ export interface ScreenClientReportInput {
   playbackFps: number | null
   receiverMetrics: ScreenReceiverMetrics | null
   sampledAt?: number
+  firstFrameMs?: number | null
+  presentationSource?: ScreenMeasurementFields['presentation_source']
   packetLossWindowMs?: number
   frameWidth?: number
   frameHeight?: number

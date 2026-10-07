@@ -51,7 +51,9 @@ void main() {
       'frame_width': 1920,
       'frame_height': 1080,
       'decoded_fps': 24,
-      'presented_fps': 20,
+      'presentation_source': 'unsupported',
+      'stats_source': 'unsupported',
+      'collection_state': 'unavailable',
       'bitrate_kbps': 800,
       'jitter_ms': 12,
       'packets_lost': 3,
@@ -76,7 +78,8 @@ void main() {
     );
 
     expect(report, containsPair('state', 'playing'));
-    expect(report, containsPair('presented_fps', 20));
+    expect(report, isNot(contains('presented_fps')));
+    expect(report, containsPair('presentation_source', 'unsupported'));
   });
 
   test('reports a selected stream that is still waiting for subscription', () {
@@ -92,6 +95,9 @@ void main() {
         'platform': 'android_native',
         'direction': 'receiver',
         'state': 'waiting_subscription',
+        'presentation_source': 'unsupported',
+        'stats_source': 'unsupported',
+        'collection_state': 'unavailable',
       },
     );
   });
