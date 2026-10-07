@@ -2,7 +2,7 @@
 
 - Scope: Flutter administrator workspace shell and responsive geometry.
 - Commits: `69c37548`, `265f4fde`, `2087a62f`, `e3ea34c2`, `dee50f1b`,
-  `1d93ec9f` and the final controller extraction commit.
+  `1d93ec9f`, `24d084bf`.
 - Result: PASS. The responsive shell, extracted Members/Audit/Media panels and
   topology mutation controller now satisfy FA-01 acceptance criteria. The
   screen keeps only stateful adapters and no legacy presentation methods.
