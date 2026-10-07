@@ -1,7 +1,8 @@
 """Identical locked web check for developers and CI."""
+import os
 import sys
 from tools.audio.asset_build import build_assets
-from tools.audio.livekit_fixture import local_sfu
+from tools.audio.livekit_fixture import IMAGE, local_sfu
 from .process import ROOT, client, output, require_version, run
 
 
@@ -24,6 +25,10 @@ def main():
     run("npm", "run", "test:voice-disconnect-notice", cwd=client("web"))
     run("npm", "run", "test:audio:quality", cwd=client("web"))
     with local_sfu():
+        smoke_env = os.environ.copy()
+        smoke_env["SCREEN_SHARE_SFU_URL"] = "ws://127.0.0.1:17880"
+        smoke_env["SCREEN_SHARE_SFU_IMAGE"] = IMAGE
+        run("npm", "run", "test:screen-profile-sfu", cwd=client("web"), env=smoke_env)
         run("npm", "run", "test:audio:browser", cwd=client("web"))
     run(sys.executable, "-m", "tools.network.restricted.run")
     run("npm", "run", "build", cwd=client("web"))

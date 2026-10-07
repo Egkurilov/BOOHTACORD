@@ -29,6 +29,14 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Test and build Vue client
         run: python3 -m tools.ci.receipts.run web
+      - name: Retain sanitized real-SFU screen-share smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screen-share-sfu-smoke-${{ github.sha }}
+          path: .out/screen-profile-browser-results/**/attachments/screen-share-sfu-smoke.json
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Retain anonymous restricted-network measurements
         if: always()
         uses: actions/upload-artifact@v4
