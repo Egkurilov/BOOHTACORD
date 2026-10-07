@@ -15,7 +15,9 @@ Source of truth: [parity map](flutter-web-parity.md). Реализованные
 - [ ] Runtime acceptance across Android, iOS, macOS and Windows. Android and
   macOS checks may be recorded when the clients are available; iOS and Windows
   remain open until a real runtime is supplied. Do not mark this item PASS from
-  widget tests alone.
+  widget tests alone. A macOS administrator-surface pass is recorded in
+  [QA-ADMIN-MACOS-RUNTIME-2026-10-07-001](../evidence/flutter/qa-admin-macos-runtime-2026-10-07-001.json);
+  it does not replace live-resize or full cross-platform acceptance.
 
 ## Текущий фокус: Flutter macOS и Android
 

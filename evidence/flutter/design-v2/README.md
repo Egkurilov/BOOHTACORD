@@ -30,3 +30,13 @@ and
 [`qa-admin-roles-conflict-2026-10-07-001.json`](../qa-admin-roles-conflict-2026-10-07-001.json).
 These are implementation results; native Android/macOS/iOS/Windows runtime
 acceptance remains open under #198. ADB was unavailable during this run.
+
+## macOS admin runtime — 2026-10-07
+
+The native macOS client rendered the complete administrator section set at
+`2048x1340`: Guild, Members, Roles, Channels, Audit, Media and Readiness. The
+accessibility tree exposed the expected filters, forms, permission controls,
+member actions, freshness state and readiness status. This is recorded in
+[`qa-admin-macos-runtime-2026-10-07-001.json`](../qa-admin-macos-runtime-2026-10-07-001.json).
+It is a macOS admin-surface pass only; live resize and the Android/iOS/Windows
+runtime matrix remain open under #198.
