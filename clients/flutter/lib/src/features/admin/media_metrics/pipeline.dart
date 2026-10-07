@@ -11,7 +11,7 @@ class AdminMediaPipeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final width = MediaQuery.sizeOf(context).width;
+      final width = constraints.maxWidth;
       final columns = width >= 840 ? 4 : width < 420 ? 1 : 2;
       const gap = 8.0;
       final cellWidth = (constraints.maxWidth - gap * (columns - 1)) / columns;

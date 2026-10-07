@@ -1,4 +1,5 @@
 import 'package:boohtacord_desktop/src/features/admin/media_metrics/panel.dart';
+import 'package:boohtacord_desktop/src/features/admin/media_metrics/pipeline.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -82,7 +83,8 @@ void main() {
         for (final name in ['Отправка', 'Приём', 'Декодирование', 'Показ'])
           tester.getTopLeft(find.byKey(ValueKey('media-stage-$name'))).dy,
       ].toSet();
-      expect(tops.length, width < 420 ? 4 : width < 840 ? 2 : 1);
+      final parentWidth = tester.getSize(find.byType(AdminMediaPipeline)).width;
+      expect(tops.length, parentWidth < 420 ? 4 : parentWidth < 840 ? 2 : 1);
       expect(tester.takeException(), isNull);
     }
   });
