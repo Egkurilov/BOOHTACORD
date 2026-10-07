@@ -11,8 +11,10 @@ ScreenSenderLayerCounters layer({
   double packets = 0,
   double lost = 0,
   double nacks = 0,
+  int? ssrc = 1,
 }) => ScreenSenderLayerCounters(
   streamId: id,
+  ssrc: ssrc,
   rid: rid,
   codec: 'video/VP8',
   timestampMs: timestamp,
@@ -29,7 +31,7 @@ ScreenSenderLayerCounters layer({
 );
 
 void main() {
-  test('keeps per RID rates separate and ignores a frozen higher layer', () {
+  test('keeps per RID rates separate and selects the higher progressing layer', () {
     final sampler = ScreenSenderLayerSampler();
     sampler.sample([layer(), layer(id: 'stream-low', rid: 'q', width: 640)], 1000);
     final result = sampler.sample([
@@ -52,5 +54,43 @@ void main() {
     final stale = sampler.sample([layer(timestamp: 4000, frames: 31, bytes: 2000, packets: 10, lost: -1)], 20000);
     expect(stale.layers.single.state, 'STALE');
     expect(stale.layers.single.packetLossPercent, isNull);
+  });
+
+  test('starts a new counter window when SSRC changes', () {
+    final sampler = ScreenSenderLayerSampler();
+    sampler.sample([layer(frames: 10, bytes: 100)], 1000);
+    final changed = sampler.sample([
+      layer(timestamp: 2000, frames: 40, bytes: 1100, ssrc: 2),
+    ], 2000);
+    expect(changed.selected, isNull);
+    final next = sampler.sample([
+      layer(timestamp: 3000, frames: 70, bytes: 2100, ssrc: 2),
+    ], 3000);
+    expect(next.selected?.framesPerSecond, 30);
+  });
+
+  test('does not select a frozen high layer because bytes continue to grow', () {
+    final sampler = ScreenSenderLayerSampler();
+    sampler.sample([
+      layer(frames: 10, bytes: 100),
+      layer(id: 'low', rid: 'q', width: 640, frames: 10, bytes: 100),
+    ], 1000);
+    final result = sampler.sample([
+      layer(timestamp: 2000, frames: 10, bytes: 1100),
+      layer(id: 'low', rid: 'q', width: 640, timestamp: 2000, frames: 40, bytes: 1100),
+    ], 2000);
+    expect(result.layers.first.state, 'INACTIVE');
+    expect(result.selected?.rid, 'q');
+  });
+
+  test('invalidates all rates for an interval with a counter reset', () {
+    final sampler = ScreenSenderLayerSampler();
+    sampler.sample([layer(frames: 10, bytes: 1000, packets: 20)], 1000);
+    final reset = sampler.sample([
+      layer(timestamp: 2000, frames: 40, bytes: 2000, packets: 2),
+    ], 2000);
+    expect(reset.layers.single.state, 'UNKNOWN');
+    expect(reset.layers.single.framesPerSecond, isNull);
+    expect(reset.layers.single.bitrateBps, isNull);
   });
 }

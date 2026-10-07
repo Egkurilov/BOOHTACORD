@@ -11,6 +11,15 @@ export interface LiveKitScreenVideoTrack {
   mediaStreamTrack: { readyState: string }
 }
 
+function relatedRemoteInbound(report: RTCStatsReport): Map<string, Record<string, unknown>> {
+  const related = new Map<string, Record<string, unknown>>()
+  report.forEach(stat => {
+    const row = stat as unknown as Record<string, unknown>
+    if (row.type === 'remote-inbound-rtp' && typeof row.localId === 'string') related.set(row.localId, row)
+  })
+  return related
+}
+
 function number(row: Record<string, unknown>, key: string): number | undefined {
   const field = row[key]
   return typeof field === 'number' && Number.isFinite(field) ? field : undefined
@@ -27,6 +36,7 @@ export async function readLiveKitScreenSenderStats(video: LiveKitScreenVideoTrac
 }> {
   if (!video.sender) return { rows: [], counters: { capturedFrames: null, encodedFrames: null } }
   const report = await screenSenderStatsSampler.read(video.sender)
+  const remoteInbound = relatedRemoteInbound(report)
   const codecs = new Map<string, string>()
   report.forEach(stat => {
     const row = stat as unknown as Record<string, unknown>
@@ -37,6 +47,7 @@ export async function readLiveKitScreenSenderStats(video: LiveKitScreenVideoTrac
     const row = stat as unknown as Record<string, unknown>
     if (row.type !== 'outbound-rtp' || (row.kind ?? row.mediaType) !== 'video') return
     const codecId = text(row, 'codecId')
+    const remote = typeof row.id === 'string' ? remoteInbound.get(row.id) : undefined
     rows.push({
       id: text(row, 'id'), timestamp: number(row, 'timestamp') ?? NaN,
       ssrc: number(row, 'ssrc'), rid: text(row, 'rid'), codec: codecId ? codecs.get(codecId) : undefined,
@@ -44,7 +55,8 @@ export async function readLiveKitScreenSenderStats(video: LiveKitScreenVideoTrac
       frameWidth: number(row, 'frameWidth'), frameHeight: number(row, 'frameHeight'),
       framesEncoded: number(row, 'framesEncoded'), bytesSent: number(row, 'bytesSent'),
       retransmittedBytesSent: number(row, 'retransmittedBytesSent'), packetsSent: number(row, 'packetsSent'),
-      packetsLost: number(row, 'packetsLost'), qualityLimitationReason: text(row, 'qualityLimitationReason'),
+      packetsLost: number(remote ?? {}, 'packetsLost'), roundTripTime: number(remote ?? {}, 'roundTripTime'),
+      qualityLimitationReason: text(row, 'qualityLimitationReason'),
       nackCount: number(row, 'nackCount'), pliCount: number(row, 'pliCount'), firCount: number(row, 'firCount'),
       totalEncodeTime: number(row, 'totalEncodeTime'),
     })

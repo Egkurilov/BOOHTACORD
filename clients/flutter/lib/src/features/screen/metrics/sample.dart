@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/screen_share_diagnostics.dart';
@@ -18,10 +19,12 @@ extension ScreenShareSample on ScreenShareMetricsController {
       return;
     }
     try {
-      final stats = await track.getSenderStats();
+      final List<rtc.StatsReport> reports =
+          track.sender == null ? const [] : await track.sender!.getStats();
+      final sources = screenSenderSourcesFromReports(reports);
       totalBitrateBps = track.currentBitrate;
       final layerSample = sampleLiveKitScreenLayers(
-        layerSampler, stats, sampleClock.elapsedMilliseconds.toDouble(),
+        layerSampler, sources, sampleClock.elapsedMilliseconds.toDouble(),
       );
       layerDiagnostics = layerSample.diagnostics.layers;
       final selected = layerSample.selected;
@@ -29,13 +32,12 @@ extension ScreenShareSample on ScreenShareMetricsController {
       previousLayerId = layerSample.diagnostics.selected?.id;
       final current = selected == null ? null : screenShareSenderSnapshotFromStats([
         ScreenShareSenderStats(
-          timestampMs: webRtcStatsTimestampMs(selected.timestamp),
-          frameWidth: selected.frameWidth,
-          frameHeight: selected.frameHeight,
-          bytesSent: selected.bytesSent,
-          framesSent: selected.framesSent,
-          framesPerSecond: selected.framesPerSecond,
-          roundTripTimeSeconds: selected.roundTripTime,
+          timestampMs: selected.counters.timestampMs,
+          frameWidth: selected.counters.width,
+          frameHeight: selected.counters.height,
+          bytesSent: selected.counters.bytesSent,
+          framesSent: selected.counters.framesSent,
+          roundTripTimeSeconds: selected.roundTripTimeSeconds,
         ),
       ]);
       if (!ticket.isActive ||
@@ -54,7 +56,7 @@ extension ScreenShareSample on ScreenShareMetricsController {
             ? ScreenShareDiagnosticEvent.senderStatsUnavailable
             : ScreenShareDiagnosticEvent.senderStatsSampled,
         platform: defaultTargetPlatform,
-        senderStatsEntries: stats.length,
+        senderStatsEntries: reports.length,
         framesSent: current?.framesSent?.round(),
         bytesSent: current?.bytesSent?.round(),
         encodedFramesPerSecond: report.encodedFps?.round(),
@@ -65,17 +67,16 @@ extension ScreenShareSample on ScreenShareMetricsController {
       changed();
       try {
         if (!reportCadence.isDue(sampleClock.elapsedMilliseconds.toDouble())) return;
-        final samples = stats.where((item) =>
-            '${item.streamId}:${item.rid ?? ''}' == layerSample.diagnostics.selected?.id)
+        final samples = sources.where((item) => item.counters.id == layerSample.diagnostics.selected?.id)
             .map(
               (item) => SenderMediaSample(
-                streamId: item.streamId,
-                timestamp: webRtcStatsTimestampMs(item.timestamp),
-                frameWidth: item.frameWidth,
-                frameHeight: item.frameHeight,
-                packetsSent: item.packetsSent,
-                packetsLost: item.packetsLost,
-                qualityLimitationReason: item.qualityLimitationReason,
+                streamId: item.counters.id,
+                timestamp: item.counters.timestampMs,
+                frameWidth: item.width,
+                frameHeight: item.height,
+                packetsSent: item.counters.packetsSent,
+                packetsLost: item.counters.packetsLost,
+                qualityLimitationReason: item.counters.qualityLimitationReason,
               ),
             )
             .toList();

@@ -12,6 +12,7 @@ export interface RawScreenLayerStats {
   retransmittedBytesSent?: number
   packetsSent?: number
   packetsLost?: number
+  roundTripTime?: number
   nackCount?: number
   pliCount?: number
   firCount?: number
@@ -34,6 +35,7 @@ export interface ScreenLayerDiagnostics {
   firPerSecond: number | null
   encodeMsPerFrame: number | null
   packetLossPercent: number | null
+  roundTripTimeMs: number | null
   qualityLimitationReason?: string
 }
 
@@ -41,6 +43,10 @@ interface PreviousLayer extends RawScreenLayerStats { key: string }
 const maximumLayers = 8
 const maximumAgeMs = 10_000
 const counter = (value: number | undefined): boolean => value !== undefined && Number.isFinite(value) && value >= 0
+
+export function screenSenderLayerId(row: RawScreenLayerStats, index: number): string {
+  return row.id ? `${row.id}:${row.ssrc ?? ''}:${row.rid ?? ''}` : `${row.ssrc ?? ''}:${row.rid ?? ''}:${index}`
+}
 
 export class ScreenSenderLayerSampler {
   private previous = new Map<string, PreviousLayer>()
@@ -50,11 +56,18 @@ export class ScreenSenderLayerSampler {
   sample(rows: RawScreenLayerStats[], now: number): { layers: ScreenLayerDiagnostics[]; selected: ScreenLayerDiagnostics | null } {
     const next = new Map<string, PreviousLayer>()
     const layers = rows.slice(0, maximumLayers).map((row, index) => {
-      const key = row.id ?? `${row.ssrc ?? ''}:${row.rid ?? ''}:${index}`
+      const key = screenSenderLayerId(row, index)
       const previous = this.previous.get(key)
       const age = now - row.timestamp
       const elapsed = previous ? row.timestamp - previous.timestamp : 0
-      const validInterval = Boolean(previous && elapsed > 0 && elapsed <= maximumAgeMs && age >= 0 && age <= maximumAgeMs)
+      const validWindow = Boolean(previous && elapsed > 0 && elapsed <= maximumAgeMs && age >= 0 && age <= maximumAgeMs)
+      const reset = validWindow && [
+        [row.framesEncoded, previous?.framesEncoded], [row.bytesSent, previous?.bytesSent],
+        [row.packetsSent, previous?.packetsSent], [row.packetsLost, previous?.packetsLost],
+        [row.retransmittedBytesSent, previous?.retransmittedBytesSent], [row.nackCount, previous?.nackCount],
+        [row.pliCount, previous?.pliCount], [row.firCount, previous?.firCount], [row.totalEncodeTime, previous?.totalEncodeTime],
+      ].some(([current, before]) => counter(current) && counter(before) && current! < before!)
+      const validInterval = validWindow && !reset
       const delta = (current: number | undefined, before: number | undefined): number | null =>
         validInterval && counter(current) && counter(before) && current! >= before! ? current! - before! : null
       const frames = delta(row.framesEncoded, previous?.framesEncoded)
@@ -68,7 +81,8 @@ export class ScreenSenderLayerSampler {
       const encodeTime = delta(row.totalEncodeTime, previous?.totalEncodeTime)
       const stale = !Number.isFinite(row.timestamp) || age < 0 || age > maximumAgeMs
       const progressed = [frames, bytes, sent].some(value => value !== null && value > 0)
-      const state = stale ? 'STALE' : row.active === false ? 'INACTIVE' : row.active === true || progressed ? 'ACTIVE' : 'UNKNOWN'
+      const state = stale ? 'STALE' : row.active === false ? 'INACTIVE' : reset ? 'UNKNOWN'
+        : frames !== null ? progressed && frames > 0 ? 'ACTIVE' : 'INACTIVE' : 'UNKNOWN'
       const rate = (value: number | null, multiplier: number): number | null => state === 'ACTIVE' && validInterval && value !== null ? value * multiplier / elapsed : null
       const packetLossPercent = state === 'ACTIVE' && sent !== null && lost !== null && sent + lost > 0
         ? lost * 100 / (sent + lost) : null
@@ -80,6 +94,7 @@ export class ScreenSenderLayerSampler {
         framesPerSecond: rate(frames, 1000), bitrateBps: rate(bytes, 8000), retransmittedBps: rate(retransmitted, 8000), packetLossPercent,
         nackPerSecond: rate(nacks, 1000), pliPerSecond: rate(plis, 1000), firPerSecond: rate(firs, 1000),
         encodeMsPerFrame: frames !== null && frames > 0 && encodeTime !== null ? encodeTime * 1000 / frames : null,
+        roundTripTimeMs: counter(row.roundTripTime) && row.roundTripTime! <= 60 ? row.roundTripTime! * 1000 : null,
         ...(row.qualityLimitationReason ? { qualityLimitationReason: row.qualityLimitationReason } : {}),
       } satisfies ScreenLayerDiagnostics
     })
