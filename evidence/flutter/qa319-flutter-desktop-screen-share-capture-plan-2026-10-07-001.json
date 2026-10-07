@@ -1,0 +1,50 @@
+{
+  "id": "QA-319",
+  "kind": "flutter-desktop-screen-share-capture-plan",
+  "status": "SOURCE_PLAN_REVIEWED_RUNTIME_ACCEPTANCE_NOT_RUN",
+  "executed_at": "2026-10-07",
+  "source_revision": "4cd7b2bda3b42f466071e11524c30ac2331d4060",
+  "summary": "Desktop startup now passes the selected profile to the capture API instead of requesting a fixed 1440p60 ceiling. The plan records API-supported source limits separately from measured output. Profile changes that require a native source restart are rejected without changing the active profile or track, and the user is told to stop and restart explicitly. No capture-quality or capacity result is claimed.",
+  "checks": [
+    {
+      "name": "macOS capture option source review",
+      "status": "PASS_SOURCE_REVIEW",
+      "source": "clients/flutter/packages/flutter_webrtc/macos/flutter_webrtc/Sources/flutter_webrtc/FlutterRTCDesktopCapturer.m",
+      "observation": "The macOS bridge reads requested width/height and mandatory frameRate. It installs the retained long-edge processor for legacy/window capture and passes the selected FPS and long edge to ScreenCaptureKit for supported full-display capture. This confirms accepted configuration inputs, not actual dimensions or cadence."
+    },
+    {
+      "name": "Windows capture option source review",
+      "status": "PASS_SOURCE_REVIEW",
+      "source": "clients/flutter/packages/flutter_webrtc/common/cpp/src/flutter_screen_capture.cc",
+      "observation": "The Windows bridge reads mandatory frameRate and passes it to RTCDesktopCapturer::Start. ParseMediaConstraints reads mandatory/optional maps; top-level width/height do not configure the native source. The plan therefore marks Windows source resolution limiting unsupported and leaves selected resolution enforcement to the existing publisher encoding path."
+    },
+    {
+      "name": "Capture-plan, geometry, and profile-transition Flutter tests",
+      "status": "NOT_RUN",
+      "command": "cd clients/flutter && flutter test test/screen_share_capture_plan_test.dart test/screen_scope/capture_profile_transition_test.dart",
+      "observation": "The focused tests cover requested low/high plans, native restart requirements, mobile compatibility, odd portrait/ultrawide geometry, even dimensions, and no upscale. Transition tests assert restart-required requests preserve active profile/track, do not call publisher update, and clear the restart notice after successful stop/start. Flutter is not installed or available on PATH in this worktree host, so the tests could not execute."
+    },
+    {
+      "name": "Dart local import and feature-boundary check",
+      "status": "PASS",
+      "command": "python -m tools.verify.dependencies.dart",
+      "observation": "Passed for 684 tracked/untracked Dart files."
+    },
+    {
+      "name": "Windows display/window capture and performance profile",
+      "status": "NOT_RUN",
+      "observation": "No Windows capture device/runtime was available. Actual capture, encoded and presented dimensions/cadence, CPU/GPU cost, frame age, resize/DPI behavior, and sleep/wake recovery remain unmeasured."
+    },
+    {
+      "name": "macOS display/window/fallback capture and performance profile",
+      "status": "NOT_RUN",
+      "observation": "No macOS device/runtime was available. ScreenCaptureKit, window, and legacy fallback output dimensions/cadence, CPU/GPU cost, frame age, Retina/ultrawide geometry, HDR/SDR handling, and sleep/wake recovery remain unmeasured."
+    },
+    {
+      "name": "Low-to-high-to-low capture restart",
+      "status": "NOT_RUN",
+      "observation": "ScreenShareCapturePlan reports when a native capture limit changes, but restart is not wired into the live lifecycle. The current controller does not retain the selected source ID/options or expose a selected-source replacement operation; current stop uses the participant screen-share toggle. Do not claim successful restart or consent handling until the #161 owner boundary can replace only the active screen source safely."
+    }
+  ],
+  "remaining": "Add selected-source capture replacement and consent-aware restart through the existing #161 lifecycle owner, then run low/high/low and display/window acceptance on Windows and Apple Silicon macOS. Record actual capture/encode/presented cadence, dimensions, CPU/GPU, frame age, geometry, and sleep/wake results from those devices."
+}
