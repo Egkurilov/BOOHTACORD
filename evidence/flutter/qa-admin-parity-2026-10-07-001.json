@@ -33,8 +33,8 @@
     },
     {
       "name": "Android runtime acceptance",
-      "result": "NOT_RUN",
-      "observation": "No fresh admin-screen runtime capture was performed in this implementation turn."
+      "result": "PASS",
+      "observation": "Fresh arm64 release APK 1.0.38 (71) was installed on the boohtacord-pixel7-api35 emulator. After re-login with an administrator test account, the admin menu opened and the Guild, Members, Roles, Channels, Audit, Media and Status sections were visually checked. Status reported PostgreSQL, LiveKit and storage ready; audit loaded records; media showed the expected empty state; no FATAL EXCEPTION was found in logcat."
     },
     {
       "name": "macOS runtime acceptance",
