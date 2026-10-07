@@ -6,26 +6,38 @@ import { describe, expect, it } from 'vitest'
 import ScreenShareSetupDialog from './ScreenShareSetupDialog.vue'
 
 describe('screen-share setup dialog', () => {
-  it('offers the shared resolution and frame-rate choices before browser capture', async () => {
+  it('offers motion/text scenarios and ceiling choices before browser capture', async () => {
     const html = await renderToString(createSSRApp(ScreenShareSetupDialog, {
       initialProfile: 'P1080_30',
     }))
 
     expect(html).toContain('Демонстрация экрана')
-    expect(html).toContain('Разрешение')
-    expect(html).toContain('Частота кадров')
+    expect(html).toContain('Плавность — игры и видео')
+    expect(html).toContain('Текст — документы и код')
+    expect(html).toContain('Максимальное разрешение')
+    expect(html).toContain('Частота кадров для текста')
     expect(html).toContain('720p')
     expect(html).toContain('1080p')
     expect(html).toContain('1440p')
     expect(html).toContain('15 FPS')
     expect(html).toContain('30 FPS')
-    expect(html).toContain('60 FPS')
+    expect(html).not.toContain('60 FPS')
     expect([...html.matchAll(/<span>(\d{3,4}p)<\/span>/g)].map((match) => match[1]))
       .toEqual(['720p', '1080p', '1440p'])
     expect([...html.matchAll(/<span>(15|30|60) FPS<\/span>/g)].map((match) => match[1]))
-      .toEqual(['15', '30', '60'])
+      .toEqual(['15', '30'])
     expect(html).toContain('браузер покажет системный запрос')
+    expect(html).toContain('Суммарный лимит двух слоёв')
+    expect(html).toContain('не гарантированный сетевой расход')
     expect(html).toContain('Начать трансляцию')
+  })
+
+  it('keeps motion mode at 60 FPS and gates a new 1440p60 choice', async () => {
+    const html = await renderToString(createSSRApp(ScreenShareSetupDialog, { initialProfile: 'P1080_60' }))
+    expect(html).toContain('<legend>Частота кадров для плавности</legend>')
+    expect([...html.matchAll(/<span>(15|30|60) FPS<\/span>/g)].map((match) => match[1])).toEqual(['60'])
+    expect(html).toMatch(/<input[^>]*disabled[^>]*value="1440"[^>]*>/)
+    expect(html).toContain('1440p60 пока недоступно без подтверждённой policy')
   })
 
   it('opens the dialog from both the room action and persistent voice dock', () => {
@@ -45,8 +57,8 @@ describe('screen-share setup dialog', () => {
       initialProfile: 'P1440_60',
     }))
 
-    expect(html).toContain('<input checked type="radio" name="screen-share-resolution" value="1440">')
-    expect(html).toContain('<input checked type="radio" name="screen-share-frame-rate" value="60">')
+    expect(html).toMatch(/<input[^>]*checked[^>]*name="screen-share-resolution" value="1440"[^>]*>/)
+    expect(html).toMatch(/<input[^>]*checked[^>]*name="screen-share-frame-rate" value="60"[^>]*>/)
   })
 
   it('shows the current stream quality editor only for an updating sender', async () => {

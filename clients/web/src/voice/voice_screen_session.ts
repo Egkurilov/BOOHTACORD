@@ -23,6 +23,7 @@ export class VoiceScreenSession {
       const diagnostics = await within(() => this.publisher.start(profile))
       if (this.current() !== current) throw new Error('Голосовое подключение закрыто.')
       current.screenProfile = profile; this.scheduleRepairWatchdog(current, profile)
+      await current.room.publishScreenProfileMetadata?.(profile).catch(() => undefined)
       return diagnostics
     })
   }
@@ -30,7 +31,7 @@ export class VoiceScreenSession {
     return tracedOperation('screen.share.stop', async () => {
       const current = this.current()
       this.cancelRepairWatchdog()
-      await this.publisher.stop()
+      try { await this.publisher.stop() } finally { await current?.room.clearScreenProfileMetadata?.().catch(() => undefined) }
       current?.room.stopScreenProfileChecks?.()
       if (current) current.screenProfile = null
     })
@@ -38,10 +39,17 @@ export class VoiceScreenSession {
   async updateScreenProfile(profile: ScreenProfile): Promise<ScreenDiagnostics> {
     const current = this.requireCurrent()
     if (!current.screenProfile) throw new Error('Демонстрация экрана не запущена.')
-    const diagnostics = await this.publisher.update(profile)
+    const previous = current.screenProfile
+    let diagnostics: ScreenDiagnostics
+    try { diagnostics = await this.publisher.update(profile) }
+    catch (cause) {
+      if (this.current() === current && previous && this.publisher.active?.profile === previous) await current.room.publishScreenProfileMetadata?.(previous).catch(() => undefined)
+      throw cause
+    }
     if (this.current() !== current) throw new Error('Голосовое подключение закрыто.')
     current.room.adoptScreenProfile?.(profile); current.screenProfile = profile
     this.scheduleRepairWatchdog(current, profile)
+    await current.room.publishScreenProfileMetadata?.(profile).catch(() => undefined)
     return diagnostics
   }
   async readScreenDiagnostics(): Promise<ScreenDiagnostics> {
@@ -61,6 +69,7 @@ export class VoiceScreenSession {
       const current = this.current()
       if (current?.room !== room || !current.screenProfile) return
       this.cancelRepairWatchdog(); current.screenProfile = null
+      void room.clearScreenProfileMetadata?.().catch(() => undefined)
       void this.publisher.submitForEndedEvent().catch(() => {})
     })
   }
@@ -78,7 +87,10 @@ export class VoiceScreenSession {
     if (!this.watchdogCurrent(session, profile, generation)) return
     try {
       const diagnostics = await readScreenShareDiagnostics(session.room)
-      if (this.watchdogCurrent(session, profile, generation) && diagnostics.profileCheck?.status === 'drift') await this.publisher.repairCurrent()
+      if (this.watchdogCurrent(session, profile, generation) && diagnostics.profileCheck?.status === 'drift') {
+        await this.publisher.repairCurrent()
+        await session.room.publishScreenProfileMetadata?.(profile).catch(() => undefined)
+      }
     } catch { /* diagnostics and repair status remain available through the regular read path */ }
     if (this.watchdogCurrent(session, profile, generation)) this.repairTimer = setTimeout(() => { void this.inspectForRepair(session, profile, generation) }, 5000)
   }

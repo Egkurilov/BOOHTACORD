@@ -66,5 +66,8 @@ func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *
 	if err := mediaroutes.ConfigureScreenPreviewRoutes(mux, database, sessionService, configuration.LiveKitPrivateHTTPURL, configuration.LiveKitAPIKey, configuration.LiveKitAPISecret, previews, events); err != nil {
 		return nil, fmt.Errorf("configure private screen previews: %w", err)
 	}
+	if err := mediaroutes.ConfigureScreenDescriptorRoutes(mux, database, sessionService, configuration.PublicOrigin, configuration.LiveKitPrivateHTTPURL, configuration.LiveKitAPIKey, configuration.LiveKitAPISecret); err != nil {
+		return nil, fmt.Errorf("configure screen profile descriptor updates: %w", err)
+	}
 	return requestid.Middleware(httpmetrics.LoggingMiddleware(slog.Default(), metrics.Middleware(tracehttp.Middleware(otel.Tracer("boohtacord/api"), mux, configuration.OriginMiddleware(mux))))), nil
 }

@@ -3,6 +3,9 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { placeScreenDiagnostics } from './screen_diagnostics_placement'
 import type { ScreenReceiverMetrics } from './screen_receiver_diagnostics'
+import { screenCaptureLabel, screenEncodingLabel, screenModeLabel, screenTargetLabel, screenTargetSourceLabel, type ScreenProfileSource } from './screen_profile_metadata/presentation'
+import type { ScreenShareDescriptorV1 } from './screen_profile_metadata/types'
+import { screenSampleAge } from './screen_profile_metadata/profile'
 
 const props = defineProps<{
   actualVideoQuality: string
@@ -11,13 +14,19 @@ const props = defineProps<{
   metrics: ScreenReceiverMetrics | null
   sampledAt: number | null
   targetProfile?: string
+  descriptor?: ScreenShareDescriptorV1
+  profileSource?: ScreenProfileSource
   participantName?: string
   presentedFps?: number | null
 }>()
-const status = computed(() => props.sampledAt === null ? 'Нет свежих данных' : `Измерено в ${new Date(props.sampledAt).toLocaleTimeString('ru-RU')}`)
+const status = computed(() => props.sampledAt === null ? screenSampleAge(null) : `${new Date(props.sampledAt).toLocaleTimeString('ru-RU')} · ${screenSampleAge(props.sampledAt)}`)
 const value = (number: number | null | undefined, suffix: string) => number === null || number === undefined ? 'Нет данных' : `${number} ${suffix}`
 const percent = (number: number | null | undefined) => number === null || number === undefined ? 'Нет данных' : `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(number)} %`
-const profile = computed(() => props.targetProfile?.match(/^P(720|1080|1440)_(15|30|60)$/)?.slice(1).join('p / ').replace(/$/, ' FPS') ?? props.targetProfile ?? 'Нет данных от источника')
+const profile = computed(() => screenTargetLabel(props.descriptor?.requested_profile_id, props.targetProfile))
+const profileSource = computed(() => screenTargetSourceLabel(props.profileSource))
+const mode = computed(() => screenModeLabel(props.descriptor?.mode))
+const capture = computed(() => screenCaptureLabel(props.descriptor))
+const encoding = computed(() => screenEncodingLabel(props.descriptor))
 const bitrate = computed(() => props.metrics?.bitrateKbps == null ? 'Нет данных' : `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(props.metrics.bitrateKbps / 1000)} Мбит/с`)
 const diagnostics = ref<HTMLDetailsElement | null>(null)
 const isOpen = ref(false)
@@ -90,6 +99,10 @@ onBeforeUnmount(() => {
     <button type="button" class="stream-diagnostics-backdrop" aria-label="Закрыть статистику" @click="close" />
     <div ref="panel" class="stream-diagnostics-panel" role="dialog" aria-label="Статистика трансляции" :aria-modal="mobile ? 'true' : undefined"><header><h2>Статистика</h2><button type="button" aria-label="Закрыть статистику" @click="close">×</button></header><p>{{ participantName ? `Экран ${participantName}` : 'Трансляция' }} · {{ status }}</p><dl>
       <div><dt>Профиль</dt><dd>{{ profile }}</dd></div>
+      <div><dt>Источник цели</dt><dd>{{ profileSource }}</dd></div>
+      <div><dt>Сценарий</dt><dd>{{ mode }}</dd></div>
+      <div><dt>Размер захвата отправителя</dt><dd>{{ capture }}</dd></div>
+      <div><dt>Лимиты кодирования отправителя</dt><dd>{{ encoding }}</dd></div>
       <div><dt>Сейчас у зрителя</dt><dd>{{ actualVideoQuality }}</dd></div>
       <div><dt>Декодирование</dt><dd>{{ value(metrics?.decodedFps, 'FPS') }}</dd></div>
       <div><dt>Показ кадров</dt><dd>{{ value(presentedFps, 'FPS') }}</dd></div>
@@ -97,7 +110,7 @@ onBeforeUnmount(() => {
       <div><dt>Потери пакетов за 10 с</dt><dd>{{ percent(metrics?.packetLossPercent) }}</dd></div>
       <div><dt>Джиттер</dt><dd>{{ value(metrics?.jitterMs, 'мс') }}</dd></div>
       <div><dt>RTT</dt><dd>Нет данных от приёмника</dd></div>
-      <div><dt>Звук трансляции</dt><dd>{{ isLocal ? 'Предпросмотр без звука' : hasAudio ? 'Аудиодорожка есть' : 'Аудиодорожки нет' }}</dd></div>
+      <div><dt>Опубликованная аудиодорожка</dt><dd>{{ isLocal ? 'Предпросмотр без звука' : hasAudio ? 'Есть в LiveKit' : 'Нет в LiveKit' }}</dd></div>
     </dl><small class="stream-diagnostics-footnote">Текущее качество у зрителя: {{ actualVideoQuality }}</small></div>
     </Teleport>
   </details>

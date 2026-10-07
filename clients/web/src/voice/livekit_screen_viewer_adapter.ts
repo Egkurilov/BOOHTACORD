@@ -7,12 +7,14 @@ import { bindLiveKitRemoteVoiceEvents } from './livekit_remote_voice_events'
 import { replaceScreenPreviewParticipantLeases } from './screen_preview/participant_leases'
 
 export interface LiveKitScreenViewerRoom {
+  name?: string
   localParticipant?: LiveKitRemoteParticipant
   on(event: unknown, listener: (...arguments_: any[]) => void): unknown
   remoteParticipants: Map<string, LiveKitRemoteParticipant>
 }
 
 export interface LiveKitScreenViewerEvents {
+  attributesChanged?: unknown
   activeSpeakersChanged: unknown
   localTrackPublished: unknown
   localTrackUnpublished: unknown
@@ -51,7 +53,7 @@ export function bindLiveKitScreenViewer(
   sources: LiveKitScreenSources,
   voicePlayback: RemoteVoicePlaybackController = new RemoteVoicePlayback(),
 ): LiveKitScreenViewerBinding {
-  const registry = new LiveKitScreenRegistry()
+  const registry = new LiveKitScreenRegistry(typeof window === 'undefined' ? '' : window.location.origin, room.name ?? '')
   const viewer = new ScreenViewerController(() => registry.streams())
   const accountId = (participant: LiveKitRemoteParticipant) => accountIdFromMetadata(participant.metadata)
   const participantId = (participant: LiveKitRemoteParticipant) => accountId(participant) ?? participant.identity
@@ -59,6 +61,7 @@ export function bindLiveKitScreenViewer(
   const participants = (): ScreenParticipantPublication[] => {
     const remote = [...room.remoteParticipants.values()].map((participant) => ({
       accountId: accountId(participant) ?? undefined,
+      attributes: participant.attributes,
       audio: participant.getTrackPublication(sources.screenAudio),
       identity: participantId(participant),
       name: participant.name,
@@ -69,6 +72,7 @@ export function bindLiveKitScreenViewer(
     const localVideo = local?.getTrackPublication(sources.screenVideo)
     return [...remote, ...(local && localVideo ? [{
       accountId: accountId(local) ?? undefined,
+      attributes: local.attributes,
       identity: participantId(local),
       isLocal: true,
       name: 'Ваш экран',
@@ -86,6 +90,7 @@ export function bindLiveKitScreenViewer(
   }
   room.on(events.localTrackPublished, refresh)
   room.on(events.localTrackUnpublished, refresh)
+  if (events.attributesChanged) room.on(events.attributesChanged, refresh)
   const subscribeMicrophones = () => room.remoteParticipants.forEach((participant) => participant.getTrackPublication(sources.microphone)?.setSubscribed?.(true))
   room.on(events.participantConnected, refresh)
   room.on(events.participantDisconnected, (participant: LiveKitRemoteParticipant) => {

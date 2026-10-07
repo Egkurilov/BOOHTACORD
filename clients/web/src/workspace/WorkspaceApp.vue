@@ -35,7 +35,7 @@ import { observeWorkspace } from '../telemetry/observe_render/workspace'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string;readiness?:ActionScope }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, loadAudioDevices, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls(props.accountId)
-const { confirmScreenShare, openScreenShareSetup, screenShareSetupOpen, selectedScreenProfile } = useScreenShareSetup(() => voiceConnection.screenState, startScreen)
+const { confirmScreenShare, openScreenShareSetup, screenShareSetupOpen, selectedScreenProfile } = useScreenShareSetup(() => voiceConnection.screenState, startScreen, props.accountId)
 const { activePanel, closeDrawers, directMessageStore, memberHeaderExpandedState, membersOpen, modalDrawer, navOpen, openDirectMessageFromMember, openGuildPanel, returnToVoice, selectedDirectMessage, selectChannel, selectDirectMessage, selectOpenedDirectMessage, sidebarSection, toggleMembers, toggleNavigation, togglePanel, voiceStageWide } = useWorkspaceNavigation(props.role, selectedChannel, topologyStore, selectWorkspaceChannel, selectWorkspaceDirectMessage)
 const messageStore = useMessageStore()
 const realtimeStore = useRealtimeStore()
