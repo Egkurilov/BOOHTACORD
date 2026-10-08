@@ -58,6 +58,46 @@ describe('voice roster event stream', () => {
     roster.stop()
   })
 
+  it('keeps a successful snapshot explicitly stale on roster-unavailable', () => {
+    const listeners = new Map<string, EventListener>()
+    const source: VoiceRosterEvents = {
+      onmessage: null,
+      onerror: null,
+      addEventListener: vi.fn((type: string, listener: EventListener) => listeners.set(type, listener)),
+      close: vi.fn(),
+    }
+    const roster = createVoiceRosterRealtime(() => source)
+    roster.start()
+    source.onmessage?.({ data: JSON.stringify({ channels: [{ channel_id: 'room', participants: [] }] }) })
+    expect(roster.status.value).toBe('fresh')
+    listeners.get('roster-unavailable')?.(new Event('roster-unavailable'))
+
+    expect(roster.status.value).toBe('stale_reconnecting')
+    expect(roster.channels.value).toEqual([{ channelId: 'room', participants: [] }])
+    expect(roster.lastUpdatedAt.value).not.toBeNull()
+    expect(roster.error.value).toBe('Не удалось обновить состав голосовых каналов.')
+    roster.stop()
+  })
+
+  it('does not confuse successful empty and unavailable snapshots', () => {
+    const listeners = new Map<string, EventListener>()
+    const source: VoiceRosterEvents = {
+      onmessage: null,
+      onerror: null,
+      addEventListener: vi.fn((type: string, listener: EventListener) => listeners.set(type, listener)),
+      close: vi.fn(),
+    }
+    const roster = createVoiceRosterRealtime(() => source)
+    roster.start()
+    source.onmessage?.({ data: JSON.stringify({ channels: [] }) })
+    expect(roster.status.value).toBe('fresh_empty')
+    listeners.get('roster-unavailable')?.(new Event('roster-unavailable'))
+
+    expect(roster.status.value).toBe('stale_reconnecting')
+    expect(roster.channels.value).toEqual([])
+    roster.stop()
+  })
+
   it('closes the browser EventSource and expires the workspace session on revocation', () => {
     const listeners = new Map<string, EventListener>()
     const source: VoiceRosterEvents = {
@@ -73,6 +113,8 @@ describe('voice roster event stream', () => {
     listeners.get('session-expired')?.(new Event('session-expired'))
 
     expect(source.close).toHaveBeenCalledOnce()
+    expect(roster.status.value).toBe('session_expired')
+    expect(roster.channels.value).toBeNull()
     expect(onSessionExpired).toHaveBeenCalledOnce()
   })
 })

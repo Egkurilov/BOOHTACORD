@@ -16,6 +16,7 @@ describe('prejoin voice roster', () => {
     }).use(createPinia()))
     expect(html).toContain('Пока никого нет')
     expect(html).not.toContain('Сейчас в канале: 0')
+    expect(html).not.toContain('Проверяем, кто сейчас в комнате')
   })
   it('shows current speakers and stream state in navigation without joining', async () => {
     const html = await renderToString(createSSRApp(ChannelNavigation, {
@@ -39,6 +40,9 @@ describe('prejoin voice roster', () => {
     expect(html).toContain('Идёт трансляция')
     const unavailable = await renderToString(createSSRApp(VoicePrejoin, { ...base, roster: null, rosterError: '503' }).use(createPinia()))
     expect(unavailable).toContain('Не удалось обновить состав')
+    expect(unavailable).toContain('aria-label="Повторить загрузку состава голосовой комнаты"')
+    expect(unavailable).toContain('Повторить попытку')
     expect(unavailable).not.toContain('Никого нет')
+    expect(html).not.toContain('Повторить попытку')
   })
 })
