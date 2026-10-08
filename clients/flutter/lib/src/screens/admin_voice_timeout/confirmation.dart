@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'controller.dart';
+import '../../widgets/confirmation_dialog.dart';
 
 Future<bool> confirmVoiceTimeout(
   BuildContext context,
@@ -9,9 +10,8 @@ Future<bool> confirmVoiceTimeout(
   required AdminVoiceTimeoutController owner,
   Listenable? scopeChanges,
 }) async =>
-    await showDialog<bool>(
+    await showConfirmationDialog<bool>(
       context: context,
-      useSafeArea: true,
       builder: (context) => ListenableBuilder(
         listenable: scopeChanges ?? owner,
         builder: (context, _) => AlertDialog(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../services/api_client.dart';
+import '../../widgets/confirmation_dialog.dart';
 import 'controller.dart';
 import 'surface.dart';
 
@@ -10,11 +11,8 @@ Future<void> showAdminVoiceTimeout(
   required String accountId,
   required String displayName,
   Listenable? scopeChanges,
-}) => showDialog<void>(
+}) => showConfirmationDialog<void>(
   context: context,
-  useSafeArea: true,
-  barrierDismissible: false,
-  requestFocus: true,
   builder: (_) => AdminVoiceTimeoutDialog(
     api: api,
     accountId: accountId,

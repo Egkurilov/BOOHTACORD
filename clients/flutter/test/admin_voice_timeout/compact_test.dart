@@ -77,11 +77,6 @@ void main() {
       await tester.tap(find.text('Спам').last);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
-      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-      await tester.pump();
-      expect(FocusManager.instance.primaryFocus, isNotNull);
       final dialog = tester.getRect(
         find
             .descendant(
@@ -92,6 +87,12 @@ void main() {
       );
       expect(dialog.left, greaterThanOrEqualTo(16));
       expect(dialog.right, lessThanOrEqualTo(304));
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      expect(FocusManager.instance.primaryFocus, isNotNull);
       expect(tester.takeException(), isNull);
     },
   );

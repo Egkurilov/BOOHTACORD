@@ -1,5 +1,6 @@
 import '../../native_bindings.dart';
 import '../../lifecycle/context.dart';
+import '../../voice_timeout/handler.dart';
 
 extension AdminCompactActions on AdminScreenStateContext {
   Widget renderAdminCompactActions(
@@ -31,6 +32,12 @@ extension AdminCompactActions on AdminScreenStateContext {
         key: ValueKey('reset-account:${account.accountId}'),
         onPressed: busy ? null : () => adminCreateResetLink(account),
         child: const Text('Сбросить пароль'),
+      ),
+      OutlinedButton(
+        key: ValueKey('voice-timeout-account:${account.accountId}'),
+        style: OutlinedButton.styleFrom(minimumSize: const Size(44, 44)),
+        onPressed: busy ? null : () => adminOpenVoiceTimeout(account),
+        child: const Text('Голосовой тайм-аут'),
       ),
       if (sameVoiceParticipant &&
           account.accountId != widget.state.user?.accountId)

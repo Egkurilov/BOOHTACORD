@@ -1,5 +1,5 @@
 import '../native_bindings.dart';
-import '../../../../widgets/confirmation_dialog.dart';
+import '../../confirmation/dialog.dart';
 import '../lifecycle/context.dart';
 
 extension RoleChangeRoleAction on RolePermissionsContext {
