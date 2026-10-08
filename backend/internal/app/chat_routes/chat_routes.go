@@ -36,6 +36,9 @@ import (
 	listdirectmessages "voice-platform/backend/internal/chat/list_direct_messages"
 	listdirectmessagesapi "voice-platform/backend/internal/chat/list_direct_messages/api"
 	listdirectmessagespostgres "voice-platform/backend/internal/chat/list_direct_messages/postgres"
+	listmymentions "voice-platform/backend/internal/chat/list_my_mentions"
+	listmymentionsapi "voice-platform/backend/internal/chat/list_my_mentions/api"
+	listmymentionspostgres "voice-platform/backend/internal/chat/list_my_mentions/postgres"
 	listtextmessages "voice-platform/backend/internal/chat/list_text_messages"
 	listhandler "voice-platform/backend/internal/chat/list_text_messages/api"
 	listpostgres "voice-platform/backend/internal/chat/list_text_messages/postgres"
@@ -79,6 +82,7 @@ func ConfigureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions au
 	directMessageReadCursor := advancedirectmessagereadcursor.New(advancedirectmessagereadcursorpostgres.New(advancedirectmessagereadcursorpostgres.NewPoolDatabase(database)))
 	directMessageSearch := searchdirectmessagehistory.New(searchdirectmessagehistorypostgres.New(searchdirectmessagehistorypostgres.NewPoolDatabase(database)))
 	messageSearch := searchmessages.New(searchmessagespostgres.New(searchmessagespostgres.NewPoolDatabase(database)))
+	myMentions := listmymentions.New(listmymentionspostgres.New(listmymentionspostgres.NewPoolDatabase(database)))
 	creator := messageevents.New(service, events)
 	mux.Handle("POST /api/v1/channels/{channelID}/messages", sessionapi.Require(sessions)(messageapi.NewHandler(creator)))
 	mux.Handle("GET /api/v1/channels/{channelID}/messages", sessionapi.Require(sessions)(listhandler.NewHandler(listService)))
@@ -92,6 +96,7 @@ func ConfigureChatRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions au
 	mux.Handle("GET /api/v1/direct-messages/{directMessageID}/messages", sessionapi.Require(sessions)(listdirectmessagehistoryapi.NewHandler(directMessageHistory)))
 	mux.Handle("GET /api/v1/direct-messages/{directMessageID}/search", sessionapi.Require(sessions)(searchdirectmessagehistoryapi.NewHandler(directMessageSearch)))
 	mux.Handle("GET /api/v1/search/messages", sessionapi.Require(sessions)(searchmessagesapi.NewHandler(messageSearch)))
+	mux.Handle("GET /api/v1/mentions", sessionapi.Require(sessions)(listmymentionsapi.NewHandler(myMentions)))
 	mux.Handle("PATCH /api/v1/direct-messages/{directMessageID}/messages/{messageID}", sessionapi.Require(sessions)(editdirectmessageapi.NewHandler(editdirectmessagerealtime.New(directMessageEditor, directMessageRecipients, events))))
 	mux.Handle("DELETE /api/v1/direct-messages/{directMessageID}/messages/{messageID}", sessionapi.Require(sessions)(deletedirectmessageapi.NewHandler(deletedirectmessagerealtime.New(directMessageDeleter, directMessageRecipients, events))))
 	mux.Handle("PUT /api/v1/direct-messages/{directMessageID}/read-cursor", sessionapi.Require(sessions)(advancedirectmessagereadcursorapi.NewHandler(directMessageReadCursor)))
