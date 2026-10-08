@@ -2,6 +2,7 @@
 set -euo pipefail
 
 project_dir="${VOICE_PLATFORM_DIR:-/opt/voice-platform}"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 compose_dir="$project_dir"
 [[ ! -f "$project_dir/deploy/compose.yaml" ]] || compose_dir="$project_dir/deploy"
 compose_file="$compose_dir/compose.yaml"
@@ -56,7 +57,7 @@ disable_maintenance_admission() {
 
 enable_maintenance_admission() {
   if ! "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable; then
-    python3 "$project_dir/tools/release/rollout/reconcile-postgres-credential.py" "$project_dir"
+    python3 "$script_dir/reconcile-postgres-credential.py" "$project_dir"
     "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable
   fi
   admission_enabled=1
@@ -80,7 +81,7 @@ if ! postgres_output="$("${compose[@]}" up -d --wait postgres 2>&1)"; then
   if [[ "$postgres_output" != *"has active endpoints"* ]]; then
     fail "PostgreSQL service could not be started; deployment containers were not removed."
   fi
-  python3 "$project_dir/tools/release/rollout/align-existing-private-network.py" "$project_dir" /opt/voice-platform/.env
+  python3 "$script_dir/align-existing-private-network.py" "$project_dir" /opt/voice-platform/.env
   "${compose[@]}" up -d --wait postgres
 else
   printf '%s\n' "$postgres_output"
@@ -104,7 +105,7 @@ temporary_env=''
 "${compose[@]}" run --rm --no-deps migrate
 "${compose[@]}" up -d --no-deps --no-build api web
 "${compose[@]}" up -d --no-deps --no-build --force-recreate proxy
-bash "$project_dir/tools/release/rollout/assert-proxy-networks.sh" "$project_dir"
+bash "$script_dir/assert-proxy-networks.sh" "$project_dir"
 "${compose[@]}" exec -T proxy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 curl -fsS --retry 5 --retry-connrefused "https://${public_host}/api/v1/health"
 disable_maintenance_admission
