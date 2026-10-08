@@ -9,6 +9,7 @@ import 'input_selection/switch.dart';
 import 'inventory.dart';
 import 'microphone.dart';
 import 'output_selection/selection.dart';
+import 'prejoin_selection/restore.dart';
 import 'processing.dart';
 import 'scan.dart';
 import 'state.dart';
@@ -21,6 +22,7 @@ class AudioDeviceController extends AudioDeviceState
         AudioInputSwitch,
         AudioInputSelection,
         AudioOutputSelection,
+        AudioDevicePreJoinRestore,
         AudioDeviceProcessing,
         AudioDeviceMicrophone,
         AudioDeviceBootstrap {
