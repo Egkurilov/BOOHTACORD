@@ -12,6 +12,7 @@ import '../../features/conversation/lifecycle/controller.dart';
 import '../../features/realtime/lifecycle/controller.dart';
 import '../../features/audio/devices/controller.dart';
 import '../../features/voice/lifecycle/controller.dart';
+import '../../features/voice/overlay/dock.dart';
 import '../../features/voice/overlay/feed.dart';
 import '../../features/voice/overlay/windows_client.dart';
 import '../../features/voice/overlay/preferences.dart';
@@ -64,6 +65,16 @@ abstract class AppOwners extends ChangeNotifier {
     voiceOverlay.setEnabled(enabled);
     notifyListeners();
   }
+
+  VoiceOverlayDockBinding voiceOverlayDockBinding({
+    required bool available,
+  }) => VoiceOverlayDockBinding(
+    enabled: voiceOverlay.enabled,
+    onlySpeakers: voiceOverlay.onlySpeakers,
+    available: available,
+    onVisibilityChanged: setVoiceOverlayEnabled,
+    onOnlySpeakersChanged: setVoiceOverlayOnlySpeakers,
+  );
 
   Future<void> setVoiceOverlayOnlySpeakers(bool value) async {
     final preferences = voiceOverlayPreferences;

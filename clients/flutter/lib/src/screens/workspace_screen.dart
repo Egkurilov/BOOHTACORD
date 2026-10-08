@@ -32,7 +32,7 @@ import '../features/voice/screen_viewer/publication_generation.dart';
 import '../features/screen/sender_metadata/descriptor.dart';
 import '../features/voice/shortcuts/capture.dart';
 import '../features/voice/lifecycle/controller.dart';
-import '../features/voice/overlay/toggle.dart';
+import '../features/voice/overlay/dock.dart';
 import '../widgets/voice_shortcuts/keyboard.dart';
 import '../widgets/voice_shortcuts/availability.dart';
 import '../widgets/voice_shortcuts/row.dart';
@@ -8038,13 +8038,8 @@ class _VoiceDock extends StatelessWidget {
                 ),
               ),
             ),
-            VoiceOverlayToggle(
-              enabled: state.voiceOverlay.enabled,
-              onlySpeakers: state.voiceOverlay.onlySpeakers,
-              available: _connected,
-              onChanged: state.setVoiceOverlayEnabled,
-              onOnlySpeakersChanged: (value) =>
-                  state.setVoiceOverlayOnlySpeakers(value),
+            VoiceOverlayDock(
+              binding: state.voiceOverlayDockBinding(available: _connected),
             ),
             _VoiceDockButton(
               compact: compact,
