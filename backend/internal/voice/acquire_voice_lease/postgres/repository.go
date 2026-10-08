@@ -16,6 +16,7 @@ type Row interface{ Scan(...any) error }
 type Transaction interface {
 	Lock(context.Context, int64) error
 	LockUser(context.Context, string) error
+	CheckVoiceTimeout(context.Context, string) error
 	QueryRow(context.Context, string, ...any) Row
 	Commit(context.Context) error
 	Rollback(context.Context) error
@@ -45,6 +46,9 @@ func (repository Repository) Acquire(context context.Context, request acquirevoi
 		return acquirevoicelease.Result{}, fmt.Errorf("lock voice account: %w", err)
 	}
 	if err := verifyActiveSession(transaction, context, request.SessionDigest[:], request.ActorID); err != nil {
+		return acquirevoicelease.Result{}, err
+	}
+	if err := transaction.CheckVoiceTimeout(context, request.ActorID); err != nil {
 		return acquirevoicelease.Result{}, err
 	}
 	if err := verifyVoiceChannel(transaction, context, request.ChannelID); err != nil {

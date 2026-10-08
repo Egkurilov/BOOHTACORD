@@ -12,6 +12,7 @@ import (
 )
 
 func ConfigureAdminVoiceRoutes(mux *http.ServeMux, database *pgxpool.Pool, sessions authenticatesession.Service) {
+	configureVoiceTimeoutRoutes(mux, database, sessions)
 	service := kickvoiceparticipant.New(kickpostgres.New(kickpostgres.NewPoolDatabase(database)))
 	handler := sessionapi.Require(sessions)(sessionapi.RequireAdministrator(kickapi.NewHandler(service)))
 	mux.Handle("POST /api/v1/admin/accounts/{accountID}/voice-kick", handler)

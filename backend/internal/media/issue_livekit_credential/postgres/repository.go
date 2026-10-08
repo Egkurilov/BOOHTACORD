@@ -17,7 +17,9 @@ JOIN sessions AS session ON session.token_digest = lease.session_token_digest
 JOIN users AS account ON account.id = lease.user_id
 WHERE lease.id = $1 AND lease.user_id = $2 AND lease.session_token_digest = $3 AND lease.revoked_at IS NULL
   AND channel.kind = 'VOICE' AND channel.archived_at IS NULL AND channel.admission_closed_at IS NULL
-  AND session.revoked_at IS NULL AND account.blocked_at IS NULL`
+  AND session.revoked_at IS NULL AND account.blocked_at IS NULL
+  AND NOT EXISTS(SELECT 1 FROM voice_timeouts restriction
+      WHERE restriction.user_id=account.id AND restriction.expires_at>clock_timestamp())`
 
 type Row interface{ Scan(...any) error }
 type Database interface {

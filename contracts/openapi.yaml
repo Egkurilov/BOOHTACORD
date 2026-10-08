@@ -2323,7 +2323,7 @@
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
-          "409": { "description": "Existing lease, closed admission, archived/non-voice channel or stale state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceLeaseConflict" } } },
+          "409": { "description": "Existing lease, active voice timeout (VOICE_TIMEOUT), closed admission, archived/non-voice channel or stale state", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceLeaseConflict" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "500": { "description": "Internal error. Middleware failure may emit an empty body.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}},
@@ -2859,6 +2859,377 @@
             "x-empty-body-possible": true }
         },
         "security": [{"SessionCookie": []}]
+      }
+    },
+    "/api/v1/admin/accounts/{accountID}/voice-timeout": {
+      "put": {
+        "operationId": "setVoiceTimeout",
+        "description": "Administrator-only temporary voice restriction using database-clock expiry in the next24 hours. Atomically revokes logical leases, records bounded audit metadata and creates durable SFU revocation.202 confirms committed intent; pending never claims physical completion. TEXT/DM and sessions are unaffected.",
+        "parameters": [
+          {
+            "name": "accountID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Exact configured PUBLIC_ORIGIN (scheme, host and port; no path or trailing slash). Required on every public mutation, including login, registration, reset and logout. This is the server CSRF boundary; no CSRF token header is accepted."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Malformed account ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "401": {
+            "description": "No valid active session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error. Middleware failure may emit an empty body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "202": {
+            "description": "Current restriction and durable removal intent; pending is not physical confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceTimeoutState"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "404": {
+            "description": "Target account unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceTimeoutRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "clearVoiceTimeout",
+        "description": "Administrator-only idempotent manual lift. Does not restore revoked leases, cancel durable SFU revocation, autojoin media or enable microphone. A new explicit Join is required.",
+        "parameters": [
+          {
+            "name": "accountID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Exact configured PUBLIC_ORIGIN (scheme, host and port; no path or trailing slash). Required on every public mutation, including login, registration, reset and logout. This is the server CSRF boundary; no CSRF token header is accepted."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Malformed account ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "401": {
+            "description": "No valid active session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error. Middleware failure may emit an empty body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "200": {
+            "description": "Current restriction and durable removal intent; pending is not physical confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceTimeoutState"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "404": {
+            "description": "Target account unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
+    "/api/v1/accounts/{accountID}/voice-timeout": {
+      "get": {
+        "operationId": "getVoiceTimeout",
+        "description": "Active session required. Only the affected account or an administrator may read state. Expiry uses database clock; expired rows omit expiry and reason. No peer moderation disclosure; no-store response.",
+        "parameters": [
+          {
+            "name": "accountID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Malformed account ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "401": {
+            "description": "No valid active session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "403": {
+            "description": "Administrator role required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error. Middleware failure may emit an empty body.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "200": {
+            "description": "Current restriction and durable removal intent; pending is not physical confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceTimeoutState"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          },
+          "404": {
+            "description": "Target account unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
       }
     },
     "/api/v1/auth/register": {
@@ -6475,7 +6846,67 @@
         "required": ["lease_id", "generation_id", "revision"],
         "properties": { "lease_id": { "type": "string", "format": "uuid" }, "generation_id": { "type": "string", "format": "uuid" }, "revision": { "type": "integer", "minimum": 1 } },
         "description": "Metadata-only realtime hint. Never contains image bytes, room IDs, participant IDs or authorization; clients coalesce latest revision and fetch over the authenticated API."
-      },      "VoiceKick": {
+      },
+      "VoiceTimeoutRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expires_at",
+          "reason_code"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Absolute future expiry, at most24 hours ahead by database clock; UTC microsecond precision."
+          },
+          "reason_code": {
+            "type": "string",
+            "enum": [
+              "DISRUPTION",
+              "HARASSMENT",
+              "SPAM",
+              "OTHER"
+            ]
+          }
+        }
+      },
+      "VoiceTimeoutState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "active",
+          "revoked_leases",
+          "revocation_pending"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason_code": {
+            "type": "string",
+            "enum": [
+              "DISRUPTION",
+              "HARASSMENT",
+              "SPAM",
+              "OTHER"
+            ]
+          },
+          "revoked_leases": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "revocation_pending": {
+            "type": "boolean",
+            "description": "Unconfirmed durable SFU removals for the account. Clear or expiry does not cancel them."
+          }
+        }
+      },
+      "VoiceKick": {
         "type": "object",
         "additionalProperties": false,
         "required": ["revoked_leases"],

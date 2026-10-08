@@ -2,7 +2,7 @@
 import copy
 import json
 import unittest
-from .source import ROOT, routes
+from .source import ROOT, PRIVATE, key, routes
 from .validate import validate
 
 
@@ -23,7 +23,8 @@ class ParityTest(unittest.TestCase):
             validate(self.document, self.native)
 
     def test_current_native_contract(self):
-        self.assertEqual(96, validate(self.document, self.native))
+        public_count = sum(key(route) not in PRIVATE for route in self.native)
+        self.assertEqual(public_count, validate(self.document, self.native))
 
     def test_removed_operation(self):
         del self.document["paths"]["/api/v1/me"]["get"]
