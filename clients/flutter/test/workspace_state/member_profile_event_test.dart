@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:boohtacord_desktop/src/features/workspace/load_members/controller.dart';
 import 'package:boohtacord_desktop/src/features/realtime/dispatch/member_profile.dart';
 import 'package:boohtacord_desktop/src/features/realtime/lifecycle/event.dart';
 import 'package:boohtacord_desktop/src/models.dart';
