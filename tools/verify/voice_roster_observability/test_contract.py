@@ -25,7 +25,9 @@ class RosterObservabilityTest(unittest.TestCase):
         for name in ('voice_roster_failures_total', 'voice_roster_initial_seconds_bucket',
                      'voice_roster_streams_active', 'voice_roster_stream_ends_total',
                      'sfu_room_service_seconds_bucket', 'sfu_room_service_calls_total',
-                     'voice_roster_gate_total', 'voice_roster_last_success_timestamp_seconds'):
+                     'voice_presence_gate_total', 'voice_roster_last_success_timestamp_seconds'):
+            self.assertIn(name, query)
+        for name in ('sfu_room_service_transport_failures_total', 'sfu_room_service_http_failures_total'):
             self.assertIn(name, query)
         self.assertIn('histogram_quantile(0.95', query)
         self.assertNotIn('or vector(0)', query)

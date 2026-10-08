@@ -1,7 +1,7 @@
 # #271 roster observability source checks
 
 Base: `b0bbe27a4618eb831dd33e1e4f2b0ea98488921b`.
-Source PASS: ten actual Grafana PromQL expressions and three sustained private
+Source PASS: fourteen actual Grafana PromQL expressions and three sustained private
 alert rules parsed by pinned `prom/prometheus:v3.11.2` promtool.
 Synthetic PASS: idle does not alert; continuous initial failures alert; active
 watchers without success alert; enabled exporter with missing roster marker alerts.

@@ -26,6 +26,9 @@ channel, lease, session, account IDs, display names, tokens or message bodies.
    (private LiveKit), then `visibility_recheck` (DB ACL revalidation).
 4. Compare failure counters with initial TTFB, active streams, close reasons,
    RoomService outcome/latency and gate shared/cached/overload/cancel counts.
+   Transport failures classify dns/connect/reset/timeout/canceled/other; HTTP
+   failures classify 401/403/404/5xx/other. Use those bounded classes before
+   checking network namespaces or credentials; never export raw dependency text.
 5. Check private DB health/pool pressure and API/SFU shared network membership,
    endpoint DNS, authenticated ListRooms/ListParticipants and deployed revisions.
    Compare direct and proxied requests without exposing management ports.

@@ -9,6 +9,7 @@ import (
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
 
 	roster "voice-platform/backend/internal/voice/list_connected_participants"
+	initialobservation "voice-platform/backend/internal/voice/watch_connected_participants/initial_observation"
 )
 
 type Lister interface {
@@ -54,9 +55,11 @@ func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenti
 		updates, unsubscribe := notifier.Subscribe()
 		defer unsubscribe()
 		ctx, cancel := context.WithTimeout(request.Context(), snapshotTimeout)
+		ctx, finishInitial := initialobservation.Begin(ctx)
 		started := time.Now()
 		initial, err := lister.List(ctx, principal.AccountID)
 		observeInitial(observer, request.Context(), time.Since(started), err)
+		finishInitial(err)
 		cancel()
 		if err != nil {
 			if request.Context().Err() != nil {
