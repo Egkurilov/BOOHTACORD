@@ -9,6 +9,7 @@ on:
       - 'clients/flutter/packages/flutter_webrtc/common/rnnoise/upstream/**'
       - 'contracts/**'
       - 'deploy/**'
+      - 'evidence/media/livekit-network-config-*.json'
       - 'tools/**'
       - '.github/workflows/**'
       - '.node-version'
