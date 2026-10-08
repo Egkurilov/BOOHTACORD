@@ -1,0 +1,57 @@
+{
+  "id": "VR-02-001",
+  "kind": "production-voice-roster-private-dns-repair",
+  "status": "PASS",
+  "observed_at_utc": "2026-10-08T20:28:21Z",
+  "environment": "Targeted repair on the documented single production deployment, followed by read-only validation.",
+  "source_revision_before_change": "ac8ff3d3d62bd5f98b32e7b229a8d0914c779dfa",
+  "reported_event": {
+    "method": "GET",
+    "path": "/api/v1/voice/rosters/events",
+    "status": 503,
+    "body": "roster unavailable",
+    "request_id": null,
+    "event_time_utc": null
+  },
+  "repair": {
+    "target": "voice-platform-livekit-1",
+    "network": "voice-platform_private",
+    "action": "Reattached only the LiveKit private network endpoint with the service alias livekit.",
+    "private_address": "172.19.0.6",
+    "api_networks_after_repair": [
+      "voice-platform_private",
+      "voice-platform_telemetry-egress"
+    ],
+    "api_connected_to_edge": false,
+    "new_public_ports": false
+  },
+  "checks": [
+    {
+      "name": "LiveKit private DNS alias",
+      "status": "PASS",
+      "observation": "Docker inspection confirmed alias livekit on the LiveKit voice-platform_private endpoint."
+    },
+    {
+      "name": "API network isolation",
+      "status": "PASS",
+      "observation": "The API remained attached only to voice-platform_private and voice-platform_telemetry-egress; it was not added to voice-platform_edge."
+    },
+    {
+      "name": "API namespace DNS and authenticated RoomService preflight",
+      "status": "PASS",
+      "observation": "The rollout helper resolved livekit to the private LiveKit address from the API network namespace and sent an authenticated ListRooms request for a random nonexistent voice:<UUID> room. LiveKit returned HTTP 200 and no matching dummy room. Runtime credential values and room inventory were not emitted."
+    },
+    {
+      "name": "Post-repair internal LiveKit probes",
+      "status": "PASS",
+      "observation": "At 2026-10-08T20:28:21Z, voice_platform_incident_last_successful was 1 for both livekit_list_rooms and livekit_probe."
+    },
+    {
+      "name": "Authenticated end-user roster endpoint smoke",
+      "status": "NOT_RUN",
+      "observation": "No authenticated browser session was supplied. The controlled RoomService preflight validates the dependency path but is not an end-user GET /api/v1/voice/rosters/events request."
+    }
+  ],
+  "production_mutation": true,
+  "limitations": "The original 503 has no request ID or timestamp, so it cannot be correlated as one historical request. The live DNS and authenticated RoomService dependency path now pass; a real authenticated roster endpoint smoke remains unverified."
+}

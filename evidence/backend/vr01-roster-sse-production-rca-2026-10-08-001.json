@@ -1,0 +1,99 @@
+{
+  "id": "VR-01-001",
+  "kind": "production-voice-roster-sse-rca",
+  "status": "PASS",
+  "observed_at_utc": "2026-10-08T20:11:05Z",
+  "environment": "Read-only diagnostics against the documented production host; no deployment, configuration, database, or LiveKit mutation.",
+  "local_source_revision": "5bcb5407df81fe74363899adc9dce1a558140761",
+  "deployed_runtime": {
+    "host": "176.108.242.211",
+    "ssh_user": "shaneque",
+    "api_source_revision": "ac8ff3d3d62bd5f98b32e7b229a8d0914c779dfa",
+    "api_image_digest": "sha256:a48497dd3884fad55d40b33070b6437400dbfab14356d0dcc2f9ccd0feb0e3ae",
+    "api_started_at_utc": "2026-10-08T19:54:15Z",
+    "livekit_image": "livekit/livekit-server:v1.13.7",
+    "livekit_image_digest": "sha256:6fd3b7088874c4d119160dd688798dfec852bc014786d392caad15f6f63912a3",
+    "livekit_started_at_utc": "2026-09-23T21:48:17Z"
+  },
+  "reported_event": {
+    "source": "User-provided report and GitHub issue #265",
+    "method": "GET",
+    "path": "/api/v1/voice/rosters/events",
+    "status": 503,
+    "body": "roster unavailable",
+    "request_id": null,
+    "event_time_utc": null
+  },
+  "checks": [
+    {
+      "name": "Deployed runtime identity",
+      "status": "CONFIRMED",
+      "observation": "The running API image label identifies revision ac8ff3d3d62bd5f98b32e7b229a8d0914c779dfa. API and proxy started at 19:54:15Z and 19:54:16Z on 2026-10-08; LiveKit has been running since 2026-09-23."
+    },
+    {
+      "name": "Roster failure stage and rate",
+      "status": "CONFIRMED",
+      "observation": "At 20:08:41Z, since the API process start, metrics showed 1,291 failed roster snapshots, all at presence_room_list; 1,286 failed ListRooms HTTP calls; and 1,348 failed incident ListRooms operations. Failures increased from 921 to 1,291 in about four minutes. The incident ListRooms failure histogram sum was 1.636s (about 1.21ms mean), so this is a repeated rapid failure, not a timeout."
+    },
+    {
+      "name": "Database and unrelated dependencies",
+      "status": "CONFIRMED",
+      "observation": "PostgreSQL reported healthy. Previously sampled database-backed worker and storage probe metrics were successful. This makes a general PostgreSQL outage unlikely, but the original request has no timestamp or request ID for exact correlation."
+    },
+    {
+      "name": "LiveKit runtime configuration",
+      "status": "CONFIRMED",
+      "observation": "Without printing values, API and LiveKit API key/secret were compared and matched; the API private URL was http://livekit:7880 and both services shared the private Docker network. API proxy environment variables were absent."
+    },
+    {
+      "name": "Authenticated RoomService probe from host",
+      "status": "PASS",
+      "observation": "A read-only ListRooms request using the API runtime credentials and roomList grant returned HTTP 200 for a randomly named nonexistent room; zero matching rooms were returned. No room inventory was requested or displayed."
+    },
+    {
+      "name": "Authenticated RoomService probe from API network namespace",
+      "status": "PASS",
+      "observation": "The same read-only request from the API container network namespace, directed to the LiveKit private address, returned HTTP 200 and zero matching dummy rooms. This confirms the API network path and credentials/grant work for a controlled ListRooms call."
+    },
+    {
+      "name": "Roster-shaped RoomService probe",
+      "status": "PASS",
+      "observation": "At 20:09:08Z, a read-only ListRooms request from the API network namespace with six randomly generated, syntactically valid voice:<UUID> names returned HTTP 200 and zero matching rooms. The requested-room histogram at 20:08:41Z also showed 1,291 attempts with sum 7,746, or six requested rooms per snapshot on average. This rules out a large request batch and basic voice-room-name format as causes for the controlled request."
+    },
+    {
+      "name": "Docker DNS and private-network alias",
+      "status": "CONFIRMED",
+      "observation": "At 20:11:05Z, the API resolver file pointed to Docker DNS 127.0.0.11. An A query from the API network namespace for livekit returned SERVFAIL (rcode 2), while postgres and web resolved. API belongs to voice-platform_private and voice-platform_telemetry-egress; LiveKit belongs to voice-platform_private and voice-platform_edge. Docker inspection showed LiveKit has alias livekit only on voice-platform_edge; its voice-platform_private endpoint has no aliases. Proxy shares edge and resolved livekit to 172.20.0.3; the API does not share edge. A controlled ListRooms to the LiveKit private IP from the API network namespace returned HTTP 200."
+    },
+    {
+      "name": "LiveKit log attribution",
+      "status": "UNVERIFIED",
+      "observation": "At 20:05:21Z, an aggregate scan of the last 15 minutes found one auth-related line, one log line containing an IPv4 address, and no auth line matching the API container address. The small number of address-bearing log lines makes client attribution inconclusive; no raw log line was emitted."
+    },
+    {
+      "name": "Exact deployed Go caller response",
+      "status": "BLOCKED",
+      "observation": "The application metrics only retain outcome and duration; they do not retain upstream HTTP status or Twirp error code. Python probes with one dummy room and six valid voice:<UUID> names succeed from the API network, but the exact Go SDK caller has not been reproduced. A separate local Go SDK probe could not be built because the required Go 1.26.4 toolchain/dependencies were not locally available and network access to proxy.golang.org is blocked. No production code or service was changed to expose the missing error."
+    },
+    {
+      "name": "Root cause",
+      "status": "CONFIRMED",
+      "observation": "The production API uses LIVEKIT_PRIVATE_HTTP_URL=http://livekit:7880, but the livekit DNS alias is missing from the API's shared private network. Docker DNS in the API network namespace returns SERVFAIL for livekit, so the Go HTTP client cannot resolve the RoomService host; this matches the repeated sub-2ms ListRooms failures and presence_room_list 503s. Runtime credentials, RoomList permission, and connectivity by the LiveKit private IP all pass controlled probes."
+    }
+  ],
+  "required_to_continue": [
+    "Apply the minimal private-network alias repair in VR-02, then verify DNS and authenticated ListRooms from the API network namespace",
+    "Production smoke with a real authenticated roster request after the repair; the original request timestamp and ID are unavailable"
+  ],
+  "local_remediation": {
+    "status": "READY_NOT_DEPLOYED",
+    "summary": "Restore the livekit alias on the shared private network and add a rollout preflight for API-network DNS plus authenticated RoomService ListRooms using a random nonexistent voice room.",
+    "focused_checks": [
+      "python3 -m unittest discover -s tools/release/rollout -p 'test_*.py' — 18 passed",
+      "deploy-images.test.sh, deploy-images-volume-guard.test.sh, deploy-images-rollback.test.sh — passed",
+      "Python compilation, LiveKit Compose YAML parse, shell syntax, and git diff --check — passed"
+    ],
+    "production_mutation": false
+  },
+  "limits": "The current production failure mechanism is confirmed from Docker DNS, network membership, alias inspection, metrics, and controlled private-IP probes. The user has no timestamp or request ID for the original report, so it cannot be correlated as a single historical request. The local repair is prepared and verified but has not been applied to production."
+}
