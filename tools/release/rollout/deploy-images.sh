@@ -13,6 +13,9 @@ fail() {
   exit 1
 }
 
+livekit_private_path_script="$script_dir/livekit_private_path.py"
+[[ -r "$livekit_private_path_script" ]] || fail "LiveKit private path preflight is missing from the release."
+
 api_image="${API_IMAGE:-}"
 web_image="${WEB_IMAGE:-}"
 [[ -n "$api_image" ]] || fail "API_IMAGE is required."
@@ -96,7 +99,7 @@ else
 fi
 python3 "$script_dir/align-existing-private-network.py" "$project_dir" --ensure-postgres-alias
 [[ "$admission_enabled" -eq 1 ]] || enable_maintenance_admission
-python3 "$script_dir/livekit_private_path.py" "$project_dir"
+python3 "$livekit_private_path_script" "$project_dir"
 sleep 15
 if [[ "$release_mode" == "registry-digest" ]]; then
   API_IMAGE="$api_image" WEB_IMAGE="$web_image" "${compose[@]}" pull api migrate web

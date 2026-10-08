@@ -93,6 +93,12 @@
   "verification_updates": [
     {
       "observed_at": "2026-10-08",
+      "source_revision": "0539933e31bfc76aefd25073eddb912a54fad2dc",
+      "change": "The first release attempt stopped before API or web image switching because the signed runtime payload did not include livekit_private_path.py. The cleanup left maintenance admission disabled; API health returned 200 and all application containers remained on the previous runtime. Added the helper to the signed runtime selection, a bundle-selection test, and a pre-maintenance fail-fast guard.",
+      "verification": "Local runtime-selection test, LiveKit network verifier and 15 model tests, 18 rollout Python tests, rollout/volume/rollback shell tests, syntax and diff checks pass. The corrected CI and production delivery rerun are pending."
+    },
+    {
+      "observed_at": "2026-10-08",
       "source_revision": "22618da85fae80f0092d363a1f98509e820a766e",
       "change": "Added the livekit alias to the existing private LiveKit Compose endpoint, matching the production repair in VR-02; network membership, media ports and metrics boundary are unchanged.",
       "verification": "The first pushed commit's GitHub contracts and server-build checks found this evidence file's pinned Compose SHA-256 stale. Updated the normalized file digest. The private-path helper and rollout tests passed locally; CI must pass before the production release workflow runs."

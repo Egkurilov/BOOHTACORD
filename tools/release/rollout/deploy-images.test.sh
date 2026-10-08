@@ -84,6 +84,10 @@ run_deploy() {
 
 line_number() { grep -n -F "$1" "$2" | head -n 1 | cut -d: -f1; }
 
+helper_guard_line="$(grep -n -F '[[ -r "$livekit_private_path_script" ]]' "$script" | cut -d: -f1)"
+admission_enable_line="$(grep -n -F '[[ "$admission_enabled" -eq 1 ]] || enable_maintenance_admission' "$script" | cut -d: -f1)"
+[[ "$helper_guard_line" -lt "$admission_enable_line" ]]
+
 allowed_output="$temporary_root/allowed.out"
 run_deploy allowed "$allowed_output"
 allowed_log="$temporary_root/commands-allowed.log"
