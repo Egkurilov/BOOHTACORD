@@ -8,29 +8,11 @@ import sys
 import tempfile
 from pathlib import Path
 
+from postgres_network import ensure_current_postgres_alias, ensure_postgres_connected, load_compose_configuration
+
 
 def output(*command):
     return subprocess.check_output(command, text=True, stderr=subprocess.DEVNULL).strip()
-
-
-def load_compose_configuration(compose):
-    return json.loads(output(*compose, "--profile", "operator", "config", "--format", "json"))
-
-
-def ensure_postgres_connected(compose, project, network_name):
-    containers = output(*compose, "ps", "-aq", "postgres").splitlines()
-    if len(containers) != 1:
-        raise RuntimeError("expected exactly one PostgreSQL service container")
-    container_id = containers[0]
-    labels = json.loads(output("docker", "inspect", "--format", "{{json .Config.Labels}}", container_id))
-    if (labels.get("com.docker.compose.project") != project
-            or labels.get("com.docker.compose.service") != "postgres"):
-        raise RuntimeError("PostgreSQL container identity does not match the Compose project")
-    networks = json.loads(output("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", container_id))
-    if network_name not in networks:
-        subprocess.run(["docker", "network", "connect", "--alias", "postgres", network_name, container_id],
-                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print("Reattached the existing PostgreSQL container to the active private network.")
 
 
 def write_external_network_config(configuration, destination, network_name):
@@ -96,6 +78,14 @@ def main(project_dir, canonical_env, recovery_compose):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 3 and sys.argv[2] == "--ensure-postgres-alias":
+        try:
+            ensure_current_postgres_alias(sys.argv[1])
+        except (OSError, ValueError, TypeError, KeyError, RuntimeError, subprocess.CalledProcessError,
+                json.JSONDecodeError):
+            print("Could not safely restore the PostgreSQL service alias.", file=sys.stderr)
+            raise SystemExit(1)
+        raise SystemExit(0)
     if len(sys.argv) != 4:
         raise SystemExit("usage: align-existing-private-network.py PROJECT_DIR CANONICAL_ENV RECOVERY_COMPOSE")
     try:

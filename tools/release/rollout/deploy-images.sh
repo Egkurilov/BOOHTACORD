@@ -94,6 +94,7 @@ if ! postgres_output="$("${compose[@]}" up -d --wait postgres 2>&1)"; then
 else
   printf '%s\n' "$postgres_output"
 fi
+python3 "$script_dir/align-existing-private-network.py" "$project_dir" --ensure-postgres-alias
 [[ "$admission_enabled" -eq 1 ]] || enable_maintenance_admission
 sleep 15
 if [[ "$release_mode" == "registry-digest" ]]; then
