@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'controller.dart';
+import 'button_style.dart';
 import '../../widgets/confirmation_dialog.dart';
 
 Future<bool> confirmVoiceTimeout(
@@ -31,11 +32,13 @@ Future<bool> confirmVoiceTimeout(
           ),
           actions: [
             TextButton(
+              style: voiceTimeoutButtonStyle,
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Отмена'),
             ),
             if (owner.active)
               FilledButton(
+                style: voiceTimeoutButtonStyle,
                 onPressed: () => Navigator.pop(context, owner.active),
                 child: const Text('Подтвердить'),
               ),

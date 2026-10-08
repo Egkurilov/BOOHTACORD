@@ -19,3 +19,9 @@ Contracts caught role feature -> application widgets imports. Shared confirmatio
 - New/touched root production Dart files are within100 lines.
 
 Synthetic API fixtures exercise actual widgets/routes/AppState. Server ACL and SFU revocation are separate Go/PostgreSQL tests and deployed QA. Physical IME/screen readers, released native builds and production revocation remain #287/#197/#97 acceptance, not implied by these widget checks.
+
+## Windows engine regression and narrow fix
+
+Owned hidden Windows engine at source559abdbf measured40dp grant/confirmation targets under the real guildTheme desktop compact density. This is a source defect, not a physical acceptance PASS. Nine Windows-platform tests reproduce red40dp targets across390/600/1440 widths and text scale1/1.3/2 with300px simulated IME.
+
+Timeout action/confirmation buttons now use an explicit minimum44dp and standard density in their own leaf; global theme and other media/UI ownership are unchanged. All six action types (grant, lift, refresh, close, cancel, confirm) are measured. Focused timeout/admin suite:80 PASS, zero skips. Final engine rerun and canonical native validation are recorded separately with their exact source SHA. Physical input, screen readers and device release remain NOT_RUN until separately evidenced.

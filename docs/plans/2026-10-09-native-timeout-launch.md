@@ -9,3 +9,5 @@ Baseline: API, dialog and session-boundary tests pass; actual compact/desktop Ad
 3. Verify actual AdminScreen launches at 390/1440, ordinary Escape/focus return, cancellation without mutation, existing timeout/privacy checks and nearest admin regressions. Keep new production files within 120 lines.
 
 Stop: green actual launch and native regression checks, explicit source/evidence commit. Physical screen readers, deployed revocation and released-client acceptance remain QA.
+
+Windows engine follow-up: preserve the real guildTheme/desktop density baseline, reproduce40dp action/confirmation buttons with focused Windows-platform tests, enforce44dp in the timeout button style only, then rerun timeout/admin, native contracts and actual engine scenarios. No global theme or media lifecycle changes.

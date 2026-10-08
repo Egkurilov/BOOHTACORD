@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'controller.dart';
 import 'confirmation.dart';
+import 'button_style.dart';
 
 class VoiceTimeoutActions extends StatelessWidget {
   const VoiceTimeoutActions({
@@ -21,6 +22,7 @@ class VoiceTimeoutActions extends StatelessWidget {
     runSpacing: 8,
     children: [
       FilledButton(
+        style: voiceTimeoutButtonStyle,
         onPressed: !owner.canMutate
             ? null
             : () async {
@@ -38,6 +40,7 @@ class VoiceTimeoutActions extends StatelessWidget {
       ),
       if (owner.active && owner.value?.active == true)
         OutlinedButton(
+          style: voiceTimeoutButtonStyle,
           onPressed: !owner.canMutate
               ? null
               : () async {
@@ -54,10 +57,12 @@ class VoiceTimeoutActions extends StatelessWidget {
           child: const Text('Снять ограничение'),
         ),
       TextButton(
+        style: voiceTimeoutButtonStyle,
         onPressed: owner.active && !owner.busy ? owner.load : null,
         child: const Text('Обновить состояние'),
       ),
       TextButton(
+        style: voiceTimeoutButtonStyle,
         onPressed: owner.active && owner.busy ? null : onClose,
         child: const Text('Закрыть'),
       ),
