@@ -51,11 +51,8 @@ export function createVoiceRosterRealtime(
     status.value = channels.value === null ? 'unavailable' : 'stale_reconnecting'
     if (channels.value !== null && staleTimer === null) {
       staleTimer = setTimeout(() => {
-        if (generation === currentGeneration) {
-          channels.value = null
-          lastUpdatedAt.value = null
-          status.value = 'unavailable'
-        }
+        channels.value = null
+        status.value = 'unavailable'
         staleTimer = null
       }, 10_000)
     }

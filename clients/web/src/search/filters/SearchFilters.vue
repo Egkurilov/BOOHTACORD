@@ -6,11 +6,15 @@ import type { AttachmentFilter } from './state'
 const props = defineProps<{
   authorId: string
   attachment: AttachmentFilter
+  dateFrom: string
+  dateTo: string
   disabled?: boolean
 }>()
 const emit = defineEmits<{
   'update:authorId': [value: string]
   'update:attachment': [value: AttachmentFilter]
+  'update:dateFrom': [value: string]
+  'update:dateTo': [value: string]
 }>()
 const members = useMemberDirectory()
 const authorOptions = computed(() =>
@@ -50,13 +54,17 @@ onMounted(() => {
         <option value="without">Без вложений</option>
       </select>
     </label>
+    <label><span>С даты</span><input type="date" :value="dateFrom" :max="dateTo || undefined" @input="emit('update:dateFrom', ($event.target as HTMLInputElement).value)"></label>
+    <label><span>По дату включительно</span><input type="date" :value="dateTo" :min="dateFrom || undefined" @input="emit('update:dateTo', ($event.target as HTMLInputElement).value)"></label>
+    <small>Даты в вашем часовом поясе.</small>
   </fieldset>
 </template>
 
 <style scoped>
-.search-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; border: 0; margin: 0; padding: 0; }
+.search-filters { display: flex; flex-wrap: wrap; min-width: 0; align-items: end; gap: 8px 12px; border: 0; margin: 0; padding: 0; }
 .search-filters legend { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
 .search-filters label { display: grid; gap: 4px; }
-.search-filters select, .search-filters button { min-height: 36px; }
+.search-filters input, .search-filters select, .search-filters button { min-height: 36px; }
 .search-filter-error { margin: 0; }
+.search-filters small { flex-basis: 100%; }
 </style>

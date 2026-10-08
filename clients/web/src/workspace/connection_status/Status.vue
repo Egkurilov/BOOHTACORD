@@ -4,13 +4,13 @@ import type { RealtimeState } from '../../realtime/realtime_store'
 import type { VoiceConnectionState } from '../../voice/connection_store'
 import { connectionStatus } from './model'
 const props = defineProps<{ chat: RealtimeState; voice: VoiceConnectionState;
-  rosterAvailable: boolean; lastUpdatedAt: number | null }>()
+  rosterAvailable: boolean; lastUpdatedAt: number | null; rosterRetained?: boolean }>()
 const emit = defineEmits<{ retryChat: []; retryRoster: [] }>()
 const now = ref(Date.now())
 let timer: ReturnType<typeof setInterval> | undefined
 onMounted(() => { timer = setInterval(() => { now.value = Date.now() }, 1000) })
 onBeforeUnmount(() => clearInterval(timer))
-const status = computed(() => connectionStatus(props.chat, props.voice, props.rosterAvailable, props.lastUpdatedAt, now.value))
+const status = computed(() => connectionStatus(props.chat, props.voice, props.rosterAvailable, props.lastUpdatedAt, now.value, props.rosterRetained))
 const visible = computed(() => props.chat !== 'CONNECTED' || !props.rosterAvailable || ['RECONNECTING', 'ERROR'].includes(props.voice))
 </script>
 <template>

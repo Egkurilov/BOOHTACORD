@@ -1,0 +1,24 @@
+groups:
+  - name: voice-roster
+    rules:
+      - alert: VoiceRosterInitialBlackout
+        expr: sum(increase(voice_platform_voice_roster_initial_total{service_name="boohtacord-api",outcome="failure"}[5m])) > 0 and sum(increase(voice_platform_voice_roster_initial_total{service_name="boohtacord-api",outcome="success"}[5m])) == 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Every observed initial roster request failed
+          description: Inspect bounded stage counters and RoomService outcomes using docs/operations/voice-roster.md; do not infer empty rooms.
+      - alert: VoiceRosterRefreshBlackout
+        expr: sum(voice_platform_voice_roster_streams_active{service_name="boohtacord-api"}) > 0 and (time() - max(voice_platform_voice_roster_last_success_timestamp_seconds{service_name="boohtacord-api"}) > 60)
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Active roster watchers have no recent successful snapshot
+          description: The 60-second budget is twelve 5-second refresh intervals, sustained for five minutes. Investigate dependencies, cancellation and stream close reasons before rollback.
+      - alert: VoiceRosterTelemetryMissing
+        expr: voice_platform_incident_enabled{service_name="boohtacord-api",operation="metric_export"} == 1 unless on(service_name) voice_platform_voice_roster_observation_enabled{service_name="boohtacord-api"}
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: API exports metrics but roster instruments are absent
+          description: Verify deployed SHA, authenticated OTLP export and Collector freshness. Missing data is not a zero failure rate.

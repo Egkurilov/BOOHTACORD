@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { api, expect, login, select, sql } from './fixture.mjs'
+import { revokedLeaseSql } from './revocation_sql.mjs'
 async function calls() {
   const response=await fetch('http://127.0.0.1:4820/metrics')
   return (await response.text()).split('\n').filter(line=>line.startsWith('voice_platform_sfu_room_service_calls_total{'))
@@ -21,7 +22,7 @@ export async function cacheAcl(page,fixture,input,report) {
       await api(page,'/voice/participants')
       const before=await calls()
       sql(action==='block' ? `UPDATE users SET blocked_at=now() WHERE id='${fixture.member}'`
-        : `UPDATE voice_leases SET revoked_at=now() WHERE user_id='${fixture.member}' AND revoked_at IS NULL`)
+        : revokedLeaseSql(fixture.member))
       assert.equal(await present(),false,'Cached SFU metadata exposed a blocked account or revoked lease')
       receipt[action+'_removed_with_fresh_snapshot']=(await calls())===before
       assert.equal(receipt[action+'_removed_with_fresh_snapshot'],true,'Fresh-TTL witness expired before the database recheck')

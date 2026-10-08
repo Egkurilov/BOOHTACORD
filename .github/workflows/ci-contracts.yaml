@@ -47,6 +47,11 @@ jobs:
           python3 -m tools.verify.media_qoe.promql .out/media-qoe
           docker run --rm --entrypoint promtool -v "$PWD:/work" -w /work prom/prometheus:v3.11.2 check rules docker/observability/media-qoe-alerts.yaml .out/media-qoe/dashboard-rules.yaml
           docker run --rm --entrypoint promtool -v "$PWD:/work" -w /work prom/prometheus:v3.11.2 test rules tools/verify/media_qoe/alerts.test.yaml tools/verify/media_qoe/diagnostics.test.yaml .out/media-qoe/dashboard.test.yaml
+      - name: Verify roster dashboard and sustained alert semantics
+        run: |
+          python3 -m tools.verify.voice_roster_observability.promql
+          docker run --rm --entrypoint promtool -v "$PWD:/work" -w /work prom/prometheus:v3.11.2 check rules docker/observability/voice-roster-alerts.yaml .out/voice-roster/dashboard-rules.yaml
+          docker run --rm --entrypoint promtool -v "$PWD:/work" -w /work/.out/voice-roster prom/prometheus:v3.11.2 test rules idle.yaml initial_blackout.yaml refresh_blackout.yaml telemetry_missing.yaml
       - name: Verify paired screen acceptance evidence gate
         run: |
           python3 -m unittest tools.verify.paired_screen_acceptance.test_evidence

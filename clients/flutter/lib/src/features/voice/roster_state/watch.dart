@@ -1,12 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 
-import '../../../services/voice_roster_events.dart';
 import 'controller.dart';
 
 extension VoiceRosterWatch on VoiceRosterController {
   void start() {
-    if (disposed || !scope.capture().isActive || !hasUser() || watching) return;
+    if (disposed ||
+        !scope.capture().isActive ||
+        !hasUser() ||
+        !isReady() ||
+        watching) {
+      return;
+    }
     watching = true;
     unawaited(watch(++revision));
   }
@@ -15,78 +20,67 @@ extension VoiceRosterWatch on VoiceRosterController {
     final ticket = scope.capture();
     while (ticket.isActive && watching && expected == revision && isReady()) {
       try {
+        opening = true;
         final response = await api.voiceRosterEvents();
-        if (!ticket.isActive || !watching || expected != revision) {
+        if (!ticket.isActive || !watching || disposed || expected != revision) {
           await response.stream.listen(null).cancel();
           return;
         }
+        opening = false;
         final done = Completer<void>();
         streamDone = done;
+        var event = '';
         subscription = response.stream
             .transform(utf8.decoder)
             .transform(const LineSplitter())
             .listen(
               (line) {
                 if (!ticket.isActive || expected != revision) return;
-                if (line == 'event: session-expired') {
-                  voiceRosters = null;
-                  voiceRosterError = null;
-                  changed();
-                  api.onUnauthorized?.call();
-                  stop();
-                  return;
-                }
-                try {
-                  final rooms = parseVoiceRosterEvent(line);
-                  if (rooms == null) return;
-                  staleTimer?.cancel();
-                  staleTimer = null;
-                  voiceRosters = rooms;
-                  voiceRosterError = null;
-                  changed();
-                } catch (cause) {
-                  voiceRosters = null;
-                  voiceRosterError = message(cause);
-                  changed();
+                if (line.startsWith('event:')) event = line.substring(6).trim();
+                if (line.isEmpty) event = '';
+                if (!receiveRosterLine(line, event, expected) &&
+                    !done.isCompleted) {
+                  done.complete();
                 }
               },
               onError: (Object _) {
-                markLost(expected);
+                if (ticket.isActive) markLost(expected);
                 if (!done.isCompleted) done.complete();
               },
               onDone: () {
-                markLost(expected);
+                if (ticket.isActive) markLost(expected);
                 if (!done.isCompleted) done.complete();
               },
             );
         await done.future;
         if (!ticket.isActive || expected != revision) return;
+        await subscription?.cancel();
+        if (!ticket.isActive || expected != revision) return;
         subscription = null;
         streamDone = null;
       } catch (cause) {
-        if (ticket.isActive && expected == revision) {
-          if (cause is ApiFailure &&
-              (cause.status == 401 || cause.status == 403)) {
-            voiceRosters = null;
-          }
-          if (voiceRosters == null) {
-            voiceRosterError = message(cause);
-          } else {
-            markLost(expected);
-          }
-          changed();
+        if (!ticket.isActive || expected != revision) return;
+        if (cause is ApiFailure && cause.status == 401) {
+          expireRosterSession();
+          return;
+        }
+        opening = false;
+        markLost(expected);
+        if (cause is ApiFailure && cause.status == 403) {
+          voiceRosters = null;
+          phase = VoiceRosterPhase.unavailable;
+          staleTimer?.cancel();
+          staleTimer = null;
+          break;
         }
       }
       if (!ticket.isActive || !watching || expected != revision) return;
-      final retry = Completer<void>();
-      retryDone = retry;
-      retryTimer = Timer(retryDelay, () {
-        if (!retry.isCompleted) retry.complete();
-      });
-      await retry.future;
-      if (!ticket.isActive || expected != revision) return;
-      retryTimer = null;
-      retryDone = null;
+      if (!await waitForRetry(expected)) break;
+    }
+    if (ticket.isActive && expected == revision) {
+      watching = false;
+      opening = false;
+      changed();
     }
   }
 }

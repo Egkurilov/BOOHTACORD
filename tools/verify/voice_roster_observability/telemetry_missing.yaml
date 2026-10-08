@@ -1,0 +1,26 @@
+rule_files:
+- voice-roster-alerts.yaml
+evaluation_interval: 1m
+tests:
+- interval: 1m
+  input_series:
+  - series: voice_platform_incident_enabled{service_name="boohtacord-api",operation="metric_export"}
+    values: 1+0x15
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: VoiceRosterInitialBlackout
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: VoiceRosterRefreshBlackout
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: VoiceRosterTelemetryMissing
+    exp_alerts:
+    - exp_labels:
+        severity: warning
+        service_name: boohtacord-api
+        operation: metric_export
+      exp_annotations:
+        summary: API exports metrics but roster instruments are absent
+        description: Verify deployed SHA, authenticated OTLP export and Collector
+          freshness. Missing data is not a zero failure rate.

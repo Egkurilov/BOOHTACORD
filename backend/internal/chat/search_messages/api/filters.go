@@ -3,17 +3,23 @@ package searchmessagesapi
 import "net/http"
 
 type filters struct {
-	authorID      string
-	hasAttachment *bool
+	authorID                   string
+	createdFrom, createdBefore string
+	hasAttachment              *bool
 }
 
 func parseFilters(request *http.Request) (filters, bool) {
 	authorID, authorOK := single(request, "author_id")
 	attachment, attachmentOK := single(request, "has_attachment")
-	if !authorOK || !attachmentOK || (request.URL.Query().Has("author_id") && authorID == "") {
+	from, fromOK := single(request, "created_from")
+	before, beforeOK := single(request, "created_before")
+	if !authorOK || !attachmentOK || !fromOK || !beforeOK ||
+		(request.URL.Query().Has("author_id") && authorID == "") ||
+		(request.URL.Query().Has("created_from") && from == "") ||
+		(request.URL.Query().Has("created_before") && before == "") {
 		return filters{}, false
 	}
-	result := filters{authorID: authorID}
+	result := filters{authorID: authorID, createdFrom: from, createdBefore: before}
 	if !request.URL.Query().Has("has_attachment") {
 		return result, true
 	}

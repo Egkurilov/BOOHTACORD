@@ -57,7 +57,7 @@ jobs:
           python3 -m tools.qa.client_lifecycle.run --critical --width 1024
       - name: Verify real attachment reservations and single API writer
         run: |
-          python3 -m unittest tools.qa.upload_reservations.test_measure
+          python3 -m unittest tools.qa.upload_reservations.test_measure tools.qa.upload_reservations.test_scenario tools.qa.upload_reservations.test_client
           python3 -m tools.qa.upload_reservations.run
       - name: Retain synthetic actual screenshots and bounded results
         if: always()

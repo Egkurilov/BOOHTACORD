@@ -1,16 +1,18 @@
 import assert from 'node:assert/strict'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { chromium, login, setup } from './fixture.mjs'
+import { login, setup } from './fixture.mjs'
+import { nativeBrowser } from './native_browser.mjs'
 import { uploads } from './uploads.mjs'
 import { unread } from './unread.mjs'
 import { navigation } from './navigation.mjs'
 const input = JSON.parse(readFileSync(process.env.QA_INPUT,'utf8'))
 assert.equal(process.env.QA_ORIGIN,'https://localhost:4810')
-const browser = await chromium.launch({ headless:false, args:['--allow-loopback-in-peer-connection'] })
+const owned = await nativeBrowser(), browser = owned.browser
 try {
-  const context = await browser.newContext({ ignoreHTTPSErrors:true, viewport:{width:1440,height:900} })
+  const context = owned.context
   context.setDefaultTimeout(20000)
-  const page = await context.newPage(), report = { status:'PASS', capacity_limited:input.limited }
+  const page = owned.page, report = { status:'PASS', capacity_limited:input.limited }
+  await page.setViewportSize({ width:1440, height:900 })
   await login(page,'qa_admin',input.password)
   const fixture = await setup(page,input.password)
   await page.reload()
@@ -27,4 +29,4 @@ try {
   let message=String(error).split(input.password).join('[redacted]')
   for (const context of browser.contexts()) for (const cookie of await context.cookies()) message=message.split(cookie.value).join('[redacted]')
   console.error(message); process.exitCode=1
-} finally { await browser.close() }
+} finally { await owned.close() }

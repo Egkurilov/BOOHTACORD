@@ -23,6 +23,7 @@ def scenario(root, limited):
             stack.reject_second_writer()
             client = Client(stack.password)
             channel = client.create_channel()
+            peer = client.create_peer(stack.password) if limited else None
             samples.append(sample(stack))
             clients = [client.upload(channel), client.upload(channel)]
             if not limited:
@@ -32,9 +33,16 @@ def scenario(root, limited):
             await_reserved(stack, 50000000, samples, build)
             samples.append(sample(stack, build))
             if limited:
-                rejected = client.upload(channel)
+                quota = client.upload(channel)
                 try:
-                    assert finish(rejected) == 507, 'Capacity-limited upload did not reject with 507'
+                    status = finish(quota)
+                    assert status == 429, f'Account concurrency guard expected 429, received {status}'
+                finally:
+                    quota.close()
+                rejected = peer.upload(channel)
+                try:
+                    status = finish(rejected)
+                    assert status == 507, f'Capacity-limited upload expected 507, received {status}'
                 finally:
                     rejected.close()
             clients[0].close()
@@ -52,6 +60,8 @@ def scenario(root, limited):
             return dict(status='PASS', capacity_limited=limited, samples=samples,
                         actual_second_api_rejected=True, canceled_and_success_released=True,
                         retry_status=201, rejection_status=507 if limited else None,
+                        same_account_concurrency_status=429 if limited else None,
+                        capacity_account_independent=limited,
                         staging_files=0, actual_stop_first_handover_cycles=2,
                         api_binary_sha256=hashlib.sha256(stack.binary.read_bytes()).hexdigest())
         finally:

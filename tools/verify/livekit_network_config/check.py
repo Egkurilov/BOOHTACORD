@@ -33,7 +33,12 @@ def main():
     peers = ", ".join(sorted(metrics_reachable_peers(deploy, observability)))
     evidence_path = root / "evidence/media/livekit-network-config-2026-10-07.json"
     evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
-    for path, expected in evidence["repository_artifacts"].items():
+    # Historical deployment evidence stays immutable; later source-only revalidation
+    # records intentional alert wiring changes without claiming a new physical probe.
+    current = root / "evidence/media/livekit-network-config-2026-10-08-roster-alerts.json"
+    revalidation = json.loads(current.read_text(encoding="utf-8"))
+    expected_artifacts = evidence["repository_artifacts"] | revalidation["repository_artifacts"]
+    for path, expected in expected_artifacts.items():
         content = (root / path).read_bytes().replace(b"\r\n", b"\n")
         actual = hashlib.sha256(content).hexdigest()
         if expected != f"sha256:{actual}":

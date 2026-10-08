@@ -6,7 +6,7 @@ import '../../../services/screen_share_diagnostics.dart';
 import '../../telemetry/action_scope/action.dart';
 import '../../telemetry/action_scope/failure.dart';
 import 'controller.dart';
-import 'events.dart';
+import '../capture/cancelled.dart';
 
 extension ScreenShareCapturePublish on ScreenShareController {
   Future<void> publishCapture(
@@ -64,7 +64,13 @@ extension ScreenShareCapturePublish on ScreenShareController {
       published(room, pending);
       pending = null;
     } catch (cause) {
-      final failure = failureOutcome(cause);
+      final cancelled =
+          !publishing &&
+          (cause is ScreenCaptureCancelled ||
+              failureOutcome(cause).outcome == 'cancelled');
+      final failure = cancelled
+          ? (outcome: 'cancelled', reason: 'disposed')
+          : failureOutcome(cause);
       ActionScope.current?.finish(
         failure.outcome,
         reason: failure.reason == 'network' ? 'dependency' : failure.reason,
@@ -80,9 +86,10 @@ extension ScreenShareCapturePublish on ScreenShareController {
       );
       if (active()) {
         await stopSampling();
-        phase = ScreenSharePhase.error;
-        error =
-            'Не удалось начать демонстрацию экрана: ${screenShareFailureDetail(cause)}';
+        phase = cancelled ? ScreenSharePhase.idle : ScreenSharePhase.error;
+        error = cancelled
+            ? null
+            : 'Не удалось начать демонстрацию экрана: ${screenShareFailureDetail(cause)}';
         changed();
       }
     } finally {

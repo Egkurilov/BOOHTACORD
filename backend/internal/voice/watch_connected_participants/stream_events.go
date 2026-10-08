@@ -38,22 +38,19 @@ func writeRoster(writer http.ResponseWriter, flusher http.Flusher, value roster.
 }
 
 func writeRosterBytes(writer http.ResponseWriter, flusher http.Flusher, encoded []byte) error {
-	if _, err := fmt.Fprintf(writer, "data: %s\n\n", encoded); err != nil {
-		return err
-	}
-	flusher.Flush()
-	return nil
+	return writeStreamFrame(writer, flusher, []byte(fmt.Sprintf("data: %s\n\n", encoded)))
 }
 
 func refreshRosterSnapshot(parent context.Context, lister Lister, accountID string, write rosterWrite, writer http.ResponseWriter, flusher http.Flusher, observer FailureObserver) bool {
 	ctx, cancel := context.WithTimeout(parent, snapshotTimeout)
-	updated, err := lister.List(ctx, accountID)
+	updated, err := loadRefresh(ctx, lister, accountID)
 	cancel()
 	if err != nil {
 		if errors.Is(parent.Err(), context.Canceled) {
 			return false
 		}
 		observeFailure(observer, "stream_snapshot")
+		traceFailure(parent, err)
 		if !writeRosterUnavailable(writer, flusher) {
 			observeFailure(observer, "stream_write")
 		}
@@ -63,15 +60,12 @@ func refreshRosterSnapshot(parent context.Context, lister Lister, accountID stri
 		observeFailure(observer, "stream_write")
 		return false
 	}
+	observeSuccess(observer)
 	return true
 }
 
 func writeRosterUnavailable(writer http.ResponseWriter, flusher http.Flusher) bool {
-	if _, err := fmt.Fprint(writer, "event: roster-unavailable\ndata: {}\n\n"); err != nil {
-		return false
-	}
-	flusher.Flush()
-	return true
+	return writeStreamFrame(writer, flusher, []byte("event: roster-unavailable\ndata: {}\n\n")) == nil
 }
 
 func authRevoked(err error, current, principal auth.Principal) bool {

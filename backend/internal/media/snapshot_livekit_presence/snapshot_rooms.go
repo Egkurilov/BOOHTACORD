@@ -41,7 +41,7 @@ func (client Client) SnapshotRooms(ctx context.Context, channelIDs []string) (ma
 	}
 	rooms, err := client.service(listToken).ListRooms(ctx, &livekit.ListRoomsRequest{Names: names})
 	if err != nil || rooms == nil {
-		return nil, unavailable("room_list")
+		return nil, unavailableCause("room_list", err)
 	}
 	seen := make(map[string]bool, len(rooms.GetRooms()))
 	for _, room := range rooms.GetRooms() {
@@ -60,7 +60,7 @@ func (client Client) SnapshotRooms(ctx context.Context, channelIDs []string) (ma
 		}
 		participants, err := client.service(participantToken).ListParticipants(ctx, &livekit.ListParticipantsRequest{Room: name})
 		if err != nil || participants == nil {
-			return nil, unavailable("participants")
+			return nil, unavailableCause("participants", err)
 		}
 		for _, participant := range participants.GetParticipants() {
 			if participant == nil || participant.GetState() != livekit.ParticipantInfo_ACTIVE {

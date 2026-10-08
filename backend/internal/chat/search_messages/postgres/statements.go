@@ -8,6 +8,8 @@ WITH matching AS (
     WHERE channel.kind = 'TEXT' AND channel.archived_at IS NULL AND m.deleted_at IS NULL
       AND ($2::uuid IS NULL OR m.channel_id = $2::uuid) AND $3::uuid IS NULL
       AND ($5::uuid IS NULL OR m.author_id = $5::uuid)
+      AND ($11::timestamptz IS NULL OR m.created_at >= $11::timestamptz)
+      AND ($12::timestamptz IS NULL OR m.created_at < $12::timestamptz)
       AND ($6::boolean IS NULL OR (EXISTS (
           SELECT 1 FROM message_attachments link
           JOIN attachments attachment ON attachment.id = link.attachment_id
@@ -22,6 +24,8 @@ WITH matching AS (
       AND ($3::uuid IS NULL OR dm.id = $3::uuid)
       AND $1::uuid IN (dm.participant_one_id, dm.participant_two_id)
       AND ($5::uuid IS NULL OR dm_message.author_id = $5::uuid)
+      AND ($11::timestamptz IS NULL OR dm_message.created_at >= $11::timestamptz)
+      AND ($12::timestamptz IS NULL OR dm_message.created_at < $12::timestamptz)
       AND ($6::boolean IS NULL OR (EXISTS (
           SELECT 1 FROM direct_message_attachments link
           JOIN attachments attachment ON attachment.id = link.attachment_id

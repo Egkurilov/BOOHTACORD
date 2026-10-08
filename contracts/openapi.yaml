@@ -238,7 +238,7 @@
               }
             }
           },
-          "500": { "description": "Response writer does not support streaming. Middleware failure may emit an empty body.", "content": { "text/plain": { "schema": { "type": "string" } } },
+          "500": { "description": "Response writer does not support streaming or a known internal roster validation/token defect occurred. Middleware failure may emit an empty body.", "content": { "text/plain": { "schema": { "type": "string" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}},
             "x-empty-body-possible": true },
           "503": { "description": "Maintenance state is temporarily unavailable before the stream opens", "content": { "text/plain": { "schema": { "type": "string" } } },
@@ -1773,7 +1773,7 @@
     "/api/v1/search/messages": {
       "get": {
         "operationId": "searchMessages",
-        "description": "Authenticated member only. Searches non-deleted text across current TEXT channels and only the caller's own DM pairs. Optional channel_id or direct_message_id restricts the current conversation; the filters are mutually exclusive. Optional author_id and has_attachment filter results inside the same authorized scope. Uses PostgreSQL simple full-text search and a stable mixed-source cursor ordered by created_at, id, and kind.",
+        "description": "Authenticated member only. Searches non-deleted text across current TEXT channels and only the caller's own DM pairs. Optional channel_id or direct_message_id restricts the current conversation; the filters are mutually exclusive. Optional author_id and has_attachment filter results inside the same authorized scope. Uses PostgreSQL simple full-text search and a stable mixed-source cursor ordered by created_at, id, and kind. Optional created_from (inclusive) and created_before (exclusive) are RFC3339 instants with explicit timezone, up to microsecond precision; start must precede end. Resend unchanged filters on each cursor page.",
         "parameters": [
           {
             "name": "query",
@@ -1815,6 +1815,28 @@
             "description": "Optional exact boolean. true requires at least one linked attachment in ATTACHED state; false requires none. Deleted messages remain excluded and file contents are not searched.",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "created_from",
+            "in": "query",
+            "description": "Optional inclusive message-created instant. RFC3339 with explicit Z or numeric offset and at most six fractional digits. Empty/duplicate/malformed values are invalid.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 32,
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+            }
+          },
+          {
+            "name": "created_before",
+            "in": "query",
+            "description": "Optional exclusive message-created instant. RFC3339 with explicit Z or numeric offset and at most six fractional digits. If created_from is present it must precede created_before; empty/duplicate/malformed values are invalid.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 32,
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
             }
           },
           {
@@ -2178,14 +2200,14 @@
     "/api/v1/voice/participants": {
       "get": {
         "operationId": "listConnectedVoiceParticipants",
-        "description": "Authenticated non-blocked guild member; no voice lease required. Returns all current VOICE channels including empty rooms. Participants are LiveKit ICE-active voice-lease identities intersected with current unrevoked database leases, sessions and accounts. Names come from users, not LiveKit metadata. Screen sharing means a currently unmuted screen video publication in this snapshot; microphone_muted is true unless the participant has a currently unmuted microphone audio track. Speaking is not asserted. No result is cached.",
+        "description": "Authenticated non-blocked guild member; no voice lease required. Returns all current VOICE channels including empty rooms. Participants are LiveKit ICE-active voice-lease identities intersected with current unrevoked database leases, sessions and accounts. Names come from users, not LiveKit metadata. Screen sharing means a currently unmuted screen video publication in this snapshot; microphone_muted is true unless the participant has a currently unmuted microphone audio track. Speaking is not asserted. Authorized results are not cached; volatile SFU observations may be reused for 250ms for equivalent channel scopes with current per-user ACL and lease rechecks.",
         "responses": {
           "200": { "description": "Current voice-room roster snapshot", "headers": { "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
               "X-Request-ID": {"$ref": "#/components/headers/RequestID"} }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/VoiceParticipants" } } } },
           "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
-          "503": { "description": "Private LiveKit RoomService snapshot unavailable; never interpreted as an empty roster", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
-            "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
+          "503": { "description": "Mandatory DB or LiveKit dependency unavailable (VOICE_PRESENCE_UNAVAILABLE); never interpreted as an empty roster", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
+            "headers": {"Retry-After": {"schema": {"type": "string", "enum": ["1"]}}, "X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
           "500": { "description": "Internal error. Middleware failure may emit an empty body.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}},
             "x-empty-body-possible": true }
@@ -2196,10 +2218,10 @@
     "/api/v1/voice/rosters/events": {
       "get": {
         "operationId": "watchConnectedVoiceParticipants",
-        "description": "Authenticated non-blocked guild member; no voice lease required. Opens a long-lived Server-Sent Events stream of complete VoiceParticipants snapshots. Each snapshot is independently rebuilt from the caller's currently visible VOICE channels, active LiveKit participants and current unrevoked leases. LiveKit webhooks carry invalidation hints only; they never supply roster data. The original session cookie is revalidated every 10 seconds while the connection remains open; if it is revoked, the server sends `event: session-expired` with an empty JSON data line and closes the stream. Heartbeat comments keep idle connections alive. Each snapshot event is one UTF-8 line `data: <JSON VoiceParticipants>` followed by a blank line. No event is cached.",
+        "description": "Authenticated non-blocked guild member; no voice lease required. Opens a long-lived Server-Sent Events stream of complete VoiceParticipants snapshots. Each snapshot is independently rebuilt from the caller's currently visible VOICE channels, active LiveKit participants and current unrevoked leases. LiveKit webhooks carry invalidation hints only; they never supply roster data. The original session cookie is revalidated every 10 seconds while the connection remains open; if it is revoked, the server sends `event: session-expired` with an empty JSON data line and closes the stream. Heartbeat comments keep idle connections alive. Each snapshot event is one UTF-8 line `data: <JSON VoiceParticipants>` followed by a blank line. No authorized event is cached. On transient refresh failure the server makes at most one retry in the original five-second snapshot budget, then emits `event: roster-unavailable` with data `{}` and closes. Dependency failures before handshake return 503 with Retry-After: 1; identifiable internal validation or token defects return 500. Short volatile SFU observations are shared only for equivalent scopes; ACL and leases are rechecked for every caller.",
         "responses": {
           "200": {
-            "description": "Long-lived SSE stream of complete current voice-roster snapshots; one JSON snapshot per data event, heartbeat comments while idle, and a session-expired event if the session is revoked",
+            "description": "Long-lived SSE stream of complete current voice-roster snapshots; one JSON snapshot per data event, heartbeat comments while idle, a session-expired event if the session is revoked, or a roster-unavailable event followed by close after bounded dependency recovery fails",
             "headers": {
               "Cache-Control": { "schema": { "type": "string", "enum": ["no-store"] } },
               "X-Accel-Buffering": { "schema": { "type": "string", "enum": ["no"] } },
@@ -2210,16 +2232,17 @@
                 "schema": { "type": "string" },
                 "examples": {
                   "snapshot": { "value": "data: {\"channels\":[{\"channel_id\":\"11111111-1111-4111-8111-111111111111\",\"participants\":[{\"account_id\":\"22222222-2222-4222-8222-222222222222\",\"display_name\":\"Р СљР С‘Р С”Р В°\",\"screen_sharing\":false,\"microphone_muted\":true}]}]}\n\n" },
-                  "sessionExpired": { "value": "event: session-expired\ndata: {}\n\n" }
+                  "sessionExpired": { "value": "event: session-expired\ndata: {}\n\n" },
+"rosterUnavailable": { "value": "event: roster-unavailable\ndata: {}\n\n" }
                 }
               }
             }
           },
           "401": { "description": "No active server-side session", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
-          "503": { "description": "Private LiveKit RoomService snapshot unavailable; stream is not opened with a fabricated empty roster", "content": { "text/plain": { "schema": { "type": "string" } } },
-            "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
-          "500": { "description": "Response writer does not support streaming. Middleware failure may emit an empty body.", "content": { "text/plain": { "schema": { "type": "string" } } },
+          "503": { "description": "Mandatory DB or LiveKit dependency unavailable; stable roster unavailable body, stream is not opened with a fabricated empty roster", "content": { "text/plain": { "schema": { "type": "string" } } },
+            "headers": {"Retry-After": {"schema": {"type": "string", "enum": ["1"]}}, "X-Request-ID": {"$ref": "#/components/headers/RequestID"}} },
+          "500": { "description": "Response writer does not support streaming or a known internal roster validation/token defect occurred. Middleware failure may emit an empty body.", "content": { "text/plain": { "schema": { "type": "string" } } },
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}},
             "x-empty-body-possible": true }
         },

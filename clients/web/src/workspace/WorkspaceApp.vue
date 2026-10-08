@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import GuildName from '../guild/profile/GuildName.vue'
 import ChannelTopologyActions from '../channel/member_topology/ChannelTopologyActions.vue'
 import { buildVoiceNavigationPresence } from '../channel/voice_navigation_presence'
@@ -31,7 +31,7 @@ import { useScreenShareSetup } from './screen_share_setup'
 import { useWorkspaceNavigation } from './workspace_navigation'
 import ConnectionStatus from './connection_status/Status.vue'
 import type { ActionScope } from '../telemetry/action_scope/scope'
-import { observeWorkspace } from '../telemetry/observe_render/workspace'
+import { bindWorkspaceReady } from './ready_lifecycle/bind'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string;readiness?:ActionScope }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
 const { activeVoiceChannel, audioSettings, loadAudioDevices, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls(props.accountId)
@@ -51,16 +51,13 @@ watch(() => realtimeStore.state, (state) => { if (state === 'ERROR' || state ===
 const { profile, profileError, profileLoading, refreshProfile, setProfile } = useCurrentProfile()
 useAuthorDirectoryLifecycle(profile)
 const voiceNavigationPresence = computed(() => buildVoiceNavigationPresence(activeVoiceChannel.value?.id ?? null, profile.value, voiceConnection))
-function setParticipantVolume(participantID: string, volume: number): void { voiceConnection.setParticipantVolume(participantID, volume) }
 function refreshTopology(): void { void topologyStore.refresh() }
-let mounted=true
-onMounted(() => {
- permissions.start(props.accountId);voiceRoster.start();workspaceRealtime.start()
- void observeWorkspace(props.readiness,async()=>{
-  await Promise.all([topologyStore.refresh(),directMessageStore.refreshNavigation(),refreshProfile()])
- },()=>mounted,()=>Boolean(topologyStore.error||directMessageStore.error||profileError.value))
+bindWorkspaceReady({ readiness: props.readiness,
+  start: () => { permissions.start(props.accountId); voiceRoster.start(); workspaceRealtime.start() },
+  refresh: () => Promise.all([topologyStore.refresh(), directMessageStore.refreshNavigation(), refreshProfile()]),
+  failed: () => Boolean(topologyStore.error || directMessageStore.error || profileError.value),
+  stop: () => { permissions.stop(); voiceRoster.stop(); workspaceRealtime.stop() },
 })
-onBeforeUnmount(() => {mounted=false;props.readiness?.finish('cancelled','disposed');permissions.stop();voiceRoster.stop();workspaceRealtime.stop()})
 </script>
 <template>
   <div class="app-frame">
@@ -74,7 +71,7 @@ onBeforeUnmount(() => {mounted=false;props.readiness?.finish('cancelled','dispos
           <SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
           <WorkspaceSidebarTabs class="sidebar-tabs" :active="sidebarSection" @select="sidebarSection = $event" />
           <div class="nav-content">
-          <ConnectionStatus :chat="realtimeStore.state" :voice="voiceConnection.state" :roster-available="voiceRoster.channels.value !== null && !voiceRoster.error.value" :last-updated-at="voiceRoster.lastUpdatedAt.value" @retry-chat="realtimeStore.reconnect()" @retry-roster="voiceRoster.reconnect()" />
+          <ConnectionStatus :chat="realtimeStore.state" :voice="voiceConnection.state" :roster-available="voiceRoster.channels.value !== null && !voiceRoster.error.value" :last-updated-at="voiceRoster.lastUpdatedAt.value" :roster-retained="voiceRoster.channels.value !== null" @retry-chat="realtimeStore.reconnect()" @retry-roster="voiceRoster.reconnect()" />
           <template v-if="sidebarSection === 'channels'">
             <p v-if="topologyStore.loading" class="state" aria-live="polite">Загружаем каналы…</p>
             <p v-else-if="topologyStore.error" class="state state-error" role="alert">{{ topologyStore.error }} Войдите в аккаунт или повторите попытку.</p>
@@ -114,7 +111,7 @@ onBeforeUnmount(() => {mounted=false;props.readiness?.finish('cancelled','dispos
           </template>
         </WorkspaceMain>
       </main>
-      <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :open="membersOpen" :active-voice-channel="activeVoiceChannel" :selected-voice-channel="selectedChannel?.kind === 'VOICE' ? selectedChannel : null" :participants="voiceConnection.voiceVolumeParticipants" :presence-resolver="guildPresence.resolve" :role="props.role" :account-i-d="profile?.account_id" :self-name="profile?.display_name ?? null" :self-microphone-muted="voiceConnection.microphoneMuted" :self-microphone-unavailable="voiceConnection.microphonePermissionDenied" :modal="modalDrawer === 'members'" @member-count="guildMemberCount = $event" @open-d-m="openDirectMessageFromMember" @set-volume="setParticipantVolume" />
+      <WorkspaceMembersPanel v-if="!selectedDirectMessage && activePanel === 'none'" :open="membersOpen" :active-voice-channel="activeVoiceChannel" :selected-voice-channel="selectedChannel?.kind === 'VOICE' ? selectedChannel : null" :participants="voiceConnection.voiceVolumeParticipants" :presence-resolver="guildPresence.resolve" :role="props.role" :account-i-d="profile?.account_id" :self-name="profile?.display_name ?? null" :self-microphone-muted="voiceConnection.microphoneMuted" :self-microphone-unavailable="voiceConnection.microphonePermissionDenied" :modal="modalDrawer === 'members'" @member-count="guildMemberCount = $event" @open-d-m="openDirectMessageFromMember" @set-volume="voiceConnection.setParticipantVolume" />
       <aside v-else-if="activePanel === 'search'" id="search-aside-panel" class="members search-aside" :class="{ 'is-open': activePanel === 'search' }" :role="modalDrawer === 'search' ? 'dialog' : undefined" :aria-modal="modalDrawer === 'search' ? 'true' : undefined" aria-label="Поиск сообщений" tabindex="-1" data-testid="search-aside-panel"><WorkspaceSearchPanel @open-channel="selectChannel" @open-direct-message="selectDirectMessage" @close="activePanel = 'none'" /></aside>
       <button v-if="navOpen || membersOpen || activePanel === 'search'" class="drawer-scrim" type="button" aria-label="Закрыть навигацию и участников" @click="closeDrawers(); activePanel = 'none'" />
     </div>

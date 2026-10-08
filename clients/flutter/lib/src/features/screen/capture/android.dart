@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+
+import 'cancelled.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
@@ -7,7 +10,7 @@ Future<void> prepareAndroidScreenShare(bool Function() active) async {
   if (defaultTargetPlatform != TargetPlatform.android || !active()) return;
   final permitted = await rtc.Helper.requestCapturePermission();
   if (!active()) return;
-  if (!permitted) throw StateError('Захват экрана не разрешён.');
+  if (!permitted) throw const ScreenCaptureCancelled();
   final initialized = await FlutterBackground.initialize(
     androidConfig: const FlutterBackgroundAndroidConfig(
       notificationTitle: 'Демонстрация экрана',

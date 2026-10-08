@@ -2,7 +2,6 @@ package watchconnectedparticipants
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -11,72 +10,78 @@ import (
 	roster "voice-platform/backend/internal/voice/list_connected_participants"
 )
 
-func serveRosterStream(writer http.ResponseWriter, request *http.Request, flusher http.Flusher, lister Lister, updates <-chan struct{}, authenticator SessionAuthenticator, principal auth.Principal, initial roster.Result, observer FailureObserver, revalidateEvery, heartbeatEvery, reconcileEvery time.Duration) {
+func serveRosterStream(writer http.ResponseWriter, request *http.Request, flusher http.Flusher, lister Lister, updates <-chan struct{}, authenticator SessionAuthenticator, principal auth.Principal, initial roster.Result, observer FailureObserver, revalidateEvery, heartbeatEvery, reconcileEvery time.Duration) string {
 	write := newRosterWriter(writer, flusher, initial)
+	writeFailed := false
+	checkedWrite := func(value roster.Result) bool { ok := write(value); writeFailed = !ok; return ok }
 	revalidation := time.NewTicker(revalidateEvery)
 	defer revalidation.Stop()
 	heartbeat := time.NewTicker(heartbeatEvery)
 	defer heartbeat.Stop()
-	reconciliation := time.NewTicker(reconcileEvery)
+	reconciliation := time.NewTicker(reconciliationPeriod(reconcileEvery))
 	defer reconciliation.Stop()
 	for {
 		select {
 		case <-request.Context().Done():
-			return
+			return "canceled"
 		case <-revalidation.C:
-			if !revalidateRosterSession(writer, request, flusher, authenticator, principal, observer) {
-				return
+			if reason := revalidateRosterSession(writer, request, flusher, authenticator, principal, observer); reason != "" {
+				return reason
 			}
 		case <-heartbeat.C:
 			if !writeHeartbeat(writer, flusher) {
 				observeFailure(observer, "stream_write")
-				return
+				return "write"
 			}
 		case <-updates:
-			if !refreshRosterSnapshot(request.Context(), lister, principal.AccountID, write, writer, flusher, observer) {
-				return
+			if !refreshRosterSnapshot(request.Context(), lister, principal.AccountID, checkedWrite, writer, flusher, observer) {
+				return refreshCloseReason(request, writeFailed)
 			}
 		case <-reconciliation.C:
-			if !refreshRosterSnapshot(request.Context(), lister, principal.AccountID, write, writer, flusher, observer) {
-				return
+			if !refreshRosterSnapshot(request.Context(), lister, principal.AccountID, checkedWrite, writer, flusher, observer) {
+				return refreshCloseReason(request, writeFailed)
 			}
 		}
 	}
 }
 
-func writeHeartbeat(writer http.ResponseWriter, flusher http.Flusher) bool {
-	if _, err := fmt.Fprint(writer, ": keepalive\n\n"); err != nil {
-		return false
+func refreshCloseReason(request *http.Request, writeFailed bool) string {
+	if request.Context().Err() != nil {
+		return "canceled"
 	}
-	flusher.Flush()
-	return true
+	if writeFailed {
+		return "write"
+	}
+	return "snapshot"
 }
 
-func revalidateRosterSession(writer http.ResponseWriter, request *http.Request, flusher http.Flusher, authenticator SessionAuthenticator, principal auth.Principal, observer FailureObserver) bool {
+func writeHeartbeat(writer http.ResponseWriter, flusher http.Flusher) bool {
+	return writeStreamFrame(writer, flusher, []byte(": keepalive\n\n")) == nil
+}
+
+func revalidateRosterSession(writer http.ResponseWriter, request *http.Request, flusher http.Flusher, authenticator SessionAuthenticator, principal auth.Principal, observer FailureObserver) string {
 	cookie, err := request.Cookie(session.CookieName)
 	if err != nil {
 		writeSessionExpired(writer, flusher)
-		return false
+		return "session_expired"
 	}
 	ctx, cancel := context.WithTimeout(request.Context(), snapshotTimeout)
 	current, err := authenticator.Authenticate(ctx, cookie.Value)
 	cancel()
 	if request.Context().Err() != nil {
-		return false
+		return "canceled"
 	}
 	if authRevoked(err, current, principal) {
 		writeSessionExpired(writer, flusher)
-		return false
+		return "session_expired"
 	}
 	if err != nil {
 		observeFailure(observer, "stream_session_store")
-		return false
+		return "session_store"
 	}
-	return true
+	return ""
 }
 
 func writeSessionExpired(writer http.ResponseWriter, flusher http.Flusher) {
-	if _, err := fmt.Fprint(writer, "event: session-expired\ndata: {}\n\n"); err == nil {
-		flusher.Flush()
-	}
+	_ = writeStreamFrame(writer, flusher, []byte("event: session-expired\ndata: {}\n\n"))
 }

@@ -1,0 +1,97 @@
+{
+  "id": "imp16-date-range-2026-10-08",
+  "kind": "search-date-range-source-and-component-integration",
+  "status": "PASS",
+  "executed_at": "2026-10-08T23:39:17+03:00",
+  "source_base": "b0bbe27a4618eb831dd33e1e4f2b0ea98488921b",
+  "source_revision": "containing Git commit",
+  "environment": {
+    "os": "Windows",
+    "browser": "local Playwright Chromium 1243",
+    "browser_timezones": [
+      "UTC",
+      "America/New_York"
+    ],
+    "unit_timezones": [
+      "UTC",
+      "America/New_York",
+      "Pacific/Apia"
+    ],
+    "database": "disposable PostgreSQL 17 over loopback SSH tunnel; synthetic isolated schemas only"
+  },
+  "checks": [
+    {
+      "command": "go test ./internal/chat/search_messages/...",
+      "status": "PASS",
+      "scope": "service/API/repository unit checks; initial integration skips were explicit"
+    },
+    {
+      "command": "go vet ./internal/chat/search_messages/...",
+      "status": "PASS"
+    },
+    {
+      "command": "npm test",
+      "status": "PASS",
+      "files": 434,
+      "tests": 1355
+    },
+    {
+      "command": "npm test -- src/search/filters",
+      "status": "PASS",
+      "tests": 13,
+      "note": "includes two additional invalid/skipped-day edge cases added after full suite"
+    },
+    {
+      "command": "npm run build",
+      "status": "PASS",
+      "note": "VITE_PUBLIC_ORIGIN=http://localhost:5173; normal existing chunk warnings"
+    },
+    {
+      "command": "npm run test:search-dates",
+      "status": "PASS",
+      "tests": 4,
+      "scope": "actual Vue components with intercepted synthetic API responses; Enter submission, calendar instants, cursor pages, reopen, logout, spring/fall DST"
+    },
+    {
+      "command": "tools/verify/contracts/verify-contracts.ps1",
+      "status": "PASS",
+      "tests": 19,
+      "public_operations": 90
+    },
+    {
+      "command": "tools/verify/spec_traceability/verify-spec-traceability.ps1",
+      "status": "PASS",
+      "requirements": 39
+    },
+    {
+      "command": "go test -count=1 -timeout=3m -json -run '^Test(Search|Handler|Date|Repository|Unified)' ./internal/chat/search_messages/... with disposable test DSN",
+      "status": "PASS",
+      "tests": 21,
+      "packages": 3,
+      "skips": 0,
+      "scope": "All IMP-16 date/ACL/cursor/attachment/index behavior and existing search regression cases; separate IMP-17 corpus excluded."
+    }
+  ],
+  "privacy": "Synthetic test messages/participants only; no production mutation, real messages, credentials, or DSNs in evidence.",
+  "remaining_runtime_qa": [
+    "Full QA-04 acceptance with real authenticated account and API in a supported browser: combine author, attachment and date filters in channel/own DM; verify inaccessible DM and archived/deleted data exclusions; record browser/OS and exact merged SHA.",
+    "Visual/responsive and keyboard acceptance in application shell at 1024/1440px and 125/150% zoom; component behavior checks do not claim pixel-perfect or cross-device acceptance."
+  ],
+  "exploratory_validation_failure": {
+    "command": "go test -count=1 -v ./internal/chat/search_messages/... with disposable test DSN",
+    "status": "FAIL",
+    "reason": "Legacy TestRussianSearchQualityReport exceeded default 10 min while individually inserting 5,000 corpus noise rows over remote SSH. New date/ACL/filter/index cases had passed first; full-suite PASS is not claimed. IMP-17 corpus fixture and production search behavior were not changed."
+  },
+  "postgres_passed_cases": [
+    "TestDateRangeInclusiveStartExclusiveEndAndPrivateMixedCursor",
+    "TestDateRangeDoesNotReviveDeletedMessagesOrHiddenAttachments",
+    "TestDateFilteredUnifiedSearchPreservesPartialGINPlans",
+    "TestSearchFiltersAttachmentsAndAuthorsWithinReadableScope",
+    "TestSearchWithPostgresCanUseBothPartialGINIndexes",
+    "TestRepositorySearchesOnlyReadableNonDeletedMessages",
+    "TestRepositoryRejectsUnreadableDMFilter",
+    "TestSearchWithPostgresRussianPhraseAndPrivateDM",
+    "TestSearchWithPostgresCursorBoundaries",
+    "TestUnifiedSearchSeparatesConversationAndMessageKinds"
+  ]
+}
