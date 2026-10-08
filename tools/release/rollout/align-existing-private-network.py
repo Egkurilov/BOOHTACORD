@@ -13,6 +13,10 @@ def output(*command):
     return subprocess.check_output(command, text=True, stderr=subprocess.DEVNULL).strip()
 
 
+def load_compose_configuration(compose):
+    return json.loads(output(*compose, "--profile", "operator", "config", "--format", "json"))
+
+
 def ensure_postgres_connected(compose, project, network_name):
     containers = output(*compose, "ps", "-aq", "postgres").splitlines()
     if len(containers) != 1:
@@ -64,7 +68,7 @@ def main(project_dir, canonical_env, recovery_compose):
     compose_dir = project_dir / "deploy" if (project_dir / "deploy/compose.yaml").is_file() else project_dir
     compose = ["docker", "compose", "--project-directory", str(compose_dir), "--env-file",
                str(project_dir / ".env"), "-f", str(compose_dir / "compose.yaml")]
-    configuration = json.loads(output(*compose, "config", "--format", "json"))
+    configuration = load_compose_configuration(compose)
     project = configuration.get("name", "voice-platform")
     network_name = project + "_private"
     network = json.loads(output("docker", "network", "inspect", network_name, "--format", "{{json .IPAM.Config}}"))
