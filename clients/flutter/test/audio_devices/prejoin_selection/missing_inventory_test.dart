@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:boohtacord_desktop/src/services/audio_preferences.dart';
+import 'package:boohtacord_desktop/src/features/voice/admission/join.dart';
+import 'package:boohtacord_desktop/src/features/voice/preferences/load.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -79,7 +81,7 @@ void main() {
 
     expect(harness.owner.selectedAudioInputId, isNull);
     expect(harness.owner.selectedAudioOutputId, isNull);
-    expect(harness.owner.audioDeviceWarning, isNotNull);
+    expect(harness.audio.audioDeviceWarning, isNotNull);
     expect(hardware.selectedAudioInput?.deviceId, currentInput.deviceId);
     expect(hardware.selectedAudioOutput?.deviceId, currentOutput.deviceId);
     expect(

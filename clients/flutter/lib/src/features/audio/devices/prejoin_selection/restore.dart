@@ -8,6 +8,7 @@ mixin AudioDevicePreJoinRestore
     if (room != null || audioDeviceScanStatus != AudioDeviceScanStatus.ready) {
       return;
     }
+    final inventoryWarning = audioDeviceWarning;
     var selectionCleared = false;
     final inputId = selectedAudioInputId;
     if (inputId != null) {
@@ -31,6 +32,7 @@ mixin AudioDevicePreJoinRestore
         selectionCleared = true;
       }
     }
+    if (inventoryWarning != null) audioDeviceWarning = inventoryWarning;
     if (selectionCleared) notifyListeners();
   }
 }
