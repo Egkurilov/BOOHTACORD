@@ -5,6 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"voice-platform/backend/internal/database/pool"
 	maintenanceadmission "voice-platform/backend/internal/maintenance/admission"
@@ -17,9 +21,11 @@ func main() {
 		fmt.Fprintln(os.Stderr, "usage: maintenance-admission --enable|--disable")
 		os.Exit(2)
 	}
-	database, err := pool.Open(context.Background(), os.Getenv("DATABASE_URL"))
+	openContext, cancelOpen := context.WithTimeout(context.Background(), 30*time.Second)
+	database, err := openDatabaseWithRetry(openContext, os.Getenv("DATABASE_URL"), 5, 2*time.Second, pool.Open)
+	cancelOpen()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "could not open database")
+		fmt.Fprintf(os.Stderr, "could not open database (%s)\n", databaseOpenErrorClass(err))
 		os.Exit(1)
 	}
 	defer database.Close()
@@ -33,6 +39,47 @@ func main() {
 		return
 	}
 	fmt.Println("Maintenance admission disabled.")
+}
+
+func openDatabaseWithRetry(
+	ctx context.Context,
+	databaseURL string,
+	retries int,
+	retryDelay time.Duration,
+	open func(context.Context, string) (*pgxpool.Pool, error),
+) (*pgxpool.Pool, error) {
+	if retries < 0 {
+		retries = 0
+	}
+	for attempt := 0; ; attempt++ {
+		database, err := open(ctx, databaseURL)
+		if err == nil {
+			return database, nil
+		}
+		if attempt >= retries || ctx.Err() != nil || !strings.HasPrefix(err.Error(), "ping postgres:") {
+			return nil, err
+		}
+		timer := time.NewTimer(retryDelay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, err
+		case <-timer.C:
+		}
+	}
+}
+
+func databaseOpenErrorClass(err error) string {
+	switch {
+	case errors.Is(err, pool.ErrDatabaseURLRequired):
+		return "DATABASE_URL missing"
+	case strings.HasPrefix(err.Error(), "open postgres pool:"):
+		return "configuration"
+	case strings.HasPrefix(err.Error(), "ping postgres:"):
+		return "connection"
+	default:
+		return "unknown"
+	}
 }
 
 func parseMode(arguments []string) (bool, error) {
