@@ -13,6 +13,7 @@
     "test:screen-profile": "playwright test -c tests/screen_profile/playwright.config.ts",
     "test:screen-profile-sfu": "playwright test -c tests/screen_profile/screen_share_sfu.playwright.config.ts",
     "test:member-popover": "playwright test -c tests/member_popover/playwright.config.ts",
+    "test:mentions-inbox": "playwright test -c tests/mentions_inbox/playwright.config.ts",
     "test:password-generation": "playwright test -c tests/password_generation/playwright.config.ts",
     "test:voice-shortcuts": "playwright test -c tests/voice_shortcuts/playwright.config.ts",
     "test:voice-disconnect-notice": "playwright test -c tests/voice_disconnect_notice/playwright.config.ts",
