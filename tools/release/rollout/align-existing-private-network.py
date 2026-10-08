@@ -28,8 +28,8 @@ def ensure_postgres_connected(compose, project, network_name):
         raise RuntimeError("PostgreSQL container identity does not match the Compose project")
     networks = json.loads(output("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", container_id))
     if network_name not in networks:
-        subprocess.run(["docker", "network", "connect", network_name, container_id], check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["docker", "network", "connect", "--alias", "postgres", network_name, container_id],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print("Reattached the existing PostgreSQL container to the active private network.")
 
 
