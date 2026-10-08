@@ -8,6 +8,6 @@ export function connectionStatus(chat: RealtimeState, voice: VoiceConnectionStat
     chat: chat === 'CONNECTED' ? 'Чат подключён' : 'Чат обновляется',
     voice: voice === 'CONNECTED' || voice === 'LISTENER' ? 'Голос подключён'
       : voice === 'JOINING' || voice === 'RECONNECTING' ? 'Голос восстанавливается' : 'Голос не подключён',
-    roster: (rosterAvailable ? 'Состав обновлён' : 'Состав недоступен')+age,
+    roster: (rosterAvailable ? 'Состав обновлён' : lastUpdatedAt !== null ? 'Состав устарел' : 'Состав недоступен')+age,
   }
 }

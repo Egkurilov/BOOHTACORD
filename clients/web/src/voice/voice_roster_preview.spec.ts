@@ -16,6 +16,7 @@ describe('prejoin voice roster', () => {
     }).use(createPinia()))
     expect(html).toContain('Пока никого нет')
     expect(html).not.toContain('Сейчас в канале: 0')
+    expect(html).not.toContain('Проверяем, кто сейчас в комнате')
   })
   it('shows current speakers and stream state in navigation without joining', async () => {
     const html = await renderToString(createSSRApp(ChannelNavigation, {

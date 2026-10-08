@@ -19,8 +19,9 @@ const emit = defineEmits<{ join: [channelId: string, transfer?: boolean, joinMod
       <h3 id="voice-prejoin-title" aria-live="polite" aria-atomic="true">{{ voiceState === 'JOINING' ? 'Подключаемся к голосовой комнате' : 'Вы не подключены' }}</h3>
       <p class="voice-prejoin-copy">{{ voiceState === 'JOINING' ? 'Соединение устанавливается.' : 'Посмотрите, кто сейчас в комнате, и выберите удобный способ подключения.' }}</p>
       <VoiceRoomRoster v-if="roster" :roster="roster" />
+      <p v-if="roster && rosterError" class="state state-error" role="status">Состав устарел. Восстанавливаем соединение.</p>
       <p v-else-if="rosterError" class="state state-error" role="status">Не удалось обновить состав комнаты. Повторяем попытку.</p>
-      <p v-else class="state" role="status">Проверяем, кто сейчас в комнате…</p>
+      <p v-else-if="!roster" class="state" role="status">Проверяем, кто сейчас в комнате…</p>
       <DisconnectNotice v-if="notice" :notice="notice" />
       <p v-else-if="voiceError" class="state state-error" role="alert">{{ voiceError }}</p>
       <TransferConfirmation v-if="voiceTransferRequired" @confirm="emit('join', channelId, true, $event)" />
