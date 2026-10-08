@@ -32,6 +32,9 @@
 - Create: `clients/flutter/lib/src/features/voice/overlay/windows_client.dart`
 - Create: `clients/flutter/windows/runner/voice_overlay_window.h`
 - Create: `clients/flutter/windows/runner/voice_overlay_window.cpp`
+- Create: `clients/flutter/windows/runner/voice_overlay_paint.cpp`
+- Create: `clients/flutter/windows/runner/voice_overlay_channel.h`
+- Create: `clients/flutter/windows/runner/voice_overlay_channel.cpp`
 - Modify: `clients/flutter/windows/runner/flutter_window.h`
 - Modify: `clients/flutter/windows/runner/flutter_window.cpp`
 - Modify: `clients/flutter/windows/runner/CMakeLists.txt`
@@ -39,7 +42,7 @@
 
 - [ ] Encode only `visible`, display name (maximum 64 characters), speaking, and mute state in `boohtacord/voice_overlay/setSnapshot`.
 - [ ] Keep the channel client unattached on non-Windows platforms; send the initial hidden snapshot and every later feed update on Windows.
-- [ ] Create one independent topmost layered popup with `WS_EX_NOACTIVATE` and `WS_EX_TRANSPARENT`; render the capped member list and mute/speaking state using Win32 GDI.
+- [ ] Create one independent topmost layered popup with `WS_EX_NOACTIVATE` and `WS_EX_TRANSPARENT`; render the capped member list and mute/speaking state in `voice_overlay_paint.cpp` using Win32 GDI.
 - [ ] Place it at the upper-right of the monitor nearest the main window, clamp to that monitor's work area, and hide/destroy it on hidden snapshot or runner shutdown.
 - [ ] Validate channel arguments and member count before rendering; malformed calls hide the panel and return an error.
 - [ ] Unit-test method name, bounded snapshot serialization, hidden clearing, and non-Windows no-op behavior.

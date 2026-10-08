@@ -9,18 +9,18 @@ VoiceOverlayFeed createCurrentVoiceOverlayFeed({
   required VoiceController voice,
   required VoiceRosterController roster,
   required String? Function() readAccountId,
-  VoiceOverlaySettings settings = const VoiceOverlaySettings(
-    enabled: false,
-    onlySpeakers: false,
-  ),
+  bool onlySpeakers = false,
 }) =>
     VoiceOverlayFeed(
       sources: [voice, roster],
-      project: () => currentVoiceOverlaySnapshot(
+      project: (enabled) => currentVoiceOverlaySnapshot(
         voice: voice,
         roster: roster,
         accountId: readAccountId(),
-        settings: settings,
+        settings: VoiceOverlaySettings(
+          enabled: enabled,
+          onlySpeakers: onlySpeakers,
+        ),
       ),
     );
 

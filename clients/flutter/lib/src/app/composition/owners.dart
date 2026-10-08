@@ -13,6 +13,7 @@ import '../../features/realtime/lifecycle/controller.dart';
 import '../../features/audio/devices/controller.dart';
 import '../../features/voice/lifecycle/controller.dart';
 import '../../features/voice/overlay/feed.dart';
+import '../../features/voice/overlay/windows_client.dart';
 import '../../features/voice/roster_state/controller.dart';
 import '../../features/screen/lifecycle/controller.dart';
 import '../../features/authorization/permissions/controller.dart';
@@ -50,11 +51,18 @@ abstract class AppOwners extends ChangeNotifier {
   late final AudioDeviceController audioDevices;
   late final VoiceController voice;
   late final VoiceOverlayFeed voiceOverlay;
+  WindowsVoiceOverlayClient? voiceOverlayWindowsClient;
   late final VoiceRosterController voiceRoster;
   late final ScreenShareController screen;
   late final PermissionController permissions;
   String? error;
   bool disposed = false;
+
+  void setVoiceOverlayEnabled(bool enabled) {
+    voiceOverlay.setEnabled(enabled);
+    notifyListeners();
+  }
+
   @override
   void notifyListeners() {
     if (!disposed) super.notifyListeners();

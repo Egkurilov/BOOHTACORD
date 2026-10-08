@@ -25,6 +25,9 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  voice_overlay_window_.Create(GetHandle());
+  voice_overlay_channel_ = std::make_unique<VoiceOverlayChannel>(
+      flutter_controller_->engine()->messenger(), &voice_overlay_window_);
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -40,6 +43,9 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  voice_overlay_window_.SetSnapshot(false, {});
+  voice_overlay_channel_.reset();
+  voice_overlay_window_.Destroy();
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }

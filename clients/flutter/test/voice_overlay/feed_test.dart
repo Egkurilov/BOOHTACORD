@@ -7,7 +7,10 @@ void main() {
   test('publishes current projection when an existing voice source changes', () {
     final voice = ChangeNotifier();
     var snapshot = const VoiceOverlaySnapshot(visible: false, members: []);
-    final feed = VoiceOverlayFeed(sources: [voice], project: () => snapshot);
+    final feed = VoiceOverlayFeed(
+      sources: [voice],
+      project: (_) => snapshot,
+    );
     var notifications = 0;
     feed.addListener(() => notifications++);
 
@@ -35,7 +38,10 @@ void main() {
     var visible = true;
     final feed = VoiceOverlayFeed(
       sources: [source],
-      project: () => VoiceOverlaySnapshot(visible: visible, members: const []),
+      project: (_) => VoiceOverlaySnapshot(
+        visible: visible,
+        members: const [],
+      ),
     );
 
     visible = false;
@@ -52,7 +58,7 @@ void main() {
     var visible = true;
     final feed = VoiceOverlayFeed(
       sources: [source],
-      project: () => VoiceOverlaySnapshot(
+      project: (_) => VoiceOverlaySnapshot(
         visible: visible,
         members: visible
             ? const [
@@ -77,6 +83,35 @@ void main() {
     expect(feed.snapshot.visible, isFalse);
     expect(feed.snapshot.members, isEmpty);
     expect(notifications, 1);
+    source.dispose();
+  });
+
+  test('enabling and disabling recomputes the existing room snapshot', () {
+    final source = ChangeNotifier();
+    final feed = VoiceOverlayFeed(
+      sources: [source],
+      project: (enabled) => VoiceOverlaySnapshot(
+        visible: enabled,
+        members: enabled
+            ? const [
+                VoiceOverlayMember(
+                  displayName: 'Alice',
+                  speaking: true,
+                  microphoneMuted: false,
+                ),
+              ]
+            : const [],
+      ),
+    );
+
+    expect(feed.snapshot.visible, isFalse);
+    feed.setEnabled(true);
+    expect(feed.snapshot.visible, isTrue);
+    expect(feed.snapshot.members.single.displayName, 'Alice');
+    feed.setEnabled(false);
+    expect(feed.snapshot.visible, isFalse);
+    expect(feed.snapshot.members, isEmpty);
+    feed.dispose();
     source.dispose();
   });
 }

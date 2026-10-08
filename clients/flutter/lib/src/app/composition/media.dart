@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
+
 import '../../core/errors/presentation.dart';
 import '../../features/audio/devices/controller.dart';
 import '../../features/voice/lifecycle/controller.dart';
 import '../../features/voice/overlay/current_feed.dart';
+import '../../features/voice/overlay/windows_client.dart';
 import '../../features/screen/lifecycle/controller.dart';
 import 'owners.dart';
 
@@ -37,4 +40,9 @@ void configureMedia(AppOwners app) {
     roster: app.voiceRoster,
     readAccountId: () => app.session.user?.accountId,
   );
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+    app.voiceOverlayWindowsClient = WindowsVoiceOverlayClient(
+      feed: app.voiceOverlay,
+    );
+  }
 }

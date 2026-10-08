@@ -1,7 +1,7 @@
 # Windows voice overlay — implementation investigation
 
-Status: implementation proposal; native runtime work awaits owner approval of
-the rendering boundary. Issue: [#112](https://github.com/Egkurilov/BOOHTACORD/issues/112).
+Status: first source MVP implemented on the #112 branch; Windows/game runtime
+acceptance remains open. Issue: [#112](https://github.com/Egkurilov/BOOHTACORD/issues/112).
 
 ## Existing component map
 
@@ -12,17 +12,20 @@ the rendering boundary. Issue: [#112](https://github.com/Egkurilov/BOOHTACORD/is
 | One authenticated LiveKit room | `clients/flutter/lib/src/features/voice/lifecycle/state.dart` | Read the current `VoiceController.room` only. |
 | Active speakers and participant lifecycle | `clients/flutter/lib/src/features/voice/room_events/remote_participants.dart`, `refresh_voice_navigation.dart` | Reuse LiveKit events and the existing notifier. |
 | Server roster | `clients/flutter/lib/src/features/voice/roster_state/` | Not a speaking source: its DTO has name, mute, and screen-share fields only. |
-| Overlay-safe display projection | `clients/flutter/lib/src/features/voice/overlay/projection.dart` | Drops participant IDs, rejects stale channels, clears stale speaker flags, filters and caps members. |
+| Overlay-safe display projection and live feed | `clients/flutter/lib/src/features/voice/overlay/` | Drops participant IDs, rejects stale channels, clears stale speaker flags, filters and caps members; derives snapshots from existing controllers. |
+| Windows snapshot transport | `clients/flutter/lib/src/features/voice/overlay/windows_client.dart`, `clients/flutter/windows/runner/voice_overlay_channel.cpp` | Sends only visibility, display name, speaking and mute state; no Room or microphone APIs. |
+| Native overlay window | `clients/flutter/windows/runner/voice_overlay_window.cpp`, `voice_overlay_paint.cpp` | One sibling layered Win32 window, click-through and non-activating, destroyed with the existing runner. |
+| User show/hide control | `clients/flutter/lib/src/features/voice/overlay/toggle.dart`, voice dock | Opt-in toggle appears only on Windows while connected; disconnect sends an empty hidden snapshot. |
 
 ## Proposed first-version boundary
 
 Keep a single Flutter engine and the current authenticated LiveKit `Room`. A
-small top-level Win32 window in the existing runner paints only projected
-display names, mute state, and active-speaker state. Flutter sends snapshots
-over a runner-owned method channel when the current `VoiceController` changes;
-the overlay must never join LiveKit, acquire a microphone, or receive audio,
-DM contents, session credentials, or account IDs. Clear its snapshot before
-logout, voice leave/channel transfer, disconnect, and runner shutdown.
+top-level Win32 window in the existing runner paints only projected display
+names, mute state, and active-speaker state. Flutter sends snapshots over a
+runner-owned method channel when the current `VoiceController` or roster
+changes; the overlay never joins LiveKit, acquires a microphone, or receives
+audio, DM contents, session credentials, or account IDs. A Windows-only voice
+dock toggle enables/disables it. Disconnect and runner shutdown clear it.
 
 Use a topmost layered window with `WS_EX_NOACTIVATE` and `WS_EX_TRANSPARENT` in
 normal mode so input continues to the game. Disable pass-through only while the
@@ -42,28 +45,31 @@ remain explicitly unclaimed pending game-matrix evidence.
 
 ## Verification boundary
 
-The pure projection tests cover channel isolation, reconnect speaker reset,
-simultaneous speakers, only-speakers mode, maximum roster size, disabled state,
-and clearing after disconnect. The Flutter application now derives a
-snapshot-only feed from its existing `VoiceController` and current-channel
-roster; the feed adds no LiveKit room, microphone capture, or participant IDs.
-The feed is not yet connected to a native window, so it does not render an
-in-game overlay. The feed and roster-projection tests were added, but are
-`NOT_RUN` in the current environment because Flutter/Dart are unavailable.
-The remaining integration needs a method-channel/native-window implementation
-and Windows runner tests for pass-through, focus, hotkey conflict, DPI/monitor
-restore, and deterministic destruction.
+Pure projection tests cover channel isolation, reconnect speaker reset,
+simultaneous speakers, only-speakers mode, roster cap, disabled state, and
+clearing after disconnect. Feed, show/hide, snapshot serialization, and native
+window contract tests are present. Local execution is `NOT_RUN` because Flutter
+and Dart are unavailable in the current environment; Windows CI must compile the
+runner before source acceptance. No physical Windows/game acceptance is
+claimed.
+
+The initial renderer choice is a sibling Win32 window in the existing runner;
+the issue requires a separate transparent overlay and forbids a second media
+connection. This keeps one engine and makes click-through/non-activation an OS
+window property. The MVP defaults hidden and exposes an in-client toggle.
 Manual acceptance must record Windows build, game and anti-cheat, display mode,
 monitor/DPI topology, steps, expected/actual focus and input, and paired
-60-second FPS/frame-time, CPU, GPU, and memory measurements with the overlay on
-and off. No physical Windows/game acceptance is claimed by this investigation.
+60-second FPS/frame-time, CPU/GPU/RAM measurements with the overlay on and off.
+The MVP only claims a bounded initial desktop position on the monitor nearest
+the main window. Hotkey registration, move/edit mode, saved account settings,
+only-speakers control, robust multi-monitor/DPI restore, broader accessibility,
+exclusive fullscreen, anti-cheat, and performance/game-matrix evidence remain
+open follow-up gates.
 
-## Owner decision
+## Compatibility boundary
 
-Please confirm the proposed native Win32-painted sibling window, with one
-Flutter engine and snapshot-only state transfer. This avoids duplicating
-LiveKit/session logic and keeps game input pass-through at the OS window level.
-Before merging the native runtime slice, also approve or replace the proposed
-initial compatibility boundary (windowed and borderless-windowed only); hardware
-performance budgets must be set from a paired baseline on the target Windows
-machine rather than guessed from unit tests.
+The implementation supports an ordinary topmost window. The initial product
+claim is limited to windowed and borderless-windowed games after manual tests.
+Exclusive-fullscreen and anti-cheat compatibility remain unclaimed. Set
+performance budgets from paired measurements on the target Windows machine;
+do not infer them from unit tests or compilation.

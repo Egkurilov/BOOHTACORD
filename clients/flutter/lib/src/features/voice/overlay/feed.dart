@@ -5,18 +5,25 @@ import 'projection.dart';
 class VoiceOverlayFeed extends ChangeNotifier {
   VoiceOverlayFeed({required List<Listenable> sources, required this.project})
     : _sources = List.unmodifiable(sources),
-      snapshot = project() {
+      snapshot = project(false) {
     for (final source in _sources) {
       source.addListener(_refresh);
     }
   }
 
   final List<Listenable> _sources;
-  final VoiceOverlaySnapshot Function() project;
+  final VoiceOverlaySnapshot Function(bool enabled) project;
   VoiceOverlaySnapshot snapshot;
+  bool enabled = false;
+
+  void setEnabled(bool value) {
+    if (enabled == value) return;
+    enabled = value;
+    _refresh();
+  }
 
   void _refresh() {
-    snapshot = project();
+    snapshot = project(enabled);
     notifyListeners();
   }
 
