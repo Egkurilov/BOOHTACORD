@@ -24,8 +24,20 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({});
     SharedPreferences.setMockInitialValues({});
     final session = SessionStore();
+    final storage = FlutterSecureStorage();
     await session.setBaseUrl('https://a.example');
     await session.writeCookie('vp_session=only-A');
+
+    expect(
+      await storage.read(key: 'boohtacord_session_cookie'),
+      isNull,
+    );
+    expect(
+      await storage.read(
+        key: 'boohtacord_session_cookie:https://a.example:443',
+      ),
+      'vp_session=only-A',
+    );
 
     await session.setBaseUrl('https://b.example');
     expect(await session.readCookie(), isNull);
