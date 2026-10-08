@@ -86,3 +86,5 @@ An actual Windows-engine harness is a separate follow-up verification packet, no
 ## Desktop density regression
 
 The engine follow-up exposed desktop compact density reducing44dp button targets to40dp. Focused actual AdminScreen save/reset tests reproduce40dp for Windows, macOS and Linux; Android standard-density baseline remains green. AdminAccessibleSurface now explicitly preserves standard density in its existing accessibility ButtonStyle, without changing the application-wide theme or input/filter geometry. All timeout/admin focused checks:83 PASS, zero skips (42 timeout and41 admin). Native physical screen-reader/IME acceptance remains NOT_RUN.
+
+After sourceb7a0582c: canonical local native app1051 PASS +1 existing skip, LiveKit442 PASS +1 existing skip, WebRTC30 PASS; analyzer54 informational diagnostics, zero errors/warnings. Canonical native contracts/traceability/import boundaries/signing/workflow/SBOM PASS. All9 role confirmation geometry/Enter/Escape/Back/focus cases also PASS with explicit Windows/compact theme. This final test/evidence update changes no production source fromb7a0582c.

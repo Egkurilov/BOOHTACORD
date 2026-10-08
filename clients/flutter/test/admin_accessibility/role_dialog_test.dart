@@ -15,6 +15,8 @@ void main() {
         (tester) async {
           await mountAdmin(
             tester,
+            platform: TargetPlatform.windows,
+            density: VisualDensity.compact,
             size: Size(width, 900),
             scale: scale,
             reducedMotion: true,
