@@ -26,15 +26,26 @@
     "atomic_promotion_rejects_order_regression": "PASS",
     "same_order_or_release_id_identity_conflicts_rejected": "PASS"
   },
+  "deployed_endpoint_readback": {
+    "status": "FAIL",
+    "url_selector": "https://v.bootybay.ru/api/v1/client-updates?platform=windows&distribution=direct&channel=stable&arch=x64",
+    "http_status": 200,
+    "cache_control": "no-store",
+    "catalog_revision": 28,
+    "release_id": "windows-direct-stable-r46",
+    "version": "1.0.32",
+    "native_build": "46",
+    "observed_at": "2026-10-08"
+  },
   "checks": {
     "tools/release/client_updates/test_catalog.py": "PASS",
     "client_update_catalog_validate": "PASS",
     "tools/verify/contracts/verify-contracts.ps1": "PASS"
   },
   "acceptance": {
-    "production_endpoint_readback": "NOT_RUN",
-    "old_windows_1_0_32_client_observes_update": "NOT_RUN",
+    "production_endpoint_readback": "FAIL: deployed endpoint still serves catalog revision 28 / Windows r46",
     "catalog_deployment": "NOT_RUN",
+    "old_windows_1_0_32_client_observes_update": "NOT_RUN",
     "windows_install_and_post_update_status": "NOT_RUN"
   }
 }
