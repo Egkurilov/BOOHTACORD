@@ -10,7 +10,9 @@ TOPOLOGY_PATHS = ("deploy/compose.yaml", "deploy/operators.yaml", "deploy/caddy/
                   "deploy/livekit/compose.yaml", "deploy/livekit/livekit.yaml", "deploy/client-updates/catalog.json")
 RUNTIME_PATHS = (*TOPOLOGY_PATHS,
                  "tools/release/archive", "tools/release/bundle", "tools/release/install", "tools/release/rollback",
-                 "tools/release/rollout/deploy-images.sh", "tools/release/rollout/reconcile-postgres-credential.py",
+                 "tools/release/rollout/deploy-images.sh", "tools/release/rollout/assert-proxy-networks.sh",
+                 "tools/release/rollout/align-existing-private-network.py",
+                 "tools/release/rollout/reconcile-postgres-credential.py",
                  "tools/ops/attachment_headroom/check-attachment-volume-headroom.sh",
                  "tools/ops/attachment_audit/audit-attachment-volume.sh", "tools/verify/oci/verify_oci.py",
                  "tools/verify/running_images/verify_running.sh")
