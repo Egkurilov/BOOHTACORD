@@ -3,6 +3,7 @@ import 'dart:async';
 import '../../features/session/lifecycle/controller.dart';
 import '../../features/realtime/lifecycle/controller.dart';
 import '../../features/realtime/dispatch/workspace.dart';
+import '../../features/profile/state/refresh.dart';
 import '../../features/voice/lifecycle/controller.dart';
 import '../../features/notifications/message_events/controller.dart';
 import 'owners.dart';
@@ -39,6 +40,11 @@ void configureRealtime(AppOwners app) {
       permissionsChanged: app.permissions.refresh,
       notifyMessage: notifications.call,
       guildChanged: (revision) => unawaited(app.guildProfile.refresh(revision)),
+      profileChanged: (userId, revision) async {
+        if (app.session.user?.accountId == userId) {
+          await app.profileOwner.refreshProfileIfNewer(revision);
+        }
+      },
       screenPreviewUpdated: app.voice.receiveScreenPreviewHint,
       screenPreviewInvalidated: app.voice.receiveScreenPreviewInvalidation,
     ).call,

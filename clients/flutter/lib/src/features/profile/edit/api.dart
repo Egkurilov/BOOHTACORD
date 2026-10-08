@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import '../../../models.dart';
 import '../../../core/http/transport.dart';
+import '../revision/avatar_url.dart';
+import '../revision/cache.dart';
 
 class OwnProfileApi {
   OwnProfileApi(this.transport);
@@ -14,7 +16,7 @@ class OwnProfileApi {
         headers: await transport.headers(),
       ),
     ) as Map<String, dynamic>;
-    return OwnProfile.fromJson(data);
+    return _profile(data);
   }
 
   Future<OwnProfile> updateOwnProfile(String displayName) async {
@@ -25,7 +27,23 @@ class OwnProfileApi {
         body: jsonEncode({'display_name': displayName}),
       ),
     ) as Map<String, dynamic>;
-    return OwnProfile.fromJson(data);
+    return _profile(data);
+  }
+
+  OwnProfile _profile(Map<String, dynamic> data) {
+    final revision = data['profile_revision'];
+    if (revision != null) {
+      if (revision is! int || revision <= 0) {
+        throw const FormatException('Invalid profile revision.');
+      }
+    }
+    final profile = OwnProfile.fromJson(
+      withAvatarRevision(data, revision as int?),
+    );
+    if (revision != null) {
+      memberProfileRevisions.recordOwn(profile, revision);
+    }
+    return profile;
   }
 
   Future<void> changePassword(

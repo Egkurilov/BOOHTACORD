@@ -1,6 +1,8 @@
 import '../../../models.dart';
 import '../../../core/http/api_failure.dart';
 import '../../../core/http/transport.dart';
+import '../../profile/revision/cache.dart';
+import '../../profile/revision/avatar_url.dart';
 
 class MembersApi {
   MembersApi(this.transport);
@@ -18,7 +20,7 @@ class MembersApi {
       ) as Map<String, dynamic>;
       result.addAll(
         (data['members'] as List<dynamic>).map(
-          (value) => GuildMember.fromJson(value as Map<String, dynamic>),
+          (value) => _member(value as Map<String, dynamic>),
         ),
       );
       cursor = data['next_cursor'] as String?;
@@ -39,6 +41,22 @@ class MembersApi {
     if (data is! Map<String, dynamic>) {
       throw const ApiFailure('Сервер вернул некорректные данные участника.');
     }
-    return GuildMember.fromJson(data);
+    return _member(data);
+  }
+
+  GuildMember _member(Map<String, dynamic> data) {
+    final revision = data['profile_revision'];
+    if (revision != null) {
+      if (revision is! int || revision <= 0) {
+        throw const FormatException('Invalid profile revision.');
+      }
+    }
+    final member = GuildMember.fromJson(
+      withAvatarRevision(data, revision as int?),
+    );
+    if (revision != null) {
+      memberProfileRevisions.recordMember(member, revision);
+    }
+    return member;
   }
 }

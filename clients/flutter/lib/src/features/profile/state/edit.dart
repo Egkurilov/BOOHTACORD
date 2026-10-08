@@ -11,7 +11,7 @@ extension ProfileEditing on ProfileController {
     return save((active) async {
       final result = await api.updateOwnProfile(value);
       if (!active()) return;
-      profile = result;
+      acceptProfile(result);
       await refreshMembers();
     });
   }

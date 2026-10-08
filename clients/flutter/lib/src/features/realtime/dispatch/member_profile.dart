@@ -1,0 +1,27 @@
+import 'dart:async';
+
+import '../../profile/revision/cache.dart';
+import '../../telemetry/realtime/process.dart';
+import '../../workspace/lifecycle/controller.dart';
+import '../lifecycle/event.dart';
+
+bool dispatchMemberProfileUpdated(
+  RealtimeEvent event,
+  WorkspaceController workspace,
+  FutureOr<void> Function(String, int)? profileChanged,
+) {
+  if (event.kind != 'member.profile.updated') return false;
+  final hint = parseMemberProfileHint(event.payload);
+  if (hint == null) return true;
+  unawaited(
+    processEffect(
+      event,
+      workspace.api.transport.session.telemetry,
+      () async {
+        await workspace.refreshMemberProfile(hint.userId, hint.revision);
+        await profileChanged?.call(hint.userId, hint.revision);
+      },
+    ),
+  );
+  return true;
+}

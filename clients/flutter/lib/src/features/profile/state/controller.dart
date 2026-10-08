@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/session/scope.dart';
+import '../revision/cache.dart';
 import '../../../models.dart';
 import '../../../services/api_client.dart';
 
@@ -26,6 +27,8 @@ class ProfileController extends ChangeNotifier {
   bool profileSaving = false;
   String? profileLoadError;
   int avatarRevision = 0;
+  int? profileRevision;
+  int profileRequestSequence = 0;
   int revision = 0;
   bool disposed = false;
 
@@ -43,9 +46,25 @@ class ProfileController extends ChangeNotifier {
 
   void clear() {
     cancelOperations();
+    profileRequestSequence++;
     profile = null;
+    profileRevision = null;
     profileLoadError = null;
     avatarRevision = 0;
+  }
+
+  bool acceptProfile(OwnProfile value, {int? minimumRevision}) {
+    final incoming = memberProfileRevisions.ownRevision(value);
+    if (minimumRevision != null && (incoming ?? 0) < minimumRevision) {
+      return false;
+    }
+    if (profileRevision != null &&
+        (incoming == null || incoming < profileRevision!)) {
+      return false;
+    }
+    profile = value;
+    profileRevision = incoming;
+    return true;
   }
 
   void cancelOperations() {
