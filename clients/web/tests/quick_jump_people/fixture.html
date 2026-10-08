@@ -1,0 +1,17 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><div id="app"></div>
+<script type="module">
+import { createApp, h, ref } from 'vue'
+import { createPinia } from 'pinia'
+import WorkspaceSearchPanel from '/src/workspace/search/WorkspaceSearchPanel.vue'
+import { useTopologyStore } from '/src/channel/topology_store.ts'
+import { useDirectMessageStore } from '/src/direct_message/direct_message_store.ts'
+import '/src/style.css'
+const pinia = createPinia(), selected = ref(''), mounted = ref(true)
+useTopologyStore(pinia).topology = { revision: 1, categories: [{ id: 'c', name: 'Общее', position: 0,
+  channels: [{ id: 'text', name: 'Чат', kind: 'TEXT', position: 0, admissionClosed: false }] }] }
+useDirectMessageStore(pinia).directMessages = [{ id: 'alice-dm', otherParticipantId: 'alice', otherParticipantDisplayName: 'Алиса', createdAt: '2026-01-01', unreadCount: 0, mentionCount: 0 }]
+createApp({ render: () => h('main', [h('output', { 'data-testid': 'selected' }, selected.value),
+  h('button', { onClick: () => mounted.value = false }, 'Завершить сессию'),
+  mounted.value ? h(WorkspaceSearchPanel, { onOpenDirectMessage: id => selected.value = id,
+    onOpenChannel: channel => selected.value = channel.id }) : null]) }).use(pinia).mount('#app')
+</script></html>

@@ -27,7 +27,7 @@ function readSeen(storage: Pick<Storage, 'getItem'>, key: string): string[] {
   } catch { return [] }
 }
 
-export function createNotificationDelivery(accountID: string, runtime: NotificationRuntime = browserNotificationRuntime()) {
+export function createNotificationDelivery(accountID: string, runtime: NotificationRuntime = browserNotificationRuntime(), readTitle: () => string = () => 'BOOHTACORD') {
   let active = true
   const prefix = `boohtacord:notification:${accountID}`
   const preferenceKey = `${prefix}:enabled`
@@ -54,7 +54,7 @@ export function createNotificationDelivery(accountID: string, runtime: Notificat
         if (!enabled() || runtime.permission() !== 'granted' || !allowed()) return
         const seen = readSeen(runtime.storage!, seenKey)
         if (seen.includes(eventID)) return
-        runtime.show('BOOHTACORD', { body, tag: eventID })
+        runtime.show(readTitle(), { body, tag: eventID })
         runtime.storage!.setItem(seenKey, JSON.stringify([...seen, eventID]))
       })
     },

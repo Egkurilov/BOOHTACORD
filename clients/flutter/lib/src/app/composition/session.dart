@@ -57,6 +57,7 @@ void configureSession(AppOwners app) {
     ),
   )..addListener(app.notifyListeners);
   app.nativeNotifications.sessionScope = app.session.scope;
+  app.nativeNotifications.readTitle = () => app.guildProfile.name;
   app.nativeNotifications.addListener(app.notifyListeners);
   app.api.onUnauthorized = () => unawaited(app.session.expire());
 }
