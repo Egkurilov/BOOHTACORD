@@ -12,6 +12,9 @@ type CallObserver interface{ ObserveSFURoomServiceCall(string, bool) }
 
 func (client Client) WithObserver(observer CallObserver) Client {
 	client.observer = observer
+	if configured, ok := observer.(interface{ ObserveSFURoomServiceConfigured(bool) }); ok {
+		configured.ObserveSFURoomServiceConfigured(client.config.URL != "" && client.config.APIKey != "" && client.config.APISecret != "")
+	}
 	return client
 }
 
@@ -44,6 +47,7 @@ func (transport bearerTransport) RoundTrip(request *http.Request) (*http.Respons
 		if method != "ListRooms" && method != "ListParticipants" {
 			method = "other"
 		}
+		observeDuration(transport.observer, method, started, response, err)
 		transport.observer.ObserveSFURoomServiceCall(method, err != nil || response == nil || response.StatusCode >= 400)
 	}
 	return response, err

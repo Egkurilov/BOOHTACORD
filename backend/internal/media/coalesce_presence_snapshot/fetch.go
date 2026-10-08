@@ -2,20 +2,30 @@ package coalescepresencesnapshot
 
 import (
 	"context"
-	"time"
+	"errors"
 )
 
-func (g *Gate) fetch(f *flight, ids []string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+func (g *Gate) fetch(ctx context.Context, f *flight, ids []string) {
+	defer f.cancel()
 	data, err := g.source.SnapshotRooms(ctx, ids)
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	f.data, f.err = copySnapshot(data), err
-	g.pending = nil
 	if err == nil {
+		f.data = copySnapshot(data)
+	}
+	f.err = err
+	g.observe("finished")
+	delete(g.pending, f.key)
+	// A short failure cooldown bounds retry multiplication, without stale data.
+	if f.generation == g.generation && !errors.Is(err, context.Canceled) {
+		if len(g.cached) >= MaxCachedScopes {
+			for key := range g.cached {
+				delete(g.cached, key)
+				break
+			}
+		}
 		f.expires = g.now().Add(TTL)
-		g.cached = f
+		g.cached[f.key] = f
 	}
 	close(f.done)
 }

@@ -46,7 +46,7 @@ func TestInitialSnapshotFailureStaysUnavailableAndHidesDependencyDetails(t *test
 type errorLister struct{}
 
 func (errorLister) List(context.Context, string) (roster.Result, error) {
-	return roster.Result{}, errors.New("private dependency failure: account-123 room-456")
+	return roster.Result{}, roster.OperationFailure{Stage: "visibility_initial", Cause: errors.New("private dependency failure: account-123 room-456")}
 }
 
 func TestRefreshFailureEmitsBoundedEventAndClosesWithoutEmptyRoster(t *testing.T) {

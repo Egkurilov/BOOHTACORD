@@ -2,64 +2,45 @@ package coalescepresencesnapshot
 
 import (
 	"context"
-	"slices"
-	"strings"
-	"sync"
+
 	"time"
-	presence "voice-platform/backend/internal/media/snapshot_livekit_presence"
 )
-
-const TTL = 250 * time.Millisecond
-
-type Snapshot = map[string][]presence.ConnectedLease
-type Source interface {
-	SnapshotRooms(context.Context, []string) (Snapshot, error)
-}
-type flight struct {
-	key     string
-	done    chan struct{}
-	data    Snapshot
-	err     error
-	expires time.Time
-}
-
-// Retains at most one exact scope and one pending fetch. Other scopes bypass retention.
-type Gate struct {
-	mu              sync.Mutex
-	source          Source
-	pending, cached *flight
-	now             func() time.Time
-}
-
-func New(source Source) *Gate { return &Gate{source: source, now: time.Now} }
 
 func (g *Gate) SnapshotRooms(ctx context.Context, ids []string) (Snapshot, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	requested := append([]string(nil), ids...)
-	slices.Sort(requested)
-	requested = slices.Compact(requested)
-	key := strings.Join(requested, ",")
+	requested, key := canonicalScope(ids)
 	g.mu.Lock()
-	if f := g.cached; f != nil && f.key == key && g.now().Before(f.expires) {
-		result := copySnapshot(f.data)
+	g.expire()
+	if f := g.cached[key]; f != nil {
+		g.observe("cached")
+		result, err := copySnapshot(f.data), f.err
 		g.mu.Unlock()
-		return result, nil
+		return result, err
 	}
-	if g.pending != nil && g.pending.key != key {
-		g.mu.Unlock()
-		return g.source.SnapshotRooms(ctx, requested)
-	}
-	f := g.pending
+	f := g.pending[key]
 	if f == nil {
-		f = &flight{key: key, done: make(chan struct{})}
-		g.pending, g.cached = f, nil
-		go g.fetch(f, requested)
+		if len(g.pending) >= MaxActiveScopes {
+			g.mu.Unlock()
+			g.observe("overloaded")
+			return nil, ErrOverloaded
+		}
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 3*time.Second)
+		f = &flight{key: key, done: make(chan struct{}), cancel: cancel, generation: g.generation}
+		g.pending[key] = f
+		g.observe("started")
+		go g.fetch(fetchCtx, f, requested)
 	}
+	if f.waiters > 0 {
+		g.observe("shared")
+	}
+	f.waiters++
 	g.mu.Unlock()
+	defer g.release(f)
 	select {
 	case <-ctx.Done():
+		g.observe("canceled")
 		return nil, ctx.Err()
 	case <-f.done:
 		if err := ctx.Err(); err != nil {
@@ -67,4 +48,29 @@ func (g *Gate) SnapshotRooms(ctx context.Context, ids []string) (Snapshot, error
 		}
 		return copySnapshot(f.data), f.err
 	}
+}
+
+func (g *Gate) expire() {
+	for key, f := range g.cached {
+		if !g.now().Before(f.expires) {
+			delete(g.cached, key)
+		}
+	}
+}
+
+func (g *Gate) release(f *flight) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	f.waiters--
+	if f.waiters == 0 {
+		f.cancel()
+	}
+}
+
+// Verified webhooks invalidate observations including an in-flight cache fill.
+func (g *Gate) Invalidate() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.generation++
+	clear(g.cached)
 }

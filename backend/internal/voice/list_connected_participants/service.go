@@ -3,7 +3,7 @@ package listconnectedparticipants
 import (
 	"context"
 	"errors"
-	"fmt"
+
 	"sort"
 	"time"
 
@@ -62,7 +62,7 @@ func (service Service) List(ctx context.Context, actorID string) (Result, error)
 			return Result{}, ctx.Err()
 		}
 		service.observeOperationFailure(ctx, err, "visibility_initial")
-		return Result{}, fmt.Errorf("list visible voice channels: %w", err)
+		return Result{}, OperationFailure{Stage: "visibility_initial", Cause: err}
 	}
 	result := Result{Channels: make([]ChannelRoster, 0, len(channels))}
 	ids := make([]string, 0, len(channels))
@@ -79,7 +79,7 @@ func (service Service) List(ctx context.Context, actorID string) (Result, error)
 	}
 	if err != nil {
 		service.observeOperationFailure(ctx, err, "presence_snapshot")
-		return Result{}, fmt.Errorf("%w: %v", ErrPresenceUnavailable, err)
+		return Result{}, OperationFailure{Stage: "presence_snapshot", Cause: errors.Join(ErrPresenceUnavailable, err)}
 	}
 	// A lease or account may be revoked while the private SFU snapshot is read.
 	channels, err = service.repository.ListVisible(ctx, actorID)
@@ -88,7 +88,7 @@ func (service Service) List(ctx context.Context, actorID string) (Result, error)
 			return Result{}, ctx.Err()
 		}
 		service.observeOperationFailure(ctx, err, "visibility_recheck")
-		return Result{}, fmt.Errorf("recheck visible voice channels: %w", err)
+		return Result{}, OperationFailure{Stage: "visibility_recheck", Cause: err}
 	}
 	for _, channel := range channels {
 		current := ChannelRoster{ChannelID: channel.ID, Participants: make([]Participant, 0)}

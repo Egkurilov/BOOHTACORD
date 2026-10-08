@@ -23,3 +23,13 @@ func TestCanonicalScopeDoesNotReuseOtherRooms(t *testing.T) {
 		t.Fatal("scope isolation failed")
 	}
 }
+
+func TestCanonicalScopeDoesNotAliasDelimiterOrEmptyScopes(t *testing.T) {
+	_, one := canonicalScope([]string{"a,b"})
+	_, two := canonicalScope([]string{"a", "b"})
+	_, nilScope := canonicalScope(nil)
+	_, emptyScope := canonicalScope([]string{})
+	if one == two || nilScope != emptyScope {
+		t.Fatalf("scope keys one=%q two=%q nil=%q empty=%q", one, two, nilScope, emptyScope)
+	}
+}

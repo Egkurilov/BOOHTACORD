@@ -1,0 +1,46 @@
+goos: windows
+goarch: amd64
+pkg: voice-platform/backend/internal/media/coalesce_presence_snapshot
+cpu: 12th Gen Intel(R) Core(TM) i7-12700
+BenchmarkEquivalentScopeFanout/watchers=1/rooms=0/coalesced=false-20         	      20	       805.0 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=1/rooms=0/coalesced=true-20          	      20	      4310 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=1/rooms=1/coalesced=false-20         	      20	      1050 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=1/rooms=1/coalesced=true-20          	      20	      4910 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=1/rooms=5/coalesced=false-20         	      20	      1065 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=1/rooms=5/coalesced=true-20          	      20	      4775 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=1/rooms=20/coalesced=false-20        	      20	      1535 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=1/rooms=20/coalesced=true-20         	      20	      4940 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=10/rooms=0/coalesced=false-20        	      20	     12190 ns/op	        10.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=10/rooms=0/coalesced=true-20         	      20	     15835 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=10/rooms=1/coalesced=false-20        	      20	      4740 ns/op	        10.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=10/rooms=1/coalesced=true-20         	      20	     18275 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=10/rooms=5/coalesced=false-20        	      20	      6210 ns/op	        10.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=10/rooms=5/coalesced=true-20         	      20	     14335 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=10/rooms=20/coalesced=false-20       	      20	      5470 ns/op	        10.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=10/rooms=20/coalesced=true-20        	      20	     16310 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=25/rooms=0/coalesced=false-20        	      20	      8425 ns/op	        25.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=25/rooms=0/coalesced=true-20         	      20	     24875 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=25/rooms=1/coalesced=false-20        	      20	      8520 ns/op	        25.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=25/rooms=1/coalesced=true-20         	      20	     20290 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=25/rooms=5/coalesced=false-20        	      20	      8110 ns/op	        25.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=25/rooms=5/coalesced=true-20         	      20	     26470 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=25/rooms=20/coalesced=false-20       	      20	     12735 ns/op	        25.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=25/rooms=20/coalesced=true-20        	      20	     28995 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=50/rooms=0/coalesced=false-20        	      20	     17900 ns/op	        50.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=50/rooms=0/coalesced=true-20         	      20	     36600 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=50/rooms=1/coalesced=false-20        	      20	     15160 ns/op	        50.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=50/rooms=1/coalesced=true-20         	      20	     33885 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=50/rooms=5/coalesced=false-20        	      20	     19410 ns/op	        50.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=50/rooms=5/coalesced=true-20         	      20	     40075 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=50/rooms=20/coalesced=false-20       	      20	     18810 ns/op	        50.00 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=50/rooms=20/coalesced=true-20        	      20	     46020 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=100/rooms=0/coalesced=false-20       	      20	     27590 ns/op	       100.0 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=100/rooms=0/coalesced=true-20        	      20	     73470 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=100/rooms=1/coalesced=false-20       	      20	     28690 ns/op	       100.0 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=100/rooms=1/coalesced=true-20        	      20	     69035 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=100/rooms=5/coalesced=false-20       	      20	     27460 ns/op	       100.0 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=100/rooms=5/coalesced=true-20        	      20	     64700 ns/op	         1.000 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=100/rooms=20/coalesced=false-20      	      20	     24475 ns/op	       100.0 source-calls/burst
+BenchmarkEquivalentScopeFanout/watchers=100/rooms=20/coalesced=true-20       	      20	     64545 ns/op	         1.000 source-calls/burst
+PASS
+ok  	voice-platform/backend/internal/media/coalesce_presence_snapshot	1.762s

@@ -54,13 +54,15 @@ func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenti
 		updates, unsubscribe := notifier.Subscribe()
 		defer unsubscribe()
 		ctx, cancel := context.WithTimeout(request.Context(), snapshotTimeout)
+		started := time.Now()
 		initial, err := lister.List(ctx, principal.AccountID)
+		observeInitial(observer, request.Context(), time.Since(started), err)
 		cancel()
 		if err != nil {
 			if request.Context().Err() != nil {
 				return
 			}
-			http.Error(writer, "roster unavailable", http.StatusServiceUnavailable)
+			writeInitialFailure(writer, err)
 			return
 		}
 		writeSSEHeaders(writer)
@@ -68,7 +70,11 @@ func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenti
 			observeFailure(observer, "stream_write")
 			return
 		}
-		serveRosterStream(writer, request, flusher, lister, updates, authenticator, principal, initial, observer, revalidateEvery, heartbeatEvery, reconcileEvery)
+		closeStream := observeStream(observer)
+		observeSuccess(observer)
+		reason := "other"
+		defer func() { closeStream(reason) }()
+		reason = serveRosterStream(writer, request, flusher, lister, updates, authenticator, principal, initial, observer, revalidateEvery, heartbeatEvery, reconcileEvery)
 	})
 }
 

@@ -33,6 +33,18 @@ func TestSingleFlightSharesFetchWithoutCallerCancellation(t *testing.T) {
 	first := make(chan error, 1)
 	go func() { _, err := g.SnapshotRooms(ctx, []string{"room"}); first <- err }()
 	<-started
+	joined := make(chan error, 1)
+	go func() { _, err := g.SnapshotRooms(context.Background(), []string{"room"}); joined <- err }()
+	for {
+		g.mu.Lock()
+		_, key := canonicalScope([]string{"room"})
+		waiters := g.pending[key].waiters
+		g.mu.Unlock()
+		if waiters == 2 {
+			break
+		}
+		time.Sleep(time.Millisecond)
+	}
 	cancel()
 	if <-first != context.Canceled {
 		t.Fatal("caller cancellation lost")
@@ -50,6 +62,9 @@ func TestSingleFlightSharesFetchWithoutCallerCancellation(t *testing.T) {
 	}
 	close(release)
 	group.Wait()
+	if err := <-joined; err != nil {
+		t.Fatal(err)
+	}
 	if calls.Load() != 1 {
 		t.Fatal("fan-out not coalesced")
 	}
@@ -79,6 +94,7 @@ func TestSnapshotCopyExpiryAndFailureNeverReturnStale(t *testing.T) {
 		t.Fatal("stale cache concealed SFU error")
 	}
 	failed = false
+	now = now.Add(TTL + time.Nanosecond)
 	_, _ = g.SnapshotRooms(context.Background(), []string{"room"})
 	if calls != 3 {
 		t.Fatal("failure was cached")

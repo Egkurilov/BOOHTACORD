@@ -3,7 +3,6 @@ package listconnectedparticipantsapi
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
@@ -28,7 +27,8 @@ func NewHandler(lister Lister) http.Handler {
 			return
 		}
 		result, err := lister.List(request.Context(), principal.AccountID)
-		if errors.Is(err, listconnectedparticipants.ErrPresenceUnavailable) {
+		if err != nil && listconnectedparticipants.FailureStatus(err) == http.StatusServiceUnavailable {
+			writer.Header().Set("Retry-After", "1")
 			writeError(writer, request, http.StatusServiceUnavailable, "VOICE_PRESENCE_UNAVAILABLE")
 			return
 		}

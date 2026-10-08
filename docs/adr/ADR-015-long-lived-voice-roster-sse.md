@@ -24,7 +24,8 @@ the reverse proxy. Revalidate the original session cookie every 10 seconds
 using the existing session authenticator. Continue rebuilding each roster
 snapshot through the existing ACL and LiveKit presence service. Signed
 LiveKit webhooks request an immediate refresh, and each open stream also
-reconciles its snapshot every five seconds. Send a snapshot only when its
+reconciles its snapshot every 4.75–5 seconds with per-stream jitter. Send a
+snapshot only when its
 serialized roster changes so a missed or delayed webhook cannot leave the
 browser stale indefinitely.
 
@@ -40,6 +41,35 @@ data; the clients may retry through their normal connection recovery paths.
   disconnects or the session expires.
 - Session revocation is detected within the 10-second revalidation interval.
 - The server performs a bounded session lookup per open roster stream every 10
-  seconds and a bounded ACL/LiveKit snapshot every five seconds. This adds
-  snapshot load proportional to the number of open roster streams.
+  seconds and an ACL/lease recheck per refresh. SFU observations share only
+  equivalent scopes under the bounded gate; authorization stays per caller.
 - Network failures still cause normal SSE or client-stream reconnects.
+
+## Bounded recovery and observation cost (2026-10-08, #268/#269)
+
+Initial mandatory dependency failures return 503 with `Retry-After: 1` and the
+server-generated `X-Request-ID`. SSE keeps its stable `roster unavailable` text;
+GET keeps the existing error envelope. Known SFU validation/token defects are
+500. Auth middleware retains 401; visibility and active leases remain DB truth.
+Internal bounded stages identify DB initial/recheck, SFU room/participant,
+validation, timeout/cancel and session-store failures without public details.
+
+Refresh performs at most one retry after 300–399ms jitter within the original
+five-second deadline. Exhaustion emits `roster-unavailable` with `{}` then closes;
+no fake empty result or session-expired event is emitted. Cancellation stops the
+retry timer. Session revalidation and heartbeat schedules are unchanged.
+
+The SFU observation gate holds at most four active exact-equivalent scopes and
+16 cached scopes. It never bypasses its budget and has no waiting queue. Its
+250ms success TTL and failure cooldown never retain partial/error payloads.
+All-waiter cancellation aborts the shared three-second fetch; one canceled
+waiter cannot cancel observers still using it. Verified webhook invalidation
+clears retained observations and prevents pending observations being cached.
+Current per-user ACL and leases are checked both before and after every read.
+Periodic reconciliation recovers missed notifications without exceeding five
+seconds plus a bounded snapshot duration. Snapshot costs are coalesced only
+for equal scopes; different authorized scopes are never merged.
+
+Synthetic fanout tests/benchmarks demonstrate the software budgets only.
+Production 1/10/25/50/100 watcher by 0/1/5/20 room baselines, latency/error/DB
+wait, CPU/RAM and device freshness acceptance remain separate evidence work.
