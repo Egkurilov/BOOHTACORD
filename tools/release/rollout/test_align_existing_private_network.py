@@ -81,6 +81,16 @@ class AlignPostgresNetworkTests(unittest.TestCase):
             stderr=MODULE.subprocess.DEVNULL,
         )
 
+    def test_restores_service_alias_when_docker_returns_null_aliases(self):
+        with patch.object(POSTGRES, "output", side_effect=[
+            "postgres-id",
+            '{"com.docker.compose.project":"voice-platform","com.docker.compose.service":"postgres"}',
+            '{"voice-platform_private":{"IPAddress":"172.30.254.3","Aliases":null}}',
+        ]), patch.object(MODULE.subprocess, "run") as run:
+            MODULE.ensure_postgres_connected([], "voice-platform", "voice-platform_private")
+
+        self.assertEqual(run.call_count, 2)
+
     def test_does_not_reconnect_postgres_with_service_alias(self):
         with patch.object(POSTGRES, "output", side_effect=[
             "postgres-id",
