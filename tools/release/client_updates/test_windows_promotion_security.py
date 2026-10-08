@@ -1,8 +1,9 @@
 import hashlib
 import json
+import tempfile
+import unittest
 import zipfile
-
-import pytest
+from pathlib import Path
 
 from tools.release.client_updates.promote_windows_release import promote
 
@@ -33,33 +34,39 @@ def fixture(tmp_path, member):
     return catalog, release, archive, manifest_path, sums
 
 
-def test_duplicate_checksum_names_fail_before_catalog_write(tmp_path):
-    catalog, release, archive, manifest, sums = fixture(tmp_path, "app.exe")
-    original = catalog.read_bytes()
-    line = sums.read_text(encoding="utf-8").splitlines()[0]
-    sums.write_text(line + "\n" + line + "\n", encoding="utf-8")
+class WindowsPromotionSecurityTests(unittest.TestCase):
+    def test_duplicate_checksum_names_fail_before_catalog_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            catalog, release, archive, manifest, sums = fixture(Path(directory), "app.exe")
+            original = catalog.read_bytes()
+            line = sums.read_text(encoding="utf-8").splitlines()[0]
+            sums.write_text(line + "\n" + line + "\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="duplicate checksum"):
-        promote(catalog, 9, release, archive, manifest, sums, "Egkurilov/BOOHTACORD")
-    assert catalog.read_bytes() == original
+            with self.assertRaisesRegex(ValueError, "duplicate checksum"):
+                promote(catalog, 9, release, archive, manifest, sums, "Egkurilov/BOOHTACORD")
+            self.assertEqual(catalog.read_bytes(), original)
+
+    def test_malicious_checksum_path_fails_before_catalog_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            catalog, release, archive, manifest, sums = fixture(Path(directory), "app.exe")
+            original = catalog.read_bytes()
+            raw = sums.read_text(encoding="utf-8").splitlines()
+            sums.write_text(raw[0].replace(archive.name, "../" + archive.name) + "\n"
+                            + raw[1] + "\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "unexpected assets"):
+                promote(catalog, 9, release, archive, manifest, sums, "Egkurilov/BOOHTACORD")
+            self.assertEqual(catalog.read_bytes(), original)
+
+    def test_zip_path_traversal_fails_before_catalog_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            catalog, release, archive, manifest, sums = fixture(Path(directory), "../outside.exe")
+            original = catalog.read_bytes()
+
+            with self.assertRaisesRegex(ValueError, "unsafe path"):
+                promote(catalog, 9, release, archive, manifest, sums, "Egkurilov/BOOHTACORD")
+            self.assertEqual(catalog.read_bytes(), original)
 
 
-def test_malicious_checksum_path_fails_before_catalog_write(tmp_path):
-    catalog, release, archive, manifest, sums = fixture(tmp_path, "app.exe")
-    original = catalog.read_bytes()
-    raw = sums.read_text(encoding="utf-8").splitlines()
-    sums.write_text(raw[0].replace(archive.name, "../" + archive.name) + "\n" + raw[1] + "\n",
-                    encoding="utf-8")
-
-    with pytest.raises(ValueError, match="unexpected assets"):
-        promote(catalog, 9, release, archive, manifest, sums, "Egkurilov/BOOHTACORD")
-    assert catalog.read_bytes() == original
-
-
-def test_zip_path_traversal_fails_before_catalog_write(tmp_path):
-    catalog, release, archive, manifest, sums = fixture(tmp_path, "../outside.exe")
-    original = catalog.read_bytes()
-
-    with pytest.raises(ValueError, match="unsafe path"):
-        promote(catalog, 9, release, archive, manifest, sums, "Egkurilov/BOOHTACORD")
-    assert catalog.read_bytes() == original
+if __name__ == "__main__":
+    unittest.main()
