@@ -3,30 +3,26 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:livekit_client/livekit_client.dart';
 
-import '../../../core/session/scope.dart';
 import '../profile/quality.dart';
 import '../lifecycle/controller.dart';
-
-bool _isCurrentSession(
-  ScreenShareController owner,
-  SessionTicket ticket,
-  int expected,
-  Room? room,
-) =>
-    !owner.disposed &&
-    ticket.isActive &&
-    expected == owner.revision &&
-    room != null &&
-    identical(owner.readRoom(), room);
+import 'guard.dart';
 
 extension ScreenShareQualityUpdate on ScreenShareController {
-  Future<void> updateScreenShareQuality(ScreenShareQuality requested) {
+  Future<void> updateScreenShareQuality(
+    ScreenShareQuality requested, {
+    bool fromSupervisor = false,
+  }) {
     if (disposed || phase != ScreenSharePhase.sharing) return Future.value();
     final track = activeTrack;
     if (track == null) {
       error = 'Активная видеодорожка демонстрации недоступна.';
       changed();
       return Future.value();
+    }
+    if (!fromSupervisor) {
+      userQualityCeiling = requested;
+      manualQualityRevision++;
+      adaptation.invalidate();
     }
     final activePlan = quality.capturePlan(defaultTargetPlatform);
     final requestedPlan = requested.capturePlan(defaultTargetPlatform);
@@ -36,7 +32,8 @@ extension ScreenShareQualityUpdate on ScreenShareController {
     pendingQualityRoom = null;
     if (requestedPlan.requiresRestartFrom(activePlan)) {
       captureRestartRequired = true;
-      error = 'Чтобы применить ${requested.resolution}p${requested.frameRate}, '
+      error =
+          'Чтобы применить ${requested.resolution}p${requested.frameRate}, '
           'остановите демонстрацию и запустите её снова, выбрав этот профиль. '
           'Текущая демонстрация продолжает работать с прежними параметрами.';
       changed();
@@ -45,17 +42,21 @@ extension ScreenShareQualityUpdate on ScreenShareController {
     captureRestartRequired = false;
     pendingQualityUpdate = requested;
     pendingQualityTicket = scope.capture();
+    pendingQualityTransportTicket = api.transport.session.scope.capture();
+    pendingQualityServer = api.transport.session.serverRevision;
     pendingQualityRoom = readRoom();
     pendingQualityLifecycleRevision = revision;
     final current = qualityUpdateOperation;
     if (current != null) return current;
     final operation = Future<void>.microtask(_drainQualityUpdates);
     qualityUpdateOperation = operation;
-    unawaited(operation.whenComplete(() {
-      if (identical(qualityUpdateOperation, operation)) {
-        qualityUpdateOperation = null;
-      }
-    }));
+    unawaited(
+      operation.whenComplete(() {
+        if (identical(qualityUpdateOperation, operation)) {
+          qualityUpdateOperation = null;
+        }
+      }),
+    );
     return operation;
   }
 
@@ -64,6 +65,8 @@ extension ScreenShareQualityUpdate on ScreenShareController {
       final requested = pendingQualityUpdate!;
       final ticket = pendingQualityTicket!;
       final room = pendingQualityRoom;
+      final transportTicket = pendingQualityTransportTicket!;
+      final server = pendingQualityServer;
       final lifecycleRevision = pendingQualityLifecycleRevision;
       final intentRevision = qualityIntentRevision;
       pendingQualityUpdate = null;
@@ -71,7 +74,14 @@ extension ScreenShareQualityUpdate on ScreenShareController {
       bool current() =>
           !disposed &&
           intentRevision == qualityIntentRevision &&
-          _isCurrentSession(this, ticket, lifecycleRevision, room) &&
+          isCurrentQualitySession(
+            this,
+            ticket,
+            transportTicket,
+            server,
+            lifecycleRevision,
+            room,
+          ) &&
           phase == ScreenSharePhase.sharing &&
           identical(activeTrack, track);
       if (track == null || room == null || !current()) continue;
@@ -99,12 +109,12 @@ extension ScreenShareQualityUpdate on ScreenShareController {
               error = detail;
             }
           } else {
-            error = 'Не удалось изменить качество: ${screenShareFailureDetail(cause)}';
+            error =
+                'Не удалось изменить качество: ${screenShareFailureDetail(cause)}';
           }
         }
       }
       changed();
     }
   }
-
 }

@@ -25,6 +25,9 @@ extension ScreenShareStart on ScreenShareController {
     phase = ScreenSharePhase.starting;
     error = null;
     this.quality = quality ?? this.quality;
+    userQualityCeiling = this.quality;
+    manualQualityRevision++;
+    adaptation.invalidate();
     captureRestartRequired = false;
     this.sourceDimensions = sourceDimensions;
     final expected = ++revision;

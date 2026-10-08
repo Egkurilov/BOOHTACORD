@@ -4,6 +4,7 @@ import '../../../core/session/scope.dart';
 import '../../../services/api_client.dart';
 import '../profile/quality.dart';
 import 'controller.dart';
+import '../runtime_apply/options.dart';
 
 export 'controller.dart' show ScreenShareMetricsController;
 
@@ -14,6 +15,8 @@ ScreenShareMetricsController createScreenShareMetricsController(
   required bool Function() isSharing,
   required ScreenShareQuality Function() readQuality,
   required void Function() changed,
+  Future<void> Function(ScreenAdaptationObservation)? Function()?
+  captureObservation,
 }) => ScreenShareMetricsController(
   api,
   scope,
@@ -21,4 +24,5 @@ ScreenShareMetricsController createScreenShareMetricsController(
   isSharing: isSharing,
   readQuality: readQuality,
   changed: changed,
+  captureObservation: captureObservation,
 );

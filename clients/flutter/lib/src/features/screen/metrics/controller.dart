@@ -9,6 +9,7 @@ import '../../../services/screen_share_metrics.dart';
 import '../../../services/screen_share_metrics_generation_gate.dart';
 import '../../../telemetry/report_media/sender.dart';
 import 'layers.dart';
+import '../runtime_apply/options.dart';
 import 'report_cadence.dart';
 import 'sample.dart';
 import 'stats_poller.dart';
@@ -21,8 +22,11 @@ class ScreenShareMetricsController {
     required this.isSharing,
     required this.readQuality,
     required this.changed,
+    this.captureObservation,
   });
   final void Function() changed;
+  final Future<void> Function(ScreenAdaptationObservation)? Function()?
+  captureObservation;
   ScreenShareSenderReport? report;
   DateTime? sampledAt;
   final ApiClient api;
