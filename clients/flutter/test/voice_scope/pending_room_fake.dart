@@ -34,6 +34,11 @@ class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
     disconnected++;
   }
 
+  void emitEvent(RoomEvent event) {
+    // ignore: invalid_use_of_internal_member
+    events.emit(event);
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

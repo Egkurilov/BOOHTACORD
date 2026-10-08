@@ -42,7 +42,7 @@ void main() {
 
     harness.room.connecting.complete();
     await joining;
-    harness.room.events.emit(const RoomReconnectedEvent());
+    harness.room.emitEvent(const RoomReconnectedEvent());
     await Future<void>.delayed(Duration.zero);
 
     expect(harness.audio.selectedAudioInputId, 'saved-input');

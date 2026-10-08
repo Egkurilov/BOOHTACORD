@@ -56,6 +56,7 @@ void main() {
     });
 
     final hardware = Hardware.instance;
+    expect(hardware.onDeviceChange.isClosed, isFalse);
     rtc.navigator.mediaDevices.ondevicechange?.call(null);
     await Future<void>.delayed(const Duration(milliseconds: 180));
     expect(sourceCalls, 1);
