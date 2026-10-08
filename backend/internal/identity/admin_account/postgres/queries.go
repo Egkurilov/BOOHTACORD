@@ -34,8 +34,8 @@ WITH updated AS (
       AND revoked_at IS NULL
     RETURNING id, channel_id
 ), queued AS (
-    INSERT INTO voice_sfu_revocations (lease_id, channel_id)
-    SELECT id, channel_id FROM revoked_leases
+    INSERT INTO voice_sfu_revocations (lease_id, channel_id, trace_cause)
+    SELECT id, channel_id, $6::jsonb FROM revoked_leases
     ON CONFLICT (lease_id) DO NOTHING
 ), audited AS (
     INSERT INTO audit_events (actor_user_id, event_type, target_user_id)

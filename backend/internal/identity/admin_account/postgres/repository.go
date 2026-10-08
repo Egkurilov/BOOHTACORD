@@ -7,6 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"voice-platform/backend/internal/identity/admin_account"
+	causal "voice-platform/backend/internal/observability/causal_reference"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 )
 
 const administrationLockKey int64 = 441903816
@@ -58,7 +60,7 @@ func (repository Repository) Update(context context.Context, input adminaccount.
 	if input.ExpectedUpdatedAt != "" {
 		expected = input.ExpectedUpdatedAt
 	}
-	err = transaction.QueryRow(context, updateAccount, input.AccountID, string(input.Role), input.Blocked, input.ActorID, expected).Scan(&account.ID, &role, &account.Blocked)
+	err = transaction.QueryRow(context, updateAccount, input.AccountID, string(input.Role), input.Blocked, input.ActorID, expected, causal.From(context).Bytes()).Scan(&account.ID, &role, &account.Blocked)
 	if errors.Is(err, pgx.ErrNoRows) {
 		if expected != nil {
 			return adminaccount.Account{}, adminaccount.ErrRevisionConflict
@@ -73,5 +75,6 @@ func (repository Repository) Update(context context.Context, input adminaccount.
 		return adminaccount.Account{}, fmt.Errorf("commit account administration: %w", err)
 	}
 	committed = true
+	flowstage.Mark(context, "commit", "success")
 	return account, nil
 }

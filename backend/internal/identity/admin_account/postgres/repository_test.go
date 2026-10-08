@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
+	"go.opentelemetry.io/otel/trace"
 	"voice-platform/backend/internal/identity/admin_account"
+	causal "voice-platform/backend/internal/observability/causal_reference"
 )
 
 func TestRepositoryLocksAndAtomicallyProtectsLastActiveAdministrator(t *testing.T) {
@@ -27,6 +29,27 @@ func TestRepositoryLocksAndAtomicallyProtectsLastActiveAdministrator(t *testing.
 		if !strings.Contains(transaction.statement, fragment) {
 			t.Fatalf("statement does not include %q: %s", fragment, transaction.statement)
 		}
+	}
+}
+
+func TestRepositoryPersistsBoundedCauseWithRevocationOutboxTransaction(t *testing.T) {
+	transaction := &fakeTransaction{row: fakeRow{values: []any{"target", "MEMBER", true}}}
+	ctx := trace.ContextWithSpanContext(context.Background(), trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID: trace.TraceID{1}, SpanID: trace.SpanID{2}, TraceFlags: trace.FlagsSampled,
+	}))
+	_, err := New(&fakeDatabase{transaction: transaction}).Update(ctx, adminaccount.Input{ActorID: "actor", AccountID: "target", Role: adminaccount.RoleMember, Blocked: true})
+	if err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	if !strings.Contains(transaction.statement, "INSERT INTO voice_sfu_revocations (lease_id, channel_id, trace_cause)") {
+		t.Fatal("revocation outbox does not persist its originating cause")
+	}
+	if len(transaction.arguments) != 6 {
+		t.Fatalf("arguments = %#v", transaction.arguments)
+	}
+	stored, ok := transaction.arguments[5].([]byte)
+	if !ok || causal.Decode(stored) != causal.From(ctx) {
+		t.Fatal("transaction did not store the bounded originating cause")
 	}
 }
 

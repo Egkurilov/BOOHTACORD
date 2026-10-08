@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"time"
+	flowstage "voice-platform/backend/internal/observability/flow_stage"
 )
 
 var (
@@ -45,7 +46,15 @@ func New(store Store) Service {
 	return Service{store: store}
 }
 
-func (service Service) Update(context context.Context, input Input) (Account, error) {
+func (service Service) Update(context context.Context, input Input) (account Account, err error) {
+	context, span := flowstage.Begin(context, "admin.account.update.server", "authorize")
+	defer func() {
+		flowstage.End(span, err,
+			flowstage.Reject(ErrInvalidInput, "invalid"),
+			flowstage.Reject(ErrUpdateDenied, "permission_denied"),
+			flowstage.Reject(ErrRevisionConflict, "conflict"),
+		)
+	}()
 	if input.ExpectedUpdatedAt != "" {
 		if _, err := time.Parse(time.RFC3339Nano, input.ExpectedUpdatedAt); err != nil {
 			return Account{}, ErrInvalidInput
@@ -54,7 +63,7 @@ func (service Service) Update(context context.Context, input Input) (Account, er
 	if input.ActorID == "" || input.AccountID == "" || (input.Role != RoleMember && input.Role != RoleAdministrator) {
 		return Account{}, ErrInvalidInput
 	}
-	account, err := service.store.Update(context, input)
+	account, err = service.store.Update(context, input)
 	if errors.Is(err, ErrUpdateDenied) {
 		return Account{}, ErrUpdateDenied
 	}
