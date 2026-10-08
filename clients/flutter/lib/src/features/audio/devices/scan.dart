@@ -1,62 +1,39 @@
 import 'dart:async';
 
-import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/android_audio_devices.dart';
-import 'state.dart';
+import 'failure.dart';
 import 'platform.dart';
-
-AudioDeviceScanFailure classifyAudioDeviceFailure(
-  Object cause, {
-  bool bootstrap = false,
-}) {
-  if (cause is PlatformException) {
-    final code = cause.code.toLowerCase();
-    if (code.contains('restricted')) {
-      return AudioDeviceScanFailure.permissionRestricted;
-    }
-    if (code.contains('permission') ||
-        code.contains('denied') ||
-        code.contains('notauthorized')) {
-      return AudioDeviceScanFailure.permissionDenied;
-    }
-    if (code.contains('init') ||
-        code.contains('factory') ||
-        code.contains('webrtc')) {
-      return AudioDeviceScanFailure.initializationFailed;
-    }
-  }
-  if (cause is TimeoutException || (bootstrap && cause is StateError)) {
-    return AudioDeviceScanFailure.initializationFailed;
-  }
-  return AudioDeviceScanFailure.enumerationFailed;
-}
-
-String audioDeviceFailureMessage(AudioDeviceScanFailure failure) {
-  switch (failure) {
-    case AudioDeviceScanFailure.permissionDenied:
-      return 'macOS запретил доступ к аудиоустройствам. Разрешите доступ к микрофону в настройках системы и повторите попытку.';
-    case AudioDeviceScanFailure.permissionRestricted:
-      return 'Доступ к аудиоустройствам ограничен системой. Проверьте настройки конфиденциальности macOS.';
-    case AudioDeviceScanFailure.initializationFailed:
-      return 'Не удалось инициализировать аудиосистему. Повторите попытку или перезапустите приложение.';
-    case AudioDeviceScanFailure.enumerationFailed:
-      return 'Не удалось получить список аудиоустройств. Повторите попытку.';
-  }
-}
+import 'state.dart';
 
 mixin AudioDeviceScan on AudioDeviceState {
+  Future<void>? _scanOperation;
+
   @override
-  Future<void> refreshAudioDevices() async {
-    final ticket = scope.capture();
-    if (isDisposed || !ticket.isActive) return;
+  Future<void> refreshAudioDevices() {
+    final pending = _scanOperation;
+    if (pending != null) return pending;
+    final operation = _refreshAudioDevices();
+    _scanOperation = operation;
+    return operation.whenComplete(() {
+      if (identical(_scanOperation, operation)) _scanOperation = null;
+    });
+  }
+
+  Future<void> refreshAfterInvalidation() async {
     if (audioDevicesLoading) {
       refreshQueued = true;
       final completion = queuedAudioRefreshCompletion ??= Completer<void>();
       await completion.future;
       return;
     }
+    await refreshAudioDevices();
+  }
+
+  Future<void> _refreshAudioDevices() async {
+    final ticket = scope.capture();
+    if (isDisposed || !ticket.isActive) return;
     final revision = deviceRevision;
     audioDevicesLoading = true;
     audioDeviceScanFailed = false;
@@ -88,7 +65,7 @@ mixin AudioDeviceScan on AudioDeviceState {
           final completion = queuedAudioRefreshCompletion;
           queuedAudioRefreshCompletion = null;
           try {
-            await refreshAudioDevices();
+            await _refreshAudioDevices();
           } finally {
             if (completion != null && !completion.isCompleted) {
               completion.complete();
@@ -97,6 +74,12 @@ mixin AudioDeviceScan on AudioDeviceState {
         }
       }
     }
+  }
+
+  @override
+  void cancelOperations() {
+    _scanOperation = null;
+    super.cancelOperations();
   }
 
   @override
@@ -115,6 +98,6 @@ mixin AudioDeviceScan on AudioDeviceState {
   void refreshAfterMicrophoneCapture() {
     if (refreshAfterCaptureRequested) return;
     refreshAfterCaptureRequested = true;
-    unawaited(refreshAudioDevices());
+    unawaited(refreshAfterInvalidation());
   }
 }

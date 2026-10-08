@@ -42,7 +42,7 @@ extension VoiceAdmissionAudio on VoiceController {
     int disconnectGeneration,
   ) async {
     if (audio.nativeBootstrap == null) {
-      await audio.refreshAudioDevices();
+      await audio.refreshAfterInvalidation();
       checkCurrentVoiceAdmission(ticket, revision, lease, disconnectGeneration);
     }
   }

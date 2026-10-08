@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:livekit_client/livekit_client.dart';
 
+import 'failure.dart';
 import 'scan.dart';
 import 'state.dart';
 
