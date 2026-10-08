@@ -3,6 +3,7 @@ import 'dart:async';
 import '../../features/session/lifecycle/controller.dart';
 import '../../features/realtime/lifecycle/controller.dart';
 import '../../features/realtime/dispatch/workspace.dart';
+import '../../features/profile/state/refresh.dart';
 import '../../features/voice/lifecycle/controller.dart';
 import '../../features/notifications/message_events/controller.dart';
 import 'owners.dart';
