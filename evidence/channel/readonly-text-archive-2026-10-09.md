@@ -17,7 +17,7 @@ Every existing live history/search/download URL still rejects archives. Fresh se
 - PASS: `npm run build`, including vue-tsc, using explicit test origin `https://archive-verification.example`. Initial build without required public-origin configuration correctly rejected missing configuration.
 - PASS: real headless Chromium, `npm run test:readonly-archive`, 2 tests. Actual SearchPanel/ArchiveReader/ArchiveManagement components exercise escaped history, cursor paging, archive search/file URL, absence of composer/admin tools for member, session unmount, confirmation, expected revision, visible restore conflict. HTTP fixtures are synthetic; this is component browser acceptance, not deployed API integration.
 - PASS: `python -m tools.ci.native.contracts`: 19 contract checks, OpenAPI schema lint and 96 public operations / 3 private exclusions; 39 requirement traceability; docs/native-edge/topology/delivery checks. Tooling suite: 241 tests with one pre-existing skip, separately from unskipped archive PostgreSQL acceptance.
-- Full Go package suite: initial run found the expected migration fingerprint list missing 0050. The exact readonly default/state constraint fingerprint was added; native migration suite subsequently PASS. Final aggregate result is recorded at handoff.
+- Full Go package suite: initial run found the expected migration fingerprint list missing 0050. The exact readonly default/state constraint fingerprint was added; native migration suite subsequently PASS. Final clean aggregate re-run `go test ./... -p 4 -timeout=180s` PASS (database integration environment unset; real archive PG acceptance is listed separately).
 
 ## Remaining acceptance
 
