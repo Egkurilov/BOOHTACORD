@@ -30,6 +30,8 @@ extension VoiceAdmissionAudio on VoiceController {
     if (audio.nativeBootstrap != null) {
       await audio.bootstrap();
       checkCurrentVoiceAdmission(ticket, revision, lease, disconnectGeneration);
+      await audio.applySavedSelectionsBeforeJoin();
+      checkCurrentVoiceAdmission(ticket, revision, lease, disconnectGeneration);
     }
   }
 

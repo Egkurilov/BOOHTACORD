@@ -5,6 +5,7 @@ import 'package:boohtacord_desktop/src/core/session/scope.dart';
 import 'package:boohtacord_desktop/src/features/audio/devices/controller.dart';
 import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart';
 import 'package:boohtacord_desktop/src/features/voice/lifecycle/controller.dart';
+import 'package:boohtacord_desktop/src/models.dart';
 
 import 'api.dart';
 import 'pending_room_fake.dart';
@@ -12,7 +13,7 @@ import 'pending_room_fake.dart';
 export 'pending_room_fake.dart';
 
 class VoiceHarness {
-  VoiceHarness({Future<void> Function()? nativeBootstrap}) {
+  VoiceHarness({Future<void> Function()? nativeBootstrap, this.account}) {
     audio = AudioDeviceController(
       readRoom: () => owner.room,
       loader: () async {
@@ -32,7 +33,7 @@ class VoiceHarness {
       scope,
       audio,
       screen,
-      readUser: () => null,
+      readUser: () => account,
       reportError: (value) => error = value,
       formatError: (value) => value.toString(),
       roomFactory: (options) {
@@ -49,6 +50,7 @@ class VoiceHarness {
   final api = DelayedVoiceApi();
   final scope = SessionScope();
   final room = PendingVoiceRoom();
+  final SessionUser? account;
   List<MediaDevice> enumeratedDevices = const [];
   late final AudioDeviceController audio;
   late final ScreenShareController screen;

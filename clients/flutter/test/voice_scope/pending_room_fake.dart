@@ -5,6 +5,7 @@ import 'package:livekit_client/livekit_client.dart';
 
 class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
   final connecting = Completer<void>();
+  final connectStarted = Completer<void>();
   int disconnected = 0;
   bool connectCalled = false;
   MediaDevice? selectedOutput;
@@ -24,6 +25,7 @@ class PendingVoiceRoom with EventsEmittable<RoomEvent> implements Room {
     FastConnectOptions? fastConnectOptions,
   }) {
     connectCalled = true;
+    if (!connectStarted.isCompleted) connectStarted.complete();
     return connecting.future;
   }
 
