@@ -43,6 +43,7 @@ import '../widgets/topology_actions/buttons.dart';
 import '../widgets/topology_actions/delete_actions.dart';
 import '../widgets/authenticated_avatar.dart';
 import '../widgets/audio_device_check.dart';
+import '../features/audio/settings/scan_notice.dart';
 import '../widgets/audio_processing_advanced_settings.dart';
 import '../widgets/voice_disconnect/notice.dart';
 import '../widgets/voice_disconnect/join_actions.dart';
@@ -7166,6 +7167,12 @@ class _AudioSettingsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          AudioDeviceScanNotice(
+                            status: state.audioDeviceScanStatus,
+                            failure: state.audioDeviceScanFailure,
+                            inputCount: state.audioInputDevices.length,
+                            outputCount: state.audioOutputDevices.length,
+                          ),
                           if (compact) ...[
                             _AudioDeviceDropdown(
                               label: 'Микрофон',
@@ -7274,7 +7281,8 @@ class _AudioSettingsScreen extends StatelessWidget {
                               outputDeviceLabel: outputDevice?.label,
                             ),
                           ],
-                          if (state.audioSettingsError != null) ...[
+                          if (state.audioSettingsError != null &&
+                              state.audioDeviceScanFailure == null) ...[
                             const SizedBox(height: 12),
                             _ErrorBanner(message: state.audioSettingsError!),
                           ],
