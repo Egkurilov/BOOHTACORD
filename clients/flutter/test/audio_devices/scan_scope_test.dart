@@ -164,7 +164,7 @@ void main() {
       final initialRefresh = owner.refreshAudioDevices();
       connected = true;
       var postConnectRefreshCompleted = false;
-      final postConnectRefresh = owner.refreshAudioDevices().then((_) {
+      final postConnectRefresh = owner.refreshAfterInvalidation().then((_) {
         postConnectRefreshCompleted = true;
       });
 
@@ -198,7 +198,7 @@ void main() {
 
     final initialRefresh = owner.refreshAudioDevices();
     var queuedRefreshCompleted = false;
-    final queuedRefresh = owner.refreshAudioDevices().then((_) {
+    final queuedRefresh = owner.refreshAfterInvalidation().then((_) {
       queuedRefreshCompleted = true;
     });
 

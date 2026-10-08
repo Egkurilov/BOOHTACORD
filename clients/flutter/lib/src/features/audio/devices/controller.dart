@@ -8,6 +8,7 @@ import 'input_selection/selection.dart';
 import 'input_selection/switch.dart';
 import 'inventory.dart';
 import 'microphone.dart';
+import 'native_inventory_readiness.dart';
 import 'output_selection/selection.dart';
 import 'prejoin_selection/restore.dart';
 import 'processing.dart';
@@ -25,6 +26,7 @@ class AudioDeviceController extends AudioDeviceState
         AudioDevicePreJoinRestore,
         AudioDeviceProcessing,
         AudioDeviceMicrophone,
+        AudioDeviceNativeInventoryReadiness,
         AudioDeviceBootstrap {
   AudioDeviceController({
     required super.readRoom,

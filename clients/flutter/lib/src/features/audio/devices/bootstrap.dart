@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:livekit_client/livekit_client.dart';
 
+import 'failure.dart';
+import 'native_inventory_readiness.dart';
 import 'scan.dart';
 import 'state.dart';
 
-mixin AudioDeviceBootstrap on AudioDeviceState, AudioDeviceScan {
+mixin AudioDeviceBootstrap
+    on AudioDeviceState, AudioDeviceScan, AudioDeviceNativeInventoryReadiness {
   void watch();
 
   Future<void>? _bootstrapOperation;
@@ -31,11 +34,23 @@ mixin AudioDeviceBootstrap on AudioDeviceState, AudioDeviceScan {
   Future<void> refreshAudioDevices() async {
     await super.refreshAudioDevices();
     final cause = _nativeBootstrapFailure;
-    if (cause == null || isDisposed) return;
+    if (isDisposed) return;
+    if (cause == null) {
+      if (audioDeviceScanStatus == AudioDeviceScanStatus.ready &&
+          isAwaitingNativeInventory(
+            audioInputDevices.followedBy(audioOutputDevices),
+          )) {
+        publishAwaitingNativeInventory();
+        notifyListeners();
+      }
+      return;
+    }
     final failure = classifyAudioDeviceFailure(cause, bootstrap: true);
     if (audioDeviceScanStatus != AudioDeviceScanStatus.ready ||
-        !_hasConcreteEndpoint(audioInputDevices.followedBy(audioOutputDevices))) {
-      _publishBootstrapFailure(failure);
+        !hasConcreteNativeEndpoint(
+          audioInputDevices.followedBy(audioOutputDevices),
+        )) {
+      publishNativeBootstrapFailure(failure);
       notifyListeners();
       return;
     }
@@ -44,20 +59,12 @@ mixin AudioDeviceBootstrap on AudioDeviceState, AudioDeviceScan {
   }
 
   bool acceptAudioDeviceChange(List<MediaDevice> devices) {
-    final cause = _nativeBootstrapFailure;
-    if (cause != null && !_hasConcreteEndpoint(devices)) {
-      _publishBootstrapFailure(
-        classifyAudioDeviceFailure(cause, bootstrap: true),
-      );
-      return false;
-    }
-    _nativeBootstrapFailure = null;
-    audioDeviceScanFailed = false;
-    audioDeviceScanStatus = AudioDeviceScanStatus.ready;
-    audioDeviceScanFailure = null;
-    audioSettingsError = null;
-    audioDeviceWarning = null;
-    return true;
+    final accepted = acceptNativeInventory(
+      devices,
+      bootstrapFailure: _nativeBootstrapFailure,
+    );
+    if (accepted) _nativeBootstrapFailure = null;
+    return accepted;
   }
 
   Future<void> _bootstrapAudioDevices() async {
@@ -90,22 +97,6 @@ mixin AudioDeviceBootstrap on AudioDeviceState, AudioDeviceScan {
     watch();
     await refreshAudioDevices();
   }
-
-  void _publishBootstrapFailure(AudioDeviceScanFailure failure) {
-    final message = audioDeviceFailureMessage(failure);
-    audioDeviceScanFailed = true;
-    audioDeviceScanStatus = AudioDeviceScanStatus.error;
-    audioDeviceScanFailure = failure;
-    audioDeviceWarning = null;
-    audioSettingsError = message;
-  }
-
-  bool _hasConcreteEndpoint(Iterable<MediaDevice> devices) => devices.any(
-    (device) =>
-        (device.kind == 'audioinput' || device.kind == 'audiooutput') &&
-        device.deviceId.isNotEmpty &&
-        device.deviceId != 'default',
-  );
 
   @override
   void cancelOperations() {
