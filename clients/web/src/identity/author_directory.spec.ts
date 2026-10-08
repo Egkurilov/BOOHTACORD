@@ -72,4 +72,39 @@ describe('author directory', () => {
     await lookup
     expect(directory.displayName('me')).toBe('Новое имя')
   })
+
+  it('supersedes an older lookup during refresh and ignores its late response', async () => {
+    const directory = useAuthorDirectory()
+    const pending: Array<(response: Response) => void> = []
+    const request = vi.fn(() => new Promise<Response>((resolve) => pending.push(resolve)))
+
+    const original = directory.ensure('user-2', request)
+    const refreshed = directory.refreshKnown(request)
+    expect(request).toHaveBeenCalledTimes(2)
+
+    pending[1](member('Новое имя'))
+    await refreshed
+    expect(directory.displayName('user-2')).toBe('Новое имя')
+
+    pending[0](member('Запоздавшее имя'))
+    await original
+    expect(directory.displayName('user-2')).toBe('Новое имя')
+  })
+
+  it('coalesces overlapping known-profile refreshes into one lookup per member', async () => {
+    const directory = useAuthorDirectory()
+    const request = vi.fn().mockResolvedValue(member('Актуальное имя'))
+    await directory.ensure('user-2', request)
+    request.mockClear()
+
+    let resolveRefresh: ((response: Response) => void) | undefined
+    request.mockImplementation(() => new Promise<Response>((resolve) => { resolveRefresh = resolve }))
+    const first = directory.refreshKnown(request)
+    const second = directory.refreshKnown(request)
+    expect(request).toHaveBeenCalledTimes(1)
+
+    resolveRefresh?.(member('Новое имя'))
+    await Promise.all([first, second])
+    expect(directory.displayName('user-2')).toBe('Новое имя')
+  })
 })
