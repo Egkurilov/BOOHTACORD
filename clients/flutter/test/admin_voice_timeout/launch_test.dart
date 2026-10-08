@@ -1,6 +1,7 @@
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
+import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,6 +31,10 @@ void main() {
       addTearDown(state.dispose);
       await tester.pumpWidget(
         MaterialApp(
+          theme: guildTheme().copyWith(
+            platform: TargetPlatform.windows,
+            visualDensity: VisualDensity.compact,
+          ),
           home: Scaffold(body: AdminScreen(state: state)),
         ),
       );
@@ -42,6 +47,8 @@ void main() {
         ),
       );
       await tester.ensureVisible(trigger);
+      expect(tester.getSize(trigger).height, greaterThanOrEqualTo(44));
+      expect(tester.getSize(trigger).width, greaterThanOrEqualTo(44));
       final triggerContent = width > 1000
           ? find.descendant(of: trigger, matching: find.byType(Icon)).first
           : find.descendant(of: trigger, matching: find.byType(Text)).first;

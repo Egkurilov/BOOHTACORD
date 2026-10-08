@@ -35,7 +35,10 @@ extension AdminCompactActions on AdminScreenStateContext {
       ),
       OutlinedButton(
         key: ValueKey('voice-timeout-account:${account.accountId}'),
-        style: OutlinedButton.styleFrom(minimumSize: const Size(44, 44)),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(44, 44),
+          visualDensity: VisualDensity.standard,
+        ),
         onPressed: busy ? null : () => adminOpenVoiceTimeout(account),
         child: const Text('Голосовой тайм-аут'),
       ),
