@@ -5,6 +5,7 @@ import 'controller.dart';
 extension VoiceRosterStop on VoiceRosterController {
   void stop() {
     watching = false;
+    opening = false;
     retryTimer?.cancel();
     retryTimer = null;
     staleTimer?.cancel();
@@ -19,6 +20,18 @@ extension VoiceRosterStop on VoiceRosterController {
     if (done != null && !done.isCompleted) done.complete();
     streamDone = null;
     revision++;
+    refreshRevision++;
     loading = false;
+    retryAttempt = 0;
+    voiceRosters = null;
+    voiceRosterError = null;
+    phase = VoiceRosterPhase.initialLoading;
+  }
+
+  void expireRosterSession() {
+    stop();
+    phase = VoiceRosterPhase.sessionExpired;
+    changed();
+    api.onUnauthorized?.call();
   }
 }

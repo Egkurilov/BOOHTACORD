@@ -1,19 +1,21 @@
-import 'dart:async';
-
 import 'controller.dart';
 
 extension VoiceRosterStale on VoiceRosterController {
   void markLost(int expected) {
-    if (!watching || expected != revision) return;
-    if (voiceRosters == null && voiceRosterError == null) {
-      voiceRosterError = 'Нет связи со списком голосовых каналов.';
-      changed();
-    }
-    staleTimer ??= Timer(staleTimeout, () {
+    if (!watching || disposed || expected != revision) return;
+    refreshRevision++;
+    loading = false;
+    voiceRosterError = 'Не удалось обновить состав комнаты.';
+    phase = voiceRosters == null
+        ? VoiceRosterPhase.unavailable
+        : VoiceRosterPhase.stale;
+    changed();
+    final ticket = scope.capture();
+    staleTimer ??= schedule(staleTimeout, () {
       staleTimer = null;
-      if (!watching || expected != revision) return;
+      if (!ticket.isActive || disposed || expected != revision) return;
       voiceRosters = null;
-      voiceRosterError = 'Нет связи со списком голосовых каналов.';
+      phase = VoiceRosterPhase.unavailable;
       changed();
     });
   }
