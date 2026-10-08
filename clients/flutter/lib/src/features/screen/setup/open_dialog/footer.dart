@@ -1,0 +1,75 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../../theme.dart';
+
+class SetupFooter extends StatelessWidget {
+  const SetupFooter({
+    super.key,
+    required this.canStart,
+    required this.updating,
+    required this.selecting,
+    required this.selectedName,
+    required this.onCancel,
+    required this.onStart,
+  });
+  final bool canStart, updating, selecting;
+  final String? selectedName;
+  final VoidCallback onCancel, onStart;
+  @override
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 640;
+    final buttons = [
+      TextButton(onPressed: onCancel, child: const Text('Отмена')),
+      FilledButton.icon(
+        key: const ValueKey('start-screen-share'),
+        onPressed: canStart ? onStart : null,
+        icon: const Icon(Icons.screen_share_outlined),
+        label: Text(updating ? 'Применить качество' : 'Начать трансляцию'),
+      ),
+    ];
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        compact ? 12 : 24,
+        14,
+        compact ? 12 : 24,
+        18,
+      ),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: GcColors.border)),
+      ),
+      child: compact
+          ? OverflowBar(
+              alignment: MainAxisAlignment.end,
+              spacing: 10,
+              overflowSpacing: 4,
+              children: buttons,
+            )
+          : Row(
+              children: [
+                if (selecting)
+                  Expanded(
+                    child: Text(
+                      canStart
+                          ? 'Выбрано: ${selectedName ?? ''}'
+                          : selectedName != null &&
+                                defaultTargetPlatform == TargetPlatform.windows
+                          ? 'Получаем размер источника…'
+                          : 'Сначала выберите экран или окно',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: GcColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                buttons.first,
+                const SizedBox(width: 10),
+                buttons.last,
+              ],
+            ),
+    );
+  }
+}
