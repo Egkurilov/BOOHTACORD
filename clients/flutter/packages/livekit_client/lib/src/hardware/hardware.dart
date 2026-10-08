@@ -213,13 +213,12 @@ class Hardware {
 
   Future<void> _flushDeviceChange() async {
     if (!_deviceChangePending) return;
-    _deviceChangePending = false;
     final pending = _deviceChangeRefresh;
     if (pending != null) {
       await pending;
-      if (_deviceChangePending) unawaited(_flushDeviceChange());
       return;
     }
+    _deviceChangePending = false;
     final operation = enumerateDevices();
     _deviceChangeRefresh = operation;
     try {
