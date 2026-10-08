@@ -29,10 +29,19 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
+      - name: Install headed window manager
+        run: sudo apt-get install --no-install-recommends --yes openbox
       - name: Verify real uploads and protected context
         env:
           VITE_PUBLIC_ORIGIN: https://localhost:4810
-        run: xvfb-run --auto-servernum python3 -m tools.qa.next_client_acceptance.run
+        run: |
+          xvfb-run --auto-servernum bash -c '
+            openbox --sm-disable >/dev/null 2>&1 &
+            window_manager_pid=$!
+            trap "kill $window_manager_pid" EXIT
+            node tools/qa/next_client_acceptance/visibility_smoke.mjs &&
+              python3 -m tools.qa.next_client_acceptance.run
+          '
       - uses: actions/upload-artifact@v4
         if: always()
         with:
