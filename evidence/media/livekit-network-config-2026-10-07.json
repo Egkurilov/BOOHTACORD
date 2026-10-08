@@ -17,7 +17,7 @@
   "repository_artifacts": {
     "deploy/livekit/livekit.yaml": "sha256:73dec4d45e589eae3901106008ea70adda1ee932d0df77df4435572f9e0541c3",
     "deploy/livekit/compose.yaml": "sha256:a172baeddb370f902a95ad5661dc770bd8f7f0b5ba003978f1a1a2ab95b9238d",
-    "deploy/compose.yaml": "sha256:7db64951d73f0edd58045992e3f113721f7b029f7905df43b86a03b9582c1f83",
+    "deploy/compose.yaml": "sha256:ac40e69350c1cefaa069084e54cf58b03561f67c80b5b8ca6b01b712059c6fca",
     "deploy/operators.yaml": "sha256:a036a6e02411fd838031f085f0eec0ad40a9d43ae3de12beae1afc6c880492b6",
     "docker/observability/compose.yaml": "sha256:a5fb64b931b2e67f8bdd9506121ca0ee692195c91a347c81503548ad1a7fb698",
     "docker/observability/prometheus.yaml": "sha256:7852473943253ef651640000282105f06256b62e3a84d232a910989cd9846b30",
