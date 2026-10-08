@@ -11,6 +11,7 @@ describe('channel navigation counters', () => {
     const pinia = createPinia()
     useAuthorDirectory(pinia).acceptOwnProfile({ account_id: 'user-1', login: 'mika', display_name: 'Мика', role: 'MEMBER', avatar_url: '/avatar' })
     const html = await renderToString(createSSRApp(ChannelNavigation, {
+      accountId: 'user-1',
       activeVoiceChannelId: 'voice-1', selectedChannelId: 'voice-1',
       voicePresence: { channelId: 'voice-1', memberCount: 1, members: [{ id: 'user-1', name: 'Мика', microphoneMuted: false, microphoneUnavailable: false, speaking: false, isSpeaking: false, screenSharing: false, self: false }] },
       topology: { revision: 1, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [
@@ -22,6 +23,7 @@ describe('channel navigation counters', () => {
 
   it('shows caller-local TEXT unread and mention badges without adding them to VOICE', async () => {
     const html = await renderToString(createSSRApp(ChannelNavigation, {
+      accountId: 'user-1',
       activeVoiceChannelId: undefined, selectedChannelId: undefined, voicePresence: null,
       topology: { revision: 2, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [
         { id: 'text-1', name: 'Общий', kind: 'TEXT', position: 0, admissionClosed: false, unreadCount: 4, mentionCount: 2 },
@@ -35,6 +37,7 @@ describe('channel navigation counters', () => {
 
   it('uses the two-letter handoff initials for connected voice members without avatars', async () => {
     const html = await renderToString(createSSRApp(ChannelNavigation, {
+      accountId: 'user-1',
       activeVoiceChannelId: 'voice-1', selectedChannelId: 'text-1',
       voicePresence: { channelId: 'voice-1', memberCount: 1, members: [{ id: 'user-2', name: 'Alex', microphoneMuted: false, microphoneUnavailable: false, speaking: false, isSpeaking: false, screenSharing: false, self: false }] },
       topology: { revision: 1, categories: [{ id: 'cat-1', name: 'ОБЩЕНИЕ', position: 0, channels: [

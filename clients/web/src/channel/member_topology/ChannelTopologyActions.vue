@@ -10,7 +10,7 @@ import ChannelNavigation from '../ChannelNavigation.vue'
 import AdminConfirmation from '../AdminConfirmation.vue'
 import { archiveText, closeVoice, createMemberCategory, createMemberChannel, deleteCategory, TopologyMutationError } from './member_topology_client'
 
-const props = defineProps<{ activeVoiceChannelId?: string; selectedChannelId?: string; topology: ChannelTopology; permissions: PermissionValues; voicePresence: VoiceNavigationPresence | null; voiceRosters?: VoiceRoomRoster[] | null }>()
+const props = defineProps<{ accountId: string; activeVoiceChannelId?: string; selectedChannelId?: string; topology: ChannelTopology; permissions: PermissionValues; voicePresence: VoiceNavigationPresence | null; voiceRosters?: VoiceRoomRoster[] | null }>()
 const emit = defineEmits<{ select: [channel: TopologyChannel]; changed: [] }>()
 const permissionStore = usePermissionStore()
 const open = ref(false); const name = ref(''); const kind = ref<'CATEGORY' | ChannelKind>('TEXT'); const categoryId = ref('')
@@ -71,7 +71,7 @@ async function remove(target: TopologyCategory | TopologyChannel): Promise<void>
 
 <template>
   <p v-if="status" class="topology-action-status" aria-live="polite">{{ status }}</p><p v-if="error" class="topology-action-error" role="alert">{{ error }}</p>
-  <ChannelNavigation :active-voice-channel-id="activeVoiceChannelId" :selected-channel-id="selectedChannelId" :topology="topology" :permissions="permissions" :voice-presence="voicePresence" :voice-rosters="voiceRosters" @select="emit('select', $event)" @create-global="begin()" @create-in-category="begin" @delete-category="remove" @delete-channel="remove" @changed="emit('changed')" />
+  <ChannelNavigation :account-id="accountId" :active-voice-channel-id="activeVoiceChannelId" :selected-channel-id="selectedChannelId" :topology="topology" :permissions="permissions" :voice-presence="voicePresence" :voice-rosters="voiceRosters" @select="emit('select', $event)" @create-global="begin()" @create-in-category="begin" @delete-category="remove" @delete-channel="remove" @changed="emit('changed')" />
   <AdminConfirmation ref="confirmation" id="member-topology-confirm" title="Подтвердите действие" :confirm-label="confirmationLabel" />
   <Teleport to="body"><div v-if="open" class="topology-dialog-backdrop" @click.self="close()"><form ref="dialogForm" class="topology-dialog" :class="{ 'topology-dialog--category': kind === 'CATEGORY' }" role="dialog" aria-modal="true" aria-labelledby="topology-create-title" @submit.prevent="submit" @keydown.esc.stop.prevent="close()" @keydown.stop="containTab">
     <header class="topology-dialog-header"><h2 id="topology-create-title">{{ kind === 'CATEGORY' ? 'Создать раздел' : 'Создать канал' }}</h2><button type="button" aria-label="Закрыть" :disabled="busy" @click="close()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button></header>

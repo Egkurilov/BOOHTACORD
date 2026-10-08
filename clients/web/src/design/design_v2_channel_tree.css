@@ -2,6 +2,14 @@
 .sidebar .sidebar-tabs { margin-bottom: 8px; }
 .channel-navigation .channel-navigation-actions { height: 36px; padding: 0 0 0 8px; }
 .channel-navigation .channel-navigation-actions > span { line-height: 16px; }
+.channel-navigation .channel-search { display: block; margin: 4px 8px 8px; }
+.channel-navigation .channel-search input { width: 100%; min-height: 34px; padding: 0 10px; border: 1px solid var(--gc-border-subtle); border-radius: 8px; color: var(--gc-text-primary); background: var(--gc-surface-raised); }
+.channel-navigation .channel-row .channel-favorite-toggle { width: 28px; flex: 0 0 28px; border: 0; color: var(--gc-text-secondary); background: transparent; font-size: 17px; }
+.channel-navigation .channel-row .channel-favorite-toggle[aria-pressed='true'] { color: var(--gc-accent-text); }
+.channel-navigation .channel-favorites-title { flex: 1; text-align: left; }
+.channel-navigation .channel-favorite-link { width: 100%; }
+.channel-navigation .channel-favorite-parent { overflow: hidden; color: var(--gc-text-secondary); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.channel-navigation .channel-search-empty { padding: 8px; color: var(--gc-text-secondary); }
 .channel-navigation .channel-navigation-actions button, .channel-navigation .channel-category-actions button { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 8px; padding: 0; }
 .channel-navigation-actions button svg, .channel-category-actions button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
 .channel-category-actions button svg { width: 18px; height: 18px; }

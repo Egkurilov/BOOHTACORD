@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const component = readFileSync(new URL('./ChannelNavigation.vue', import.meta.url), 'utf8')
+const component = readFileSync(new URL('./CategoryContextMenu.vue', import.meta.url), 'utf8')
 const styles = readFileSync(new URL('../design/design_v2_contextual_overlays.css', import.meta.url), 'utf8')
 
 describe('Design V2 category context menu', () => {
