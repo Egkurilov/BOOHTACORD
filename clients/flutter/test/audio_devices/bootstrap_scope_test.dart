@@ -6,6 +6,41 @@ import 'package:boohtacord_desktop/src/core/session/scope.dart';
 import 'package:boohtacord_desktop/src/features/audio/devices/controller.dart';
 
 void main() {
+  test(
+    'a bootstrap request after logout cannot block the next account',
+    () async {
+      final scope = SessionScope()..close();
+      var nativeCalls = 0;
+      var inactiveNativeCalls = 0;
+      var scanCalls = 0;
+      final owner = AudioDeviceController(
+        scope: scope,
+        readRoom: () => null,
+        nativeBootstrap: () async {
+          nativeCalls++;
+          if (!scope.capture().isActive) inactiveNativeCalls++;
+        },
+        loader: () async {
+          scanCalls++;
+          return const [
+            MediaDevice('current', 'Current microphone', 'audioinput', null),
+          ];
+        },
+      );
+      addTearDown(owner.dispose);
+
+      final staleRequest = owner.bootstrap();
+      scope.begin();
+      await owner.bootstrap();
+      await staleRequest;
+
+      expect(nativeCalls, 1);
+      expect(inactiveNativeCalls, 0);
+      expect(scanCalls, 1);
+      expect(owner.audioInputDevices.single.deviceId, 'current');
+    },
+  );
+
   test('a late bootstrap cannot scan after logout and the next login', () async {
     final scope = SessionScope();
     final oldNativeBootstrap = Completer<void>();

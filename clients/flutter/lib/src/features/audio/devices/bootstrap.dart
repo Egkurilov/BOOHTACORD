@@ -15,6 +15,7 @@ mixin AudioDeviceBootstrap on AudioDeviceState, AudioDeviceScan {
   bool get nativeAudioBootstrapPending => _nativeBootstrapPending;
 
   Future<void> bootstrap() {
+    if (isDisposed || !scope.capture().isActive) return Future<void>.value();
     final pending = _bootstrapOperation;
     if (pending != null) return pending;
     final operation = _bootstrapAudioDevices();
