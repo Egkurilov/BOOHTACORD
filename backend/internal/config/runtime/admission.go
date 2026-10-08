@@ -17,7 +17,7 @@ func configureAdmission(configuration *Config) error {
 	}
 	configuration.RegistrationLimiter, err = makeLimiter(5, 15*time.Minute, 10_000)
 	if err == nil {
-		configuration.LoginLimiter, err = makeLimiter(120, 5*time.Minute, 10_000)
+		configuration.LoginLimiter, err = makeLimiter(10, 5*time.Minute, 10_000)
 	}
 	if err == nil {
 		configuration.LoginFailureLimiter, err = makeLimiter(8, 5*time.Minute, 50_000)

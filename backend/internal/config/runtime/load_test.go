@@ -53,3 +53,19 @@ func TestLoadRejectsInvalidTrustedProxyCIDR(t *testing.T) {
 		t.Fatal("invalid trusted proxy configuration accepted")
 	}
 }
+
+func TestLoginSourceLimitMatchesADR003(t *testing.T) {
+	values := environment()
+	configuration, err := Load(func(key string) string { return values[key] })
+	if err != nil {
+		t.Fatal(err)
+	}
+	for attempt := 1; attempt <= 10; attempt++ {
+		if _, allowed := configuration.LoginLimiter.Allow("198.51.100.20"); !allowed {
+			t.Fatalf("login attempt %d was rejected before the ADR-003 limit", attempt)
+		}
+	}
+	if _, allowed := configuration.LoginLimiter.Allow("198.51.100.20"); allowed {
+		t.Fatal("11th login attempt from one source was allowed")
+	}
+}
