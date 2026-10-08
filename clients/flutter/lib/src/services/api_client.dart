@@ -23,6 +23,7 @@ import '../features/admin/media_metrics/facade.dart';
 import '../features/admin/accounts/facade.dart';
 import '../features/admin/password_reset/facade.dart';
 import '../features/admin/voice_kick/facade.dart';
+import '../features/admin/voice_timeout/facade.dart';
 import '../features/text/history/facade.dart';
 import '../features/workspace/members/facade.dart';
 import '../features/direct/conversations/facade.dart';
@@ -69,6 +70,7 @@ class ApiClient extends ApiFacadeBase
         AdminAccountsFacade,
         AdminPasswordResetFacade,
         AdminVoiceKickFacade,
+        AdminVoiceTimeoutFacade,
         TextHistoryFacade,
         MembersFacade,
         DirectConversationsFacade,
