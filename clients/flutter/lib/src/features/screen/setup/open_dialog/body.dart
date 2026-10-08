@@ -10,7 +10,7 @@ import '../select_source/grid.dart';
 import '../quality/picker.dart';
 import 'header.dart';
 import 'footer.dart';
-import 'mobile_notice.dart';
+import 'quality_content.dart';
 import 'surface.dart';
 import 'source_tabs.dart';
 
@@ -55,8 +55,6 @@ class _SetupState extends State<SetupBody> {
   @override
   Widget build(BuildContext context) {
     final platform = defaultTargetPlatform;
-    final mobile =
-        platform == TargetPlatform.iOS || platform == TargetPlatform.android;
     final dimensions = ScreenShareQuality.sourceDimensionsFromJpeg(
       inventory.selected?.thumbnail,
     );
@@ -79,24 +77,17 @@ class _SetupState extends State<SetupBody> {
     return SetupSurface(
       children: [
         SetupHeader(updating: widget.updating, onClose: close),
-        ScreenCapabilityNotice(capability: capability),
         if (widget.allowSourceSelection) ...[
+          ScreenCapabilityNotice(capability: capability),
           SourceTabs(inventory: inventory),
           Expanded(child: SourceGrid(inventory: inventory)),
           picker,
         ] else
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  if (!widget.updating && mobile) ...[
-                    const SizedBox(height: 12),
-                    const MobileCaptureNotice(),
-                    const SizedBox(height: 8),
-                  ],
-                  picker,
-                ],
-              ),
+            child: SetupQualityContent(
+              capability: capability,
+              updating: widget.updating,
+              picker: picker,
             ),
           ),
         SetupFooter(
