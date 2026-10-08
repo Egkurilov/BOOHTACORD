@@ -33,6 +33,11 @@ before="$(sha256sum "$state_dir/postgres/"* "$state_dir/attachments/"*)"
 mkdir -p "$root/tools/qa/legacy_rollback"
 cp "$root/tools/qa/legacy_rollback/fake_docker.sh" "$bin_dir/docker"
 chmod 0755 "$bin_dir/docker"
+cat > "$bin_dir/python3" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'python3 %s\n' "$*" >> "$QA12_LOG"
+EOF
 cat > "$bin_dir/curl" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -46,7 +51,7 @@ cat > "$bin_dir/sleep" <<'EOF'
 set -euo pipefail
 printf 'sleep %s\n' "$*" >> "$QA12_LOG"
 EOF
-chmod 0755 "$bin_dir/curl" "$bin_dir/sleep"
+chmod 0755 "$bin_dir/python3" "$bin_dir/curl" "$bin_dir/sleep"
 export QA12_STATE="$state_dir" QA12_PROJECT="$project_dir" QA12_LOG="$temporary_root/commands.log"
 export PATH="$bin_dir:$PATH" VOICE_PLATFORM_DIR="$project_dir"
 
@@ -74,6 +79,7 @@ fi
 [[ "$(cat "$state_dir/maintenance")" == off ]]
 grep -Fxq "API_IMAGE=$old_api" "$project_dir/.env"
 grep -Fxq "WEB_IMAGE=$old_web" "$project_dir/.env"
+[[ "$(grep -Fc -- '--ensure-postgres-alias' "$QA12_LOG")" == 2 ]]
 [[ "$(sha256sum "$state_dir/postgres/"* "$state_dir/attachments/"*)" == "$before" ]]
 [[ "$(grep -c 'maintenance-admission --enable' "$QA12_LOG")" == 2 ]]
 [[ "$(grep -c 'maintenance-admission --disable' "$QA12_LOG")" == 2 ]]
