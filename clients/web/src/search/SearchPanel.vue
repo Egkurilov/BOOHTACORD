@@ -5,12 +5,15 @@ import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { avatarInitials } from '../design/avatar_initials'
 import SystemWelcomeMessage from '../conversation/system_welcome/SystemWelcomeMessage.vue'
 import SearchResultBody from './SearchResultBody.vue'
+import PersonalMentionsPanel from './PersonalMentionsPanel.vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { searchMessages, type SearchMessage } from './search_messages_client'
+import type { MentionInboxItem } from './mentions_inbox_client'
 
 interface SearchConversation { id: string; kind: 'CHANNEL' | 'DIRECT_MESSAGE'; label: string }
 const props = defineProps<{ currentConversation: SearchConversation | null; channelLabels: Record<string, string>; directMessageLabels: Record<string, string> }>()
-const emit = defineEmits<{ open: [message: SearchMessage]; close: [] }>()
+const emit = defineEmits<{ open: [message: SearchMessage]; openMention: [mention: MentionInboxItem]; close: [] }>()
+const activeView = ref<'messages' | 'mentions'>('messages')
 const query = ref('')
 const scope = ref<'all' | 'current'>('all')
 const authors = useAuthorDirectory()
@@ -60,7 +63,15 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
 
 <template>
   <section class="search-panel" aria-labelledby="search-panel-title" data-testid="search-panel">
-    <header class="search-panel-heading"><h1 id="search-panel-title">Поиск сообщений</h1><button class="search-close" type="button" aria-label="Закрыть поиск" @click="emit('close')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg></button></header>
+    <header class="search-panel-heading"><h1 id="search-panel-title">{{ activeView === 'messages' ? 'Поиск сообщений' : 'Упоминания' }}</h1><button class="search-close" type="button" aria-label="Закрыть поиск" @click="emit('close')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg></button></header>
+    <div class="search-view-tabs" role="group" aria-label="Поиск и упоминания">
+      <button id="search-messages-tab" type="button" :aria-pressed="activeView === 'messages'" aria-controls="search-messages-view" @click="activeView = 'messages'">Сообщения</button>
+      <button id="search-mentions-tab" type="button" :aria-pressed="activeView === 'mentions'" aria-controls="search-mentions-view" @click="activeView = 'mentions'">Упоминания</button>
+    </div>
+    <div v-if="activeView === 'mentions'" id="search-mentions-view" role="region" aria-label="Упоминания">
+      <PersonalMentionsPanel :channel-labels="channelLabels" :direct-message-labels="directMessageLabels" @open="emit('openMention', $event)" />
+    </div>
+    <div v-else id="search-messages-view" role="region" aria-label="Поиск сообщений">
     <form class="search-form" role="search" @submit.prevent="runSearch()">
       <label class="search-query-label"><span class="visually-hidden">Запрос</span><input ref="queryInput" v-model="query" type="search" autocomplete="off" placeholder="Поиск сообщений" :disabled="loading" :aria-describedby="error ? 'search-error' : undefined"></label>
       <div class="search-form-meta"><label class="search-scope-label"><span class="visually-hidden">Область поиска</span><select v-model="scope" :disabled="loading"><option value="all">Везде</option><option v-if="currentConversation" value="current">{{ currentConversation.label }}</option></select></label><span>Enter — найти</span></div>
@@ -75,5 +86,13 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
       </li>
     </ol>
     <button v-if="nextCursor" class="search-more" type="button" :disabled="loading" @click="runSearch(nextCursor)">Показать ещё</button>
+    </div>
   </section>
 </template>
+
+<style scoped>
+.search-view-tabs { display: flex; gap: 8px; margin: 12px 20px; }
+.search-view-tabs button { background: transparent; border: 1px solid var(--gc-border, #363a46); border-radius: 999px; color: inherit; cursor: pointer; min-height: 36px; padding: 6px 12px; }
+.search-view-tabs button[aria-pressed="true"] { background: var(--gc-surface-raised, #20232d); border-color: var(--gc-accent, #6974f5); }
+.search-view-tabs button:focus-visible { outline: 2px solid var(--gc-accent, #6974f5); outline-offset: 2px; }
+</style>

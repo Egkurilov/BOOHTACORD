@@ -8,6 +8,8 @@ import type { SearchMessage } from '../../search/search_messages_client'
 import { useSearchTargetStore } from '../../search/search_target_store'
 import QuickJumpPanel from '../../search/QuickJumpPanel.vue'
 import type { QuickJumpTarget } from '../../search/quick_jump'
+import type { MentionInboxItem } from '../../search/mentions_inbox_client'
+import { targetForMention } from '../../search/mention_target'
 
 const emit = defineEmits<{ openChannel: [channel: TopologyChannel]; openDirectMessage: [id: string]; close: [] }>()
 const voice = useWorkspaceVoiceControls()
@@ -41,6 +43,36 @@ async function open(message: SearchMessage): Promise<void> {
     emit('openDirectMessage', message.directMessageId)
   }
 }
+async function openMention(mention: MentionInboxItem): Promise<void> {
+  const sequence = ++openSequence
+  openError.value = ''
+  let target = targetForMention(
+    mention,
+    navigationChannels.value,
+    directMessageStore.directMessages.map(({ id }) => id),
+  )
+  if (!target && mention.kind === 'CHANNEL') {
+    await voice.topologyStore.refresh()
+    if (sequence !== openSequence) return
+    target = targetForMention(mention, navigationChannels.value, [])
+  } else if (!target) {
+    await directMessageStore.refreshNavigation()
+    if (sequence !== openSequence) return
+    target = targetForMention(mention, [], directMessageStore.directMessages.map(({ id }) => id))
+  }
+  if (!target) {
+    openError.value = mention.kind === 'CHANNEL' ? 'Канал с упоминанием больше недоступен.' : 'Личный диалог больше недоступен.'
+    return
+  }
+  searchTarget.open(target)
+  if (target.kind === 'CHANNEL') {
+    const channel = navigationChannels.value.find(({ id, kind }) => id === target.conversationId && kind === 'TEXT')
+    if (!channel) { openError.value = 'Канал с упоминанием больше недоступен.'; searchTarget.clear(); return }
+    emit('openChannel', channel)
+  } else {
+    emit('openDirectMessage', target.conversationId)
+  }
+}
 async function openQuickJump(entry: QuickJumpTarget): Promise<void> {
   const sequence = ++openSequence
   openError.value = ''
@@ -64,7 +96,7 @@ onBeforeUnmount(() => { openSequence++ })
     <button type="button" :aria-pressed="searchMode === 'navigation'" @click="searchMode = 'navigation'">Каналы и люди</button>
     <button v-if="searchMode === 'navigation'" type="button" aria-label="Закрыть поиск" @click="emit('close')">Закрыть</button>
   </div>
-  <SearchPanel v-show="searchMode === 'messages'" :current-conversation="currentConversation" :channel-labels="channelLabels" :direct-message-labels="directMessageLabels" @open="open" @close="emit('close')" />
+  <SearchPanel v-show="searchMode === 'messages'" :current-conversation="currentConversation" :channel-labels="channelLabels" :direct-message-labels="directMessageLabels" @open="open" @open-mention="openMention" @close="emit('close')" />
   <QuickJumpPanel v-if="searchMode === 'navigation'" :channels="navigationChannels" :people="navigationPeople" :status="navigationStatus" @select="openQuickJump" />
   <p v-if="openError" class="search-error" role="alert">{{ openError }}</p>
 </template>
