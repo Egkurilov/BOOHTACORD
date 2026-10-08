@@ -16,7 +16,7 @@
   "hash_format": "SHA-256 of UTF-8 text with CRLF normalized to LF, matching Git blob line endings across platforms.",
   "repository_artifacts": {
     "deploy/livekit/livekit.yaml": "sha256:73dec4d45e589eae3901106008ea70adda1ee932d0df77df4435572f9e0541c3",
-    "deploy/livekit/compose.yaml": "sha256:a172baeddb370f902a95ad5661dc770bd8f7f0b5ba003978f1a1a2ab95b9238d",
+    "deploy/livekit/compose.yaml": "sha256:51a898da4b8950d09bab3a95519c658ec56a5212262f877367aca2381eb528dd",
     "deploy/compose.yaml": "sha256:ac40e69350c1cefaa069084e54cf58b03561f67c80b5b8ca6b01b712059c6fca",
     "deploy/operators.yaml": "sha256:a036a6e02411fd838031f085f0eec0ad40a9d43ae3de12beae1afc6c880492b6",
     "docker/observability/compose.yaml": "sha256:a5fb64b931b2e67f8bdd9506121ca0ee692195c91a347c81503548ad1a7fb698",
@@ -91,6 +91,12 @@
     "verification": "PASS: 15 focused LiveKit network tests and full python -m tools.ci.native.contracts. All 174 Python tests passed with one pre-existing skip; contracts, traceability, documentation links, topology, workflows and Compose checks passed. No deployment/runtime acceptance performed."
   },
   "verification_updates": [
+    {
+      "observed_at": "2026-10-08",
+      "source_revision": "22618da85fae80f0092d363a1f98509e820a766e",
+      "change": "Added the livekit alias to the existing private LiveKit Compose endpoint, matching the production repair in VR-02; network membership, media ports and metrics boundary are unchanged.",
+      "verification": "The first pushed commit's GitHub contracts and server-build checks found this evidence file's pinned Compose SHA-256 stale. Updated the normalized file digest. The private-path helper and rollout tests passed locally; CI must pass before the production release workflow runs."
+    },
     {
       "observed_at": "2026-10-08",
       "source_revision": "1ff19f85828946d61b21ec7c488178ba522fc61e",
