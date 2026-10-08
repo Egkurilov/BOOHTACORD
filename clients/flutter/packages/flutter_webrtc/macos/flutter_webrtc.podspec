@@ -16,6 +16,7 @@ A new flutter plugin project.
   s.public_header_files = 'flutter_webrtc/Sources/flutter_webrtc/include/flutter_webrtc/**/*.h'
 
   s.dependency 'FlutterMacOS'
+  s.frameworks = 'CoreAudio'
   s.weak_frameworks = 'ScreenCaptureKit'
   s.dependency 'WebRTC-SDK', '150.7871.01'
   s.osx.deployment_target = '10.15'

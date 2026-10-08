@@ -15,3 +15,17 @@ add_custom_command(TARGET audio_device_selection_test POST_BUILD
   COMMAND $<TARGET_FILE:audio_device_selection_test>
   VERBATIM
 )
+
+add_executable(audio_device_change_coalescer_test audio_device_change_coalescer_test.cc)
+target_include_directories(audio_device_change_coalescer_test PRIVATE ../../../macos/flutter_webrtc/Sources/flutter_webrtc/include/flutter_webrtc)
+target_compile_features(audio_device_change_coalescer_test PRIVATE cxx_std_17)
+if(MSVC)
+  target_compile_options(audio_device_change_coalescer_test PRIVATE /UNDEBUG)
+else()
+  target_compile_options(audio_device_change_coalescer_test PRIVATE -UNDEBUG)
+endif()
+add_test(NAME audio_device_change_coalescer_test COMMAND audio_device_change_coalescer_test)
+add_custom_command(TARGET audio_device_change_coalescer_test POST_BUILD
+  COMMAND $<TARGET_FILE:audio_device_change_coalescer_test>
+  VERBATIM
+)
