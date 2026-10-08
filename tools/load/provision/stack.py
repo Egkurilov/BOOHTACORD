@@ -10,3 +10,8 @@ class Stack(ExistingStack):
         super().__init__(root, work)
         self.environment = {name: value for name, value in self.environment.items()
                             if not name.startswith('OTEL_')}
+        # The disposable Caddy proxy runs on the host and forwards the driver's
+        # loopback address in X-Forwarded-For. Trust only that local proxy so
+        # shared-NAT auth exercises retain per-source isolation from the admin
+        # login used during fixture provisioning.
+        self.environment['TRUSTED_PROXY_CIDRS'] = '127.0.0.1/32'

@@ -14,6 +14,7 @@ class FreshFixtureTests(unittest.TestCase):
                                         'OTEL_INGEST_AUTH': 'private', 'QA_BIN_DIR': ''}):
                 stack = Stack(work, work)
                 self.assertFalse(any(name.startswith('OTEL_') for name in stack.environment))
+                self.assertEqual(stack.environment['TRUSTED_PROXY_CIDRS'], '127.0.0.1/32')
             with patch.dict(os.environ, {'QA_BIN_DIR': 'external-binary'}):
                 with self.assertRaises(ValueError):
                     Stack(work, work)
