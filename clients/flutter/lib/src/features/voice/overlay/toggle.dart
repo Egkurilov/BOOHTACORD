@@ -5,13 +5,17 @@ class VoiceOverlayToggle extends StatelessWidget {
   const VoiceOverlayToggle({
     super.key,
     required this.enabled,
+    required this.onlySpeakers,
     required this.available,
     required this.onChanged,
+    required this.onOnlySpeakersChanged,
   });
 
   final bool enabled;
+  final bool onlySpeakers;
   final bool available;
   final ValueChanged<bool> onChanged;
+  final ValueChanged<bool> onOnlySpeakersChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -21,19 +25,37 @@ class VoiceOverlayToggle extends StatelessWidget {
     final label = enabled
         ? 'Скрыть панель говорящих'
         : 'Показать панель говорящих';
-    return Semantics(
-      button: true,
-      enabled: available,
-      toggled: enabled,
-      label: label,
-      child: IconButton(
-        tooltip: label,
-        onPressed: available ? () => onChanged(!enabled) : null,
-        icon: Icon(
-          Icons.record_voice_over_outlined,
-          color: enabled ? Theme.of(context).colorScheme.primary : null,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          button: true,
+          enabled: available,
+          toggled: enabled,
+          label: label,
+          child: IconButton(
+            tooltip: label,
+            onPressed: available ? () => onChanged(!enabled) : null,
+            icon: Icon(
+              Icons.record_voice_over_outlined,
+              color: enabled ? Theme.of(context).colorScheme.primary : null,
+            ),
+          ),
         ),
-      ),
+        PopupMenuButton<bool>(
+          tooltip: 'Настройки панели говорящих',
+          enabled: available,
+          onSelected: onOnlySpeakersChanged,
+          itemBuilder: (context) => [
+            CheckedPopupMenuItem<bool>(
+              checked: onlySpeakers,
+              value: !onlySpeakers,
+              child: const Text('Показывать только говорящих'),
+            ),
+          ],
+          icon: const Icon(Icons.tune),
+        ),
+      ],
     );
   }
 }

@@ -14,6 +14,7 @@ import '../../features/audio/devices/controller.dart';
 import '../../features/voice/lifecycle/controller.dart';
 import '../../features/voice/overlay/feed.dart';
 import '../../features/voice/overlay/windows_client.dart';
+import '../../features/voice/overlay/preferences.dart';
 import '../../features/voice/roster_state/controller.dart';
 import '../../features/screen/lifecycle/controller.dart';
 import '../../features/authorization/permissions/controller.dart';
@@ -51,6 +52,7 @@ abstract class AppOwners extends ChangeNotifier {
   late final AudioDeviceController audioDevices;
   late final VoiceController voice;
   late final VoiceOverlayFeed voiceOverlay;
+  VoiceOverlayPreferences? voiceOverlayPreferences;
   WindowsVoiceOverlayClient? voiceOverlayWindowsClient;
   late final VoiceRosterController voiceRoster;
   late final ScreenShareController screen;
@@ -60,6 +62,28 @@ abstract class AppOwners extends ChangeNotifier {
 
   void setVoiceOverlayEnabled(bool enabled) {
     voiceOverlay.setEnabled(enabled);
+    notifyListeners();
+  }
+
+  Future<void> setVoiceOverlayOnlySpeakers(bool value) async {
+    final preferences = voiceOverlayPreferences;
+    final ticket = session.scope.capture();
+    if (preferences == null ||
+        !ticket.isActive ||
+        session.user?.accountId != preferences.accountId) {
+      return;
+    }
+    if (!await preferences.setOnlySpeakers(value)) {
+      if (ticket.isActive) {
+        error = 'Не удалось сохранить настройку панели говорящих.';
+        notifyListeners();
+      }
+      return;
+    }
+    if (!ticket.isActive || session.user?.accountId != preferences.accountId) {
+      return;
+    }
+    voiceOverlay.setOnlySpeakers(value);
     notifyListeners();
   }
 

@@ -9,11 +9,10 @@ VoiceOverlayFeed createCurrentVoiceOverlayFeed({
   required VoiceController voice,
   required VoiceRosterController roster,
   required String? Function() readAccountId,
-  bool onlySpeakers = false,
 }) =>
     VoiceOverlayFeed(
       sources: [voice, roster],
-      project: (enabled) => currentVoiceOverlaySnapshot(
+      project: (enabled, onlySpeakers) => currentVoiceOverlaySnapshot(
         voice: voice,
         roster: roster,
         accountId: readAccountId(),

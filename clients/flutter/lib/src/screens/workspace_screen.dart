@@ -8040,8 +8040,11 @@ class _VoiceDock extends StatelessWidget {
             ),
             VoiceOverlayToggle(
               enabled: state.voiceOverlay.enabled,
+              onlySpeakers: state.voiceOverlay.onlySpeakers,
               available: _connected,
               onChanged: state.setVoiceOverlayEnabled,
+              onOnlySpeakersChanged: (value) =>
+                  state.setVoiceOverlayOnlySpeakers(value),
             ),
             _VoiceDockButton(
               compact: compact,

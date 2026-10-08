@@ -16,6 +16,9 @@ extension AppAccountCleanup on AppOwners {
     voiceRoster.voiceRosters = null;
     voiceRoster.voiceRosterError = null;
     voice.clearAccountPreferences();
+    voiceOverlayPreferences = null;
+    voiceOverlay.setEnabled(false);
+    voiceOverlay.setOnlySpeakers(false);
     audioDevices.clearAccount();
   }
 
