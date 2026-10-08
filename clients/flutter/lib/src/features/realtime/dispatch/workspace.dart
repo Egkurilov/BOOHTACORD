@@ -8,6 +8,7 @@ import '../../telemetry/realtime/process.dart';
 import 'conversation_events.dart';
 import 'direct_message.dart';
 import 'screen_preview_event.dart';
+import 'member_profile.dart';
 
 class WorkspaceRealtimeDispatch {
   WorkspaceRealtimeDispatch(
@@ -17,6 +18,7 @@ class WorkspaceRealtimeDispatch {
     required this.voiceRevoked,
     required this.permissionsChanged,
     this.guildChanged,
+    this.profileChanged,
     this.screenPreviewUpdated,
     this.screenPreviewInvalidated,
   });
@@ -26,9 +28,11 @@ class WorkspaceRealtimeDispatch {
   final FutureOr<void> Function(Map<String, dynamic>) voiceRevoked;
   final FutureOr<void> Function() permissionsChanged;
   final void Function(int)? guildChanged;
+  final FutureOr<void> Function(String, int)? profileChanged;
   final void Function(Map<String, dynamic>)? screenPreviewUpdated;
   final void Function(Map<String, dynamic>)? screenPreviewInvalidated;
   void call(RealtimeEvent event) {
+    if (dispatchMemberProfileUpdated(event, workspace, profileChanged)) return;
     if (dispatchConversationEvent(event, workspace, conversation, notifyMessage)) return;
     if (dispatchScreenPreviewEvent(event, screenPreviewUpdated, screenPreviewInvalidated)) return;
     final payload = event.payload;

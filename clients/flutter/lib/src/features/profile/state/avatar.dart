@@ -35,8 +35,8 @@ extension ProfileAvatar on ProfileController {
   Future<void> _refreshAvatar(bool Function() active) async {
     final result = await api.ownProfile();
     if (!active()) return;
-    profile = result;
-    avatarRevision++;
+    if (!acceptProfile(result)) return;
+    avatarRevision = profileRevision ?? avatarRevision + 1;
     await refreshMembers();
   }
 }

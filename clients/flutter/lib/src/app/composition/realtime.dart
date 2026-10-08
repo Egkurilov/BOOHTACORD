@@ -39,6 +39,11 @@ void configureRealtime(AppOwners app) {
       permissionsChanged: app.permissions.refresh,
       notifyMessage: notifications.call,
       guildChanged: (revision) => unawaited(app.guildProfile.refresh(revision)),
+      profileChanged: (userId, revision) async {
+        if (app.session.user?.accountId == userId) {
+          await app.profileOwner.refreshProfileIfNewer(revision);
+        }
+      },
       screenPreviewUpdated: app.voice.receiveScreenPreviewHint,
       screenPreviewInvalidated: app.voice.receiveScreenPreviewInvalidation,
     ).call,
