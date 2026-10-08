@@ -7,6 +7,7 @@ import MentionAutocomplete from '../conversation/MentionAutocomplete.vue'
 import EmojiPicker from '../conversation/EmojiPicker.vue'
 import { useComposerInput } from '../conversation/composer_input/controller'
 import ConversationOverflowMenu from '../conversation/ConversationOverflowMenu.vue'
+import ConversationFilesPanel from '../conversation/files_panel/ConversationFilesPanel.vue'
 import type { TextMessageAttachment } from '../conversation/message_client'
 import DirectMessageAttachmentPicker from './DirectMessageAttachmentPicker.vue'
 import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
@@ -30,6 +31,7 @@ const store = useDirectMessageStore()
 const firstUnread = computed(() => store.directMessages.find(({ id }) => id === props.directMessageId)?.firstUnreadMessageId)
 const { unreadBoundary, unreadContextOpen, readUnlocked, showUnread, continueAtLatest } = useUnreadBoundary(() => props.directMessageId, firstUnread, () => { void showLatest().then(queueVisibleRead) })
 const searchTarget = useSearchTargetStore()
+const filesOpen = ref(false)
 const contextTarget = computed(() => searchTarget.target?.kind === 'DIRECT_MESSAGE' && searchTarget.target.conversationId === props.directMessageId ? searchTarget.target : null)
 const replyContextTarget = ref<string | null>(null)
 const restored = ref<Position | null>(null)
@@ -44,13 +46,13 @@ const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>
 const emojiPicker = ref<{ show: () => Promise<void> } | null>(null)
 const { readRoot, queueVisibleRead } = useVisibleRead({
   conversationId: () => props.directMessageId, loadedConversationId: () => store.directMessageId, messages: () => store.messages,
-  canRead: () => props.active && store.directMessages.some(({ id }) => id === props.directMessageId) && !contextTarget.value && !replyContextTarget.value && !unreadContextOpen.value && !restored.value && (!unreadBoundary.value || readUnlocked.value),
+  canRead: () => props.active && store.directMessages.some(({ id }) => id === props.directMessageId) && !filesOpen.value && !contextTarget.value && !replyContextTarget.value && !unreadContextOpen.value && !restored.value && (!unreadBoundary.value || readUnlocked.value),
   advance: (id, messageId) => advanceReadIfVisible({ activeDirectMessageId: store.directMessageId,
     renderedDirectMessageId: id, newestDisplayedMessageId: messageId, visibilityState: document.visibilityState }),
   refreshCounters: () => { void store.refreshNavigation() },
 })
 
-const contextOpen = () => Boolean(contextTarget.value || replyContextTarget.value || unreadContextOpen.value || restored.value)
+const contextOpen = () => Boolean(filesOpen.value || contextTarget.value || replyContextTarget.value || unreadContextOpen.value || restored.value)
 const { save: savePosition, showLatest } = useContextPosition(props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId, readRoot, contextOpen, () => store.historyLoaded && store.directMessageId === props.directMessageId, restored)
 function onViewportChange(): void { savePosition(); queueVisibleRead() }
 const { send, retry } = useScopedSend<DirectMessageHistoryItem, TextMessageAttachment, DirectMessageHistoryItem>(
@@ -83,17 +85,18 @@ onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessag
         <h2 id="direct-message-title">{{ props.otherParticipantDisplayName }}</h2>
         <small>Личный диалог</small>
       </div>
-      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="props.navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu @search="searchOpen = true" /></template></WorkspaceHeaderActions>
+      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="props.navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu show-files @search="searchOpen = true" @files="filesOpen = true" /></template></WorkspaceHeaderActions>
     </header>
     <div v-if="searchOpen" v-show="!contextOpen()" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" @open="searchTarget.open({ kind: 'DIRECT_MESSAGE', conversationId: props.directMessageId, messageId: $event })" @close="closeSearch" /></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
-    <div v-if="unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
+    <div v-if="!filesOpen && unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
       <span>Есть непрочитанные сообщения.</span>
       <button type="button" @click="showUnread">К первому непрочитанному</button>
       <button type="button" @click="continueAtLatest">Остаться у последних</button>
     </div>
-    <SearchMessageContext v-if="contextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
+    <ConversationFilesPanel v-if="filesOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :deleted-message-ids="store.deletedMessageIds" @open-message="filesOpen = false; searchTarget.open({ kind: 'DIRECT_MESSAGE', conversationId: props.directMessageId, messageId: $event })" @close="filesOpen = false; void nextTick(() => searchTrigger?.focus())" />
+    <SearchMessageContext v-else-if="contextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
     <SearchMessageContext v-else-if="replyContextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="replyContextTarget" heading="Контекст ответа" @close="replyContextTarget = null" />
     <SearchMessageContext v-else-if="unreadContextOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" unread :active="props.active" @read="store.refreshNavigation()" @viewport-change="savePosition" @close="continueAtLatest" />
     <SearchMessageContext v-else-if="restored" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="restored.id" :offset="restored.offset" heading="Сохранённая позиция" @viewport-change="savePosition" @close="restored = null" />

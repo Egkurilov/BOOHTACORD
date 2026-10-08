@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 import {
   loadDirectMessages,
@@ -19,10 +19,26 @@ export const useDirectMessageStore = defineStore('direct-messages', () => {
     for (const [key, value] of retries) if (value === id) retries.delete(key)
   }
   const { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder, refreshMessage, refreshMessages } = createDirectMessageHistory(pending, acknowledge)
+  const deletedMessageIds = ref<string[]>([])
+  watch(directMessageId, () => { deletedMessageIds.value = [] })
   const loadingNavigation = ref(false)
   const sending = ref(false)
   let navigationSequence = 0
   const actions = createDirectMessageMessageActions({ directMessageId, error, messages, sending, pending, retries, acknowledge })
+
+  function applyDeletedHint(targetDirectMessageId: string, messageId: string): void {
+    if (directMessageId.value !== targetDirectMessageId || !messageId) return
+    if (!deletedMessageIds.value.includes(messageId)) deletedMessageIds.value = [...deletedMessageIds.value, messageId]
+    messages.value = messages.value.map(message => message.id === messageId && !message.deleted
+      ? { ...message, body: '', deleted: true, attachments: [], mentionUserIds: [] } : message)
+  }
+
+  async function remove(messageId: string, request?: DirectMessageRequest): Promise<boolean> {
+    const target = directMessageId.value
+    const removed = await actions.remove(messageId, request)
+    if (removed && target) applyDeletedHint(target, messageId)
+    return removed
+  }
 
   async function refreshNavigation(request?: DirectMessageRequest): Promise<void> {
     const sequence = ++navigationSequence
@@ -40,8 +56,10 @@ export const useDirectMessageStore = defineStore('direct-messages', () => {
 
   return {
     close,
+    applyDeletedHint,
     directMessageId,
     directMessages,
+    deletedMessageIds,
     error,
     loadingHistory,
     olderLoading,
@@ -53,6 +71,7 @@ export const useDirectMessageStore = defineStore('direct-messages', () => {
     nextCursor,
     open,
     ...actions,
+    remove,
     refreshHistory,
     refreshMessage,
     refreshMessages,
