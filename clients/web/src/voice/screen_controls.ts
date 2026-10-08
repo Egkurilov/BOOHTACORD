@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 
 import type { ScreenProfile } from './livekit_gateway'
+import { ScreenPublisherOperationError } from './screen_publisher/adapter'
 import { screenDiagnosticMessage, screenFailureMessage } from './screen_feedback'
 import { unknownScreenDiagnostics, type ScreenDiagnostics } from './screen_diagnostics'
 
@@ -42,6 +43,15 @@ export function createScreenControls(
       screenState.value = 'SHARING'
       screenError.value = screenDiagnosticMessage(screenDiagnostics.value)
     } catch (cause) {
+      if (captureCancelled(cause)) {
+        if (screenState.value === 'STARTING') {
+          screenDiagnostics.value = unknownScreenDiagnostics()
+          screenProfile.value = null
+          screenState.value = 'IDLE'
+        }
+        screenError.value = null
+        return
+      }
       screenState.value = 'ERROR'
       screenError.value = screenFailureMessage(cause)
     }
@@ -81,4 +91,9 @@ export function createScreenControls(
   }
 
   return { refreshScreenDiagnostics, startScreen, stopScreen }
+}
+
+function captureCancelled(cause: unknown): boolean {
+  return (cause instanceof Error && cause.name === 'AbortError')
+    || (cause instanceof ScreenPublisherOperationError && cause.outcome === 'cancel')
 }

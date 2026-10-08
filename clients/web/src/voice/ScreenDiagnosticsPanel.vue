@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import type { ScreenDiagnostics } from './screen_diagnostics'
 import type { ScreenProfile } from './livekit_gateway'
+import { observedScreenCaptureTracks } from './screen_capture_capabilities'
 
 const props = defineProps<{ diagnostics: ScreenDiagnostics; profile: ScreenProfile | null }>()
 const emit = defineEmits<{ refresh: [] }>()
@@ -15,7 +16,12 @@ const target = computed(() => ({
 const measured = computed(() => props.diagnostics.measured
   ? `${props.diagnostics.measured.width} × ${props.diagnostics.measured.height}${props.diagnostics.measured.framesPerSecond ? ` · ${props.diagnostics.measured.framesPerSecond} FPS` : ''}`
   : 'нет данных от браузера/SDK')
-const audioTrack = computed(() => ({ PRESENT: 'есть', ABSENT: 'нет', UNKNOWN: 'неизвестно' }[props.diagnostics.audioTrack]))
+const receivedTracks = computed(() => observedScreenCaptureTracks({
+  videoTrack: props.diagnostics.source === 'UNKNOWN' ? null : props.diagnostics.source === 'ACTIVE',
+  audioTrack: props.diagnostics.audioTrack === 'UNKNOWN' ? null : props.diagnostics.audioTrack === 'PRESENT',
+}))
+const audioTrack = computed(() => ({ present: 'есть', absent: 'нет', unknown: 'неизвестно' }[receivedTracks.value.audio]))
+const videoTrack = computed(() => ({ present: 'есть', absent: 'нет', unknown: 'неизвестно' }[receivedTracks.value.video]))
 const quality = computed(() => ({ EXCELLENT: 'отличное', GOOD: 'хорошее', POOR: 'низкое', LOST: 'потеряно', UNKNOWN: 'нет данных' }[props.diagnostics.connectionQuality]))
 const source = computed(() => ({ ACTIVE: 'активен', ENDED: 'завершён', UNKNOWN: 'неизвестно' }[props.diagnostics.source]))
 const layers = computed(() => (props.diagnostics.layers ?? []).map(layer => ({
@@ -39,10 +45,11 @@ const technical = computed(() => [
 <template>
   <p>Демонстрация идёт. Цель: {{ target }}. Измерено: {{ measured }}.</p>
   <dl class="screen-diagnostics">
-    <div><dt>Аудиодорожка</dt><dd>{{ audioTrack }}</dd></div>
+    <div><dt>Фактически полученные дорожки</dt><dd>Видео: {{ videoTrack }} · Аудио: {{ audioTrack }}</dd></div>
     <div><dt>Качество связи</dt><dd>{{ quality }}</dd></div>
     <div><dt>Источник</dt><dd>{{ source }}</dd></div>
   </dl>
+  <p>Голос остаётся доступен без аудиодорожки экрана.</p>
   <details>
     <summary>Технические данные</summary>
     <p>{{ technical }}</p>
