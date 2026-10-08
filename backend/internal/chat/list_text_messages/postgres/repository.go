@@ -25,7 +25,12 @@ type Repository struct{ database Database }
 func New(database Database) Repository { return Repository{database: database} }
 func (repository Repository) List(context context.Context, request listtextmessages.Request) ([]listtextmessages.Message, error) {
 	var available bool
-	if err := repository.database.QueryRow(context, selectChannel, request.ChannelID).Scan(&available); err != nil {
+	query, arguments := selectChannel, []any{request.ChannelID}
+	if request.ReadArchive {
+		query = `SELECT EXISTS(SELECT 1 FROM channels JOIN users ON users.id=$2 WHERE channels.id=$1 AND channels.kind='TEXT' AND channels.archived_at IS NOT NULL AND channels.readonly_archive AND users.blocked_at IS NULL)`
+		arguments = append(arguments, request.ActorID)
+	}
+	if err := repository.database.QueryRow(context, query, arguments...).Scan(&available); err != nil {
 		return nil, fmt.Errorf("select text channel: %w", err)
 	}
 	if !available {
@@ -39,7 +44,13 @@ func (repository Repository) List(context context.Context, request listtextmessa
 	} else if request.After != "" {
 		before = request.After
 	}
-	rows, err := repository.database.Query(context, historyQuery(request.After != ""), request.ChannelID, before, request.Limit+1, request.At != "")
+	dataQuery := historyQuery(request.After != "")
+	dataArguments := []any{request.ChannelID, before, request.Limit + 1, request.At != ""}
+	if request.ReadArchive {
+		dataQuery = archiveHistoryQuery(request.After != "")
+		dataArguments = append(dataArguments, request.ActorID)
+	}
+	rows, err := repository.database.Query(context, dataQuery, dataArguments...)
 	if err != nil {
 		return nil, fmt.Errorf("select text messages: %w", err)
 	}

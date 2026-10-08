@@ -19,7 +19,8 @@ JOIN messages ON messages.id = message_attachments.message_id AND messages.chann
 WHERE users.id = $1
   AND users.blocked_at IS NULL
   AND channels.kind = 'TEXT'
-  AND channels.archived_at IS NULL
+  AND ((NOT $4::boolean AND channels.archived_at IS NULL)
+       OR ($4::boolean AND channels.archived_at IS NOT NULL AND channels.readonly_archive))
   AND attachments.state = 'ATTACHED'
   AND messages.deleted_at IS NULL`
 
@@ -35,7 +36,7 @@ func New(database Database) Repository { return Repository{database: database} }
 
 func (repository Repository) Find(ctx context.Context, input downloadtextattachment.Input) (downloadtextattachment.Metadata, error) {
 	var metadata downloadtextattachment.Metadata
-	err := repository.database.QueryRow(ctx, findAttachment, input.ActorID, input.ChannelID, input.AttachmentID).Scan(
+	err := repository.database.QueryRow(ctx, findAttachment, input.ActorID, input.ChannelID, input.AttachmentID, input.ReadArchive).Scan(
 		&metadata.OriginalName, &metadata.StorageKey, &metadata.SizeBytes,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {

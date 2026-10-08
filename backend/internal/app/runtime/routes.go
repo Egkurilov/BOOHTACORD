@@ -6,6 +6,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"log/slog"
 	"net/http"
+	archivetextroutes "voice-platform/backend/internal/app/archive_text_routes"
 	authroutes "voice-platform/backend/internal/app/auth_routes"
 	authorizationroutes "voice-platform/backend/internal/app/authorization_routes"
 	channelsroutes "voice-platform/backend/internal/app/channels_routes"
@@ -56,6 +57,9 @@ func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *
 	}
 	if err := identityroutes.ConfigureProfileAdminRoutes(mux, database, sessionService, configuration, events); err != nil {
 		return nil, fmt.Errorf("configure profile routes: %w", err)
+	}
+	if err := archivetextroutes.Register(mux, database, sessionService, events, configuration.AttachmentRoot); err != nil {
+		return nil, err
 	}
 	mediaroutes.ConfigureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
 	mediaroutes.ConfigureVoiceParticipantRoutes(mux, database, sessionService, configuration.MediaSnapshot, metrics, configuration.LiveKitAPIKey, configuration.LiveKitAPISecret)

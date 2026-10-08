@@ -19,7 +19,10 @@ var (
 	ErrFileUnavailable       = errors.New("private attachment file unavailable")
 )
 
-type Input struct{ ActorID, ChannelID, AttachmentID string }
+type Input struct {
+	ActorID, ChannelID, AttachmentID string
+	ReadArchive                      bool
+}
 
 type Metadata struct {
 	OriginalName, StorageKey string

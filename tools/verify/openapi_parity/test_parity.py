@@ -23,7 +23,7 @@ class ParityTest(unittest.TestCase):
             validate(self.document, self.native)
 
     def test_current_native_contract(self):
-        self.assertEqual(90, validate(self.document, self.native))
+        self.assertEqual(96, validate(self.document, self.native))
 
     def test_removed_operation(self):
         del self.document["paths"]["/api/v1/me"]["get"]
