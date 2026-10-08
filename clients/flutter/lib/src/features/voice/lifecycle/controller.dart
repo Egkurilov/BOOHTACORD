@@ -9,6 +9,8 @@ import '../connection_close/leave.dart';
 import '../volumes/reset.dart';
 import '../connection_stats/poll.dart';
 import '../stream_notice/events.dart';
+import '../background_microphone/session.dart';
+import '../background_microphone/admission.dart';
 export 'types.dart';
 export '../shortcuts/execute.dart';
 export '../preferences/shortcuts.dart';
@@ -51,17 +53,21 @@ class VoiceController extends VoiceState {
     required super.formatError,
     Room Function(RoomOptions)? roomFactory,
     Future<void> Function(Room, MediaDevice)? audioOutputDeviceSetter,
+    MicrophoneForegroundSession? microphoneForeground,
   }) : audioOutputDeviceSetter =
            audioOutputDeviceSetter ??
            ((room, device) => room.setAudioOutputDevice(device)),
+       microphoneForeground = microphoneForeground ?? MicrophoneForegroundSession(),
        super(
          createRoom: roomFactory ?? ((options) => Room(roomOptions: options)),
-       );
+       ) { this.microphoneForeground.onStopped = backgroundMicrophoneStopped; }
+  final MicrophoneForegroundSession microphoneForeground;
   final Future<void> Function(Room, MediaDevice) audioOutputDeviceSetter;
   final Map<String, RemoteTrackPublication> screenThumbnailPublications = {};
   static const voiceStreamSoundPreferenceKey = 'voice-screen-start-sound:v1';
   @override
   void dispose() {
+    unawaited(microphoneForeground.dispose());
     unawaited(flushVoiceVolumes());
     cancelVoiceShortcuts(release: true);
     disconnect.reset();

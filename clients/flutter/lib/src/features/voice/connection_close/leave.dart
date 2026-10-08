@@ -3,7 +3,6 @@ import 'dart:async';
 import '../../../services/android_audio_devices.dart';
 import '../../screen/lifecycle/controller.dart';
 import '../lifecycle/controller.dart';
-import '../screen_preview/receive.dart';
 import 'observe.dart';
 import '../../telemetry/action_scope/action.dart';
 
@@ -38,6 +37,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
     audio.nativeNoise.cancel();
     audio.nativeMicrophone.pause();
     audio.microphoneMutedIntent = true;
+    final stopMicrophoneService = microphoneForeground.stop();
     final stopScreen = screen.stopScreenShare();
     room = null;
     pendingRoom = null;
@@ -54,6 +54,7 @@ extension VoiceConnectionCloseLeave on VoiceController {
     pushToTalkPressed = false;
     notifyListeners();
     await stopScreen;
+    await stopMicrophoneService;
     for (final target in {connected, pending}) {
       try {
         await target?.disconnect();

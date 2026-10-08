@@ -5,6 +5,7 @@ import 'package:boohtacord_desktop/src/core/session/scope.dart';
 import 'package:boohtacord_desktop/src/features/audio/devices/controller.dart';
 import 'package:boohtacord_desktop/src/features/screen/lifecycle/controller.dart';
 import 'package:boohtacord_desktop/src/features/voice/lifecycle/controller.dart';
+import 'package:boohtacord_desktop/src/features/voice/background_microphone/session.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 
 import 'api.dart';
@@ -13,7 +14,7 @@ import 'pending_room_fake.dart';
 export 'pending_room_fake.dart';
 
 class VoiceHarness {
-  VoiceHarness({Future<void> Function()? nativeBootstrap, this.account}) {
+  VoiceHarness({Future<void> Function()? nativeBootstrap, this.account, MicrophoneForegroundSession? foreground}) {
     audio = AudioDeviceController(
       readRoom: () => owner.room,
       loader: () async {
@@ -36,6 +37,7 @@ class VoiceHarness {
       readUser: () => account,
       reportError: (value) => error = value,
       formatError: (value) => value.toString(),
+      microphoneForeground: foreground,
       roomFactory: (options) {
         created++;
         createdRoomOptions = options;
