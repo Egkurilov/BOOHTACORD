@@ -7,11 +7,11 @@ import sys
 from pathlib import Path
 
 
-def main(project_dir):
+def main(project_dir, recovery_compose=None):
     project_dir = Path(project_dir).resolve()
     compose_dir = project_dir / "deploy" if (project_dir / "deploy/compose.yaml").is_file() else project_dir
     compose = ["docker", "compose", "--project-directory", str(compose_dir), "--env-file",
-               str(project_dir / ".env"), "-f", str(compose_dir / "compose.yaml")]
+               str(project_dir / ".env"), "-f", str(recovery_compose or compose_dir / "compose.yaml")]
     config = subprocess.run(compose + ["config", "--format", "json"], capture_output=True, text=True)
     if config.returncode:
         print("PostgreSQL recovery preflight could not read the Compose configuration.", file=sys.stderr)
@@ -49,6 +49,6 @@ def main(project_dir):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        raise SystemExit("usage: reconcile-postgres-credential.py PROJECT_DIR")
-    raise SystemExit(main(sys.argv[1]))
+    if len(sys.argv) not in (2, 3):
+        raise SystemExit("usage: reconcile-postgres-credential.py PROJECT_DIR [RECOVERY_COMPOSE]")
+    raise SystemExit(main(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None))

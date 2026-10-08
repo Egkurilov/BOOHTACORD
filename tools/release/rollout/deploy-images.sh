@@ -58,7 +58,11 @@ disable_maintenance_admission() {
 
 enable_maintenance_admission() {
   if ! "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable; then
-    python3 "$script_dir/reconcile-postgres-credential.py" "$project_dir"
+    if [[ -n "$temporary_compose" ]]; then
+      python3 "$script_dir/reconcile-postgres-credential.py" "$project_dir" "$temporary_compose"
+    else
+      python3 "$script_dir/reconcile-postgres-credential.py" "$project_dir"
+    fi
     "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable
   fi
   admission_enabled=1

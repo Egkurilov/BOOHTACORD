@@ -13,6 +13,15 @@ SPEC.loader.exec_module(MODULE)
 
 
 class AlignPostgresNetworkTests(unittest.TestCase):
+    def test_recovery_config_includes_operator_profile(self):
+        with patch.object(MODULE, "output", return_value='{"services": {}}') as output:
+            configuration = MODULE.load_compose_configuration(["docker", "compose"])
+
+        self.assertEqual(configuration, {"services": {}})
+        output.assert_called_once_with(
+            "docker", "compose", "--profile", "operator", "config", "--format", "json"
+        )
+
     def test_recovery_compose_reuses_private_network_as_external(self):
         configuration = {
             "services": {"api": {"image": "api-ref"}},
