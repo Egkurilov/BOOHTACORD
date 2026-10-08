@@ -22,7 +22,7 @@ class VoiceOverlayPreferences {
   Future<bool> setOnlySpeakers(bool value) async {
     if (_storage == null) return false;
     try {
-      final saved = await _storage!.setBool(_keyFor(accountId), value);
+      final saved = await _storage.setBool(_keyFor(accountId), value);
       if (saved) onlySpeakers = value;
       return saved;
     } catch (_) {}

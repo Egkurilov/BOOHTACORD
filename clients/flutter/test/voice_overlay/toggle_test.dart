@@ -33,7 +33,7 @@ void main() {
       expect(enabled, isTrue);
       await tester.tap(find.byTooltip('Настройки панели говорящих'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Показывать только говорящих'));
+      await tester.tap(find.byType(CheckedPopupMenuItem<bool>));
       expect(onlySpeakers, isTrue);
     } finally {
       debugDefaultTargetPlatformOverride = null;
