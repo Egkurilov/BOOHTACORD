@@ -2,6 +2,7 @@
 set -euo pipefail
 
 project_dir="${VOICE_PLATFORM_DIR:-/opt/voice-platform}"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 compose_dir="$project_dir"
 [[ ! -f "$project_dir/deploy/compose.yaml" ]] || compose_dir="$project_dir/deploy"
 compose_file="$compose_dir/compose.yaml"
@@ -36,22 +37,6 @@ public_host="$(sed -n 's/^PUBLIC_HOST=//p' "$env_file" | tail -n 1)"
 
 compose=(docker compose --project-directory "$compose_dir" --env-file "$env_file" -f "$compose_file")
 
-assert_proxy_networks() {
-  local proxy_id
-  local index
-  local expected_proxy_networks=(voice-platform_edge voice-platform_private)
-  local proxy_networks=()
-
-  proxy_id="$("${compose[@]}" ps -q proxy)"
-  [[ -n "$proxy_id" ]] || fail "Proxy container is unavailable after deployment."
-  mapfile -t proxy_networks < <(docker inspect --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$proxy_id" | awk 'NF' | sort)
-
-  [[ "${#proxy_networks[@]}" -eq "${#expected_proxy_networks[@]}" ]] || fail "Proxy has an unexpected Docker network attachment."
-  for index in "${!expected_proxy_networks[@]}"; do
-    [[ "${proxy_networks[$index]}" == "${expected_proxy_networks[$index]}" ]] || fail "Proxy has an unexpected Docker network attachment."
-  done
-}
-
 if [[ "$release_mode" == "local-build" ]]; then
   docker image inspect "$api_image" >/dev/null || fail "Local API image is unavailable."
   docker image inspect "$web_image" >/dev/null || fail "Local web image is unavailable."
@@ -70,6 +55,14 @@ disable_maintenance_admission() {
   admission_enabled=0
 }
 
+enable_maintenance_admission() {
+  if ! "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable; then
+    python3 "$script_dir/reconcile-postgres-credential.py" "$project_dir"
+    "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable
+  fi
+  admission_enabled=1
+}
+
 cleanup() {
   local status=$?
   [[ -z "$temporary_env" ]] || rm -f "$temporary_env"
@@ -82,12 +75,18 @@ cleanup() {
 }
 trap cleanup EXIT
 
-"${compose[@]}" up -d --wait postgres
-if ! "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable; then
-  python3 "$project_dir/tools/release/rollout/reconcile-postgres-credential.py" "$project_dir"
-  "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable
+postgres_output=''
+if ! postgres_output="$("${compose[@]}" up -d --wait postgres 2>&1)"; then
+  printf '%s\n' "$postgres_output" >&2
+  if [[ "$postgres_output" != *"has active endpoints"* ]]; then
+    fail "PostgreSQL service could not be started; deployment containers were not removed."
+  fi
+  python3 "$script_dir/align-existing-private-network.py" "$project_dir" /opt/voice-platform/.env
+  "${compose[@]}" up -d --wait postgres
+else
+  printf '%s\n' "$postgres_output"
 fi
-admission_enabled=1
+[[ "$admission_enabled" -eq 1 ]] || enable_maintenance_admission
 sleep 15
 if [[ "$release_mode" == "registry-digest" ]]; then
   API_IMAGE="$api_image" WEB_IMAGE="$web_image" "${compose[@]}" pull api migrate web
@@ -106,7 +105,7 @@ temporary_env=''
 "${compose[@]}" run --rm --no-deps migrate
 "${compose[@]}" up -d --no-deps --no-build api web
 "${compose[@]}" up -d --no-deps --no-build --force-recreate proxy
-assert_proxy_networks
+bash "$script_dir/assert-proxy-networks.sh" "$project_dir"
 "${compose[@]}" exec -T proxy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 curl -fsS --retry 5 --retry-connrefused "https://${public_host}/api/v1/health"
 disable_maintenance_admission
