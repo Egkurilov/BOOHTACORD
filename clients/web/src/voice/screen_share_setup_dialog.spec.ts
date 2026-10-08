@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 import ScreenShareSetupDialog from './ScreenShareSetupDialog.vue'
+import ScreenDiagnosticsPanel from './ScreenDiagnosticsPanel.vue'
 
 describe('screen-share setup dialog', () => {
   it('offers motion/text scenarios and ceiling choices before browser capture', async () => {
@@ -71,6 +72,23 @@ describe('screen-share setup dialog', () => {
     expect(html).toContain('<circle cx="12" cy="12" r="9"></circle>')
     expect(html).toContain('Применить')
     expect(html).not.toContain('браузер покажет системный запрос')
+  })
+
+  it('labels pre-picker support separately from tracks actually received after selection', async () => {
+    const setup = await renderToString(createSSRApp(ScreenShareSetupDialog, { initialProfile: 'P1080_30' }))
+    expect(setup).toContain('Поддержка до выбора источника')
+    expect(setup).toContain('Звук определяется после выбора источника')
+    expect(setup).toContain('выбранный источник может не передать аудио')
+    expect(setup).not.toContain('игровой звук поддерживается')
+
+    const diagnostics = await renderToString(createSSRApp(ScreenDiagnosticsPanel, {
+      profile: 'P1080_30',
+      diagnostics: { audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: null, source: 'ACTIVE' },
+    }))
+    expect(diagnostics).toContain('Фактически полученные дорожки')
+    expect(diagnostics).toContain('Видео: есть')
+    expect(diagnostics).toContain('Аудио: нет')
+    expect(diagnostics).toContain('Голос остаётся доступен без аудиодорожки экрана')
   })
 
   it('keeps the dialog styling on shared tokens and adapts quality rows on mobile', () => {

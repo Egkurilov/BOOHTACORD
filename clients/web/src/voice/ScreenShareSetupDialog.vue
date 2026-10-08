@@ -3,8 +3,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { ScreenProfile } from './livekit_gateway'
 import type { ScreenFrameRate, ScreenResolution } from './media_publishing'
 import { screenProfileMode, screenShareBandwidthEstimate } from './screen_profile_metadata/profile'
+import ScreenCaptureCapabilitySummary from './ScreenCaptureCapabilitySummary.vue'
 import ScreenShareQualityOptions from './ScreenShareQualityOptions.vue'
-
 const props = defineProps<{ initialProfile: ScreenProfile; updating?: boolean }>()
 const emit = defineEmits<{ cancel: []; start: [profile: ScreenProfile] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
@@ -15,10 +15,8 @@ function profileValues(profile: ScreenProfile): { resolution: ScreenResolution; 
   return { resolution: Number(match[1]) as ScreenResolution, frameRate: Number(match[2]) as ScreenFrameRate }
 }
 const initialValues = profileValues(props.initialProfile)
-const resolution = ref<ScreenResolution>(initialValues?.resolution ?? 1080)
-const frameRate = ref<ScreenFrameRate>(initialValues?.frameRate ?? 30)
-const mode = ref<'motion' | 'text'>(screenProfileMode(props.initialProfile))
-const allow1440p60 = false
+const resolution = ref<ScreenResolution>(initialValues?.resolution ?? 1080), frameRate = ref<ScreenFrameRate>(initialValues?.frameRate ?? 30)
+const mode = ref<'motion' | 'text'>(screenProfileMode(props.initialProfile)), allow1440p60 = false
 const selectedProfile = computed(() => `P${resolution.value}_${frameRate.value}` as ScreenProfile)
 const profileAllowed = computed(() => !(mode.value === 'motion' && resolution.value === 1440 && !allow1440p60))
 const bandwidthEstimate = computed(() => screenShareBandwidthEstimate(selectedProfile.value))
@@ -47,7 +45,6 @@ onMounted(async () => {
   await nextTick()
   dialog.value?.querySelector<HTMLElement>('[autofocus]')?.focus()
 })
-
 onBeforeUnmount(() => {
   if (dialog.value?.open) dialog.value.close()
   void nextTick(() => {
@@ -93,6 +90,8 @@ function start(): void {
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 21 7v5c0 5-3.7 8-9 10-5.3-2-9-5-9-10V7zm0 5v5m0 3h.01" /></svg>
         <p>{{ updating ? 'Качество и FPS изменятся в текущей трансляции без выбора экрана заново.' : 'После продолжения браузер покажет системный запрос на выбор экрана или окна. Вы сможете остановить трансляцию в любой момент.' }}</p>
       </div>
+
+      <ScreenCaptureCapabilitySummary v-if="!updating" />
 
       <section class="screen-share-quality" aria-labelledby="screen-share-quality-title">
         <h3 id="screen-share-quality-title" :class="{ 'gc-sr-only': updating }">
