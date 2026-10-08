@@ -10,3 +10,4 @@ class Stack(ExistingStack):
         super().__init__(root, work)
         self.environment = {name: value for name, value in self.environment.items()
                             if not name.startswith('OTEL_')}
+        self.environment['TRUSTED_PROXY_CIDRS'] = '127.0.0.1/32'
