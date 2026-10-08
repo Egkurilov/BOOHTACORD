@@ -4710,13 +4710,14 @@
       "OwnProfile": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["account_id", "login", "display_name", "role"],
+        "required": ["account_id", "login", "display_name", "role", "profile_revision"],
         "properties": {
           "account_id": { "type": "string", "format": "uuid" },
           "login": { "type": "string", "minLength": 3, "maxLength": 32, "readOnly": true },
           "display_name": { "type": "string", "minLength": 1, "maxLength": 64 },
           "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"], "readOnly": true },
-          "avatar_url": { "type": "string", "format": "uri-reference", "readOnly": true }
+          "avatar_url": { "type": "string", "format": "uri-reference", "readOnly": true },
+          "profile_revision": { "type": "integer", "minimum": 1, "readOnly": true }
         }
       },
       "OwnProfileUpdateRequest": {
@@ -4736,13 +4737,14 @@
       },
       "Member": {
         "type": "object", "additionalProperties": false,
-        "required": ["user_id", "login", "display_name", "role", "presence"],
+        "required": ["user_id", "login", "display_name", "role", "presence", "profile_revision"],
         "properties": {
           "user_id": { "type": "string", "format": "uuid" },
           "login": { "type": "string", "minLength": 3, "maxLength": 32 },
           "display_name": { "type": "string", "minLength": 1, "maxLength": 64 },
           "role": { "type": "string", "enum": ["MEMBER", "ADMINISTRATOR"] },
           "presence": { "type": "string", "enum": ["online", "offline", "unknown"], "readOnly": true, "description": "online when at least one authenticated realtime WebSocket is active; offline when the live registry has none; unknown when presence data is unavailable. Away is not supported." },
+          "profile_revision": { "type": "integer", "minimum": 1, "readOnly": true, "description": "Monotonic metadata revision, incremented when the member name or avatar changes." },
           "avatar_url": { "type": "string", "format": "uri-reference" }
         }
       },

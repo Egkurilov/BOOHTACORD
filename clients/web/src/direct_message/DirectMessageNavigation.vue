@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { loadMembers, type GuildMember } from '../identity/profile_client'
+import { computed, onMounted } from 'vue'
+import { useMemberDirectory } from '../identity/member_directory'
 import type { DirectMessageListItem } from './direct_message_client'
 import DirectMessageStarter from './DirectMessageStarter.vue'
 
@@ -12,11 +12,9 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ select: [directMessageId: string]; open: [directMessageId: string] }>()
-const members = ref<Record<string, GuildMember>>({})
-onMounted(async () => {
-  try { members.value = Object.fromEntries((await loadMembers()).members.map((member) => [member.user_id, member])) }
-  catch { members.value = {} }
-})
+const memberDirectory = useMemberDirectory()
+const members = computed(() => memberDirectory.byId)
+onMounted(() => { void memberDirectory.refresh() })
 
 </script>
 

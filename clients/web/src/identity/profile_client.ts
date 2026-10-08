@@ -2,9 +2,9 @@ import { tracedFetch } from '../telemetry/client_tracing'
 import { apiBaseUrl } from '../config/runtime'
 import { normalizeAvatarImage } from './avatar_image'
 
-export interface OwnProfile { account_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; avatar_url?: string }
+export interface OwnProfile { account_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; avatar_url?: string; profile_revision?: number }
 export type MemberPresence = 'online' | 'offline' | 'unknown'
-export interface GuildMember { user_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; presence: MemberPresence; avatar_url?: string }
+export interface GuildMember { user_id: string; login: string; display_name: string; role: 'MEMBER' | 'ADMINISTRATOR'; presence: MemberPresence; avatar_url?: string; profile_revision?: number }
 export interface MemberPage { members: GuildMember[]; next_cursor?: string }
 export type ProfileRequest = (url: string, init: RequestInit) => Promise<Response>
 
@@ -16,7 +16,7 @@ function stringField(value: unknown): string { if (typeof value !== 'string') th
 function parseProfile(value: unknown): OwnProfile {
   const profile = record(value)
   if (profile.role !== 'MEMBER' && profile.role !== 'ADMINISTRATOR') throw new Error('Сервер вернул некорректную роль профиля.')
-  return { account_id: stringField(profile.account_id), login: stringField(profile.login), display_name: stringField(profile.display_name), role: profile.role, ...(typeof profile.avatar_url === 'string' ? { avatar_url: profile.avatar_url } : {}) }
+  return { account_id: stringField(profile.account_id), login: stringField(profile.login), display_name: stringField(profile.display_name), role: profile.role, ...(typeof profile.avatar_url === 'string' ? { avatar_url: profile.avatar_url } : {}), ...(Number.isSafeInteger(profile.profile_revision) && Number(profile.profile_revision) > 0 ? { profile_revision: Number(profile.profile_revision) } : {}) }
 }
 async function error(response: Response): Promise<Error> {
   try { const body = record(await response.json()); const detail = record(body.error); if (typeof detail.message === 'string') return new Error(detail.message) } catch { /* Use status-only fallback. */ }
@@ -54,5 +54,5 @@ function parseMember(value: unknown): GuildMember {
   const member = record(value)
   if (member.role !== 'MEMBER' && member.role !== 'ADMINISTRATOR') throw new Error('Сервер вернул некорректную роль участника.')
   const presence = member.presence === 'online' || member.presence === 'offline' ? member.presence : 'unknown'
-  return { user_id: stringField(member.user_id), login: stringField(member.login), display_name: stringField(member.display_name), role: member.role, presence, ...(typeof member.avatar_url === 'string' ? { avatar_url: member.avatar_url } : {}) }
+  return { user_id: stringField(member.user_id), login: stringField(member.login), display_name: stringField(member.display_name), role: member.role, presence, ...(typeof member.avatar_url === 'string' ? { avatar_url: member.avatar_url } : {}), ...(Number.isSafeInteger(member.profile_revision) && Number(member.profile_revision) > 0 ? { profile_revision: Number(member.profile_revision) } : {}) }
 }

@@ -10,11 +10,11 @@ import (
 )
 
 const listMembers = `
-SELECT id::text, login, display_name, role, avatar_key IS NOT NULL
+SELECT id::text, login, display_name, role, avatar_key IS NOT NULL, profile_revision
 FROM users
 WHERE blocked_at IS NULL AND ($1::uuid IS NULL OR id > $1::uuid)
 ORDER BY id ASC LIMIT $2`
-const findMember = `SELECT id::text, login, display_name, role, avatar_key IS NOT NULL FROM users WHERE id = $1 AND blocked_at IS NULL`
+const findMember = `SELECT id::text, login, display_name, role, avatar_key IS NOT NULL, profile_revision FROM users WHERE id = $1 AND blocked_at IS NULL`
 
 type Rows interface {
 	Next() bool
@@ -44,7 +44,7 @@ func (repository Repository) List(ctx context.Context, cursor string, limit int)
 	var members []listmembers.Member
 	for rows.Next() {
 		var member listmembers.Member
-		if err := rows.Scan(&member.ID, &member.Login, &member.DisplayName, &member.Role, &member.HasAvatar); err != nil {
+		if err := rows.Scan(&member.ID, &member.Login, &member.DisplayName, &member.Role, &member.HasAvatar, &member.Revision); err != nil {
 			return nil, fmt.Errorf("scan member: %w", err)
 		}
 		members = append(members, member)
@@ -57,7 +57,7 @@ func (repository Repository) List(ctx context.Context, cursor string, limit int)
 
 func (repository Repository) Find(ctx context.Context, memberID string) (listmembers.Member, error) {
 	var member listmembers.Member
-	err := repository.database.QueryRow(ctx, findMember, memberID).Scan(&member.ID, &member.Login, &member.DisplayName, &member.Role, &member.HasAvatar)
+	err := repository.database.QueryRow(ctx, findMember, memberID).Scan(&member.ID, &member.Login, &member.DisplayName, &member.Role, &member.HasAvatar, &member.Revision)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return listmembers.Member{}, listmembers.ErrMemberNotFound
 	}

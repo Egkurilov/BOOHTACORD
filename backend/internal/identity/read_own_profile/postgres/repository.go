@@ -10,7 +10,7 @@ import (
 )
 
 const selectOwnProfile = `
-SELECT id::text, login, display_name, role, avatar_key IS NOT NULL
+SELECT id::text, login, display_name, role, avatar_key IS NOT NULL, profile_revision
 FROM users
 WHERE id = $1 AND blocked_at IS NULL`
 
@@ -25,7 +25,7 @@ func New(database Database) Repository { return Repository{database: database} }
 
 func (repository Repository) Find(context context.Context, accountID string) (readownprofile.Profile, error) {
 	var profile readownprofile.Profile
-	err := repository.database.QueryRow(context, selectOwnProfile, accountID).Scan(&profile.AccountID, &profile.Login, &profile.DisplayName, &profile.Role, &profile.HasAvatar)
+	err := repository.database.QueryRow(context, selectOwnProfile, accountID).Scan(&profile.AccountID, &profile.Login, &profile.DisplayName, &profile.Role, &profile.HasAvatar, &profile.Revision)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return readownprofile.Profile{}, readownprofile.ErrProfileNotFound
 	}

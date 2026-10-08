@@ -26,6 +26,8 @@ func validateHint(event eventhub.Event, recipients []string) error {
 		required, private = []string{"lease_id", "reason"}, true
 	case "channel.updated", "guild.profile.updated":
 		required = []string{"revision"}
+	case "member.profile.updated":
+		required = []string{"user_id", "revision"}
 	default:
 		return ErrInvalidHint
 	}
@@ -39,7 +41,7 @@ func validateHint(event eventhub.Event, recipients []string) error {
 	}
 	for key, value := range event.Payload {
 		switch key {
-		case "channel_id", "message_id", "direct_message_id", "lease_id":
+		case "channel_id", "message_id", "direct_message_id", "lease_id", "user_id":
 			identifier, ok := value.(string)
 			if !ok {
 				return ErrInvalidHint
@@ -81,7 +83,7 @@ func validateHint(event eventhub.Event, recipients []string) error {
 		if _, ok := event.Payload["revision"]; !ok {
 			return ErrInvalidHint
 		}
-		if event.Kind == "channel.updated" || event.Kind == "guild.profile.updated" || event.Kind == "voice.lease_revoked" {
+		if event.Kind == "channel.updated" || event.Kind == "guild.profile.updated" || event.Kind == "member.profile.updated" || event.Kind == "voice.lease_revoked" {
 			return ErrInvalidHint
 		}
 	}

@@ -14,7 +14,7 @@ WITH locked AS MATERIALIZED (
     SELECT COALESCE(avatar_key, '') AS avatar_key FROM users
     WHERE id = $1 AND blocked_at IS NULL FOR UPDATE
 ), updated AS (
-    UPDATE users SET avatar_key = $2, updated_at = now()
+    UPDATE users SET avatar_key = $2, updated_at = now(), profile_revision = profile_revision + 1
     WHERE id = $1 AND blocked_at IS NULL RETURNING id
 )
 SELECT locked.avatar_key FROM locked JOIN updated ON TRUE`
@@ -24,7 +24,7 @@ WITH locked AS MATERIALIZED (
     SELECT COALESCE(avatar_key, '') AS avatar_key FROM users
     WHERE id = $1 AND blocked_at IS NULL FOR UPDATE
 ), updated AS (
-    UPDATE users SET avatar_key = NULL, updated_at = now()
+    UPDATE users SET avatar_key = NULL, updated_at = now(), profile_revision = profile_revision + 1
     WHERE id = $1 AND blocked_at IS NULL RETURNING id
 )
 SELECT locked.avatar_key FROM locked JOIN updated ON TRUE`

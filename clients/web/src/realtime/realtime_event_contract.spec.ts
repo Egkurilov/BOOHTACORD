@@ -14,6 +14,7 @@ describe('typed realtime payloads', () => {
     expect(parseRealtimeEvent(event('direct_message.message_updated', { direct_message_id: id, message_id: message, revision: 2 })).kind).toBe('direct_message.message_updated')
     expect(parseRealtimeEvent(event('direct_message.message_deleted', { direct_message_id: id, message_id: message, revision: 3 })).kind).toBe('direct_message.message_deleted')
     expect(parseRealtimeEvent(event('channel.updated', { revision: 7 })).kind).toBe('channel.updated')
+    expect(parseRealtimeEvent(event('member.profile.updated', { user_id: id, revision: 9 })).kind).toBe('member.profile.updated')
     expect(parseRealtimeEvent(event('voice.lease_revoked', { lease_id: id, reason: 'KICK' })).kind).toBe('voice.lease_revoked')
     expect(parseRealtimeEvent(event('role.permissions.updated', { role: 'MEMBER', revision: 8 })).kind).toBe('role.permissions.updated')
     expect(parseRealtimeEvent(event('auth.permissions.invalidated', {})).kind).toBe('auth.permissions.invalidated')
@@ -46,5 +47,6 @@ describe('typed realtime payloads', () => {
       expect(() => parseRealtimeEvent(event('role.permissions.updated', payload))).toThrow('Некорректное')
     }
     expect(() => parseRealtimeEvent(event('auth.permissions.invalidated', { user_id: id }))).toThrow('Некорректное')
+    expect(() => parseRealtimeEvent(event('member.profile.updated', { user_id: id, revision: 9, display_name: 'private' }))).toThrow('Некорректное')
   })
 })

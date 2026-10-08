@@ -11,9 +11,9 @@ import (
 )
 
 func TestRepositoryReadsProfileByAuthenticatedAccountID(t *testing.T) {
-	database := &fakeDatabase{row: fakeRow{values: []any{"account-1", "immutable", "Имя", "MEMBER", true}}}
+	database := &fakeDatabase{row: fakeRow{values: []any{"account-1", "immutable", "Имя", "MEMBER", true, int64(12)}}}
 	profile, err := New(database).Find(context.Background(), "account-1")
-	if err != nil || profile != (readownprofile.Profile{AccountID: "account-1", Login: "immutable", DisplayName: "Имя", Role: "MEMBER", HasAvatar: true}) || database.accountID != "account-1" {
+	if err != nil || profile != (readownprofile.Profile{AccountID: "account-1", Login: "immutable", DisplayName: "Имя", Role: "MEMBER", HasAvatar: true, Revision: 12}) || database.accountID != "account-1" {
 		t.Fatalf("Find() = %#v, %v; ID = %q", profile, err, database.accountID)
 	}
 	if !strings.Contains(database.statement, "WHERE id = $1") || strings.Contains(strings.ToLower(database.statement), "password_hash") {
@@ -55,6 +55,8 @@ func (row fakeRow) Scan(destinations ...any) error {
 			*destination = value.(string)
 		case *bool:
 			*destination = value.(bool)
+		case *int64:
+			*destination = value.(int64)
 		}
 	}
 	return nil
