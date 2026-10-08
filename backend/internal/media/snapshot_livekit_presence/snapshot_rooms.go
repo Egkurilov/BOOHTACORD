@@ -26,7 +26,7 @@ func (client Client) SnapshotRooms(ctx context.Context, channelIDs []string) (ma
 	requested := make(map[string]string, len(channelIDs))
 	for _, id := range channelIDs {
 		if uuid.Validate(id) != nil {
-			return nil, ErrUnavailable
+			return nil, unavailable("validation")
 		}
 		name := "voice:" + id
 		if _, exists := requested[name]; exists {
@@ -37,30 +37,30 @@ func (client Client) SnapshotRooms(ctx context.Context, channelIDs []string) (ma
 	}
 	listToken, err := client.token(auth.VideoGrant{RoomList: true})
 	if err != nil {
-		return nil, ErrUnavailable
+		return nil, unavailable("token")
 	}
 	rooms, err := client.service(listToken).ListRooms(ctx, &livekit.ListRoomsRequest{Names: names})
 	if err != nil || rooms == nil {
-		return nil, ErrUnavailable
+		return nil, unavailable("room_list")
 	}
 	seen := make(map[string]bool, len(rooms.GetRooms()))
 	for _, room := range rooms.GetRooms() {
 		if room == nil {
-			return nil, ErrUnavailable
+			return nil, unavailable("validation")
 		}
 		name := room.GetName()
 		id, allowed := requested[name]
 		if !allowed || seen[name] {
-			return nil, ErrUnavailable
+			return nil, unavailable("validation")
 		}
 		seen[name] = true
 		participantToken, err := client.token(auth.VideoGrant{RoomAdmin: true, Room: name})
 		if err != nil {
-			return nil, ErrUnavailable
+			return nil, unavailable("token")
 		}
 		participants, err := client.service(participantToken).ListParticipants(ctx, &livekit.ListParticipantsRequest{Room: name})
 		if err != nil || participants == nil {
-			return nil, ErrUnavailable
+			return nil, unavailable("participants")
 		}
 		for _, participant := range participants.GetParticipants() {
 			if participant == nil || participant.GetState() != livekit.ParticipantInfo_ACTIVE {

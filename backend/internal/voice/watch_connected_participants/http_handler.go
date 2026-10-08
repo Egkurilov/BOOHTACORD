@@ -1,17 +1,13 @@
 package watchconnectedparticipants
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
 	auth "voice-platform/backend/internal/identity/authenticate_session"
 	sessionapi "voice-platform/backend/internal/identity/authenticate_session/api"
-	"voice-platform/backend/internal/identity/session"
+
 	roster "voice-platform/backend/internal/voice/list_connected_participants"
 )
 
@@ -23,6 +19,10 @@ type SessionAuthenticator interface {
 	Authenticate(context.Context, string) (auth.Principal, error)
 }
 
+type FailureObserver interface {
+	ObserveVoiceRosterFailure(string)
+}
+
 const snapshotTimeout = 5 * time.Second
 const sessionRevalidationInterval = 10 * time.Second
 const heartbeatInterval = 15 * time.Second
@@ -30,11 +30,15 @@ const rosterReconciliationInterval = 5 * time.Second
 
 // Session validity is rechecked on the live connection, while every snapshot
 // independently rechecks channel visibility and active leases.
-func NewHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenticator) http.Handler {
-	return newHandler(lister, notifier, authenticator, sessionRevalidationInterval, heartbeatInterval, rosterReconciliationInterval)
+func NewHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenticator, observers ...FailureObserver) http.Handler {
+	return newHandler(lister, notifier, authenticator, sessionRevalidationInterval, heartbeatInterval, rosterReconciliationInterval, observers...)
 }
 
-func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenticator, revalidateEvery, heartbeatEvery, reconcileEvery time.Duration) http.Handler {
+func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenticator, revalidateEvery, heartbeatEvery, reconcileEvery time.Duration, observers ...FailureObserver) http.Handler {
+	var observer FailureObserver
+	if len(observers) > 0 {
+		observer = observers[0]
+	}
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		principal, ok := sessionapi.PrincipalFrom(request.Context())
 		if !ok {
@@ -46,95 +50,36 @@ func newHandler(lister Lister, notifier *Notifier, authenticator SessionAuthenti
 			http.Error(writer, "stream unsupported", http.StatusInternalServerError)
 			return
 		}
-		// Subscribe before loading the initial snapshot so a room change during
-		// List is queued and causes a fresh snapshot immediately afterward.
+		// Subscribe first so updates during the initial fetch are not lost.
 		updates, unsubscribe := notifier.Subscribe()
 		defer unsubscribe()
-		initialContext, cancelInitial := context.WithTimeout(request.Context(), snapshotTimeout)
-		initial, err := lister.List(initialContext, principal.AccountID)
-		cancelInitial()
+		ctx, cancel := context.WithTimeout(request.Context(), snapshotTimeout)
+		initial, err := lister.List(ctx, principal.AccountID)
+		cancel()
 		if err != nil {
+			if request.Context().Err() != nil {
+				return
+			}
 			http.Error(writer, "roster unavailable", http.StatusServiceUnavailable)
 			return
 		}
-		writer.Header().Set("Content-Type", "text/event-stream")
-		writer.Header().Set("Cache-Control", "no-store")
-		writer.Header().Set("X-Accel-Buffering", "no")
-		var lastSnapshot []byte
-		write := func(value roster.Result) bool {
-			encoded, err := json.Marshal(value)
-			if err != nil {
-				return false
-			}
-			if bytes.Equal(encoded, lastSnapshot) {
-				return true
-			}
-			if _, err = fmt.Fprintf(writer, "data: %s\n\n", encoded); err != nil {
-				return false
-			}
-			flusher.Flush()
-			lastSnapshot = encoded
-			return true
-		}
-		if !write(initial) {
+		writeSSEHeaders(writer)
+		if !writeRoster(writer, flusher, initial) {
+			observeFailure(observer, "stream_write")
 			return
 		}
-		revalidation := time.NewTicker(revalidateEvery)
-		defer revalidation.Stop()
-		heartbeat := time.NewTicker(heartbeatEvery)
-		defer heartbeat.Stop()
-		reconciliation := time.NewTicker(reconcileEvery)
-		defer reconciliation.Stop()
-		for {
-			select {
-			case <-request.Context().Done():
-				return
-			case <-revalidation.C:
-				cookie, err := request.Cookie(session.CookieName)
-				if err != nil {
-					writeSessionExpired(writer, flusher)
-					return
-				}
-				ctx, cancel := context.WithTimeout(request.Context(), snapshotTimeout)
-				current, err := authenticator.Authenticate(ctx, cookie.Value)
-				cancel()
-				if errors.Is(err, auth.ErrUnauthenticated) || (err == nil && (current.AccountID != principal.AccountID || current.SessionDigest != principal.SessionDigest)) {
-					writeSessionExpired(writer, flusher)
-					return
-				}
-				if err != nil {
-					return
-				}
-			case <-heartbeat.C:
-				if _, err := fmt.Fprint(writer, ": keepalive\n\n"); err != nil {
-					return
-				}
-				flusher.Flush()
-			case <-updates:
-				if !refreshSnapshot(request.Context(), lister, principal.AccountID, write) {
-					return
-				}
-			case <-reconciliation.C:
-				if !refreshSnapshot(request.Context(), lister, principal.AccountID, write) {
-					return
-				}
-			}
-		}
+		serveRosterStream(writer, request, flusher, lister, updates, authenticator, principal, initial, observer, revalidateEvery, heartbeatEvery, reconcileEvery)
 	})
 }
 
-func refreshSnapshot(parent context.Context, lister Lister, accountID string, write func(roster.Result) bool) bool {
-	ctx, cancel := context.WithTimeout(parent, snapshotTimeout)
-	defer cancel()
-	updated, err := lister.List(ctx, accountID)
-	if err != nil {
-		return false
-	}
-	return write(updated)
+func writeSSEHeaders(writer http.ResponseWriter) {
+	writer.Header().Set("Content-Type", "text/event-stream")
+	writer.Header().Set("Cache-Control", "no-store")
+	writer.Header().Set("X-Accel-Buffering", "no")
 }
 
-func writeSessionExpired(writer http.ResponseWriter, flusher http.Flusher) {
-	if _, err := fmt.Fprint(writer, "event: session-expired\ndata: {}\n\n"); err == nil {
-		flusher.Flush()
+func observeFailure(observer FailureObserver, stage string) {
+	if observer != nil {
+		observer.ObserveVoiceRosterFailure(stage)
 	}
 }
