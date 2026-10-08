@@ -97,3 +97,11 @@ def test_current_windows_catalog_points_to_verified_release_identity():
     assert windows["target"]["release_order"] == 52
     assert windows["target"]["version"] == "1.0.38"
     assert windows["target"]["native_build"] == "71"
+
+
+def test_repeating_identical_promotion_does_not_advance_catalog_revision(tmp_path):
+    current = target() | {"release_id": "windows-direct-stable-r5", "release_order": 5}
+    path = source(tmp_path, current)
+    document = mutate(path, 4, ("windows", "direct", "stable", "x64"), "published", current)
+    assert document["catalog_revision"] == 4
+    assert json.loads(path.read_text(encoding="utf-8"))["catalog_revision"] == 4
