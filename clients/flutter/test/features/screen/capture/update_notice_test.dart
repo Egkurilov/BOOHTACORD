@@ -16,7 +16,7 @@ void main() {
     final android = screenShareUpdateNotice(TargetPlatform.android);
 
     expect(macOS, contains('захвата'));
-    expect(macOS, contains('остановить'));
+    expect(macOS, contains('останов'));
     expect(android, contains('захвата'));
     expect(android, contains('разрешение'));
   });

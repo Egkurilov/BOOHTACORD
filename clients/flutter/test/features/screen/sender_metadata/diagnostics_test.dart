@@ -17,7 +17,14 @@ void main() {
     expect(find.text('Выбрано отправителем'), findsOneWidget);
     expect(find.text('1080p · 60 FPS'), findsOneWidget);
     expect(find.text('Сейчас у зрителя'), findsOneWidget);
-    expect(find.text('Нет данных'), findsOneWidget);
+    final viewerRow = find.ancestor(
+      of: find.text('Сейчас у зрителя'),
+      matching: find.byType(Row),
+    );
+    expect(
+      find.descendant(of: viewerRow, matching: find.text('Нет данных')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('keeps legacy track diagnostics and omits invented sender data', (
