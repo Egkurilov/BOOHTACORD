@@ -16,12 +16,18 @@ def connection():
 
 
 class Client:
-    def __init__(self, password):
+    def __init__(self, password, login='qa_admin'):
         self.cookie = ''
-        status, _, headers = self.request('/auth/login', 'POST', {'login': 'qa_admin', 'password': password})
+        status, _, headers = self.request('/auth/login', 'POST', {'login': login, 'password': password})
         assert status == 204, 'Synthetic fixture login failed'
         cookie = SimpleCookie(headers['Set-Cookie'])
         self.cookie = 'vp_session='+cookie['vp_session'].value
+
+    def create_peer(self, password):
+        login = 'qa_upload_peer'
+        status, _, _ = self.request('/auth/register', 'POST', {'login': login, 'password': password})
+        assert status == 201, f'Synthetic independent uploader registration returned {status}'
+        return Client(password, login)
 
     def request(self, path, method='GET', body=None):
         client = connection()

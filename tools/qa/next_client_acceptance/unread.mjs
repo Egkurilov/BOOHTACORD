@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { api, channel, expect, seed, select, sql, status } from './fixture.mjs'
+import { whileWindowHidden } from './window_visibility.mjs'
 export async function unread(page, browser, fixture, input, report) {
   const results = []
   fixture.a = await channel(page, fixture.category, 'NextUnread')
@@ -33,13 +34,12 @@ export async function unread(page, browser, fixture, input, report) {
     for (let i=0; i<6; i++) await context.getByRole('button', { name: 'Показать следующие сообщения', exact: true }).click()
     await expect(context.locator('[data-message-id]')).toHaveCount(121)
     assert.notEqual(read(), data.ids[120], 'Invisible tail was incorrectly marked read')
-    const before = read(), background = await page.context().newPage()
-    await background.bringToFront()
-    await expect.poll(() => page.evaluate(() => document.visibilityState)).toBe('hidden')
-    await context.locator('.search-context-list').evaluate(list => { list.scrollTop=list.scrollHeight; list.dispatchEvent(new Event('scroll')) })
-    await page.waitForTimeout(200)
-    assert.equal(read(), before, 'Background tab advanced cursor')
-    await background.close(); await page.bringToFront()
+    const before = read()
+    await whileWindowHidden(page, async () => {
+      await context.locator('.search-context-list').evaluate(list => { list.scrollTop=list.scrollHeight; list.dispatchEvent(new Event('scroll')) })
+      await page.waitForTimeout(200)
+      assert.equal(read(), before, 'Background window advanced cursor')
+    })
     await context.locator('.search-context-list').evaluate(list => list.dispatchEvent(new Event('scroll')))
     await expect.poll(read).toBe(data.ids[120])
     await page.screenshot({ path: input.directory+'/unread-'+kind.toLowerCase()+'.png' })
