@@ -44,9 +44,15 @@ remain explicitly unclaimed pending game-matrix evidence.
 
 The pure projection tests cover channel isolation, reconnect speaker reset,
 simultaneous speakers, only-speakers mode, maximum roster size, disabled state,
-and clearing after disconnect. The next integration slice needs a focused
-Flutter notifier-to-method-channel test and Windows runner tests for pass-through,
-focus, hotkey conflict, DPI/monitor restore, and deterministic destruction.
+and clearing after disconnect. The Flutter application now derives a
+snapshot-only feed from its existing `VoiceController` and current-channel
+roster; the feed adds no LiveKit room, microphone capture, or participant IDs.
+The feed is not yet connected to a native window, so it does not render an
+in-game overlay. The feed and roster-projection tests were added, but are
+`NOT_RUN` in the current environment because Flutter/Dart are unavailable.
+The remaining integration needs a method-channel/native-window implementation
+and Windows runner tests for pass-through, focus, hotkey conflict, DPI/monitor
+restore, and deterministic destruction.
 Manual acceptance must record Windows build, game and anti-cheat, display mode,
 monitor/DPI topology, steps, expected/actual focus and input, and paired
 60-second FPS/frame-time, CPU, GPU, and memory measurements with the overlay on

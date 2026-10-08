@@ -1,6 +1,7 @@
 import '../../core/errors/presentation.dart';
 import '../../features/audio/devices/controller.dart';
 import '../../features/voice/lifecycle/controller.dart';
+import '../../features/voice/overlay/current_feed.dart';
 import '../../features/screen/lifecycle/controller.dart';
 import 'owners.dart';
 
@@ -31,4 +32,9 @@ void configureMedia(AppOwners app) {
     formatError: appFailureMessage,
     roomFactory: app.voiceRoomFactory,
   )..addListener(app.notifyListeners);
+  app.voiceOverlay = createCurrentVoiceOverlayFeed(
+    voice: app.voice,
+    roster: app.voiceRoster,
+    readAccountId: () => app.session.user?.accountId,
+  );
 }

@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/features/voice/overlay/projection.dart';
+import 'package:boohtacord_desktop/src/features/voice/overlay/roster_projection.dart';
 
 void main() {
   const members = <VoiceOverlayMemberInput>[
@@ -61,6 +63,35 @@ void main() {
 
     expect(state.members, hasLength(3));
     expect(state.members.every((member) => !member.speaking), isTrue);
+  });
+
+  test('roster projection resolves speaking accounts without exporting IDs', () {
+    final state = projectVoiceOverlayRoster(
+      settings: const VoiceOverlaySettings(enabled: true, onlySpeakers: false),
+      voiceChannelId: 'voice-a',
+      rosterChannelId: 'voice-a',
+      voiceStatus: VoiceOverlayVoiceStatus.connected,
+      roster: const [
+        VoiceRosterMember(
+          accountId: 'account-1',
+          displayName: 'Alice',
+          screenSharing: false,
+          microphoneMuted: false,
+        ),
+        VoiceRosterMember(
+          accountId: 'account-2',
+          displayName: 'Bob',
+          screenSharing: false,
+          microphoneMuted: true,
+        ),
+      ],
+      speakingAccountIds: const {'account-2'},
+    );
+
+    expect(state.members.map((member) => member.displayName), ['Alice', 'Bob']);
+    expect(state.members.map((member) => member.speaking), [false, true]);
+    expect(state.members.map((member) => member.microphoneMuted), [false, true]);
+    expect(state.members.toString(), isNot(contains('account-')));
   });
 
 }

@@ -13,6 +13,7 @@ void disposeOwners(AppOwners app) {
   app.nativeNotifications.dispose();
   app.maintenance.dispose();
   app.reset.dispose();
+  app.voiceOverlay.dispose();
   app.voice.dispose();
   app.screen.dispose();
   app.audioDevices.dispose();
