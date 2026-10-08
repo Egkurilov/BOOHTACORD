@@ -13,7 +13,8 @@ extension AdminScreenStateAdminBuildAdminAccountCardBindingAction
   Widget executeAdminBuildAdminAccountCard(AdminAccount account) =>
       LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth >= 720) {
+          final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+          if (constraints.maxWidth / scale >= 720) {
             return adminBuildAdminAccountDesktopRow(account);
           }
           return adminBuildAdminAccountCompactCard(account);

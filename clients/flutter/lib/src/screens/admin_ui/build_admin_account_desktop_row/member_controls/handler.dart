@@ -51,9 +51,13 @@ extension RenderAdminMemberControlsAction on AdminScreenStateContext {
       ),
       onPressed: busy ? null : () => adminSaveAccount(account),
       child: busy
-          ? const SizedBox.square(
-              dimension: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+          ? Semantics(
+              liveRegion: true,
+              label: 'Сохраняем изменения участника',
+              child: const SizedBox.square(
+                dimension: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             )
           : const Text('Сохранить'),
     ),

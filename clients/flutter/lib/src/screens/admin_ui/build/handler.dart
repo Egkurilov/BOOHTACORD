@@ -2,6 +2,7 @@ import 'shell_header/handler.dart';
 import 'shell_content/handler.dart';
 import '../native_bindings.dart';
 import '../lifecycle/context.dart';
+import '../../../features/admin/accessibility/surface.dart';
 
 mixin AdminScreenStateBuildBinding on AdminScreenStateContext {
   @override
@@ -45,26 +46,31 @@ extension AdminScreenStateBuildBindingAction on AdminScreenStateContext {
     final voiceChannels = allChannels
         .where((channel) => channel.kind == ChannelKind.voice)
         .toList(growable: false);
-    return Material(
-      color: GcColors.content,
-      child: Column(
-        children: [
-          ...renderAdminShellHeader(compact),
-          ...renderAdminShellContent(
-            compact,
-            width,
-            categories,
-            expandedCategoryId,
-            selectedCategory,
-            selectedId,
-            channels,
-            selectedChannel,
-            moveSourceCategory,
-            textChannels,
-            allChannels,
-            voiceChannels,
-          ),
-        ],
+    return AdminAccessibleSurface(
+      onClose:
+          widget.onClose ??
+          () => widget.state.toggleWorkspacePanel(WorkspacePanel.none),
+      child: Material(
+        color: GcColors.content,
+        child: Column(
+          children: [
+            ...renderAdminShellHeader(compact),
+            ...renderAdminShellContent(
+              compact,
+              width,
+              categories,
+              expandedCategoryId,
+              selectedCategory,
+              selectedId,
+              channels,
+              selectedChannel,
+              moveSourceCategory,
+              textChannels,
+              allChannels,
+              voiceChannels,
+            ),
+          ],
+        ),
       ),
     );
   }

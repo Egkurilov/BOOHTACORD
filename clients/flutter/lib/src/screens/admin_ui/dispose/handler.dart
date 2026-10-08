@@ -27,5 +27,8 @@ extension AdminScreenStateDisposeBindingAction on AdminScreenStateContext {
     for (final focusNode in adminAccountSaveFocusNodes.values) {
       focusNode.dispose();
     }
+    for (final focusNode in adminAccountActionFocusNodes.values) {
+      focusNode.dispose();
+    }
   }
 }

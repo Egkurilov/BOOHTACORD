@@ -32,7 +32,11 @@ extension AdminScreenStateAdminBuildAdminAccountCompactCardBindingAction
       child: Material(
         color: GcColors.surface,
         child: ExpansionTile(
+          key: PageStorageKey('admin-member-expansion:${account.accountId}'),
           initiallyExpanded: true,
+          expansionAnimationStyle: MediaQuery.disableAnimationsOf(context)
+              ? AnimationStyle.noAnimation
+              : null,
           tilePadding: EdgeInsets.zero,
           childrenPadding: EdgeInsets.zero,
           leading: CircleAvatar(

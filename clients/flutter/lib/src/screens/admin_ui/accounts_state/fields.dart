@@ -10,6 +10,7 @@ mixin AdminAccountsFields {
   final Map<String, AdminAccount> adminAccountBaselines = {};
   final Map<String, AdminAccountConflict> adminAccountConflicts = {};
   final Map<String, FocusNode> adminAccountSaveFocusNodes = {};
+  final Map<String, FocusNode> adminAccountActionFocusNodes = {};
   final Set<String> adminBusyAccountIds = {};
   bool adminAccountsLoading = false;
   String? adminAccountsError;
