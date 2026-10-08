@@ -72,6 +72,11 @@ def mutate(path, expected_revision, selector, state, target):
         if state == "published":
             if not isinstance(target, dict): raise ValueError("published promotion requires a target")
             validate_target(target, selector[0])
+        elif state != "unconfigured" or target is not None:
+            raise ValueError("withdrawal requires the unconfigured state and no target")
+        if matches[0].get("state") == state and matches[0].get("target") == target:
+            return document
+        if state == "published":
             previous = matches[0].get("target")
             if isinstance(previous, dict):
                 previous_order = previous.get("release_order", 0)
@@ -84,8 +89,6 @@ def mutate(path, expected_revision, selector, state, target):
                         target.get(field) != previous.get(field)
                         for field in ("release_order", "version", "native_build")):
                     raise ValueError("release identity conflicts with its existing version or build")
-        elif state != "unconfigured" or target is not None:
-            raise ValueError("withdrawal requires the unconfigured state and no target")
         matches[0].update(state=state, target=target)
         document["catalog_revision"] += 1; validate(document)
         payload = json.dumps(document, indent=2, ensure_ascii=False) + "\n"
