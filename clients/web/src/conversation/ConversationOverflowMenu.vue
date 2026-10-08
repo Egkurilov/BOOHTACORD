@@ -3,12 +3,12 @@ import { onBeforeUnmount, onMounted, useId } from 'vue'
 
 import { useConversationOverflowMenu } from './conversation_overflow_menu'
 
-const props = withDefaults(defineProps<{ showMembers?: boolean; membersOpen?: boolean; menuLabel?: string }>(), {
+const props = withDefaults(defineProps<{ showMembers?: boolean; membersOpen?: boolean; showFiles?: boolean; menuLabel?: string }>(), {
   showMembers: false,
   membersOpen: false,
   menuLabel: 'Действия переписки',
 })
-const emit = defineEmits<{ search: []; toggleMembers: [] }>()
+const emit = defineEmits<{ search: []; toggleMembers: []; files: [] }>()
 const menuId = useId()
 const { expanded, root, trigger, menu, toggle, onOutside, onFocusOut, onKeys, openSearch, toggleMembers } =
   useConversationOverflowMenu(() => emit('search'), () => emit('toggleMembers'))
@@ -24,6 +24,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutside))
       :aria-controls="menuId" @click="toggle">⋯</button>
     <div v-show="expanded" :id="menuId" ref="menu" class="conversation-overflow__menu" role="menu" :aria-label="props.menuLabel">
       <button type="button" role="menuitem" @click="openSearch">Найти сообщение</button>
+      <button v-if="props.showFiles" type="button" role="menuitem" @click="expanded = false; emit('files')">Файлы беседы</button>
       <button v-if="props.showMembers" type="button" role="menuitem" @click="toggleMembers">{{ props.membersOpen ? 'Скрыть участников' : 'Показать участников' }}</button>
     </div>
   </div>
