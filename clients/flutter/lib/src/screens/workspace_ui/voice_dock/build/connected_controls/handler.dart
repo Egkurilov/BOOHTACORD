@@ -3,6 +3,7 @@ import '../../../voice_dock_button/component.dart';
 import '../../../voice_dock_ptt_button/component.dart';
 import '../../../native_bindings.dart';
 import '../../lifecycle/context.dart';
+import '../../../../voice_overlay_settings/factory.dart';
 
 extension VoiceDockConnectedControlsRenderer on WorkspaceVoiceDockContext {
   Row renderVoiceDockConnectedControls(BuildContext context) => Row(
@@ -86,6 +87,10 @@ extension VoiceDockConnectedControlsRenderer on WorkspaceVoiceDockContext {
         ),
       ),
       VoiceOverlayToggle(
+        onSettings: () => unawaited(showVoiceOverlaySettings(context, state)),
+        onEdit: () => unawaited(toggleVoiceOverlayEditing(state)),
+        editing:
+            state.voiceOverlayWindowsClient?.configuration.editing ?? false,
         enabled: state.voiceOverlay.enabled,
         onlySpeakers: state.voiceOverlay.onlySpeakers,
         available: workspaceConnected,

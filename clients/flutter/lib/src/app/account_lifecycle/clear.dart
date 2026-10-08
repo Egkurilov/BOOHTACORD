@@ -21,6 +21,10 @@ extension AppAccountCleanup on AppOwners {
     voiceOverlayPreferences = null;
     voiceOverlay.setEnabled(false);
     voiceOverlay.setOnlySpeakers(false);
+    voiceOverlay.setMaxParticipants(8);
+    voiceOverlayWindowsClient?.configuration.onPlacement = null;
+    voiceOverlayWindowsClient?.configuration.onHotkeyConflict = null;
+    voiceOverlaySettingsRevision++;
     audioDevices.clearAccount();
   }
 

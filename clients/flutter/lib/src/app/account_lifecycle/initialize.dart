@@ -11,6 +11,7 @@ import '../../features/realtime/lifecycle/controller.dart';
 import '../composition/owners.dart';
 import '../../features/voice/overlay/preferences.dart';
 import '../media_preferences/screen.dart';
+import '../overlay_preferences/actions.dart';
 
 extension AppAccountInitialization on AppOwners {
   Future<void> initializePlatform() async {
@@ -35,6 +36,9 @@ extension AppAccountInitialization on AppOwners {
       }
       voiceOverlayPreferences = overlayPreferences;
       voiceOverlay.setOnlySpeakers(overlayPreferences.onlySpeakers);
+      bindOverlayPlacement();
+      await saveOverlayConfiguration(overlayPreferences.configuration);
+      if (!ticket.isActive) return;
     }
     await restoreScreenPreferences();
     if (!ticket.isActive || session.user?.accountId != account.accountId) return;

@@ -9,6 +9,9 @@ class VoiceOverlayToggle extends StatelessWidget {
     required this.available,
     required this.onChanged,
     required this.onOnlySpeakersChanged,
+    this.onSettings,
+    this.onEdit,
+    this.editing = false,
   });
 
   final bool enabled;
@@ -16,6 +19,8 @@ class VoiceOverlayToggle extends StatelessWidget {
   final bool available;
   final ValueChanged<bool> onChanged;
   final ValueChanged<bool> onOnlySpeakersChanged;
+  final VoidCallback? onSettings, onEdit;
+  final bool editing;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +57,19 @@ class VoiceOverlayToggle extends StatelessWidget {
               value: !onlySpeakers,
               child: const Text('Показывать только говорящих'),
             ),
+            if (onSettings != null)
+              PopupMenuItem<bool>(
+                onTap: onSettings,
+                child: const Text('Настройки overlay'),
+              ),
+            if (onEdit != null)
+              PopupMenuItem<bool>(
+                onTap: onEdit,
+                enabled: enabled,
+                child: Text(
+                  editing ? 'Завершить перемещение' : 'Переместить панель',
+                ),
+              ),
           ],
           icon: const Icon(Icons.tune),
         ),

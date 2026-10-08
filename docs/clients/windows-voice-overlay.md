@@ -1,8 +1,8 @@
 # Windows voice overlay — implementation investigation
 
-Status: the same-engine overlay MVP is merged. This follow-up adds an
-account-scoped only-speakers preference and Windows dock control; Windows/game
-runtime acceptance remains open. Issue:
+Status: source settings, hotkey, edit and monitor/DPI recovery are implemented.
+Windows native checks and debug build pass; game/performance acceptance remains
+open. Issue:
 [#112](https://github.com/Egkurilov/BOOHTACORD/issues/112).
 
 ## Existing component map
@@ -15,11 +15,11 @@ runtime acceptance remains open. Issue:
 | Active speakers and participant lifecycle | `clients/flutter/lib/src/features/voice/room_events/remote_participants.dart`, `refresh_voice_navigation.dart` | Reuse LiveKit events and the existing notifier. |
 | Server roster | `clients/flutter/lib/src/features/voice/roster_state/` | Not a speaking source: its DTO has name, mute, and screen-share fields only. |
 | Overlay-safe display projection and live feed | `clients/flutter/lib/src/features/voice/overlay/` | Drops participant IDs, rejects stale channels, clears stale speaker flags, filters and caps members; derives snapshots from existing controllers. |
-| Windows snapshot transport | `clients/flutter/lib/src/features/voice/overlay/windows_client.dart`, `clients/flutter/windows/runner/voice_overlay_channel.cpp` | Sends only visibility, display name, speaking and mute state; no Room or microphone APIs. |
-| Native overlay window | `clients/flutter/windows/runner/voice_overlay_window.cpp`, `voice_overlay_paint.cpp` | One sibling layered Win32 window, click-through and non-activating, destroyed with the existing runner. |
+| Windows snapshot transport | `clients/flutter/lib/src/features/voice/overlay/windows_client.dart`, `clients/flutter/windows/runner/voice_overlay/bridge/channel.cpp` | Sends only visibility, display name, speaking and mute state; no Room or microphone APIs. |
+| Native overlay window | `clients/flutter/windows/runner/voice_overlay/window_lifecycle/lifecycle.cpp`, `voice_overlay/presentation/paint.cpp` | One sibling layered Win32 window, click-through and non-activating, destroyed with the existing runner. |
 | User show/hide control | `clients/flutter/lib/src/features/voice/overlay/toggle.dart`, voice dock | Opt-in toggle appears only on Windows while connected; disconnect sends an empty hidden snapshot. |
 
-## Proposed first-version boundary
+## Implemented first-version boundary
 
 Keep a single Flutter engine and the current authenticated LiveKit `Room`. A
 top-level Win32 window in the existing runner paints only projected display
@@ -50,10 +50,9 @@ remain explicitly unclaimed pending game-matrix evidence.
 Pure projection tests cover channel isolation, reconnect speaker reset,
 simultaneous speakers, only-speakers mode, roster cap, disabled state, and
 clearing after disconnect. Feed, show/hide, snapshot serialization, and native
-window contract tests are present. Local execution is `NOT_RUN` because Flutter
-and Dart are unavailable in the current environment; Windows CI must compile the
-runner before source acceptance. No physical Windows/game acceptance is
-claimed.
+window contract tests are present. Current Flutter/native checks and Windows
+debug compilation pass; see the dated source evidence below. Physical game and
+performance acceptance remains open.
 
 The initial renderer choice is a sibling Win32 window in the existing runner;
 the issue requires a separate transparent overlay and forbids a second media
@@ -62,13 +61,10 @@ window property. The MVP defaults hidden and exposes an in-client toggle.
 Manual acceptance must record Windows build, game and anti-cheat, display mode,
 monitor/DPI topology, steps, expected/actual focus and input, and paired
 60-second FPS/frame-time, CPU/GPU/RAM measurements with the overlay on and off.
-The MVP only claims a bounded initial desktop position on the monitor nearest
-the main window. This follow-up persists only-speakers mode under an
-account-scoped local preference and exposes it in the Windows voice dock. The
-issue still needs persistence for placement, scale and transparency, hotkey
-registration, move/edit mode, robust multi-monitor/DPI restore, broader
-accessibility, exclusive fullscreen, anti-cheat, and performance/game-matrix
-evidence.
+The original MVP only positioned the panel near the main window. The current
+source adds account-local placement, scale/transparency, hotkey registration,
+explicit move/edit mode and monitor/DPI recovery. Broader hardware accessibility,
+exclusive fullscreen, anti-cheat and game/performance evidence remain QA.
 
 ## Compatibility boundary
 
@@ -77,3 +73,13 @@ claim is limited to windowed and borderless-windowed games after manual tests.
 Exclusive-fullscreen and anti-cheat compatibility remain unclaimed. Set
 performance budgets from paired measurements on the target Windows machine;
 do not infer them from unit tests or compilation.
+
+## Settings and native acceptance — 2026-10-09
+
+Account-local preferences now retain enabled, speaker filter, normalized monitor placement, scale, opacity, participant cap and modifier+F-key. The Windows menu opens the real settings dialog and an explicit non-activating drag editor. Hotkey conflicts are reported; normal mode is click-through. Disabled/disconnected overlays release the window and OS hotkey; disabled feeds release observer subscriptions. Newest-snapshot coalescing prevents queued stale participants from returning after a boundary. The current authorized Room supplies membership and microphone state; matching SSE roster names are hints, and Room names work while SSE is unavailable. Initial avatars use display initials without image requests.
+
+Physical implementation is now in native child leaves (window lifecycle, presentation, configuration, placement/events, and typed decoders); Flutter runtime is in roster_display, preferences_store, settings, windows_bridge and screen UI leaves. Root Dart entrypoints only forward exports.
+
+Flutter 3.47.5/Dart 3.13.4: 128 combined component tests pass (79 workspace, 6 prejoin, 13 quick jump, 30 overlay). Owned files max114 lines. A separate native Windows test executable built with /W4 /WX passes real OS window, click-through, unchanged foreground, explicit editor, opacity, fallback work-area placement, hotkey conflict/retry/cleanup, visibility across snapshots and strict decode checks. Full Windows debug build passes on Windows 11 Pro10.0.26300; vendor plugin warnings remain. Current source evidence: evidence/flutter/windows-overlay-settings-2026-10-09.md.
+
+These automated checks supersede the earlier local NOT_RUN status for source compilation. Physical simultaneous calls, real multi-monitor/DPI changes, actual game input/anti-cheat and paired FPS/frame-time/CPU/GPU/RAM remain NOT_RUN. This implementation adds no polling timer or media owner; speaking follows existing LiveKit events. Hardware budgets and compatibility remain unclaimed until measurements are attached.

@@ -33,7 +33,7 @@ export 'package:boohtacord_desktop/src/features/voice/screen_viewer/publication_
 export 'package:boohtacord_desktop/src/features/screen/sender_metadata/descriptor.dart';
 export 'package:boohtacord_desktop/src/features/voice/shortcuts/capture.dart';
 export 'package:boohtacord_desktop/src/features/voice/lifecycle/controller.dart';
-export 'package:boohtacord_desktop/src/features/voice/overlay/toggle.dart';
+export 'package:boohtacord_desktop/src/screens/voice_overlay_controls/toggle.dart';
 export 'package:boohtacord_desktop/src/widgets/voice_shortcuts/keyboard.dart';
 export 'package:boohtacord_desktop/src/widgets/voice_shortcuts/availability.dart';
 export 'package:boohtacord_desktop/src/widgets/voice_shortcuts/row.dart';
