@@ -1835,6 +1835,23 @@
         "security": [{"SessionCookie": []}]
       }
     },
+    "/api/v1/mentions": {
+      "get": {
+        "operationId": "listMyMentions",
+        "description": "Caller-only metadata inbox for live mentions. Recipient identity is derived from the authenticated session; clients cannot select another recipient. Results cover non-archived TEXT channels and only the caller's own DM pairs. Deleted messages and messages whose current mention IDs no longer include the caller are omitted. The response contains message/conversation/author IDs and timestamps only, never message or DM text; opening a result must use the existing ACL-protected conversation history route with at=message_id. This is not a read receipt.",
+        "parameters": [
+          {"name": "before", "in": "query", "schema": {"type": "string", "maxLength": 512}, "description": "Opaque cursor from the previous page."},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100, "default": 50}}
+        ],
+        "responses": {
+          "200": {"description": "Newest-first caller mention metadata page; personal metadata is not cached", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/MentionInboxPage"}}}, "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}, "Cache-Control": {"schema": {"type": "string"}, "description": "private, no-store"}}},
+          "400": {"description": "Malformed cursor or limit", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}, "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}}},
+          "401": {"description": "No active server-side session", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}, "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}}},
+          "500": {"description": "Internal error. Middleware failure may emit an empty body.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}, "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}}, "x-empty-body-possible": true}
+        },
+        "security": [{"SessionCookie": []}]
+      }
+    },
     "/api/v1/channels/{channelID}/attachments": {
       "post": {
         "operationId": "uploadTextAttachment",
@@ -5120,6 +5137,16 @@
         }
       },
       "TextMessageSearchResult": {"type":"object","additionalProperties":false,"required":["id","channel_id","author_id","body","created_at","revision","kind"],"properties":{"id":{"type":"string","format":"uuid"},"channel_id":{"type":"string","format":"uuid"},"author_id":{"type":"string","format":"uuid"},"body":{"type":"string","minLength":1,"maxLength":8000},"created_at":{"type":"string","format":"date-time"},"edited_at":{"type":"string","format":"date-time"},"revision":{"type":"integer","minimum":1},"kind":{"type":"string","enum":["USER","SYSTEM_WELCOME"],"default":"USER","description":"SYSTEM_WELCOME is server-created and immutable; author_id and its mention identify the registered subject."}}},
+      "MentionInboxPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["mentions"],
+        "properties": {
+          "mentions": {"type": "array", "items": {"$ref": "#/components/schemas/MentionInboxItem"}},
+          "next_cursor": {"type": "string", "minLength": 1, "maxLength": 512}
+        }
+      },
+      "MentionInboxItem": {"type":"object","additionalProperties":false,"required":["kind","message_id","conversation_id","author_id","created_at"],"properties":{"kind":{"type":"string","enum":["CHANNEL","DIRECT_MESSAGE"]},"message_id":{"type":"string","format":"uuid"},"conversation_id":{"type":"string","format":"uuid"},"author_id":{"type":"string","format":"uuid"},"created_at":{"type":"string","format":"date-time"}}},
       "MessageSearchPage": {
         "type": "object",
         "additionalProperties": false,
