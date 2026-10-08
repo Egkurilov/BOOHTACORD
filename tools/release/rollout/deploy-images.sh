@@ -83,7 +83,10 @@ cleanup() {
 trap cleanup EXIT
 
 "${compose[@]}" up -d --wait postgres
-"${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable
+if ! "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable; then
+  python3 "$project_dir/tools/release/rollout/reconcile-postgres-credential.py" "$project_dir"
+  "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable
+fi
 admission_enabled=1
 sleep 15
 if [[ "$release_mode" == "registry-digest" ]]; then
