@@ -75,6 +75,7 @@ class AdminVoiceTimeoutDialogState extends State<AdminVoiceTimeoutDialog> {
       owner: owner,
       displayName: widget.displayName,
       onClose: () => Navigator.pop(context),
+      scopeChanges: widget.scopeChanges,
     ),
   );
 }

@@ -11,10 +11,12 @@ class VoiceTimeoutSurface extends StatelessWidget {
     required this.owner,
     required this.displayName,
     required this.onClose,
+    this.scopeChanges,
   });
   final AdminVoiceTimeoutController owner;
   final String displayName;
   final VoidCallback onClose;
+  final Listenable? scopeChanges;
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: owner,
@@ -34,7 +36,7 @@ class VoiceTimeoutSurface extends StatelessWidget {
                   'Ограничение голоса',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                Text(displayName),
+                if (owner.active) Text(displayName),
                 const SizedBox(height: 16),
                 if (!owner.active)
                   const Text(
@@ -47,16 +49,14 @@ class VoiceTimeoutSurface extends StatelessWidget {
                   VoiceTimeoutStatus(value: owner.value!),
                 if (owner.active) ...[
                   const SizedBox(height: 16),
-                  VoiceTimeoutForm(
-                    key: ValueKey(owner),
-                    owner: owner,
-                  ),
+                  VoiceTimeoutForm(key: ValueKey(owner), owner: owner),
                 ],
                 const SizedBox(height: 16),
                 VoiceTimeoutActions(
                   owner: owner,
                   displayName: displayName,
                   onClose: onClose,
+                  scopeChanges: scopeChanges,
                 ),
               ],
             ),

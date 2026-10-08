@@ -1,39 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'controller.dart';
-
-Future<bool> confirmVoiceTimeout(
-  BuildContext context,
-  bool lift,
-  String name,
-) async =>
-    await showDialog<bool>(
-      context: context,
-      useSafeArea: true,
-      builder: (context) => AlertDialog(
-        title: Text(
-          lift
-              ? 'Снять ограничение голоса?'
-              : 'Подтвердить ограничение голоса?',
-        ),
-        content: Text(
-          lift
-              ? '$name: снятие не возвращает голос и не включает микрофон. Нужен новый Join.'
-              : '$name: текущие голосовые подключения будут отозваны. TEXT и DM сохраняются.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Подтвердить'),
-          ),
-        ],
-      ),
-    ) ??
-    false;
+import 'confirmation.dart';
 
 class VoiceTimeoutActions extends StatelessWidget {
   const VoiceTimeoutActions({
@@ -41,10 +9,12 @@ class VoiceTimeoutActions extends StatelessWidget {
     required this.owner,
     required this.displayName,
     required this.onClose,
+    this.scopeChanges,
   });
   final AdminVoiceTimeoutController owner;
   final String displayName;
   final VoidCallback onClose;
+  final Listenable? scopeChanges;
   @override
   Widget build(BuildContext context) => Wrap(
     spacing: 8,
@@ -54,7 +24,13 @@ class VoiceTimeoutActions extends StatelessWidget {
         onPressed: !owner.canMutate
             ? null
             : () async {
-                if (await confirmVoiceTimeout(context, false, displayName)) {
+                if (await confirmVoiceTimeout(
+                  context,
+                  false,
+                  displayName,
+                  owner: owner,
+                  scopeChanges: scopeChanges,
+                )) {
                   await owner.apply();
                 }
               },
@@ -65,7 +41,13 @@ class VoiceTimeoutActions extends StatelessWidget {
           onPressed: !owner.canMutate
               ? null
               : () async {
-                  if (await confirmVoiceTimeout(context, true, displayName)) {
+                  if (await confirmVoiceTimeout(
+                    context,
+                    true,
+                    displayName,
+                    owner: owner,
+                    scopeChanges: scopeChanges,
+                  )) {
                     await owner.clear();
                   }
                 },
