@@ -9,7 +9,7 @@ import type { VoiceLeaseRevocationReason } from '../voice/voice_lease_revocation
 import { refreshDirectMessageHint } from './direct_message_realtime'
 import { refreshTopologyHint } from './topology_realtime'
 import { applyVoiceLeaseRevocation } from './voice_lease_realtime'
-import { shouldRefreshTextHistory } from './active_message_resync'
+import { applyDeletedMessageHint, shouldRefreshTextHistory } from './active_message_resync'
 import { usePermissionStore } from '../authorization/permission_store'
 import { notifyOwnSessionsChanged } from '../identity/own_sessions/state'
 import { guildProfile } from '../guild/profile/state'
@@ -23,13 +23,12 @@ import { parseScreenPreviewHint } from '../voice/screen_preview/client'
 import { screenPreviewCardVisibility } from '../voice/screen_preview/visibility'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
-interface TextHistory extends Refreshable { channelId: string | null; refreshMessages?(ids: string[]): Promise<unknown> }
+interface TextHistory extends Refreshable { channelId: string | null; applyDeletedHint?(channelId: string, messageId: string): void; refreshMessages?(ids: string[]): Promise<unknown> }
 interface DirectHistory {
   directMessageId: string | null
   error: string | null
-  refreshNavigation(): Promise<void>
-  refreshHistory(): Promise<void>
-  refreshMessages?(ids: string[]): Promise<unknown>
+  refreshNavigation(): Promise<void>; refreshHistory(): Promise<void>
+  applyDeletedHint?(directMessageId: string, messageId: string): void; refreshMessages?(ids: string[]): Promise<unknown>
 }
 export interface WorkspaceRealtimeStores {
   topology: Refreshable
@@ -73,12 +72,14 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
     if (!active) return
     const eventLifecycle = lifecycle
     if (presence.acceptRealtimeEvent(event)) return
+    applyDeletedMessageHint(event, stores)
     if (event.kind === 'session.state_changed') { notifyOwnSessionsChanged(); return }
     if (event.kind === 'guild.profile.updated') return guildProfile.refresh(event.payload.revision as number)
     if (event.kind === 'connection.resync_required') return refreshProtectedState(stores)
     if (event.kind === 'direct_message.message_created' || event.kind === 'direct_message.message_updated' || event.kind === 'direct_message.message_deleted') {
+      const directMessageId = event.payload.direct_message_id as string
       const previousUnread = notify ? notifications.capture(event) : null
-      return refreshDirectMessageHint(stores.directMessages, event.payload.direct_message_id as string).then(() => {
+      return refreshDirectMessageHint(stores.directMessages, directMessageId).then(() => {
         if (notify && active && lifecycle === eventLifecycle) return notifications.deliver(event, previousUnread)
       })
     }

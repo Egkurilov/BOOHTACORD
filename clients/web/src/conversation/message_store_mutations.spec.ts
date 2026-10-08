@@ -39,6 +39,16 @@ describe('TEXT message mutations', () => {
     expect(store.messages[0]?.mentionUserIds).toEqual(['user-2'])
   })
 
+  it('keeps a realtime tombstone for an older message and clears it when the channel changes', async () => {
+    const store = useMessageStore()
+    const request = async () => new Response(JSON.stringify({ messages: [] }))
+    await store.open('text-1', request)
+    store.applyDeletedHint('text-1', 'older-message')
+    expect(store.deletedMessageIds).toContain('older-message')
+    await store.open('text-2', request)
+    expect(store.deletedMessageIds).toEqual([])
+  })
+
   it('allows the editor to replace the mention list explicitly', async () => {
     const store = useMessageStore()
     let editPayload: Record<string, unknown> | undefined

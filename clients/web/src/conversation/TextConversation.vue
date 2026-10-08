@@ -96,7 +96,7 @@ function closeSearch(): void { searchOpen.value = false; void nextTick(() => sea
       <button type="button" @click="showUnread">К первому непрочитанному</button>
       <button type="button" @click="continueAtLatest">Остаться у последних</button>
     </div>
-    <ConversationFilesPanel v-if="filesOpen" kind="CHANNEL" :conversation-id="props.channelId" :deleted-message-ids="store.messages.filter(({ deleted }) => deleted).map(({ id }) => id)" @open-message="filesOpen = false; searchTarget.open({ kind: 'CHANNEL', conversationId: props.channelId, messageId: $event })" @close="filesOpen = false; void nextTick(() => searchTrigger?.focus())" />
+    <ConversationFilesPanel v-if="filesOpen" kind="CHANNEL" :conversation-id="props.channelId" :deleted-message-ids="store.deletedMessageIds" @open-message="filesOpen = false; searchTarget.open({ kind: 'CHANNEL', conversationId: props.channelId, messageId: $event })" @close="filesOpen = false; void nextTick(() => searchTrigger?.focus())" />
     <SearchMessageContext v-else-if="contextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
     <SearchMessageContext v-else-if="replyContextTarget" kind="CHANNEL" :conversation-id="props.channelId" :message-id="replyContextTarget" heading="Контекст ответа" @close="replyContextTarget = null" />
     <SearchMessageContext v-else-if="unreadContextOpen" kind="CHANNEL" :conversation-id="props.channelId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" unread :active="props.active" @read="topology.refresh()" @viewport-change="savePosition" @close="continueAtLatest" />

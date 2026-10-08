@@ -95,7 +95,7 @@ onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessag
       <button type="button" @click="showUnread">К первому непрочитанному</button>
       <button type="button" @click="continueAtLatest">Остаться у последних</button>
     </div>
-    <ConversationFilesPanel v-if="filesOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :deleted-message-ids="store.messages.filter(({ deleted }) => deleted).map(({ id }) => id)" @open-message="filesOpen = false; searchTarget.open({ kind: 'DIRECT_MESSAGE', conversationId: props.directMessageId, messageId: $event })" @close="filesOpen = false; void nextTick(() => searchTrigger?.focus())" />
+    <ConversationFilesPanel v-if="filesOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :deleted-message-ids="store.deletedMessageIds" @open-message="filesOpen = false; searchTarget.open({ kind: 'DIRECT_MESSAGE', conversationId: props.directMessageId, messageId: $event })" @close="filesOpen = false; void nextTick(() => searchTrigger?.focus())" />
     <SearchMessageContext v-else-if="contextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="contextTarget.messageId" @close="searchTarget.clear()" />
     <SearchMessageContext v-else-if="replyContextTarget" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="replyContextTarget" heading="Контекст ответа" @close="replyContextTarget = null" />
     <SearchMessageContext v-else-if="unreadContextOpen" kind="DIRECT_MESSAGE" :conversation-id="props.directMessageId" :message-id="unreadBoundary" heading="Первое непрочитанное сообщение" unread :active="props.active" @read="store.refreshNavigation()" @viewport-change="savePosition" @close="continueAtLatest" />

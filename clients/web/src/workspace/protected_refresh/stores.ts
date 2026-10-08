@@ -7,6 +7,7 @@ export function coalesceStores(stores: WorkspaceRealtimeStores, gate: ReturnType
     topology: { get error() { return topology.error }, refresh: () => gate.run('topology', () => topology.refresh()) },
     messages: {
       get channelId() { return messages.channelId }, get error() { return messages.error },
+      applyDeletedHint: (channelId, messageId) => messages.applyDeletedHint?.(channelId, messageId),
       refresh() {
         const id = messages.channelId
         return gate.run('text:'+id, async () => { if (messages.channelId === id) await messages.refresh() })
@@ -14,6 +15,7 @@ export function coalesceStores(stores: WorkspaceRealtimeStores, gate: ReturnType
     },
     directMessages: {
       get directMessageId() { return directMessages.directMessageId }, get error() { return directMessages.error },
+      applyDeletedHint: (directMessageId, messageId) => directMessages.applyDeletedHint?.(directMessageId, messageId),
       refreshNavigation: () => gate.run('dm-navigation', () => directMessages.refreshNavigation()),
       refreshHistory() {
         const id = directMessages.directMessageId

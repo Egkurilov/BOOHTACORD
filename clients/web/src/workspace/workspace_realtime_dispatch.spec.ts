@@ -19,8 +19,8 @@ function hint(kind: RealtimeEvent['kind'], payload: Record<string, unknown>): Re
 function fixture() {
   const stores = {
     topology: { refresh: vi.fn(async () => {}), error: null },
-    messages: { channelId: null, refresh: vi.fn(async () => {}), error: null },
-    directMessages: { directMessageId: directID, refreshNavigation: vi.fn(async () => {}), refreshHistory: vi.fn(async () => {}), error: null },
+    messages: { channelId: null as string | null, refresh: vi.fn(async () => {}), error: null },
+    directMessages: { directMessageId: directID as string | null, refreshNavigation: vi.fn(async () => {}), refreshHistory: vi.fn(async () => {}), error: null },
   }
   const voice = { active: { leaseId: leaseID }, state: 'CONNECTED', revokeLease: vi.fn(async () => true) }
   let deliver!: (event: RealtimeEvent) => void | Promise<void>
