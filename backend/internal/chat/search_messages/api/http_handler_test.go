@@ -18,12 +18,29 @@ func TestHandlerUsesSessionActorAndCurrentConversationFilter(t *testing.T) {
 		input = value
 		return searchmessages.Result{Messages: []searchmessages.Message{{ID: "44444444-4444-4444-8444-444444444444", Kind: searchmessages.KindChannel, ChannelID: "22222222-2222-4222-8222-222222222222", Body: "точная фраза", Revision: 1}}}, nil
 	}))
-	request := httptest.NewRequest(http.MethodGet, "/api/v1/search/messages?query=%22%D1%82%D0%BE%D1%87%D0%BD%D0%B0%D1%8F+%D1%84%D1%80%D0%B0%D0%B7%D0%B0%22&channel_id=22222222-2222-4222-8222-222222222222&limit=10", nil)
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/search/messages?query=%22%D1%82%D0%BE%D1%87%D0%BD%D0%B0%D1%8F+%D1%84%D1%80%D0%B0%D0%B7%D0%B0%22&channel_id=22222222-2222-4222-8222-222222222222&author_id=33333333-3333-4333-8333-333333333333&has_attachment=false&limit=10", nil)
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "11111111-1111-4111-8111-111111111111", Role: "ADMINISTRATOR"}))
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusOK || input.ActorID != "11111111-1111-4111-8111-111111111111" || input.ChannelID != "22222222-2222-4222-8222-222222222222" || input.Query != `"точная фраза"` || input.Limit != 10 || !strings.Contains(recorder.Body.String(), `"kind":"CHANNEL"`) {
+	if recorder.Code != http.StatusOK || input.ActorID != "11111111-1111-4111-8111-111111111111" || input.ChannelID != "22222222-2222-4222-8222-222222222222" || input.AuthorID != "33333333-3333-4333-8333-333333333333" || input.HasAttachment == nil || *input.HasAttachment || input.Query != `"точная фраза"` || input.Limit != 10 || !strings.Contains(recorder.Body.String(), `"kind":"CHANNEL"`) {
 		t.Fatalf("status=%d input=%#v body=%q", recorder.Code, input, recorder.Body.String())
+	}
+}
+
+func TestHandlerRejectsMalformedSearchFilters(t *testing.T) {
+	for _, query := range []string{
+		"?query=x&has_attachment=maybe",
+		"?query=x&has_attachment=",
+		"?query=x&has_attachment=true&has_attachment=false",
+		"?query=x&author_id=",
+		"?query=x&author_id=33333333-3333-4333-8333-333333333333&author_id=44444444-4444-4444-8444-444444444444",
+	} {
+		searcher := &fakeSearcher{}
+		recorder := httptest.NewRecorder()
+		NewHandler(searcher).ServeHTTP(recorder, authenticatedRequest("/api/v1/search/messages"+query))
+		if recorder.Code != http.StatusBadRequest || searcher.called {
+			t.Fatalf("query=%q status=%d called=%v", query, recorder.Code, searcher.called)
+		}
 	}
 }
 

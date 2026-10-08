@@ -4,7 +4,7 @@ import { apiBaseUrl } from '../config/runtime'
 import { MessageRequestError, type MessageRequest } from '../conversation/message_client'
 
 export type SearchConversationKind = 'CHANNEL' | 'DIRECT_MESSAGE'
-export interface SearchMessagesInput { query: string; channelId?: string; directMessageId?: string; before?: string; limit?: number }
+export interface SearchMessagesInput { query: string; channelId?: string; directMessageId?: string; authorId?: string; hasAttachment?: boolean; before?: string; limit?: number }
 interface SearchMessageBase { messageKind?: MessageKind; id: string; kind: SearchConversationKind; authorId: string; body: string; createdAt: string; editedAt?: string; revision: number }
 export type SearchMessage = SearchMessageBase & ({ kind: 'CHANNEL'; channelId: string; directMessageId?: never } | { kind: 'DIRECT_MESSAGE'; directMessageId: string; channelId?: never })
 export interface SearchMessagesPage { messages: SearchMessage[]; nextCursor?: string }
@@ -41,6 +41,8 @@ export async function searchMessages(input: SearchMessagesInput, request: Messag
   const parameters = new URLSearchParams({ query: input.query })
   if (input.channelId) parameters.set('channel_id', input.channelId)
   if (input.directMessageId) parameters.set('direct_message_id', input.directMessageId)
+  if (input.authorId) parameters.set('author_id', input.authorId)
+  if (input.hasAttachment !== undefined) parameters.set('has_attachment', String(input.hasAttachment))
   if (input.before) parameters.set('before', input.before)
   if (input.limit !== undefined) parameters.set('limit', String(input.limit))
   const response = await request(`${apiBaseUrl}/search/messages?${parameters}`, { method: 'GET', credentials: 'same-origin', headers: { accept: 'application/json' } })

@@ -1773,7 +1773,7 @@
     "/api/v1/search/messages": {
       "get": {
         "operationId": "searchMessages",
-        "description": "Authenticated member only. Searches non-deleted text across current TEXT channels and only the caller's own DM pairs. Optional channel_id or direct_message_id restricts the current conversation; the filters are mutually exclusive. Uses PostgreSQL simple full-text search and a mixed-source cursor.",
+        "description": "Authenticated member only. Searches non-deleted text across current TEXT channels and only the caller's own DM pairs. Optional channel_id or direct_message_id restricts the current conversation; the filters are mutually exclusive. Optional author_id and has_attachment filter results inside the same authorized scope. Uses PostgreSQL simple full-text search and a stable mixed-source cursor ordered by created_at, id, and kind.",
         "parameters": [
           {
             "name": "query",
@@ -1798,6 +1798,23 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "author_id",
+            "in": "query",
+            "description": "Optional author UUID. This does not broaden channel or own-DM access; an author outside the selected readable scope yields no results.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "has_attachment",
+            "in": "query",
+            "description": "Optional exact boolean. true requires at least one linked attachment in ATTACHED state; false requires none. Deleted messages remain excluded and file contents are not searched.",
+            "schema": {
+              "type": "boolean"
             }
           },
           {
