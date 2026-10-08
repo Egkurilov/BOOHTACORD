@@ -54,11 +54,17 @@ class OverlayConfigurationBridge {
     onPlacement?.call(current);
   }
 
-  void dispose() {
-    disposed = true;
+  void clearAccount() {
     revision++;
+    current = const OverlayConfiguration();
+    editing = false;
     onPlacement = null;
     onHotkeyConflict = null;
+  }
+
+  void dispose() {
+    disposed = true;
+    clearAccount();
     channel.setMethodCallHandler(null);
   }
 }
