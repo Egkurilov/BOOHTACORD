@@ -15,6 +15,7 @@ class AdminAccessibleSurface extends StatelessWidget {
   ButtonStyle _style(ButtonStyle? previous, {bool outlined = false}) =>
       (previous ?? const ButtonStyle()).copyWith(
         minimumSize: const WidgetStatePropertyAll(Size(44, 44)),
+        visualDensity: VisualDensity.standard,
         side: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.focused)
               ? const BorderSide(color: GcColors.focus, width: 2)

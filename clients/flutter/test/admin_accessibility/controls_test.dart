@@ -34,17 +34,30 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
-  testWidgets('compact buttons expose44px touch targets without hover', (
-    tester,
-  ) async {
-    await mountAdmin(tester);
-    for (final key in ['save-account:account-a', 'reset-account:account-a']) {
-      final target = find.byKey(ValueKey(key));
-      await tester.ensureVisible(target);
-      await tester.pump();
-      expect(tester.getSize(target).height, greaterThanOrEqualTo(44));
-    }
-  });
+  for (final platform in [
+    TargetPlatform.android,
+    TargetPlatform.windows,
+    TargetPlatform.macOS,
+    TargetPlatform.linux,
+  ]) {
+    testWidgets('compact buttons expose44px touch targets on $platform', (
+      tester,
+    ) async {
+      await mountAdmin(
+        tester,
+        platform: platform,
+        density: platform == TargetPlatform.android
+            ? VisualDensity.standard
+            : VisualDensity.compact,
+      );
+      for (final key in ['save-account:account-a', 'reset-account:account-a']) {
+        final target = find.byKey(ValueKey(key));
+        await tester.ensureVisible(target);
+        await tester.pump();
+        expect(tester.getSize(target).height, greaterThanOrEqualTo(44));
+      }
+    });
+  }
   testWidgets(
     'member popup Escape restores initiator and system Back closes transient first',
     (tester) async {

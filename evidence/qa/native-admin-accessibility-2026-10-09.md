@@ -82,3 +82,7 @@ OS200% text and real pointer/touch selection of the reset URL. Real production m
 media acceptance are outside this packet. #97 native dialog launcher is integrated by the root
 agent after this source commit; its actual trigger/Escape tests must be rerun there.
 An actual Windows-engine harness is a separate follow-up verification packet, not a release build.
+
+## Desktop density regression
+
+The engine follow-up exposed desktop compact density reducing44dp button targets to40dp. Focused actual AdminScreen save/reset tests reproduce40dp for Windows, macOS and Linux; Android standard-density baseline remains green. AdminAccessibleSurface now explicitly preserves standard density in its existing accessibility ButtonStyle, without changing the application-wide theme or input/filter geometry. All timeout/admin focused checks:83 PASS, zero skips (42 timeout and41 admin). Native physical screen-reader/IME acceptance remains NOT_RUN.

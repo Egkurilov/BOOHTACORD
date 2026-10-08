@@ -30,6 +30,8 @@ Future<AppState> mountAdmin(
   EdgeInsets insets = EdgeInsets.zero,
   bool reducedMotion = false,
   AccessibleAdminApi? api,
+  TargetPlatform? platform,
+  VisualDensity? density,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -39,7 +41,7 @@ Future<AppState> mountAdmin(
   addTearDown(app.dispose);
   await tester.pumpWidget(
     MaterialApp(
-      theme: guildTheme(),
+      theme: guildTheme().copyWith(platform: platform, visualDensity: density),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(
           textScaler: TextScaler.linear(scale),
