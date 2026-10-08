@@ -82,8 +82,9 @@ if __name__ == "__main__":
         try:
             ensure_current_postgres_alias(sys.argv[1])
         except (OSError, ValueError, TypeError, KeyError, RuntimeError, subprocess.CalledProcessError,
-                json.JSONDecodeError):
-            print("Could not safely restore the PostgreSQL service alias.", file=sys.stderr)
+                json.JSONDecodeError) as error:
+            detail = str(error) if isinstance(error, RuntimeError) else type(error).__name__
+            print(f"Could not safely restore the PostgreSQL service alias: {detail}.", file=sys.stderr)
             raise SystemExit(1)
         raise SystemExit(0)
     if len(sys.argv) != 4:

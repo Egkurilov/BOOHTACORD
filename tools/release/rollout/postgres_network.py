@@ -5,11 +5,17 @@ from pathlib import Path
 
 
 def output(*command):
-    return subprocess.check_output(command, text=True, stderr=subprocess.DEVNULL).strip()
+    try:
+        return subprocess.check_output(command, text=True, stderr=subprocess.DEVNULL).strip()
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError("PostgreSQL Compose inspection failed") from error
 
 
 def load_compose_configuration(compose):
-    return json.loads(output(*compose, "--profile", "operator", "config", "--format", "json"))
+    try:
+        return json.loads(output(*compose, "--profile", "operator", "config", "--format", "json"))
+    except (TypeError, ValueError, RuntimeError) as error:
+        raise RuntimeError("PostgreSQL Compose configuration could not be read") from error
 
 
 def ensure_postgres_connected(compose, project, network_name):
@@ -17,25 +23,40 @@ def ensure_postgres_connected(compose, project, network_name):
     if len(containers) != 1:
         raise RuntimeError("expected exactly one PostgreSQL service container")
     container_id = containers[0]
-    labels = json.loads(output("docker", "inspect", "--format", "{{json .Config.Labels}}", container_id))
+    labels = read_json("PostgreSQL container identity inspection failed", "docker", "inspect",
+                       "--format", "{{json .Config.Labels}}", container_id)
     if (labels.get("com.docker.compose.project") != project
             or labels.get("com.docker.compose.service") != "postgres"):
         raise RuntimeError("PostgreSQL container identity does not match the Compose project")
-    networks = json.loads(output("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", container_id))
+    networks = read_json("PostgreSQL network inspection failed", "docker", "inspect",
+                         "--format", "{{json .NetworkSettings.Networks}}", container_id)
     endpoint = networks.get(network_name)
     if endpoint is None:
-        connect(network_name, container_id)
+        connect(network_name, container_id, "PostgreSQL network reattachment failed")
         print("Reattached PostgreSQL with its Compose service alias.")
     elif "postgres" not in endpoint.get("Aliases", []):
-        subprocess.run(["docker", "network", "disconnect", network_name, container_id], check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        connect(network_name, container_id)
+        run_checked("PostgreSQL endpoint disconnect failed",
+                    ["docker", "network", "disconnect", network_name, container_id])
+        connect(network_name, container_id, "PostgreSQL service alias reconnect failed")
         print("Restored the PostgreSQL Compose service alias on the active private network.")
 
 
-def connect(network_name, container_id):
-    subprocess.run(["docker", "network", "connect", "--alias", "postgres", network_name, container_id],
-                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def read_json(phase, *command):
+    try:
+        return json.loads(output(*command))
+    except (TypeError, ValueError, RuntimeError) as error:
+        raise RuntimeError(phase) from error
+
+
+def run_checked(phase, command):
+    try:
+        subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(phase) from error
+
+
+def connect(network_name, container_id, phase):
+    run_checked(phase, ["docker", "network", "connect", "--alias", "postgres", network_name, container_id])
 
 
 def ensure_current_postgres_alias(project_dir):
