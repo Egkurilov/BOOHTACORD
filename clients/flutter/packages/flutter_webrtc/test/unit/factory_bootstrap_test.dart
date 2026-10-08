@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ void main() {
 
   const methodChannel = MethodChannel('FlutterWebRTC.Method');
   const eventChannel = MethodChannel('FlutterWebRTC.Event');
+  const bootstrapEvents = MethodChannel('FlutterWebRTC/peerConnectionEventbootstrap');
 
   setUp(() {
     WebRTC.initialized = false;
@@ -28,14 +30,16 @@ void main() {
       return null;
     });
     eventChannel.setMockMethodCallHandler((_) async => null);
+    bootstrapEvents.setMockMethodCallHandler((_) async => null);
   });
 
   tearDown(() {
     methodChannel.setMockMethodCallHandler(null);
     eventChannel.setMockMethodCallHandler(null);
+    bootstrapEvents.setMockMethodCallHandler(null);
   });
 
-  test('initializes once before enumerating without creating media', () async {
+  test('initializes once and releases Mac bootstrap before inventory without media', () async {
     final calls = <String>[];
     final initializeStarted = Completer<void>();
     final finishInitialize = Completer<void>();
@@ -44,6 +48,10 @@ void main() {
       if (call.method == 'initialize') {
         initializeStarted.complete();
         await finishInitialize.future;
+      }
+      if (call.method == 'createPeerConnection') {
+        expect(call.arguments['configuration']['iceServers'], isEmpty);
+        return {'peerConnectionId': 'bootstrap'};
       }
       if (call.method == 'getSources') {
         return {
@@ -72,8 +80,8 @@ void main() {
 
     expect(devices, hasLength(1));
     expect(devices.single.deviceId, 'default-input');
-    expect(calls, ['initialize', 'getSources']);
-    expect(calls, isNot(contains('createPeerConnection')));
+    expect(calls, Platform.isMacOS ? ['initialize', 'createPeerConnection',
+      'peerConnectionClose', 'peerConnectionDispose', 'getSources'] : ['initialize', 'getSources']);
     expect(calls, isNot(contains('getUserMedia')));
     expect(calls, isNot(contains('getDisplayMedia')));
   });
