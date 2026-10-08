@@ -1,0 +1,81 @@
+enum VoiceOverlayVoiceStatus { disconnected, connected, reconnecting }
+
+class VoiceOverlaySettings {
+  const VoiceOverlaySettings({
+    required this.enabled,
+    required this.onlySpeakers,
+  });
+
+  final bool enabled;
+  final bool onlySpeakers;
+}
+
+class VoiceOverlayMemberInput {
+  const VoiceOverlayMemberInput({
+    required this.displayName,
+    required this.speaking,
+    required this.microphoneMuted,
+  });
+
+  final String displayName;
+  final bool speaking;
+  final bool microphoneMuted;
+}
+
+class VoiceOverlayMember {
+  const VoiceOverlayMember({
+    required this.displayName,
+    required this.speaking,
+    required this.microphoneMuted,
+  });
+
+  final String displayName;
+  final bool speaking;
+  final bool microphoneMuted;
+}
+
+class VoiceOverlaySnapshot {
+  const VoiceOverlaySnapshot({required this.visible, required this.members});
+
+  final bool visible;
+  final List<VoiceOverlayMember> members;
+}
+
+VoiceOverlaySnapshot projectVoiceOverlay({
+  required VoiceOverlaySettings settings,
+  required String? voiceChannelId,
+  required String? rosterChannelId,
+  required VoiceOverlayVoiceStatus voiceStatus,
+  required Iterable<VoiceOverlayMemberInput> members,
+  int maxParticipants = 8,
+}) {
+  final channelMatches = voiceChannelId != null &&
+      voiceChannelId.isNotEmpty &&
+      voiceChannelId == rosterChannelId;
+  if (!settings.enabled ||
+      !channelMatches ||
+      voiceStatus == VoiceOverlayVoiceStatus.disconnected) {
+    return const VoiceOverlaySnapshot(visible: false, members: []);
+  }
+
+  final cap = maxParticipants.clamp(1, 12).toInt();
+  final projected = <VoiceOverlayMember>[];
+  for (final member in members) {
+    final name = member.displayName.trim();
+    final speaking = voiceStatus == VoiceOverlayVoiceStatus.connected &&
+        member.speaking;
+    if (settings.onlySpeakers && !speaking) continue;
+    projected.add(
+      VoiceOverlayMember(
+        displayName: name.isEmpty ? 'Участник' : name,
+        speaking: speaking,
+        microphoneMuted: member.microphoneMuted,
+      ),
+    );
+    if (projected.length >= cap) break;
+  }
+  return VoiceOverlaySnapshot(
+    visible: true,
+    members: List.unmodifiable(projected),
+  );
+}
