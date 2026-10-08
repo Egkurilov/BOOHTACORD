@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const schema = JSON.parse(fs.readFileSync(path.join(root, 'contracts/telemetry-flow-v1.json')))
 const fixtures = JSON.parse(fs.readFileSync(path.join(root, 'contracts/telemetry-flow-v1.fixtures.json')))
+const dartJSON = value => JSON.stringify(value).replaceAll('$', '\\$')
 const targets = new Map()
 targets.set('backend/internal/observability/flow_contract/generated.go',
 	  '// Code generated from telemetry-flow-v1.json; DO NOT EDIT.\npackage flowcontract\n\nconst Version = 1\nconst MaxSpans = '+schema.limits.spans+'\nconst MaxAttributes = '+schema.limits.attributes+'\nconst MaxEvents = '+schema.limits.events+'\nconst MaxLinks = '+schema.limits.links+'\nconst MaxLinkAttributes = '+schema.limits.linkAttributes+'\nconst MaxFlowDurationSeconds = '+schema.limits.durationSeconds+'\nconst MaxBatchBytes = '+schema.limits.maxBatchBytes+'\n' +
@@ -20,8 +21,8 @@ targets.set('clients/web/src/telemetry/flow_contract/generated.ts',
 targets.set('clients/web/src/telemetry/flow_contract/fixtures.ts',
   '// Code generated from telemetry-flow-v1.fixtures.json; DO NOT EDIT.\nexport default '+JSON.stringify(fixtures)+' as const\n')
 targets.set('clients/flutter/lib/src/features/telemetry/flow_contract/generated.dart',
-	  '// Code generated from telemetry-flow-v1.json; DO NOT EDIT.\nconst flowLimits = '+JSON.stringify(schema.limits)+';\nconst flowOperations = '+JSON.stringify(schema.operations)+';\nconst flowFields = <String, Map<String, Object>>{\n' +
-  Object.entries(schema.fields).map(([key,f])=>JSON.stringify(key)+': '+JSON.stringify(f)+',').join('\n')+'\n};\n')
+	  '// Code generated from telemetry-flow-v1.json; DO NOT EDIT.\nconst flowLimits = '+dartJSON(schema.limits)+';\nconst flowOperations = '+dartJSON(schema.operations)+';\nconst flowFields = <String, Map<String, Object>>{\n' +
+	  Object.entries(schema.fields).map(([key,f])=>dartJSON(key)+': '+dartJSON(f)+',').join('\n')+'\n};\n')
 let stale = false
 for (const [name, raw] of targets) {
   const content=name.endsWith('.go')?execFileSync('gofmt',[],{input:raw,encoding:'utf8'}):raw

@@ -3,10 +3,10 @@ const flowLimits = {"spans":32,"attributes":32,"events":8,"links":8,"durationSec
 const flowOperations = ["api.request","startup","session.restore","auth.login","message.send","message.render","voice.join","voice.leave","voice.reconnect","realtime.connect","realtime.reconnect","realtime.process","screen.share.start","screen.share.stop","screen.view","media.sample","audio.input.switch","voice.audio.sample","voice.volume.preference","voice.disconnect","telemetry.export.health"];
 const flowFields = <String, Map<String, Object>>{
 "app.schema.version": {"type":"integer","min":1,"max":1,"owner":"contract","required":true},
-"session.id": {"type":"id","owner":"server","required":true,"minLength":32,"maxLength":32,"pattern":"^[0-9a-f]{32}$"},
-"app.visit.id": {"type":"id","owner":"client","required":true,"minLength":32,"maxLength":32,"pattern":"^[0-9a-f]{32}$"},
-"app.flow.id": {"type":"id","owner":"client","required":true,"minLength":32,"maxLength":32,"pattern":"^[0-9a-f]{32}$"},
-"app.media.session.id": {"type":"id","owner":"client","required":false,"minLength":32,"maxLength":32,"pattern":"^[0-9a-f]{32}$"},
+"session.id": {"type":"id","owner":"server","required":true,"minLength":32,"maxLength":32,"pattern":"^[0-9a-f]{32}\$"},
+"app.visit.id": {"type":"id","owner":"client","required":true,"minLength":32,"maxLength":32,"pattern":"^[0-9a-f]{32}\$"},
+"app.flow.id": {"type":"id","owner":"client","required":true,"minLength":32,"maxLength":32,"pattern":"^[0-9a-f]{32}\$"},
+"app.media.session.id": {"type":"id","owner":"client","required":false,"minLength":32,"maxLength":32,"pattern":"^[0-9a-f]{32}\$"},
 "app.flow.name": {"type":"enum","values":["startup","session.restore","auth.login","message.send","message.render","voice.join","voice.leave","voice.reconnect","realtime.connect","realtime.reconnect","realtime.process","screen.share.start","screen.share.stop","screen.view","telemetry.export"],"owner":"client","required":true,"minLength":1,"maxLength":18},
 "app.flow.stage": {"type":"enum","values":["intent","storage","restore","authenticate","workspace","request","ack","render","lease","credential","connect","microphone","ready","select","subscribe","track","decoded","first_frame","publish","stop","refresh","dispatch","enqueue","dependency","commit","authorize","export"],"owner":"observer","required":true,"minLength":1,"maxLength":12},
 "app.flow.record": {"type":"enum","values":["start","checkpoint","terminal"],"owner":"observer","required":true,"minLength":1,"maxLength":10},
@@ -14,7 +14,7 @@ const flowFields = <String, Map<String, Object>>{
 "app.flow.reason": {"type":"enum","values":["none","permission_denied","network","dependency","invalid","conflict","deadline","disposed","generation_changed","revoked","unsupported","export_lost"],"owner":"observer","required":false,"minLength":1,"maxLength":18},
 "app.flow.attempt": {"type":"integer","min":1,"max":20,"owner":"client","required":true},
 "app.provenance": {"type":"enum","values":["client_observed","server_confirmed","sfu_observed"],"owner":"server","required":false,"minLength":1,"maxLength":16},
-"app.client.version": {"type":"version","owner":"client","required":false,"minLength":1,"maxLength":32,"pattern":"^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,31}$"},
+"app.client.version": {"type":"version","owner":"client","required":false,"minLength":1,"maxLength":32,"pattern":"^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,31}\$"},
 "app.sample.age_ms": {"type":"number","min":0,"max":60000,"owner":"client","required":false},
 "app.sample.window_ms": {"type":"number","min":1,"max":60000,"owner":"client","required":false},
 "app.media.capture_fps": {"type":"number","min":0,"max":240,"owner":"client","required":false},
