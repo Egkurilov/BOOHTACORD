@@ -29,6 +29,18 @@ def ensure_postgres_connected(compose, project, network_name):
         print("Reattached the existing PostgreSQL container to the active private network.")
 
 
+def write_external_network_config(configuration, destination, network_name):
+    networks = configuration.get("networks", {})
+    if not isinstance(networks.get("private"), dict):
+        raise RuntimeError("Compose private network configuration is unavailable")
+    networks["private"] = {"external": True, "name": network_name}
+    destination = Path(destination)
+    if destination.is_symlink() or not destination.is_file():
+        raise RuntimeError("recovery Compose file is unavailable")
+    os.chmod(destination, 0o600)
+    destination.write_text(json.dumps(configuration), encoding="utf-8")
+
+
 def update_environment(path, values):
     path = Path(path)
     if path.is_symlink() or not path.is_file():
@@ -47,7 +59,7 @@ def update_environment(path, values):
             os.unlink(temporary)
 
 
-def main(project_dir, canonical_env):
+def main(project_dir, canonical_env, recovery_compose):
     project_dir = Path(project_dir).resolve()
     compose_dir = project_dir / "deploy" if (project_dir / "deploy/compose.yaml").is_file() else project_dir
     compose = ["docker", "compose", "--project-directory", str(compose_dir), "--env-file",
@@ -74,15 +86,16 @@ def main(project_dir, canonical_env):
     if canonical_env != (project_dir / ".env").resolve():
         update_environment(canonical_env, values)
     ensure_postgres_connected(compose, project, network_name)
-    print("Deployment network settings now match the active private subnet and proxy address.")
+    write_external_network_config(configuration, recovery_compose, network_name)
+    print("Recovery Compose configuration will reuse the active private network.")
     return 0
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: align-existing-private-network.py PROJECT_DIR CANONICAL_ENV")
+    if len(sys.argv) != 4:
+        raise SystemExit("usage: align-existing-private-network.py PROJECT_DIR CANONICAL_ENV RECOVERY_COMPOSE")
     try:
-        raise SystemExit(main(sys.argv[1], sys.argv[2]))
+        raise SystemExit(main(sys.argv[1], sys.argv[2], sys.argv[3]))
     except (OSError, ValueError, TypeError, KeyError, RuntimeError, subprocess.CalledProcessError, json.JSONDecodeError):
         print("Could not safely align deployment settings to the active private network.", file=sys.stderr)
         raise SystemExit(1)
