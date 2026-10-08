@@ -15,7 +15,7 @@ void main() {
 
   setUp(() {
     FlutterSecureStorage.setMockInitialValues({
-      'boohtacord_session_cookie': 'session=preview-test',
+      'boohtacord_session_cookie:https://v.bootybay.ru:443': 'session=preview-test',
     });
   });
 

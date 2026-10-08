@@ -7,7 +7,7 @@ void main() {
     final notice = screenShareUpdateNotice(TargetPlatform.windows);
 
     expect(notice, contains('FPS'));
-    expect(notice, contains('остановить'));
+    expect(notice, contains('остановить и снова запустить'));
     expect(notice, contains('кодирования'));
   });
 
@@ -16,7 +16,7 @@ void main() {
     final android = screenShareUpdateNotice(TargetPlatform.android);
 
     expect(macOS, contains('захвата'));
-    expect(macOS, contains('остановить'));
+    expect(macOS, contains('остановите и снова запустите'));
     expect(android, contains('захвата'));
     expect(android, contains('разрешение'));
   });
@@ -25,6 +25,6 @@ void main() {
     final notice = screenShareUpdateNotice(TargetPlatform.iOS);
 
     expect(notice, contains('кодирования'));
-    expect(notice, isNot(contains('остановить')));
+    expect(notice, isNot(contains('остановите')));
   });
 }

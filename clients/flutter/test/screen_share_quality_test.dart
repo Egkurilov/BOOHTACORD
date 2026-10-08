@@ -302,7 +302,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Изменить качество и FPS без перезапуска'),
+      find.textContaining('Для применения нового профиля захвата остановите'),
       findsOneWidget,
     );
     expect(

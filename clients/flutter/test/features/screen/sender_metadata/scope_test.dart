@@ -23,7 +23,7 @@ void main() {
     expect(parse(missingRoom), isNull);
     final emptyLayers = descriptor();
     ((emptyLayers['effective_profile'] as Map<String, Object?>)['encoding']
-            as Map<String, Object?>)['layers'] = <Object?>[];
+            as Map<String, Object?>)['layers'] = <Map<String, Object?>>[];
     expect(parse(emptyLayers), isNull);
   });
 

@@ -12,7 +12,7 @@ void main() {
 
   test('temporary TLS failure keeps the cookie for session retry', () async {
     FlutterSecureStorage.setMockInitialValues({
-      'boohtacord_session_cookie': 'session=example',
+      'boohtacord_session_cookie:https://v.bootybay.ru:443': 'session=example',
     });
     final requests = <http.Request>[];
     final api = ApiClient(

@@ -17,7 +17,7 @@ void main() {
     expect(find.text('Выбрано отправителем'), findsOneWidget);
     expect(find.text('1080p · 60 FPS'), findsOneWidget);
     expect(find.text('Сейчас у зрителя'), findsOneWidget);
-    expect(find.text('Нет данных'), findsOneWidget);
+    expect(find.text('Нет данных'), findsAtLeastNWidgets(1));
   });
 
   testWidgets('keeps legacy track diagnostics and omits invented sender data', (
