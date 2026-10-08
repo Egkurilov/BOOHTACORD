@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'owners.dart';
 
 void disposeOwners(AppOwners app) {
@@ -13,6 +15,8 @@ void disposeOwners(AppOwners app) {
   app.nativeNotifications.dispose();
   app.maintenance.dispose();
   app.reset.dispose();
+  unawaited(app.voiceOverlayWindowsClient?.dispose() ?? Future<void>.value());
+  app.voiceOverlay.dispose();
   app.voice.dispose();
   app.screen.dispose();
   app.audioDevices.dispose();

@@ -7,6 +7,8 @@
 #include <memory>
 
 #include "win32_window.h"
+#include "voice_overlay_channel.h"
+#include "voice_overlay_window.h"
 
 // A window that does nothing but host a Flutter view.
 class FlutterWindow : public Win32Window {
@@ -28,6 +30,8 @@ class FlutterWindow : public Win32Window {
 
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
+  VoiceOverlayWindow voice_overlay_window_;
+  std::unique_ptr<VoiceOverlayChannel> voice_overlay_channel_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_
