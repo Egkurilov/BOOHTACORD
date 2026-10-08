@@ -20,14 +20,16 @@ type clientScreenMetrics struct {
 	total   *prometheus.CounterVec
 	fps     *prometheus.HistogramVec
 	bitrate *prometheus.HistogramVec
+	qualityMetrics
 }
 
 func newClientScreenMetrics() *clientScreenMetrics {
 	return &clientScreenMetrics{
 		latest: make(map[string]ClientScreenSample), now: time.Now,
-		total:   prometheus.NewCounterVec(prometheus.CounterOpts{Name: "voice_platform_client_screen_reports_total", Help: "Authenticated anonymous client screen reports by fixed platform, direction and state."}, []string{"platform", "direction", "state"}),
-		fps:     prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "voice_platform_client_screen_fps", Help: "Client-reported screen FPS; not a hardware capability claim.", Buckets: []float64{0, 1, 5, 10, 15, 24, 30, 45, 60, 90, 120, 240}}, []string{"platform", "direction", "kind"}),
-		bitrate: prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "voice_platform_client_screen_bitrate_kbps", Help: "Client-reported screen bitrate in kilobits per second.", Buckets: []float64{0, 100, 300, 600, 1000, 2000, 4000, 8000, 16000, 32000}}, []string{"platform", "direction"}),
+		total:          prometheus.NewCounterVec(prometheus.CounterOpts{Name: "voice_platform_client_screen_reports_total", Help: "Authenticated anonymous client screen reports by fixed platform, direction and state."}, []string{"platform", "direction", "state"}),
+		fps:            prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "voice_platform_client_screen_fps", Help: "Client-reported screen FPS; not a hardware capability claim.", Buckets: []float64{0, 1, 5, 10, 15, 24, 30, 45, 60, 90, 120, 240}}, []string{"platform", "direction", "kind"}),
+		bitrate:        prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "voice_platform_client_screen_bitrate_kbps", Help: "Client-reported screen bitrate in kilobits per second.", Buckets: []float64{0, 100, 300, 600, 1000, 2000, 4000, 8000, 16000, 32000}}, []string{"platform", "direction"}),
+		qualityMetrics: newQualityMetrics(),
 	}
 }
 
@@ -44,6 +46,7 @@ func (recorder *Recorder) ObserveClientScreen(report ClientScreenReport) error {
 	metrics.latest[report.Platform+":"+report.Direction] = ClientScreenSample{Report: report, SampledAtUTC: metrics.now().UTC().Format(time.RFC3339)}
 	metrics.mu.Unlock()
 	metrics.total.WithLabelValues(report.Platform, report.Direction, report.State).Inc()
+	metrics.observeQuality(report, metrics.now())
 	for kind, value := range map[string]*float64{"encoded": report.EncodedFPS, "decoded": report.DecodedFPS, "presented": report.PresentedFPS} {
 		if value != nil {
 			metrics.fps.WithLabelValues(report.Platform, report.Direction, kind).Observe(*value)

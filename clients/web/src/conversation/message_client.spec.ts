@@ -21,6 +21,12 @@ describe('message client', () => {
     expect(request).toHaveBeenCalledWith('/api/v1/channels/text-1/messages?at=message-1&limit=20', expect.objectContaining({ credentials: 'same-origin' }))
   })
 
+  it('requests the next newer page from its protected cursor', async () => {
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [body], next_cursor: 'message-2' })))
+    await expect(loadMessagePage('text-1', undefined, request, undefined, 'message-1')).resolves.toMatchObject({ nextCursor: 'message-2' })
+    expect(request).toHaveBeenCalledWith('/api/v1/channels/text-1/messages?after=message-1&limit=20', expect.objectContaining({ credentials: 'same-origin' }))
+  })
+
   it('rejects history that omits the required safe attachment array', async () => {
     const { attachments: _attachments, ...withoutAttachments } = body
     const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ messages: [withoutAttachments] })))

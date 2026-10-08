@@ -95,7 +95,7 @@ function start(): void {
       </div>
 
       <section class="screen-share-quality" aria-labelledby="screen-share-quality-title">
-        <h3 v-if="!updating" id="screen-share-quality-title">
+        <h3 id="screen-share-quality-title" :class="{ 'gc-sr-only': updating }">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9m4 0h3M4 17h3m4 0h9M13 4v6M9 14v6" /></svg>
           Качество трансляции
         </h3>

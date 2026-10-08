@@ -99,4 +99,28 @@ describe('screen viewer publication lifecycle', () => {
     expect(controller.ended).toBe(true)
     expect(selected.video.setSubscribed).toHaveBeenCalledTimes(4)
   })
+
+  it('stops the selected stream and disposes its single audio output idempotently', () => {
+    const selected = stream()
+    const dispose = vi.fn()
+    const attachOutput = vi.fn(() => ({ dispose, setMuted: vi.fn(), setVolume: vi.fn() }))
+    const controller = new ScreenViewerController(() => [selected], { attach: attachOutput } as never)
+    const video = {} as HTMLVideoElement
+    const audio = {} as HTMLAudioElement
+
+    controller.select(selected.id, video, audio)
+    controller.stop()
+    controller.stop()
+
+    expect(controller.selectedId).toBeNull()
+    expect(selected.video.setSubscribed).toHaveBeenNthCalledWith(1, true)
+    expect(selected.video.setSubscribed).toHaveBeenNthCalledWith(2, false)
+    expect(selected.audio!.setSubscribed).toHaveBeenNthCalledWith(1, true)
+    expect(selected.audio!.setSubscribed).toHaveBeenNthCalledWith(2, false)
+    expect(selected.video.track!.detach).toHaveBeenCalledWith(video)
+    expect(selected.audio!.track!.detach).toHaveBeenCalledWith(audio)
+    expect(attachOutput).toHaveBeenCalledOnce()
+    expect(dispose).toHaveBeenCalledOnce()
+    expect(() => controller.select(selected.id, video, audio)).toThrow('уже остановлен')
+  })
 })

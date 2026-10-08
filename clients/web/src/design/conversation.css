@@ -85,6 +85,11 @@
 .unread-boundary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gc-space-2); padding: var(--gc-space-2) var(--gc-space-5); color: var(--gc-text-secondary); border-bottom: 1px solid var(--gc-border-control); }
 .unread-boundary-actions button { border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: var(--gc-space-1) var(--gc-space-2); color: var(--gc-text-primary); background: var(--gc-surface); cursor: pointer; }
 .message-history-wrap > .messages { min-width: 0; flex: 1; }
+.message-list--virtual { position: relative; overflow-anchor: auto; }
+.message-list--virtual > .virtual-spacer, .message-list--virtual > .virtual-history-control { box-sizing: border-box; min-height: 0; margin: 0 !important; padding: 0; }
+.message-list--virtual > .virtual-spacer { border: 0; }
+.message-list--virtual > .virtual-history-control { display: grid; min-height: 44px; align-content: center; justify-items: start; gap: var(--gc-space-2); }
+.message-list--virtual > [data-virtual-key] { margin: 0 !important; }
 .message-jump-latest { position: absolute; right: var(--gc-space-4); bottom: var(--gc-space-3); z-index: 4; min-height: var(--gc-size-control); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-md); padding: 0 var(--gc-space-4); color: var(--gc-text-primary); background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-popup); }
 @media (hover: none), (pointer: coarse), (max-width: 600px) {
   .message-row .message-actions { width: var(--gc-size-control-sm); flex-direction: column; align-items: flex-end; }

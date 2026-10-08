@@ -87,4 +87,5 @@ describe('TEXT history pagination', () => {
     expect(store.channelId).toBe('text-2')
     expect(store.olderLoading).toBe(false)
   })
+
 })

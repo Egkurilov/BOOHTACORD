@@ -8,7 +8,7 @@ import { createTextHistory, type PendingSend } from './text_history'
 
 export const useMessageStore = defineStore('text-messages', () => {
   const pending = new Map<string, PendingSend>()
-  const { channelId, messages, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder, refreshMessage, refreshMessages } = createTextHistory(pending)
+  const { channelId, messages, messageById, nextCursor, newerCursor, loading, olderLoading, newerLoading, historyLoaded, error, olderError, newerError, open, refresh, loadOlder, loadNewer, setHistoryAnchor, refreshMessage, refreshMessages } = createTextHistory(pending)
   const sending = ref(false)
   const retries = new Map<string, string>()
 
@@ -53,5 +53,5 @@ export const useMessageStore = defineStore('text-messages', () => {
     }
   }
 
-  return { channelId, edit, editWithResult, error, loading, olderLoading, historyLoaded, olderError, loadOlder, messages, nextCursor, open, refresh, refreshMessage, refreshMessages, remove, retry, send, sending }
+  return { channelId, edit, editWithResult, error, loading, olderLoading, newerLoading, historyLoaded, olderError, newerError, loadOlder, loadNewer, messages, messageById, nextCursor, newerCursor, open, refresh, refreshMessage, refreshMessages, remove, retry, send, sending, setHistoryAnchor }
 })

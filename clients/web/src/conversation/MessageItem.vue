@@ -19,13 +19,14 @@ import SystemWelcomeMessage from './system_welcome/SystemWelcomeMessage.vue'
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; directMessageId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
 const props = defineProps<{ message: RenderedMessage; grouped?: boolean; replyPreview?: string; canEdit: boolean; canDelete: boolean; retryDisabled?: boolean; mentionRecipient?: { id: string; displayName: string }; editMessage?: (body: string, mentionIds: string[], revision: number) => Promise<EditResult>; refreshMessage?: () => Promise<{ revision: number; deleted: boolean } | null> }>()
-const emit = defineEmits<{ remove: []; reply: []; retry: []; replyContext: [messageId: string] }>()
+const emit = defineEmits<{ remove: []; reply: []; retry: []; replyContext: [messageId: string]; editState: [editing: boolean] }>()
 onMounted(()=>markRendered(props.message));onUpdated(()=>markRendered(props.message))
 const editor = useMessageEditController({
   save: (body, ids, revision) => props.editMessage?.(body, ids, revision) ?? Promise.resolve({ kind: 'stale', message: 'Сообщение недоступно.' }),
   refresh: () => props.refreshMessage?.() ?? Promise.resolve(null),
 })
 const { editing, body, mentionUserIds: editingMentionIds, pending, needsRefresh, error: editError, notice: editNotice } = editor
+watch(editing, (value) => emit('editState', value), { flush: 'sync' })
 const textChannelId = computed(() => props.message.channelId ?? '')
 const textAttachments = computed(() => props.message.attachments ?? [])
 const authors = useAuthorDirectory()

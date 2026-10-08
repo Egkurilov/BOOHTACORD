@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadMembers, type GuildMember } from '../identity/profile_client'
 import { addMentionId } from './mention_ids'
 import { activeMentionQuery, replaceMentionQuery } from './mention_query'
+import { canHandleMentionKeydown, isMentionComposerTarget } from './mention_keyboard'
 
 const props = defineProps<{ modelValue: string; mentionUserIds: string[]; selfId: string; disabled: boolean; onlyParticipant?: { id: string; displayName: string } }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string]; 'update:mentionUserIds': [ids: string[]] }>()
@@ -12,6 +13,7 @@ const loading = ref(false)
 const error = ref('')
 const selectedIndex = ref(0)
 const dismissed = ref(false)
+const compositionActive = ref(false)
 let requestVersion = 0
 const active = computed(() => activeMentionQuery(props.modelValue) !== null)
 const query = computed(() => activeMentionQuery(props.modelValue)?.query ?? '')
@@ -40,24 +42,38 @@ async function load(): Promise<void> {
 }
 watch(active, (value) => { if (value) void load(); else dismissed.value = false }, { immediate: true })
 function choose(id: string, name: string): void {
-  if (props.disabled || !suggestions.value.some((item) => item.id === id)) return
+  if (props.disabled || compositionActive.value || !suggestions.value.some((item) => item.id === id)) return
   emit('update:modelValue', replaceMentionQuery(props.modelValue, name))
   emit('update:mentionUserIds', addMentionId(props.mentionUserIds, id, props.selfId))
 }
 function onKeydown(event: KeyboardEvent): void {
-  if (event.isComposing || !(event.target instanceof HTMLTextAreaElement) || !['message-body', 'direct-message-body'].includes(event.target.id) || dismissed.value || !active.value || !suggestions.value.length) return
+  if (!canHandleMentionKeydown(event, compositionActive.value) || dismissed.value || !active.value || !suggestions.value.length) return
   const count = Math.min(suggestions.value.length, 5)
   if (event.key === 'Escape') { dismissed.value = true; event.preventDefault(); event.stopPropagation() }
   if (event.key === 'ArrowDown') { selectedIndex.value = (selectedIndex.value + 1) % count; event.preventDefault() }
   if (event.key === 'ArrowUp') { selectedIndex.value = (selectedIndex.value + count - 1) % count; event.preventDefault() }
   if (event.key === 'Enter') { const member = suggestions.value[selectedIndex.value]; if (member) choose(member.id, member.name); event.preventDefault(); event.stopPropagation() }
 }
-onMounted(() => document.addEventListener('keydown', onKeydown, true))
-onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown, true))
+function onCompositionStart(event: CompositionEvent): void {
+  if (isMentionComposerTarget(event.target)) compositionActive.value = true
+}
+function onCompositionEnd(event: CompositionEvent): void {
+  if (isMentionComposerTarget(event.target)) compositionActive.value = false
+}
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown, true)
+  document.addEventListener('compositionstart', onCompositionStart, true)
+  document.addEventListener('compositionend', onCompositionEnd, true)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown, true)
+  document.removeEventListener('compositionstart', onCompositionStart, true)
+  document.removeEventListener('compositionend', onCompositionEnd, true)
+})
 </script>
 
 <template>
-  <div v-if="active && !dismissed && (suggestions.length || error || loading)" class="mention-autocomplete" :class="{ 'mention-autocomplete--unfiltered': !query }">
+  <div v-if="active && !compositionActive && !dismissed && (suggestions.length || error || loading)" class="mention-autocomplete" :class="{ 'mention-autocomplete--unfiltered': !query }">
     <p v-if="loading" class="mention-autocomplete-loading" role="status">Загружаем участников…</p>
     <ul v-if="suggestions.length" class="mention-popover" role="listbox" aria-label="Подсказки упоминаний">
       <li class="mention-popover-heading">Упомянуть участника</li>
