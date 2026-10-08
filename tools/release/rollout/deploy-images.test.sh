@@ -126,6 +126,7 @@ network_repair_output="$temporary_root/network-repair.out"
 run_deploy repair "$network_repair_output" allowed allowed detached
 network_repair_log="$temporary_root/commands-repair.log"
 grep -Fq 'align-existing-private-network.py' "$network_repair_log"
+grep -Fq '.compose.recovery.' "$network_repair_log"
 [[ "$(grep -Fc 'up -d --wait postgres' "$network_repair_log")" == 4 ]]
 
 health_output="$temporary_root/health.out"

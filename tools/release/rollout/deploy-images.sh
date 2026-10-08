@@ -44,6 +44,7 @@ fi
 
 admission_enabled=0
 temporary_env=''
+temporary_compose=''
 
 disable_maintenance_admission() {
   if ! "${compose[@]}" up -d --wait postgres; then
@@ -66,6 +67,7 @@ enable_maintenance_admission() {
 cleanup() {
   local status=$?
   [[ -z "$temporary_env" ]] || rm -f "$temporary_env"
+  [[ -z "$temporary_compose" ]] || rm -f "$temporary_compose"
   if [[ "$admission_enabled" -eq 1 ]] && ! disable_maintenance_admission; then
     printf '%s\n' "Could not disable maintenance admission after a failed deployment." >&2
     status=1
@@ -81,7 +83,9 @@ if ! postgres_output="$("${compose[@]}" up -d --wait postgres 2>&1)"; then
   if [[ "$postgres_output" != *"has active endpoints"* && "$postgres_output" != *"not connected to the network"* ]]; then
     fail "PostgreSQL service could not be started; deployment containers were not removed."
   fi
-  python3 "$script_dir/align-existing-private-network.py" "$project_dir" /opt/voice-platform/.env
+  temporary_compose="$(mktemp "$project_dir/.compose.recovery.XXXXXX")"
+  python3 "$script_dir/align-existing-private-network.py" "$project_dir" /opt/voice-platform/.env "$temporary_compose"
+  compose=(docker compose --project-directory "$compose_dir" --env-file "$env_file" -f "$temporary_compose")
   "${compose[@]}" up -d --wait postgres
 else
   printf '%s\n' "$postgres_output"

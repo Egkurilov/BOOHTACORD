@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -11,6 +13,24 @@ SPEC.loader.exec_module(MODULE)
 
 
 class AlignPostgresNetworkTests(unittest.TestCase):
+    def test_recovery_compose_reuses_private_network_as_external(self):
+        configuration = {
+            "services": {"api": {"image": "api-ref"}},
+            "networks": {"private": {"internal": True, "ipam": {"config": []}}, "edge": {}},
+            "volumes": {"postgres-data": {}},
+        }
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "recovery.yaml"
+            destination.touch()
+            MODULE.write_external_network_config(configuration, destination, "voice-platform_private")
+            written = json.loads(destination.read_text(encoding="utf-8"))
+
+        self.assertEqual(written["networks"]["private"], {
+            "external": True, "name": "voice-platform_private"
+        })
+        self.assertIn("api", written["services"])
+        self.assertIn("postgres-data", written["volumes"])
+
     def test_attaches_detached_project_postgres_container(self):
         with patch.object(MODULE, "output", side_effect=[
             "postgres-id",
