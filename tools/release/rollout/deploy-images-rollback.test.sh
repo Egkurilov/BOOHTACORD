@@ -65,7 +65,10 @@ grep -Fq 'up -d --no-deps --no-build --force-recreate proxy' "$QA12_LOG"
 if grep -q '^curl ' "$QA12_LOG"; then exit 1; fi
 
 export API_IMAGE="$old_api" WEB_IMAGE="$old_web" QA12_FAIL_PROXY_ONCE=0
-bash "$root/tools/release/rollout/deploy-images.sh" > "$temporary_root/rollback.out" 2>&1
+if ! bash "$root/tools/release/rollout/deploy-images.sh" > "$temporary_root/rollback.out" 2>&1; then
+  cat "$temporary_root/rollback.out" >&2
+  exit 1
+fi
 [[ "$(cat "$state_dir/running-api")" == "$old_api" ]]
 [[ "$(cat "$state_dir/running-web")" == "$old_web" ]]
 [[ "$(cat "$state_dir/maintenance")" == off ]]

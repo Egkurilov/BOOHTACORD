@@ -82,6 +82,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+"${compose[@]}" up -d --wait postgres
 "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --enable
 admission_enabled=1
 sleep 15
