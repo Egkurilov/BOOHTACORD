@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'model.dart';
 import 'validation.dart';
+import '../rollout/policy.dart';
 
 const screenShareDescriptorAttribute = 'boohtacord.screen-share.v1';
 const _maxBytes = 4096;
@@ -30,6 +31,7 @@ ScreenShareSenderDescriptor? parseScreenShareDescriptor(
   String? expectedAccountId,
   String? expectedRoomId,
 }) {
+  if (!const ScreenMediaRollout().descriptor) return null;
   if (raw == null || raw.isEmpty || utf8.encode(raw).length > _maxBytes) {
     return null;
   }

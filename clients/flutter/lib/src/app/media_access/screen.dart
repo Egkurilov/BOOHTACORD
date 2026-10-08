@@ -5,9 +5,9 @@ import '../../services/screen_share_metrics.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../features/screen/profile/quality.dart';
-import '../../features/screen/metrics/layers.dart';
 import '../../features/screen/lifecycle/controller.dart';
 import '../composition/owners.dart';
+import '../media_preferences/screen.dart';
 
 mixin AppScreenAccess on AppOwners {
   ScreenSharePhase get screenSharePhase => screen.phase;
@@ -35,14 +35,21 @@ mixin AppScreenAccess on AppOwners {
     String? sourceId,
     ScreenShareQuality? quality,
     VideoDimensions? sourceDimensions,
-  }) => screen.startScreenShare(
-    sourceId: sourceId,
-    quality: quality,
-    sourceDimensions: sourceDimensions,
-  );
+  }) async {
+    final preferences = captureScreenPreferences();
+    await screen.startScreenShare(sourceId: sourceId, quality: quality, sourceDimensions: sourceDimensions);
+    if (screen.phase == ScreenSharePhase.sharing && screen.error == null) {
+      await preferences?.save(screen.quality);
+    }
+  }
 
   Future<void> stopScreenShare() => screen.stopScreenShare();
 
-  Future<void> updateScreenShareQuality(ScreenShareQuality quality) =>
-      screen.updateScreenShareQuality(quality);
+  Future<void> updateScreenShareQuality(ScreenShareQuality quality) async {
+    final preferences = captureScreenPreferences();
+    await screen.updateScreenShareQuality(quality);
+    if (screen.phase == ScreenSharePhase.sharing && screen.error == null && screen.quality == quality) {
+      await preferences?.save(quality);
+    }
+  }
 }

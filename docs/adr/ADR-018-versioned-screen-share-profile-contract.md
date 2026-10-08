@@ -107,3 +107,13 @@ been executed and does not establish a runtime or hardware PASS.
 Implementation-specific publisher ownership is delivered by SS-04/SS-05. This
 ADR fixes the shared contract and fixtures; it does not claim the current
 runtime, SFU negotiation, physical devices, or proposed quality gates passed.
+
+## 2026-10-09 rollout amendment (#176)
+
+Client publishers now default to one layer. Bounded Web and Flutter desktop
+simulcast require independent explicit build switches; Android/iOS stay single
+layer. Native backup codec is disabled. The catalog records these current source
+defaults without asserting physical acceptance. Independent descriptor and HTTP
+JPEG switches, safe VP8 fallback and per-origin/account native preferences are
+defined in `docs/runbooks/screen-media-rollout.md`. Applied slow adaptation and
+experimental profile enablement remain gated by calibration and pilot evidence.

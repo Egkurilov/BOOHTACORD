@@ -1,6 +1,7 @@
 import { beginScreenPreview, invalidateScreenPreview, uploadScreenPreview, type ScreenPreviewRequest } from './client'
 import { validScreenThumbnail } from '../screen_thumbnail'
 import { ScreenPreviewRequestScopes } from './request_scopes'
+import { screenMediaRollout } from '../screen_rollout/policy'
 
 const shutdownGraceMs = 250
 async function settlesWithin(operation: Promise<unknown>): Promise<boolean> {
@@ -21,7 +22,7 @@ export class LatestScreenPreviewUploader {
   private epoch = 0
   private requestScopes: ScreenPreviewRequestScopes
 
-  constructor(request: ScreenPreviewRequest = fetch) { this.requestScopes = new ScreenPreviewRequestScopes(request) }
+  constructor(request: ScreenPreviewRequest = fetch, private readonly enabled = screenMediaRollout().jpegPreview) { this.requestScopes = new ScreenPreviewRequestScopes(request) }
 
   private async invalidateBounded(leaseId: string, generationId: string): Promise<void> {
     const scope = this.requestScopes.create()
@@ -30,6 +31,7 @@ export class LatestScreenPreviewUploader {
   }
 
   async start(leaseId: string): Promise<void> {
+    if (!this.enabled) return
     if (this.leaseId === leaseId && this.generationId) return
     if (this.leaseId === leaseId && this.beginning) return this.beginning
     const epoch = ++this.epoch
@@ -56,6 +58,7 @@ export class LatestScreenPreviewUploader {
   }
 
   offer(bytes: Uint8Array): void {
+    if (!this.enabled) return
     if (!validScreenThumbnail(bytes)) return
     if (!this.generationId) {
       if (!this.leaseId) return

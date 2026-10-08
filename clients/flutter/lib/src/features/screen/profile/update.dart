@@ -3,6 +3,8 @@ import 'package:livekit_client/livekit_client.dart';
 
 import '../capture/dimensions.dart';
 import 'quality.dart';
+import '../rollout/policy.dart';
+import '../rollout/publish_plan.dart';
 
 Future<bool> updateScreenShareProfile(
   Room room,
@@ -17,8 +19,8 @@ Future<bool> updateScreenShareProfile(
   if (previous == null) throw StateError('Профиль демонстрации недоступен.');
   final source = screenShareCaptureDimensions(track) ??
       (defaultTargetPlatform == TargetPlatform.windows ? dimensions : null);
-  final profile = quality.publishOptions(
-    simulcast: previous.simulcast,
+  final profile = nativeScreenPublishPlan(
+    quality, ScreenMediaRollout(boundedSimulcast: previous.simulcast), defaultTargetPlatform,
     sourceDimensions: source,
   );
   final publication = await participant.updateScreenShareTrackProfile(
@@ -27,6 +29,8 @@ Future<bool> updateScreenShareProfile(
       name: profile.name,
       screenShareEncoding: profile.screenShareEncoding,
       degradationPreference: profile.degradationPreference,
+      screenShareSimulcastLayers: profile.screenShareSimulcastLayers,
+      backupVideoCodec: profile.backupVideoCodec,
     ),
     isCurrent: isCurrent,
   );

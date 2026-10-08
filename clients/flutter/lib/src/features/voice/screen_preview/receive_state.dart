@@ -6,6 +6,7 @@ import 'package:livekit_client/livekit_client.dart'
 import '../../../core/http/api_failure.dart';
 import '../lifecycle/controller.dart';
 import 'client.dart';
+import '../../screen/rollout/policy.dart';
 
 class ScreenPreviewGenerationState {
   ScreenPreviewGenerationState(this.generation, this.revision);
@@ -16,11 +17,14 @@ class ScreenPreviewGenerationState {
 }
 
 class ScreenPreviewReceiver {
-  ScreenPreviewReceiver(this.owner);
+  ScreenPreviewReceiver(this.owner, {bool? enabled})
+      : enabled = enabled ?? const ScreenMediaRollout().jpegPreview;
   final VoiceController owner;
+  final bool enabled;
   final states = <String, ScreenPreviewGenerationState>{};
 
   void updated(String lease, String generation, int revision) {
+    if (!enabled) return;
     if (!_active(lease)) return;
     var state = states[lease];
     if (state?.generation != generation) {
@@ -52,7 +56,7 @@ class ScreenPreviewReceiver {
       state.timer?.cancel();
     }
     states.clear();
-    for (final lease in leases) _clear(lease);
+    for (final lease in leases) { _clear(lease); }
   }
 
   bool _active(String lease) {
