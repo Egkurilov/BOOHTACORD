@@ -21,6 +21,7 @@ import { processRealtime } from '../telemetry/realtime_flow/process'
 import { LatestScreenPreviewReader } from '../voice/screen_preview/reader'
 import { parseScreenPreviewHint } from '../voice/screen_preview/client'
 import { screenPreviewCardVisibility } from '../voice/screen_preview/visibility'
+import { createMemberProfileRefresh } from './member_profile_realtime'
 
 interface Refreshable { error: string | null; refresh(): Promise<void> }
 interface TextHistory extends Refreshable { channelId: string | null; applyDeletedHint?(channelId: string, messageId: string): void; refreshMessages?(ids: string[]): Promise<unknown> }
@@ -35,12 +36,10 @@ export interface WorkspaceRealtimeStores {
   messages: TextHistory
   directMessages: DirectHistory
 }
-
 async function checked(refresh: () => Promise<void>, getError: () => string | null): Promise<void> {
   await refresh()
   if (getError()) throw new Error(getError()!)
 }
-
 export async function refreshProtectedState(stores: WorkspaceRealtimeStores): Promise<void> {
   const { topology, messages, directMessages } = stores
   const textActive = Boolean(messages.channelId && !directMessages.directMessageId)
@@ -54,7 +53,6 @@ export async function refreshProtectedState(stores: WorkspaceRealtimeStores): Pr
     textActive ? checked(() => messages.refresh(), () => messages.error) : Promise.resolve(),
   ])
 }
-
 export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtime: ReturnType<typeof useRealtimeStore>, presence: ReturnType<typeof useGuildPresence>, voice: ReturnType<typeof useVoiceConnectionStore>, accountID: string, onSessionExpired: () => void) {
   let gate = createProtectedRefreshGate()
   const original = stores
@@ -62,6 +60,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
   const voiceNavigation = useVoiceNavigationStore()
   const notifications = useNotificationStore()
   const permissions = usePermissionStore()
+  const refreshMemberProfile = createMemberProfileRefresh()
   const previews = new LatestScreenPreviewReader({
     apply: (hint, bytes) => { const active = voice.active; if (active && active.leaseId !== hint.leaseId) active.room.applyScreenPreview?.(hint.leaseId, bytes) },
     clear: leaseId => voice.active?.room.clearScreenPreview?.(leaseId),
@@ -73,6 +72,7 @@ export function createWorkspaceRealtime(stores: WorkspaceRealtimeStores, realtim
     const eventLifecycle = lifecycle
     if (presence.acceptRealtimeEvent(event)) return
     applyDeletedMessageHint(event, stores)
+    if (event.kind === 'member.profile.updated') return refreshMemberProfile(event, stores.directMessages).then(() => undefined)
     if (event.kind === 'session.state_changed') { notifyOwnSessionsChanged(); return }
     if (event.kind === 'guild.profile.updated') return guildProfile.refresh(event.payload.revision as number)
     if (event.kind === 'connection.resync_required') return refreshProtectedState(stores)

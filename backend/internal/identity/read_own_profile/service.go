@@ -18,6 +18,7 @@ type Profile struct {
 	Role        string
 	AvatarURL   string
 	HasAvatar   bool
+	Revision    int64
 }
 
 type Store interface {

@@ -9,7 +9,7 @@
     "event_id": { "type": "string", "format": "uuid" },
     "kind": {
       "type": "string",
-      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "guild.profile.updated", "presence.snapshot", "presence.changed", "message.created", "message.updated", "message.deleted", "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted", "role.permissions.updated", "auth.permissions.invalidated", "session.state_changed", "screen_preview.updated", "screen_preview.invalidated"]
+      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "guild.profile.updated", "member.profile.updated", "presence.snapshot", "presence.changed", "message.created", "message.updated", "message.deleted", "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted", "role.permissions.updated", "auth.permissions.invalidated", "session.state_changed", "screen_preview.updated", "screen_preview.invalidated"]
     },
     "occurred_at": { "type": "string", "format": "date-time" },
     "payload": { "type": "object" },
@@ -26,6 +26,7 @@
   "allOf": [
     {"if": {"properties": {"kind": {"const": "session.state_changed"}}, "required": ["kind"]}, "then": {"properties": {"payload": {"type": "object", "additionalProperties": false, "maxProperties": 0}}}},
     {"if": {"properties": {"kind": {"const": "guild.profile.updated"}}, "required": ["kind"]}, "then": {"properties": {"payload": {"type": "object", "additionalProperties": false, "required": ["revision"], "properties": {"revision": {"type": "integer", "minimum": 1}}}}}},
+    {"if": {"properties": {"kind": {"const": "member.profile.updated"}}, "required": ["kind"]}, "then": {"properties": {"payload": {"type": "object", "additionalProperties": false, "required": ["user_id", "revision"], "properties": {"user_id": {"type": "string", "format": "uuid"}, "revision": {"type": "integer", "minimum": 1}}}}}},
     {
       "if": { "properties": { "kind": { "const": "connection.resync_required" } }, "required": ["kind"] },
       "then": {

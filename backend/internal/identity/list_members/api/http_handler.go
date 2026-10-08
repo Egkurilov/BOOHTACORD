@@ -60,7 +60,7 @@ func NewDetailHandler(reader Reader) http.Handler {
 			writeError(w, r, http.StatusInternalServerError, "INTERNAL", "Не удалось загрузить участника")
 			return
 		}
-		writeJSON(w, memberResponse{UserID: member.ID, Login: member.Login, DisplayName: member.DisplayName, Role: member.Role, AvatarURL: member.AvatarURL, Presence: safePresence(member.Presence)})
+		writeJSON(w, response(member))
 	})
 }
 
@@ -83,6 +83,7 @@ type memberResponse struct {
 	Role        string               `json:"role"`
 	AvatarURL   string               `json:"avatar_url,omitempty"`
 	Presence    listmembers.Presence `json:"presence"`
+	Revision    int64                `json:"profile_revision"`
 }
 type listResponse struct {
 	Members    []memberResponse `json:"members"`
@@ -92,9 +93,13 @@ type listResponse struct {
 func memberResponses(members []listmembers.Member) []memberResponse {
 	result := make([]memberResponse, 0, len(members))
 	for _, member := range members {
-		result = append(result, memberResponse{UserID: member.ID, Login: member.Login, DisplayName: member.DisplayName, Role: member.Role, AvatarURL: member.AvatarURL, Presence: safePresence(member.Presence)})
+		result = append(result, response(member))
 	}
 	return result
+}
+
+func response(member listmembers.Member) memberResponse {
+	return memberResponse{UserID: member.ID, Login: member.Login, DisplayName: member.DisplayName, Role: member.Role, AvatarURL: member.AvatarURL, Presence: safePresence(member.Presence), Revision: member.Revision}
 }
 
 func safePresence(presence listmembers.Presence) listmembers.Presence {

@@ -73,7 +73,6 @@ func TestDurableTargetedPublishPersistsWithoutSubscriber(t *testing.T) {
 		t.Fatalf("journal = %#v", journal)
 	}
 }
-
 func TestJournalFailureBreaksContinuityAndSignalsResync(t *testing.T) {
 	hub := New(1)
 	journal := &fakeJournal{err: errors.New("disk unavailable")}

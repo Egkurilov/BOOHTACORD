@@ -13,7 +13,7 @@ func replayable(kind string) bool {
 	switch kind {
 	case "message.created", "message.updated", "message.deleted",
 		"direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted",
-		"channel.updated", "guild.profile.updated", "voice.lease_revoked":
+		"channel.updated", "guild.profile.updated", "member.profile.updated", "voice.lease_revoked":
 		return true
 	default:
 		return false

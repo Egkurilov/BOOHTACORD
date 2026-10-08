@@ -1,4 +1,5 @@
 import { createApp, defineComponent, h, ref } from 'vue'
+import { createPinia } from 'pinia'
 import WorkspaceMembersPanel from '../../src/workspace/WorkspaceMembersPanel.vue'
 import type { TopologyChannel } from '../../src/channel/topology_client'
 import type { VoiceVolumeParticipant } from '../../src/voice/voice_volume_controls'
@@ -35,4 +36,4 @@ createApp(defineComponent({
       }),
     ]))
   },
-})).mount('#app')
+})).use(createPinia()).mount('#app')

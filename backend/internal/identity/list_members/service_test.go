@@ -7,7 +7,7 @@ import (
 )
 
 func TestListUsesBoundedCursorPageAndReturnsOnlyPublicProfileFields(t *testing.T) {
-	store := &fakeStore{members: []Member{{ID: "00000000-0000-4000-8000-000000000001", DisplayName: "One", Role: "MEMBER", HasAvatar: true}, {ID: "00000000-0000-4000-8000-000000000002", DisplayName: "Two", Role: "ADMINISTRATOR"}}}
+	store := &fakeStore{members: []Member{{ID: "00000000-0000-4000-8000-000000000001", DisplayName: "One", Role: "MEMBER", HasAvatar: true, Revision: 2}, {ID: "00000000-0000-4000-8000-000000000002", DisplayName: "Two", Role: "ADMINISTRATOR"}}}
 	result, err := New(store).List(context.Background(), Input{Limit: 1})
 	if err != nil || len(result.Members) != 1 || result.NextCursor != store.members[0].ID || store.limit != 2 || result.Members[0].AvatarURL != "/api/v1/members/00000000-0000-4000-8000-000000000001/avatar" {
 		t.Fatalf("List() = %#v, %v; store=%#v", result, err, store)

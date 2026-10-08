@@ -16,7 +16,7 @@ func TestReplaceAvatarKeyLocksOwnActiveAccountAndReturnsPriorKey(t *testing.T) {
 	if err != nil || oldKey != "old-key" || database.arguments[0] != "account-1" || database.arguments[1] != "new-key" {
 		t.Fatalf("ReplaceAvatarKey() = %q, %v, db=%#v", oldKey, err, database)
 	}
-	for _, fragment := range []string{"FOR UPDATE", "avatar_key = $2", "blocked_at IS NULL"} {
+	for _, fragment := range []string{"FOR UPDATE", "avatar_key = $2", "profile_revision = profile_revision + 1", "blocked_at IS NULL"} {
 		if !strings.Contains(database.statement, fragment) {
 			t.Fatalf("replace query misses %q", fragment)
 		}
@@ -27,6 +27,16 @@ func TestReplaceAvatarKeyMapsMissingProfile(t *testing.T) {
 	database := &fakeDatabase{row: fakeRow{err: pgx.ErrNoRows}}
 	if _, err := New(database).ReplaceAvatarKey(context.Background(), "account-1", "new-key"); !errors.Is(err, uploadownavatar.ErrProfileUnavailable) {
 		t.Fatalf("error = %v", err)
+	}
+}
+
+func TestClearAvatarIncrementsMetadataRevision(t *testing.T) {
+	database := &fakeDatabase{row: fakeRow{value: "old-key"}}
+	if _, err := New(database).ClearAvatarKey(context.Background(), "account-1"); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(database.statement, "profile_revision = profile_revision + 1") {
+		t.Fatalf("clear query does not advance revision: %s", database.statement)
 	}
 }
 

@@ -107,4 +107,5 @@ describe('author directory', () => {
     await Promise.all([first, second])
     expect(directory.displayName('user-2')).toBe('Новое имя')
   })
+
 })

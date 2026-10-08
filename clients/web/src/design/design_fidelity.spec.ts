@@ -77,7 +77,8 @@ describe('GuildChat reference fidelity', () => {
 
   it('shows truthful guild presence groups and only confirmed voice-room participants', () => {
     const panel = source('../workspace/WorkspaceMembersPanel.vue')
-    expect(panel).toContain('loadMembers')
+    expect(panel).toContain('useMemberDirectory')
+    expect(panel).toContain('directory.refresh')
     expect(panel).toContain('groupMembersByPresence')
     expect(panel).toContain('presenceResolver')
     expect(source('../workspace/WorkspaceApp.vue')).toContain('guildPresence.resolve')

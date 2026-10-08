@@ -25,6 +25,9 @@ func (repository Repository) Authorize(ctx context.Context, accountID string, ev
 		resourceID, _ = event.Payload["lease_id"].(string)
 	case "channel.updated", "guild.profile.updated":
 		statement = `SELECT EXISTS (SELECT 1 FROM users u WHERE u.id=$1::uuid AND u.blocked_at IS NULL)`
+	case "member.profile.updated":
+		statement = `SELECT EXISTS (SELECT 1 FROM users viewer JOIN users member ON member.id=$2::uuid WHERE viewer.id=$1::uuid AND viewer.blocked_at IS NULL AND member.blocked_at IS NULL)`
+		resourceID, _ = event.Payload["user_id"].(string)
 	default:
 		return false, nil
 	}

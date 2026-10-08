@@ -36,7 +36,7 @@ func NewHandler(reader Reader) http.Handler {
 			return
 		}
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		_ = json.NewEncoder(writer).Encode(profileResponse{AccountID: profile.AccountID, Login: profile.Login, DisplayName: profile.DisplayName, Role: profile.Role, AvatarURL: profile.AvatarURL})
+		_ = json.NewEncoder(writer).Encode(profileResponse{AccountID: profile.AccountID, Login: profile.Login, DisplayName: profile.DisplayName, Role: profile.Role, AvatarURL: profile.AvatarURL, Revision: profile.Revision})
 	})
 }
 
@@ -46,6 +46,7 @@ type profileResponse struct {
 	DisplayName string `json:"display_name"`
 	Role        string `json:"role"`
 	AvatarURL   string `json:"avatar_url,omitempty"`
+	Revision    int64  `json:"profile_revision"`
 }
 
 func writeError(writer http.ResponseWriter, request *http.Request, status int, code, message string) {

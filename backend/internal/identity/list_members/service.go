@@ -32,6 +32,7 @@ type Member struct {
 	ID, Login, DisplayName, Role, AvatarURL string
 	HasAvatar                               bool
 	Presence                                Presence
+	Revision                                int64
 }
 type Result struct {
 	Members    []Member

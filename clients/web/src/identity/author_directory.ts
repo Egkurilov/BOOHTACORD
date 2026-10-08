@@ -5,7 +5,7 @@ import { ref } from 'vue'
 import { apiBaseUrl } from '../config/runtime'
 import { loadMember, type OwnProfile, type ProfileRequest } from './profile_client'
 
-interface AuthorEntry { displayName: string; hasAvatar: boolean; checkedAt: number; verified: boolean }
+interface AuthorEntry { displayName: string; hasAvatar: boolean; checkedAt: number; verified: boolean; revision: number }
 
 const freshForMs = 60_000
 const fallbackName = 'Участник'
@@ -20,7 +20,8 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
   function displayName(id: string): string { return authors.value[id]?.displayName || fallbackName }
   function verifiedDisplayName(id: string): string | null { const entry = authors.value[id]; return entry?.verified ? entry.displayName : null }
   function avatarUrl(id: string): string | undefined {
-    return authors.value[id]?.hasAvatar ? `${apiBaseUrl}/members/${encodeURIComponent(id)}/avatar` : undefined
+    const entry = authors.value[id]
+    return entry?.hasAvatar ? `${apiBaseUrl}/members/${encodeURIComponent(id)}/avatar${entry.revision ? `?revision=${entry.revision}` : ''}` : undefined
   }
 
   function ensure(id: string, request: ProfileRequest = tracedFetch, force = false): Promise<void> {
@@ -36,12 +37,13 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
         const member = await loadMember(id, request)
         if (member.user_id !== id) throw new Error('Некорректный участник.')
         if ((lookupGenerations.get(id) ?? 0) !== generation) return
+        if (member.profile_revision !== undefined && member.profile_revision < (authors.value[id]?.revision ?? 0)) return
         const name = member.display_name.trim()
-        authors.value[id] = { displayName: name || fallbackName, hasAvatar: Boolean(member.avatar_url), checkedAt: Date.now(), verified: Boolean(name) }
+        authors.value[id] = { displayName: name || fallbackName, hasAvatar: Boolean(member.avatar_url), checkedAt: Date.now(), verified: Boolean(name), revision: member.profile_revision ?? 0 }
       } catch {
         if ((lookupGenerations.get(id) ?? 0) !== generation) return
         const previous = authors.value[id]
-        authors.value[id] = previous ? { ...previous, checkedAt: Date.now(), verified: false } : { displayName: fallbackName, hasAvatar: false, checkedAt: Date.now(), verified: false }
+        authors.value[id] = previous ? { ...previous, checkedAt: Date.now(), verified: false } : { displayName: fallbackName, hasAvatar: false, checkedAt: Date.now(), verified: false, revision: 0 }
       }
     })()
     inFlight.set(id, { generation, task })
@@ -55,7 +57,15 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
     knownIds.add(profile.account_id)
     lookupGenerations.set(profile.account_id, (lookupGenerations.get(profile.account_id) ?? 0) + 1)
     const name = profile.display_name.trim()
-    authors.value[profile.account_id] = { displayName: name || fallbackName, hasAvatar: Boolean(profile.avatar_url), checkedAt: Date.now(), verified: Boolean(name) }
+    authors.value[profile.account_id] = { displayName: name || fallbackName, hasAvatar: Boolean(profile.avatar_url), checkedAt: Date.now(), verified: Boolean(name), revision: profile.profile_revision ?? 0 }
+  }
+
+  function invalidate(id: string, revision: number, request: ProfileRequest = tracedFetch): Promise<void> {
+    if (!id || !Number.isSafeInteger(revision) || revision < 1) return Promise.resolve()
+    if ((authors.value[id]?.revision ?? 0) >= revision) return Promise.resolve()
+    knownIds.add(id)
+    lookupGenerations.set(id, (lookupGenerations.get(id) ?? 0) + 1)
+    return ensure(id, request, true)
   }
 
   function refreshKnown(request: ProfileRequest = tracedFetch): Promise<void> {
@@ -70,5 +80,5 @@ export const useAuthorDirectory = defineStore('author-directory', () => {
     return tracked
   }
 
-  return { acceptOwnProfile, avatarUrl, displayName, ensure, refreshKnown, verifiedDisplayName }
+  return { acceptOwnProfile, avatarUrl, displayName, ensure, invalidate, refreshKnown, verifiedDisplayName }
 })

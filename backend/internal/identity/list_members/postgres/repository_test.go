@@ -11,12 +11,12 @@ import (
 )
 
 func TestListUsesStableCursorAndExcludesBlockedOrSensitiveFields(t *testing.T) {
-	database := &fakeDatabase{rows: &fakeRows{members: []listmembers.Member{{ID: "member-1", Login: "login", DisplayName: "Member", Role: "MEMBER", HasAvatar: true}}}}
+	database := &fakeDatabase{rows: &fakeRows{members: []listmembers.Member{{ID: "member-1", Login: "login", DisplayName: "Member", Role: "MEMBER", HasAvatar: true, Revision: 5}}}}
 	members, err := New(database).List(context.Background(), "00000000-0000-4000-8000-000000000001", 51)
 	if err != nil || len(members) != 1 || database.arguments[0] != "00000000-0000-4000-8000-000000000001" || database.arguments[1] != 51 {
 		t.Fatalf("List()=%#v,%v db=%#v", members, err, database)
 	}
-	for _, part := range []string{"blocked_at IS NULL", "ORDER BY id ASC", "avatar_key IS NOT NULL"} {
+	for _, part := range []string{"blocked_at IS NULL", "ORDER BY id ASC", "avatar_key IS NOT NULL", "profile_revision"} {
 		if !strings.Contains(database.statement, part) {
 			t.Fatalf("query misses %q", part)
 		}
@@ -61,7 +61,7 @@ func (rows *fakeRows) Next() bool { return rows.index < len(rows.members) }
 func (rows *fakeRows) Scan(destinations ...any) error {
 	member := rows.members[rows.index]
 	rows.index++
-	*destinations[0].(*string), *destinations[1].(*string), *destinations[2].(*string), *destinations[3].(*string), *destinations[4].(*bool) = member.ID, member.Login, member.DisplayName, member.Role, member.HasAvatar
+	*destinations[0].(*string), *destinations[1].(*string), *destinations[2].(*string), *destinations[3].(*string), *destinations[4].(*bool), *destinations[5].(*int64) = member.ID, member.Login, member.DisplayName, member.Role, member.HasAvatar, member.Revision
 	return nil
 }
 func (rows *fakeRows) Err() error { return rows.err }

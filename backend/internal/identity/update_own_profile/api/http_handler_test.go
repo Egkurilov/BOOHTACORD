@@ -16,13 +16,13 @@ func TestHandlerUpdatesTheAuthenticatedAccountDisplayName(t *testing.T) {
 	var captured updateownprofile.Input
 	handler := NewHandler(updaterFunc(func(_ context.Context, input updateownprofile.Input) (updateownprofile.Profile, error) {
 		captured = input
-		return updateownprofile.Profile{AccountID: input.AccountID, Login: "immutable", DisplayName: input.DisplayName, Role: "MEMBER"}, nil
+		return updateownprofile.Profile{AccountID: input.AccountID, Login: "immutable", DisplayName: input.DisplayName, Role: "MEMBER", Revision: 9}, nil
 	}))
 	request := httptest.NewRequest(http.MethodPatch, "/api/v1/me", strings.NewReader(`{"display_name":"Новое имя"}`))
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), authenticatesession.Principal{AccountID: "account-1", Role: "MEMBER"}))
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusOK || captured != (updateownprofile.Input{AccountID: "account-1", DisplayName: "Новое имя"}) || !strings.Contains(recorder.Body.String(), `"login":"immutable"`) {
+	if recorder.Code != http.StatusOK || captured != (updateownprofile.Input{AccountID: "account-1", DisplayName: "Новое имя"}) || !strings.Contains(recorder.Body.String(), `"login":"immutable"`) || !strings.Contains(recorder.Body.String(), `"profile_revision":9`) {
 		t.Fatalf("status = %d, input = %#v, body = %q", recorder.Code, captured, recorder.Body.String())
 	}
 }

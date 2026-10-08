@@ -3,7 +3,8 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
 import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { avatarInitials } from '../design/avatar_initials'
-import { loadMembers, type GuildMember, type MemberPresence } from '../identity/profile_client'
+import { useMemberDirectory } from '../identity/member_directory'
+import type { MemberPresence } from '../identity/profile_client'
 import type { VoiceVolumeParticipant } from '../voice/voice_volume_controls'
 import VoiceParticipantStatus from '../voice/VoiceParticipantStatus.vue'
 import GuildPresenceGroup from './GuildPresenceGroup.vue'
@@ -12,11 +13,12 @@ import { groupMembersByPresence } from './member_presence'
 
 const props = defineProps<{ activeVoiceChannel: TopologyChannel | null; selectedVoiceChannel: TopologyChannel | null; participants: VoiceVolumeParticipant[]; presenceResolver: (userID: string, fallback: MemberPresence) => MemberPresence; role: 'MEMBER' | 'ADMINISTRATOR'; accountID?: string; selfMicrophoneMuted: boolean; selfMicrophoneUnavailable: boolean; selfName: string | null; open: boolean; modal: boolean }>()
 const emit = defineEmits<{ openDM: [userID: string]; setVolume: [participantID: string, volume: number]; memberCount: [count: number] }>()
-const guildMembers = ref<GuildMember[]>([])
-const memberCursor = ref<string | null>(null)
+const directory = useMemberDirectory()
+const guildMembers = computed(() => directory.members)
+const memberCursor = computed(() => directory.cursor)
+const membersLoading = computed(() => directory.loading)
+const membersError = computed(() => directory.error)
 const presenceGroups = computed(() => groupMembersByPresence(guildMembers.value.map((member) => ({ ...member, presence: props.presenceResolver(member.user_id, member.presence) }))))
-const membersLoading = ref(false)
-const membersError = ref<string | null>(null)
 const selectedID = ref<string | null>(null)
 const openedFromVoiceRoster = ref(false)
 const popoverTop = ref(80)
@@ -27,15 +29,10 @@ const visibleVoiceChannel = computed(() => props.selectedVoiceChannel)
 const memberCount = computed(() => props.selectedVoiceChannel ? voiceRoomVisible.value ? props.participants.length + 1 : '—' : memberCursor.value ? '—' : guildMembers.value.length)
 
 async function loadRoster(cursor?: string): Promise<void> {
-  if (membersLoading.value) return
-  membersLoading.value = true; membersError.value = null
-  try {
-    const page = await loadMembers(cursor)
-    guildMembers.value = cursor ? [...guildMembers.value, ...page.members] : page.members
-    memberCursor.value = page.next_cursor ?? null
-    if (!memberCursor.value) emit('memberCount', guildMembers.value.length)
-  } catch (error) { membersError.value = error instanceof Error ? error.message : 'Не удалось загрузить участников.' }
-  finally { membersLoading.value = false }
+  if (directory.loading) return
+  if (cursor) await directory.loadNext()
+  else await directory.refresh()
+  if (!directory.cursor) emit('memberCount', directory.members.length)
 }
 function openProfile(userID: string, event: MouseEvent): void {
   const button = event.currentTarget as HTMLButtonElement
