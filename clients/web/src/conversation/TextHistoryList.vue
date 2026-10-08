@@ -8,7 +8,7 @@ import { useTextHistoryList } from './history_window/use_text_history_list'
 const props = defineProps<{ channelId: string; session: CurrentSession | null }>()
 const emit = defineEmits<{ reply: [message: TextMessage]; retry: [message: TextMessage]; replyContext: [messageId: string]; viewportChange: [] }>()
 const list = ref<HTMLOListElement | null>(null)
-const { store, timeline, announcement, jumpCount, historyWindow, onScroll, jumpToLatest, openReplyContext, replyPreview, loadOlder } = useTextHistoryList(
+const { store, timeline, announcement, jumpCount, historyWindow, onScroll, jumpToLatest, openReplyContext, replyPreview, loadOlder, loadNewer } = useTextHistoryList(
   props, { viewportChange: () => emit('viewportChange'), replyContext: (id) => emit('replyContext', id) }, list)
 </script>
 
@@ -42,6 +42,10 @@ const { store, timeline, announcement, jumpCount, historyWindow, onScroll, jumpT
       />
     </li>
     <li v-if="historyWindow.range.value.end < timeline.length" class="virtual-spacer" aria-hidden="true" :style="{ height: `${historyWindow.bottomSpacer.value}px` }" />
+    <li v-if="store.newerCursor || store.newerError" class="virtual-history-control" data-history-control>
+      <button v-if="store.newerCursor" type="button" :disabled="store.newerLoading" @click="loadNewer">{{ store.newerLoading ? 'Загружаем новые сообщения…' : 'Показать следующие сообщения' }}</button>
+      <span v-if="store.newerError" class="state state-error" role="alert">{{ store.newerError }} <button type="button" :disabled="store.newerLoading" @click="loadNewer">Повторить</button></span>
+    </li>
     <li v-if="!store.messages.length && !store.loading" class="state">Сообщений пока нет.</li>
   </ol>
   </div>

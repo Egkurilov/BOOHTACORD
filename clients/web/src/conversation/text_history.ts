@@ -1,47 +1,50 @@
 import { computed, ref } from 'vue'
 
-import { loadMessagePage, type MessageRequest, type TextMessage, type TextMessageAttachment } from './message_client'
+import { loadMessagePage, type MessageRequest, type TextMessage } from './message_client'
 import { createLoadedRevisionRefresh } from './revision_refresh/loaded'
-import { trackRealtimeMessages } from '../telemetry/realtime_flow/process'
 import { indexMessages } from './message_index/index'
+import { boundHistoryWindow } from './history_window/eviction'
+import { createHistoryMerger } from './history_window/merge'
+import { createHistoryPaging } from './history_window/paging'
+import { type PendingSend } from './history_window/pending'
 
-export interface PendingSend { retryBlocked?: boolean; channelId: string; authorId: string; body: string; replyToId?: string; attachments: TextMessageAttachment[]; mentionUserIds: string[]; request?: MessageRequest; sendStatus?: 'sending' | 'checking' | 'failed' }
-
-export function pendingMessage(id: string, draft: PendingSend): TextMessage {
-  return { id: `optimistic:${id}`, channelId: draft.channelId, authorId: draft.authorId, clientMessageId: id, body: draft.body, replyToId: draft.replyToId, revision: 0, createdAt: new Date().toISOString(), deleted: false, attachments: draft.attachments, mentionUserIds: draft.mentionUserIds, retryBlocked: draft.retryBlocked, sendStatus: draft.sendStatus ?? 'failed' }
-}
+export { pendingMessage, type PendingSend } from './history_window/pending'
 
 export function createTextHistory(pending: Map<string, PendingSend>) {
   const channelId = ref<string | null>(null)
   const messages = ref<TextMessage[]>([])
   const messageById = computed(() => indexMessages(messages.value))
   const nextCursor = ref<string | undefined>()
+  const newerCursor = ref<string | undefined>()
   const loading = ref(false)
   const olderLoading = ref(false)
+  const newerLoading = ref(false)
   const historyLoaded = ref(false)
   const error = ref<string | null>(null)
   const olderError = ref<string | null>(null)
+  const newerError = ref<string | null>(null)
+  const historyAnchorId = ref<string | undefined>()
   let generation = 0
   let refreshSequence = 0
-  let olderPagesLoaded = false
+  let windowPaged = false
+  const mergePage = createHistoryMerger(messages, channelId, pending)
 
-  function mergePage(incoming: TextMessage[]): void {
-    const byId = new Map<string, TextMessage>()
-    for (const message of messages.value) if (!message.sendStatus) byId.set(message.id, message)
-    for (const message of incoming) {
-      const current = byId.get(message.id)
-      if (!current || message.revision >= current.revision) byId.set(message.id, message)
-    }
-    const server = [...byId.values()].sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt) || right.id.localeCompare(left.id))
-    const acknowledged = new Set(server.map(({ clientMessageId }) => clientMessageId))
-    const queued = [...pending].flatMap(([id, draft]) => {
-      if (draft.channelId !== channelId.value) return []
-      if (acknowledged.has(id)) { pending.delete(id); return [] }
-      return [pendingMessage(id, draft)]
-    })
-    messages.value = [...queued, ...server]
-    trackRealtimeMessages(incoming)
+  function applyWindow(canPageOlder: boolean, canPageNewer: boolean, direction?: 'older' | 'newer'): void {
+    const optimistic = messages.value.filter((message) => message.sendStatus)
+    const bounded = boundHistoryWindow(
+      messages.value.filter((message) => !message.sendStatus),
+      { anchorMessageId: historyAnchorId.value, direction, canPageOlder, canPageNewer },
+    )
+    nextCursor.value = bounded.olderCursor
+    newerCursor.value = bounded.newerCursor
+    messages.value = [...optimistic, ...bounded.messages]
   }
+  const paging = createHistoryPaging({
+    channelId, historyLoaded, olderCursor: nextCursor, newerCursor,
+    olderLoading, newerLoading, olderError, newerError,
+    generation: () => generation, merge: mergePage, applyWindow,
+    markPaged: () => { windowPaged = true },
+  })
 
   async function open(nextChannelId: string, request?: MessageRequest): Promise<void> {
     if (channelId.value === nextChannelId) return
@@ -49,10 +52,14 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
     channelId.value = nextChannelId
     messages.value = []
     nextCursor.value = undefined
+    newerCursor.value = undefined
     olderLoading.value = false
+    newerLoading.value = false
     olderError.value = null
+    newerError.value = null
+    historyAnchorId.value = undefined
     historyLoaded.value = false
-    olderPagesLoaded = false
+    windowPaged = false
     await refresh(request)
   }
 
@@ -67,7 +74,10 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
       const page = await loadMessagePage(target, undefined, request)
       if (generation !== version || channelId.value !== target || refreshSequence !== sequence) return
       mergePage(page.messages)
-      if (!olderPagesLoaded) nextCursor.value = page.nextCursor
+      applyWindow(
+        windowPaged ? Boolean(nextCursor.value) : Boolean(page.nextCursor),
+        windowPaged && Boolean(newerCursor.value),
+      )
       historyLoaded.value = true
     } catch (cause) {
       if (generation === version && refreshSequence === sequence) error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить историю сообщений.'
@@ -76,31 +86,10 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
     }
   }
 
-  async function loadOlder(request?: MessageRequest): Promise<boolean> {
-    const target = channelId.value
-    const before = nextCursor.value
-    if (!target || !historyLoaded.value || !before || olderLoading.value) return false
-    const version = generation
-    olderLoading.value = true
-    olderError.value = null
-    try {
-      const page = await loadMessagePage(target, before, request)
-      if (generation !== version || channelId.value !== target) return false
-      mergePage(page.messages)
-      nextCursor.value = page.nextCursor
-      olderPagesLoaded = true
-      return true
-    } catch (cause) {
-      if (generation === version) olderError.value = cause instanceof Error ? cause.message : 'Не удалось загрузить старые сообщения.'
-      return false
-    } finally {
-      if (generation === version) olderLoading.value = false
-    }
-  }
-
   const { refreshMessage, refreshMessages } = createLoadedRevisionRefresh<TextMessage, MessageRequest>({ messages,
-    resourceId: channelId, version: () => generation, load: loadMessagePage, merge: mergePage, error,
+    resourceId: channelId, version: () => generation, load: loadMessagePage,
+    merge: (incoming) => { mergePage(incoming); applyWindow(Boolean(nextCursor.value), Boolean(newerCursor.value)) }, error,
     fallback: 'Не удалось обновить сообщение.' })
 
-  return { channelId, messages, messageById, nextCursor, loading, olderLoading, historyLoaded, error, olderError, open, refresh, loadOlder, refreshMessage, refreshMessages }
+  return { channelId, messages, messageById, nextCursor, newerCursor, loading, olderLoading, newerLoading, historyLoaded, error, olderError, newerError, open, refresh, ...paging, setHistoryAnchor: (id?: string) => { historyAnchorId.value = id }, refreshMessage, refreshMessages }
 }

@@ -25,8 +25,8 @@ export function useTextHistoryList(props: { channelId: string; session: CurrentS
     if (!text) return
     await nextTick(); if (version === announcementVersion) announcement.value = text
   }, { immediate: true, flush: 'post' })
-  onMounted(() => { if (list.value) list.value.scrollTop = list.value.scrollHeight; historyWindow.syncScroll(); emit.viewportChange() })
-  watch(() => props.channelId, async () => { jumpCount.value = 0; await nextTick(); if (list.value) list.value.scrollTop = list.value.scrollHeight; historyWindow.syncScroll(); emit.viewportChange() })
+  onMounted(() => { if (list.value) list.value.scrollTop = list.value.scrollHeight; historyWindow.syncScroll(); updateHistoryAnchor(); emit.viewportChange() })
+  watch(() => props.channelId, async () => { jumpCount.value = 0; await nextTick(); if (list.value) list.value.scrollTop = list.value.scrollHeight; historyWindow.syncScroll(); updateHistoryAnchor(); emit.viewportChange() })
   watch([() => store.historyLoaded, latestServerId], async ([loaded, newest], [wasLoaded, previous]) => {
     const viewport = list.value
     if (!newest || !viewport || store.channelId !== props.channelId) return
@@ -36,8 +36,17 @@ export function useTextHistoryList(props: { channelId: string; session: CurrentS
     else if (loaded) jumpCount.value += added
     emit.viewportChange()
   })
-  function onScroll(): void { historyWindow.syncScroll(); if (isHistoryNearBottom(list.value)) jumpCount.value = 0; emit.viewportChange() }
-  function jumpToLatest(): void { if (!list.value) return; list.value.scrollTop = list.value.scrollHeight; historyWindow.syncScroll(); jumpCount.value = 0; emit.viewportChange() }
+  function updateHistoryAnchor(): void {
+    const viewport = list.value
+    if (!viewport) return
+    const top = viewport.getBoundingClientRect().top, bottom = top + viewport.clientHeight
+    const anchor = [...viewport.querySelectorAll<HTMLElement>('[data-message-id]')].find((item) => {
+      const bounds = item.getBoundingClientRect(); return bounds.bottom > top && bounds.top < bottom
+    })
+    store.setHistoryAnchor(anchor?.dataset.messageId)
+  }
+  function onScroll(): void { historyWindow.syncScroll(); updateHistoryAnchor(); if (isHistoryNearBottom(list.value)) jumpCount.value = 0; emit.viewportChange() }
+  function jumpToLatest(): void { if (!list.value) return; list.value.scrollTop = list.value.scrollHeight; historyWindow.syncScroll(); updateHistoryAnchor(); jumpCount.value = 0; emit.viewportChange() }
   async function openReplyContext(messageId: string): Promise<void> {
     if (historyWindow.scrollToMessage(messageId)) { await nextTick(); navigateToReplyTarget(list.value, messageId, () => emit.replyContext(messageId)); return }
     navigateToReplyTarget(list.value, messageId, () => emit.replyContext(messageId))
@@ -48,14 +57,15 @@ export function useTextHistoryList(props: { channelId: string; session: CurrentS
     if (!target) return 'Исходное сообщение недоступно'
     return target.deleted ? 'Сообщение удалено' : `${authors.displayName(target.authorId)}: ${target.body.slice(0, 140)}`
   }
-  async function loadOlder(): Promise<void> {
+  async function loadPage(load: () => Promise<boolean>): Promise<void> {
     const viewport = list.value, top = viewport?.getBoundingClientRect().top
     const anchor = [...(viewport?.querySelectorAll<HTMLElement>('[data-message-id]') ?? [])].find((item) => {
       const bounds = item.getBoundingClientRect(); return bounds.bottom > (top ?? 0) && bounds.top < (top ?? 0) + (viewport?.clientHeight ?? 0)
     })
     const anchorId = anchor?.dataset.messageId, anchorTop = anchor?.getBoundingClientRect().top
     const anchorOffset = anchorId ? historyWindow.offsetOf(anchorId) : undefined, channelId = props.channelId
-    if (!await store.loadOlder()) return
+    store.setHistoryAnchor(anchorId)
+    if (!await load()) return
     const newOffset = anchorId ? historyWindow.offsetOf(anchorId) : undefined
     if (viewport && anchorOffset !== undefined && newOffset !== undefined) { viewport.scrollTop += newOffset - anchorOffset; historyWindow.syncScroll() }
     await nextTick()
@@ -64,7 +74,10 @@ export function useTextHistoryList(props: { channelId: string; session: CurrentS
       const current = [...viewport.querySelectorAll<HTMLElement>('[data-message-id]')].find((item) => item.dataset.messageId === anchorId)
       if (current) viewport.scrollTop += current.getBoundingClientRect().top - anchorTop
     }
+    updateHistoryAnchor()
     emit.viewportChange()
   }
-  return { store, timeline, announcement, jumpCount, historyWindow, onScroll, jumpToLatest, openReplyContext, replyPreview, loadOlder }
+  const loadOlder = () => loadPage(() => store.loadOlder())
+  const loadNewer = () => loadPage(() => store.loadNewer())
+  return { store, timeline, announcement, jumpCount, historyWindow, onScroll, jumpToLatest, openReplyContext, replyPreview, loadOlder, loadNewer }
 }
