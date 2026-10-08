@@ -14,7 +14,7 @@ class RealtimeConnectApi {
       scheme: 'wss',
       path: '${httpUri.path}/realtime',
       queryParameters: const {
-        'capabilities': 'role_permissions_v1,flow_tracing_v1,screen_previews_v1',
+        'capabilities': 'role_permissions_v1,flow_tracing_v1,screen_previews_v1,message_social_v1',
       },
     );
     final headers = await transport.headers();

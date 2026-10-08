@@ -1,6 +1,7 @@
 import '../../../mention_display_name/component.dart';
 import '../../../reply_preview/component.dart';
 import '../../../native_bindings.dart';
+import '../../../message_social/component.dart';
 import '../../lifecycle/context.dart';
 
 extension DirectConversationMessageBubbleRenderer
@@ -65,6 +66,13 @@ extension DirectConversationMessageBubbleRenderer
               style: const TextStyle(color: GcColors.muted, fontSize: 11),
             ),
           ],
+          if (!message.deleted && message.sendStatus == null)
+            MessageSocialControls(
+              transport: widget.state.api.transport,
+              direct: true,
+              conversation: message.directMessageId,
+              message: message.id,
+            ),
         ],
       ),
     ),

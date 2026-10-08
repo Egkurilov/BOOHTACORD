@@ -20,7 +20,11 @@ extension WorkspaceSearchPanelHeaderControlsRenderer
         children: [
           Expanded(
             child: Text(
-              navigationMode ? 'Каналы и люди' : 'Поиск сообщений',
+              pinsMode
+                  ? 'Закреплённые'
+                  : navigationMode
+                  ? 'Каналы и люди'
+                  : 'Поиск сообщений',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -30,10 +34,23 @@ extension WorkspaceSearchPanelHeaderControlsRenderer
               ),
             ),
           ),
+          if (workspaceCurrentConversation()?.direct == false)
+            IconButton(
+              tooltip: 'Закреплённые',
+              onPressed: workspaceCurrentConversation()?.direct == false
+                  ? () => workspaceMutateView(() {
+                      pinsMode = !pinsMode;
+                      navigationMode = false;
+                    })
+                  : null,
+              icon: const Icon(Icons.push_pin_outlined, size: 20),
+            ),
           IconButton(
             tooltip: navigationMode ? 'Поиск сообщений' : 'Каналы и люди',
-            onPressed: () =>
-                workspaceMutateView(() => navigationMode = !navigationMode),
+            onPressed: () => workspaceMutateView(() {
+              navigationMode = !navigationMode;
+              pinsMode = false;
+            }),
             icon: Icon(
               navigationMode ? Icons.chat_bubble_outline : Icons.people_outline,
               size: 20,

@@ -9,6 +9,7 @@ import '../../native_bindings.dart';
 import '../lifecycle/context.dart';
 import '../handler_bindings.dart';
 import 'navigation_panel/handler.dart';
+import 'pins_panel/handler.dart';
 
 mixin WorkspaceWorkspaceSearchPanelStateBuildBinding
     on WorkspaceWorkspaceSearchPanelStateContext {
@@ -24,6 +25,12 @@ extension WorkspaceWorkspaceSearchPanelStateBuildAction
     final current = workspaceCurrentConversation();
     if (workspaceScope == 'current' && current == null) workspaceScope = 'all';
     final compact = MediaQuery.sizeOf(context).width <= 720;
+    if (current == null || current.direct) {
+      pinsMode = false;
+    }
+    if (pinsMode && current != null && !current.direct) {
+      return renderTextPinsPanel(compact, current.id);
+    }
     if (navigationMode) {
       return renderQuickJumpNavigation(compact);
     }

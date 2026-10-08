@@ -1,7 +1,8 @@
 import 'sender_metadata/handler.dart';
 import 'sender_header/handler.dart';
 import '../../confirm_delete/component.dart';
-import '../../mention_display_name/component.dart';
+import 'mention_label/handler.dart';
+import '../../message_social/component.dart';
 import '../../reply_preview/component.dart';
 import '../../native_bindings.dart';
 
@@ -99,12 +100,13 @@ extension WorkspaceMessageRowBuildAction on WorkspaceMessageRowContext {
                   attachments: message.attachments,
                 ),
               if (message.mentionUserIds.isNotEmpty && !message.deleted)
-                Padding(
-                  padding: const EdgeInsets.only(top: 5),
-                  child: Text(
-                    'Упомянуты: ${message.mentionUserIds.map((id) => workspaceMentionDisplayName(state, id)).join(' ')}',
-                    style: const TextStyle(color: GcColors.muted, fontSize: 12),
-                  ),
+                renderMessageMentionLabel(),
+              if (!message.deleted && message.sendStatus == null)
+                MessageSocialControls(
+                  transport: state.api.transport,
+                  direct: false,
+                  conversation: message.channelId,
+                  message: message.id,
                 ),
             ],
           ),
