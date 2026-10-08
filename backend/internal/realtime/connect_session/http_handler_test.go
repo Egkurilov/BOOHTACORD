@@ -104,6 +104,7 @@ func TestHandlerRejectsOverQuotaBeforeUpgradeAndReleasesOnClose(t *testing.T) {
 		t.Fatalf("over-quota response = %#v, error = %v", response, err)
 	}
 	first.CloseNow()
+	waitForQuotaToDrain(t, quota)
 	third, _, err := websocket.Dial(context.Background(), endpoint, &websocket.DialOptions{HTTPHeader: http.Header{"Origin": {server.URL}}})
 	if err != nil {
 		t.Fatalf("connection slot was not released: %v", err)
