@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../app_state.dart';
-import '../../../models.dart';
-import '../../../theme.dart';
-import '../../../widgets/authenticated_avatar.dart';
-import '../../../services/voice_avatar_palette.dart';
+import '../../app_state.dart';
+import '../../models.dart';
+import '../../theme.dart';
+import '../../widgets/authenticated_avatar.dart';
+import '../../services/voice_avatar_palette.dart';
 
 class VoiceRosterMemberRow extends StatelessWidget {
   const VoiceRosterMemberRow({

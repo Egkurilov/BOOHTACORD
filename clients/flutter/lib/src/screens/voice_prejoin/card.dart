@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../app_state.dart';
-import '../../../models.dart';
-import '../../../theme.dart';
-import '../../../widgets/voice_disconnect/join_actions.dart';
-import '../../../widgets/voice_disconnect/notice.dart';
+import '../../app_state.dart';
+import '../../models.dart';
+import '../../theme.dart';
+import '../../widgets/voice_disconnect/join_actions.dart';
+import '../../widgets/voice_disconnect/notice.dart';
 import 'surface.dart';
 import 'heading.dart';
 import 'roster_preview.dart';

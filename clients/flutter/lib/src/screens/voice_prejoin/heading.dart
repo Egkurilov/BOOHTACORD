@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme.dart';
+import '../../theme.dart';
 
 class VoicePrejoinHeading extends StatelessWidget {
   const VoicePrejoinHeading({super.key, required this.joining});

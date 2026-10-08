@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme.dart';
+import '../../theme.dart';
 
 class VoicePrejoinSurface extends StatelessWidget {
   const VoicePrejoinSurface({super.key, required this.children});

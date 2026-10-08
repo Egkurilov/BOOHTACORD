@@ -1,6 +1,6 @@
 import 'package:boohtacord_desktop/src/app_state.dart';
 import 'package:boohtacord_desktop/src/models.dart';
-import 'package:boohtacord_desktop/src/features/voice/prejoin/roster_preview.dart';
+import 'package:boohtacord_desktop/src/screens/voice_prejoin/roster_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

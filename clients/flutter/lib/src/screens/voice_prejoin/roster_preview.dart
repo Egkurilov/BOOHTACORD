@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../app_state.dart';
-import '../../../theme.dart';
-import '../roster_state/controller.dart';
+import '../../app_state.dart';
+import '../../theme.dart';
+import '../../features/voice/roster_state/controller.dart';
 import 'member_row.dart';
 
 class VoiceRosterPreview extends StatelessWidget {

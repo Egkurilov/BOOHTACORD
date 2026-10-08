@@ -6,7 +6,7 @@ Scope: #270 Flutter prejoin recovery UI; physical decomposition of the existing 
 
 The original 9,290-line widget library is a one-line forwarding export. Its actual implementation is physically owned by child widget, event-handler, lifecycle, render and derived-feedback libraries under `clients/flutter/lib/src/screens/workspace_ui`. `native_bindings.dart` and component facades only export native dependencies. No `part` library or static reference application replaces the runtime.
 
-`features/voice/prejoin` owns the real card, member row and roster preview. The preview preserves cached participants with a historical label after loss, reports unavailable separately from known fresh empty rooms, offers bounded-controller manual retry, and requests login after session expiration. The real header uses the same phase semantics. Join/listen buttons remain explicit user actions.
+`screens/voice_prejoin` owns the real card, member row and roster preview. The preview preserves cached participants with a historical label after loss, reports unavailable separately from known fresh empty rooms, offers bounded-controller manual retry, and requests login after session expiration. The real header uses the same phase semantics. Join/listen buttons remain explicit user actions.
 
 All 330 extracted production Dart files are <=120 lines; immediate leaf maximum 5 production files. Names identify UI responsibilities (history, composer, member summary, room viewer, overlays, keyboard/window lifecycle). The final derived layout/search-feedback leaves preserve existing breakpoint and status decisions. No aggregate contains a second runtime implementation.
 
@@ -31,3 +31,11 @@ Flutter 3.47.5/Dart 3.13.4.
 - Native formatter and owned-file size review: PASS; no owned production file exceeds 120 lines.
 
 Hardware capture, paired-device calls and authenticated production roster acceptance: NOT_RUN by this packet. These results prove source/component behavior, not physical media performance.
+
+## Native boundary correction
+
+The dependency check rejected prejoin UI importing application composition from the feature layer. All five unchanged UI implementations are now physically under screens/voice_prejoin; native exports and the nearest test support import are rewired. No validator exception was added.
+
+- python -m tools.verify.dependencies.dart: PASS, 1171 files.
+- Repeated workspace and prejoin widget tests: PASS, 85 tests.
+- Flutter analyze on the moved screen, native exports and tests: PASS, no issues.

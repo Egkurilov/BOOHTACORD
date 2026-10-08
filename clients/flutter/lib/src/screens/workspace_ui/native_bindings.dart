@@ -9,8 +9,8 @@ export 'package:livekit_client/livekit_client.dart'
     hide ChatMessage, ConnectionState, TimeoutException;
 export 'package:window_manager/window_manager.dart';
 export 'package:boohtacord_desktop/src/app_state.dart';
-export 'package:boohtacord_desktop/src/features/voice/prejoin/card.dart';
-export 'package:boohtacord_desktop/src/features/voice/prejoin/member_row.dart';
+export 'package:boohtacord_desktop/src/screens/voice_prejoin/card.dart';
+export 'package:boohtacord_desktop/src/screens/voice_prejoin/member_row.dart';
 export 'package:boohtacord_desktop/src/models.dart';
 export 'package:boohtacord_desktop/src/theme.dart';
 export 'package:boohtacord_desktop/src/services/message_presentation.dart';
