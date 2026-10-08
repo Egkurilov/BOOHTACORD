@@ -49,7 +49,8 @@ class AlignPostgresNetworkTests(unittest.TestCase):
             MODULE.ensure_postgres_connected([], "voice-platform", "voice-platform_private")
 
         run.assert_called_once_with(
-            ["docker", "network", "connect", "voice-platform_private", "postgres-id"],
+            ["docker", "network", "connect", "--alias", "postgres",
+             "voice-platform_private", "postgres-id"],
             check=True,
             stdout=MODULE.subprocess.DEVNULL,
             stderr=MODULE.subprocess.DEVNULL,
