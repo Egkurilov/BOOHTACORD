@@ -22,7 +22,7 @@ void main() {
     final source = ChangeNotifier();
     final feed = VoiceOverlayFeed(
       sources: [source],
-      project: (enabled) => VoiceOverlaySnapshot(
+      project: (enabled, _) => VoiceOverlaySnapshot(
         visible: enabled,
         members: enabled
             ? const [

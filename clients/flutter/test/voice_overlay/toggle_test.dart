@@ -12,14 +12,17 @@ void main() {
     try {
       debugDefaultTargetPlatformOverride = TargetPlatform.windows;
       var enabled = false;
+      var onlySpeakers = false;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: VoiceOverlayToggle(
               enabled: enabled,
+              onlySpeakers: onlySpeakers,
               available: true,
               onChanged: (value) => enabled = value,
+              onOnlySpeakersChanged: (value) => onlySpeakers = value,
             ),
           ),
         ),
@@ -28,6 +31,10 @@ void main() {
       expect(find.byTooltip('Показать панель говорящих'), findsOneWidget);
       await tester.tap(find.byTooltip('Показать панель говорящих'));
       expect(enabled, isTrue);
+      await tester.tap(find.byTooltip('Настройки панели говорящих'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(CheckedPopupMenuItem<bool>));
+      expect(onlySpeakers, isTrue);
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
@@ -42,8 +49,10 @@ void main() {
           home: Scaffold(
             body: VoiceOverlayToggle(
               enabled: false,
+              onlySpeakers: false,
               available: true,
               onChanged: _ignore,
+              onOnlySpeakersChanged: _ignore,
             ),
           ),
         ),

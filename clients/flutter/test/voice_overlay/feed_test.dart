@@ -9,7 +9,7 @@ void main() {
     var snapshot = const VoiceOverlaySnapshot(visible: false, members: []);
     final feed = VoiceOverlayFeed(
       sources: [voice],
-      project: (_) => snapshot,
+      project: (_, _) => snapshot,
     );
     var notifications = 0;
     feed.addListener(() => notifications++);
@@ -38,7 +38,7 @@ void main() {
     var visible = true;
     final feed = VoiceOverlayFeed(
       sources: [source],
-      project: (_) => VoiceOverlaySnapshot(
+      project: (_, _) => VoiceOverlaySnapshot(
         visible: visible,
         members: const [],
       ),
@@ -58,7 +58,7 @@ void main() {
     var visible = true;
     final feed = VoiceOverlayFeed(
       sources: [source],
-      project: (_) => VoiceOverlaySnapshot(
+      project: (_, _) => VoiceOverlaySnapshot(
         visible: visible,
         members: visible
             ? const [
@@ -90,7 +90,7 @@ void main() {
     final source = ChangeNotifier();
     final feed = VoiceOverlayFeed(
       sources: [source],
-      project: (enabled) => VoiceOverlaySnapshot(
+      project: (enabled, _) => VoiceOverlaySnapshot(
         visible: enabled,
         members: enabled
             ? const [
@@ -114,4 +114,5 @@ void main() {
     feed.dispose();
     source.dispose();
   });
+
 }

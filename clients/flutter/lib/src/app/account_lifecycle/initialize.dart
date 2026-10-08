@@ -9,6 +9,7 @@ import '../../features/voice/lifecycle/controller.dart';
 import '../../features/voice/roster_state/controller.dart';
 import '../../features/realtime/lifecycle/controller.dart';
 import '../composition/owners.dart';
+import '../../features/voice/overlay/preferences.dart';
 
 extension AppAccountInitialization on AppOwners {
   Future<void> initializePlatform() async {
@@ -24,6 +25,16 @@ extension AppAccountInitialization on AppOwners {
     final ticket = session.scope.capture();
     await nativeNotifications.useAccount(account.accountId);
     if (!ticket.isActive) return;
+    if (voiceOverlayWindowsClient != null) {
+      final overlayPreferences = await VoiceOverlayPreferences.open(
+        account.accountId,
+      );
+      if (!ticket.isActive || session.user?.accountId != account.accountId) {
+        return;
+      }
+      voiceOverlayPreferences = overlayPreferences;
+      voiceOverlay.setOnlySpeakers(overlayPreferences.onlySpeakers);
+    }
     await voice.loadAudioPreferences(account.accountId);
     if (!ticket.isActive || audioDevices.nativeBootstrap == null) return;
     // macOS creates its AudioEngine device module lazily. Bootstrap it after

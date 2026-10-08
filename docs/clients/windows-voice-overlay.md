@@ -1,7 +1,9 @@
 # Windows voice overlay — implementation investigation
 
-Status: first source MVP implemented on the #112 branch; Windows/game runtime
-acceptance remains open. Issue: [#112](https://github.com/Egkurilov/BOOHTACORD/issues/112).
+Status: the same-engine overlay MVP is merged. This follow-up adds an
+account-scoped only-speakers preference and Windows dock control; Windows/game
+runtime acceptance remains open. Issue:
+[#112](https://github.com/Egkurilov/BOOHTACORD/issues/112).
 
 ## Existing component map
 
@@ -61,10 +63,12 @@ Manual acceptance must record Windows build, game and anti-cheat, display mode,
 monitor/DPI topology, steps, expected/actual focus and input, and paired
 60-second FPS/frame-time, CPU/GPU/RAM measurements with the overlay on and off.
 The MVP only claims a bounded initial desktop position on the monitor nearest
-the main window. Hotkey registration, move/edit mode, saved account settings,
-only-speakers control, robust multi-monitor/DPI restore, broader accessibility,
-exclusive fullscreen, anti-cheat, and performance/game-matrix evidence remain
-open follow-up gates.
+the main window. This follow-up persists only-speakers mode under an
+account-scoped local preference and exposes it in the Windows voice dock. The
+issue still needs persistence for placement, scale and transparency, hotkey
+registration, move/edit mode, robust multi-monitor/DPI restore, broader
+accessibility, exclusive fullscreen, anti-cheat, and performance/game-matrix
+evidence.
 
 ## Compatibility boundary
 
