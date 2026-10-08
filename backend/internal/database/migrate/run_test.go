@@ -62,6 +62,7 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"ADD COLUMN IF NOT EXISTS public_id", "last_active_at", "sessions_public_id_unique"},
 		{"ALTER TABLE voice_sfu_revocations ADD COLUMN IF NOT EXISTS trace_cause", "ALTER TABLE realtime_events ADD COLUMN IF NOT EXISTS trace_cause", "voice_trace_cause_bounded", "event_trace_cause_bounded"},
 		{"screen_profile_operation_revision BIGINT NOT NULL DEFAULT 0", "screen_profile_operation_hash BYTEA", "octet_length(screen_profile_operation_hash) = 32"},
+		{"ADD COLUMN IF NOT EXISTS profile_revision BIGINT NOT NULL DEFAULT 1", "CHECK (profile_revision > 0)"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))
