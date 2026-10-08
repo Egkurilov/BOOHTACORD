@@ -30,6 +30,7 @@ class AdminMemberConflictReview extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     container: true,
+    liveRegion: true,
     label: 'Сравнение конфликтующих изменений для @$login',
     child: Container(
       margin: const EdgeInsets.only(bottom: 12),

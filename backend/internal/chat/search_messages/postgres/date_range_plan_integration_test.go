@@ -20,7 +20,7 @@ func TestDateFilteredUnifiedSearchPreservesPartialGINPlans(t *testing.T) {
 	from := time.Date(2026, 9, 25, 0, 0, 0, 0, time.UTC)
 	before := from.AddDate(0, 0, 1)
 	rows, err := connection.Query(t.Context(), "EXPLAIN (ANALYZE, BUFFERS, COSTS OFF) "+searchMessages,
-		fixture.actorID, nil, nil, "orbit", nil, nil, nil, nil, nil, 21, from, before)
+		fixture.actorID, nil, nil, "orbit", nil, nil, nil, nil, nil, 21, from, before, false)
 	if err != nil {
 		t.Fatal(err)
 	}

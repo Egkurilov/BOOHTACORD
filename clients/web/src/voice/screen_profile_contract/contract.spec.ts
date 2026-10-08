@@ -23,10 +23,10 @@ describe('screen-share contract v1', () => {
     expect(catalog.topologyPolicy.selectedVideoSubscriptionsPerViewer).toBe(1)
     expect(catalog.topologyPolicy.maximumLayers).toBe(2)
     expect(catalog.topologyPolicy.dynacastOwner).toBe('LiveKit/WebRTC SDK')
-    expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.web).toMatchObject({ simulcast: true, primaryLayers: { min: 1, max: 2 }, lowLayerMaxFps: 15, evidenceStatus: 'source-derived-unvalidated' })
+    expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.web).toMatchObject({ simulcast: false, primaryLayers: { min: 1, max: 1 }, lowLayerMaxFps: 15, evidenceStatus: 'source-derived-unvalidated' })
     expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.flutterAndroid).toMatchObject({ simulcast: false, primaryLayers: { min: 1, max: 1 }, evidenceStatus: 'source-derived-unvalidated' })
     expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.flutterIOS.defaultProfileId).toBe('P720_15')
-    expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.flutterDesktop.primaryLayers.max).toBe(2)
+    expect(catalog.topologyPolicy.currentSourceDerivedByRuntime.flutterDesktop.primaryLayers.max).toBe(1)
     expect(catalog.topologyPolicy.backupCodecEvidenceStatus).toBe('sfu-negotiated-unvalidated')
     expect(fixtures.schemaVersion).toBe(schema.properties.schema_version.const)
     expect(fixtures.descriptorCompatibility).toEqual([

@@ -26,10 +26,10 @@
     "selectedVideoSubscriptionsPerViewer": 1,
     "maximumLayers": 2,
     "currentSourceDerivedByRuntime": {
-      "web": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "lowLayerMaxFps": 15, "defaultProfileId": "P1080_30", "evidenceStatus": "source-derived-unvalidated" },
+      "web": { "simulcast": false, "primaryLayers": { "min": 1, "max": 1 }, "lowLayerMaxFps": 15, "defaultProfileId": "P1080_30", "evidenceStatus": "source-derived-unvalidated" },
       "flutterAndroid": { "simulcast": false, "primaryLayers": { "min": 1, "max": 1 }, "defaultProfileId": "P720_15", "evidenceStatus": "source-derived-unvalidated" },
-      "flutterIOS": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "defaultProfileId": "P720_15", "evidenceStatus": "source-derived-unvalidated" },
-      "flutterDesktop": { "simulcast": true, "primaryLayers": { "min": 1, "max": 2 }, "lowLayerMaxFps": 15, "defaultProfileId": "P1080_30", "evidenceStatus": "source-derived-unvalidated" }
+      "flutterIOS": { "simulcast": false, "primaryLayers": { "min": 1, "max": 1 }, "defaultProfileId": "P720_15", "evidenceStatus": "source-derived-unvalidated" },
+      "flutterDesktop": { "simulcast": false, "primaryLayers": { "min": 1, "max": 1 }, "lowLayerMaxFps": 15, "defaultProfileId": "P1080_30", "evidenceStatus": "source-derived-unvalidated" }
     },
     "backupCodecEvidenceStatus": "sfu-negotiated-unvalidated",
     "congestionControlOwner": "LiveKit/WebRTC SDK",

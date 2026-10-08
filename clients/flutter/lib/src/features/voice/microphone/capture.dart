@@ -4,6 +4,7 @@ import 'package:livekit_client/livekit_client.dart';
 
 import '../../../services/audio_preferences.dart';
 import '../lifecycle/controller.dart';
+import '../background_microphone/admission.dart';
 
 extension VoiceMicrophoneCapture on VoiceController {
   Future<bool> applyMicrophoneMuted(bool muted) {
@@ -26,19 +27,18 @@ extension VoiceMicrophoneCapture on VoiceController {
     final operation = audio.nativeNoise.run(() async {
       if (!current()) return false;
       try {
-        if (!muted) { await audio.prepareNoiseForCapture(); await audio.applyMicrophoneControls(); }
+        if (!muted) { await preflightBackgroundMicrophone(); await audio.prepareNoiseForCapture(); await audio.applyMicrophoneControls(); }
         if (!current()) return false;
         await audio.nativeNoise.reset();
         await participant?.setMicrophoneEnabled(
           !audio.microphoneMutedIntent,
           audioCaptureOptions: audio.captureOptions,
         );
+        if (current()) await promoteBackgroundMicrophone(participant);
         if (!current()) {
+          await microphoneForeground.stop();
           if (!muted) {
             try {
-              if (!muted) await audio.prepareNoiseForCapture();
-              if (!current()) return false;
-              await audio.nativeNoise.reset();
               await participant?.setMicrophoneEnabled(false);
             } catch (_) {}
           }
@@ -65,6 +65,7 @@ extension VoiceMicrophoneCapture on VoiceController {
         }
         return true;
       } catch (cause) {
+        await microphoneForeground.stop();
         if (current() && request == microphoneRevision) {
           microphoneMuted = true;
           if (!muted) microphoneUnavailable = true;

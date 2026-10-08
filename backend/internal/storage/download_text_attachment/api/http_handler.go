@@ -19,6 +19,12 @@ type Downloader interface {
 }
 
 func NewHandler(downloader Downloader) http.Handler {
+	return handler(downloader, false)
+}
+
+func NewArchiveHandler(downloader Downloader) http.Handler { return handler(downloader, true) }
+
+func handler(downloader Downloader, archive bool) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		writer.Header().Set("Cache-Control", "no-store")
 		principal, ok := sessionapi.PrincipalFrom(request.Context())
@@ -30,6 +36,7 @@ func NewHandler(downloader Downloader) http.Handler {
 			ActorID:      principal.AccountID,
 			ChannelID:    request.PathValue("channelID"),
 			AttachmentID: request.PathValue("attachmentID"),
+			ReadArchive:  archive,
 		})
 		if errors.Is(err, downloadtextattachment.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректный идентификатор вложения")

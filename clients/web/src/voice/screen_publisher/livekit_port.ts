@@ -4,8 +4,11 @@ import type { ScreenDiagnostics } from '../screen_diagnostics'
 import { screenCapturePlan, screenPublishPlan } from './plan'
 import type { ScreenProfile } from '../screen_profile/policy'
 import type { ScreenPublisherPort } from './types'
+import { screenMediaRollout } from '../screen_rollout/policy'
 
 export function bindLiveKitScreenPublisher(participant: LocalParticipant, diagnostics: () => Promise<ScreenDiagnostics>, adopt: (profile: ScreenProfile) => void, repair: (profile: ScreenProfile, action: () => Promise<void>, current: () => boolean) => Promise<boolean>) {
+  const rollout = screenMediaRollout()
+  const publicationPlan = (profile: ScreenProfile) => screenPublishPlan(profile, undefined, rollout.boundedSimulcast, rollout.codecPolicy)
   let generation = 0
   const expectedUnpublish = new WeakSet<LocalVideoTrack>(), ended = new Set<() => void>()
   const published = new Set<(track: LocalVideoTrack) => void>()
@@ -20,10 +23,10 @@ export function bindLiveKitScreenPublisher(participant: LocalParticipant, diagno
     generation: () => generation,
     isLive: track => track.mediaStreamTrack.readyState === 'live',
     currentTrack,
-    start: async profile => (await participant.setScreenShareEnabled(true, screenCapturePlan(profile), screenPublishPlan(profile)))?.videoTrack ?? currentTrack(),
+    start: async profile => (await participant.setScreenShareEnabled(true, screenCapturePlan(profile), publicationPlan(profile)))?.videoTrack ?? currentTrack(),
     capture: (track, profile) => applyScreenProfile(track, profile),
     unpublish,
-    publish: async (track, profile) => { await participant.publishTrack(track, { ...screenPublishPlan(profile), source: Track.Source.ScreenShare }) },
+    publish: async (track, profile) => { await participant.publishTrack(track, { ...publicationPlan(profile), source: Track.Source.ScreenShare }) },
     stop: async track => {
       let failure: unknown
       const published = currentTrack(), staleTrack = Boolean(track && published && published !== track)
@@ -44,7 +47,7 @@ export function bindLiveKitScreenPublisher(participant: LocalParticipant, diagno
       await applyScreenProfile(track, profile)
       await unpublish(track, false)
       if (!current()) throw new Error('Операция восстановления отменена.')
-      await participant.publishTrack(track, { ...screenPublishPlan(profile), source: Track.Source.ScreenShare })
+      await participant.publishTrack(track, { ...publicationPlan(profile), source: Track.Source.ScreenShare })
       if (currentTrack() !== track) throw new Error('LiveKit не подтвердил восстановленную публикацию.')
     }, current),
     onEnded: listener => { ended.add(listener); return () => ended.delete(listener) },

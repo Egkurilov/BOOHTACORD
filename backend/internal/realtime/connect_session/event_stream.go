@@ -79,7 +79,7 @@ func streamEvents(connection *websocket.Conn, authenticator sessionapi.Authentic
 
 func isPrivateDirectMessageEvent(kind string) bool {
 	switch kind {
-	case "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted":
+	case "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted", "direct_message.reactions_updated":
 		return true
 	default:
 		return false

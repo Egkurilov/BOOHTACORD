@@ -28,7 +28,12 @@ func New(database Database) Repository { return Repository{database: database} }
 func (repository Repository) Search(ctx context.Context, request searchmessages.Request) ([]searchmessages.Message, error) {
 	if request.ChannelID != "" {
 		var available bool
-		if err := repository.database.QueryRow(ctx, searchableChannel, request.ChannelID).Scan(&available); err != nil {
+		query, arguments := searchableChannel, []any{request.ChannelID}
+		if request.ReadArchive {
+			query = `SELECT EXISTS(SELECT 1 FROM channels JOIN users ON users.id=$2 WHERE channels.id=$1 AND channels.kind='TEXT' AND channels.archived_at IS NOT NULL AND channels.readonly_archive AND users.blocked_at IS NULL)`
+			arguments = append(arguments, request.ActorID)
+		}
+		if err := repository.database.QueryRow(ctx, query, arguments...).Scan(&available); err != nil {
 			return nil, fmt.Errorf("select searchable channel: %w", err)
 		}
 		if !available {
@@ -47,7 +52,7 @@ func (repository Repository) Search(ctx context.Context, request searchmessages.
 	if request.Before != nil {
 		beforeAt, beforeID, beforeKind = request.Before.CreatedAt, request.Before.ID, request.Before.Kind
 	}
-	rows, err := repository.database.Query(ctx, searchMessages, request.ActorID, nullable(request.ChannelID), nullable(request.DirectMessageID), request.Query, nullable(request.AuthorID), nullableBool(request.HasAttachment), beforeAt, beforeID, beforeKind, request.Limit+1, request.CreatedFrom, request.CreatedBefore)
+	rows, err := repository.database.Query(ctx, searchMessages, request.ActorID, nullable(request.ChannelID), nullable(request.DirectMessageID), request.Query, nullable(request.AuthorID), nullableBool(request.HasAttachment), beforeAt, beforeID, beforeKind, request.Limit+1, request.CreatedFrom, request.CreatedBefore, request.ReadArchive)
 	if err != nil {
 		return nil, fmt.Errorf("search messages: %w", err)
 	}

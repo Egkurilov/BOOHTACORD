@@ -1,0 +1,274 @@
+{
+  "source": "b7a0582cc0a4d829d40665e0654a2eb097fd214f",
+  "host": "owned hidden Windows Flutter embedder",
+  "eventPath": "LiveWidgetController pointer + synthesized PlatformDispatcher KeyData framework events",
+  "nativeResize": true,
+  "visible": false,
+  "devicePixelRatio": 1.5,
+  "cases": [
+    {
+      "width": 390.0,
+      "height": 900.0,
+      "scale": 1.0,
+      "desktopMenu": false,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 390,
+        "height": 600,
+        "bytes": 936000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 48.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    },
+    {
+      "width": 390.0,
+      "height": 900.0,
+      "scale": 1.3,
+      "desktopMenu": false,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 390,
+        "height": 600,
+        "bytes": 936000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 48.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    },
+    {
+      "width": 390.0,
+      "height": 900.0,
+      "scale": 2.0,
+      "desktopMenu": false,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 390,
+        "height": 600,
+        "bytes": 936000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 48.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    },
+    {
+      "width": 600.0,
+      "height": 900.0,
+      "scale": 1.0,
+      "desktopMenu": false,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 600,
+        "height": 600,
+        "bytes": 1440000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 48.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    },
+    {
+      "width": 599.3333333333334,
+      "height": 900.0,
+      "scale": 1.3,
+      "desktopMenu": false,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 600,
+        "height": 600,
+        "bytes": 1440000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 48.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    },
+    {
+      "width": 600.0,
+      "height": 900.0,
+      "scale": 2.0,
+      "desktopMenu": false,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 600,
+        "height": 600,
+        "bytes": 1440000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 48.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    },
+    {
+      "width": 1440.0,
+      "height": 900.0,
+      "scale": 1.0,
+      "desktopMenu": true,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 1440,
+        "height": 600,
+        "bytes": 3456000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 44.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    },
+    {
+      "width": 1440.0,
+      "height": 900.0,
+      "scale": 1.3,
+      "desktopMenu": false,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 1440,
+        "height": 600,
+        "bytes": 3456000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 48.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    },
+    {
+      "width": 1440.0,
+      "height": 900.0,
+      "scale": 2.0,
+      "desktopMenu": false,
+      "getRequests": 1,
+      "writes": 0,
+      "raster": {
+        "width": 1440,
+        "height": 600,
+        "bytes": 3456000
+      },
+      "grantTargetHeight": 48.0,
+      "confirmationTargetHeight": 48.0,
+      "adminTriggerHeight": 48.0,
+      "timeoutTargetHeights": {
+        "grant": 48.0,
+        "lift": 48.0,
+        "refresh": 48.0,
+        "close": 48.0,
+        "confirm": 48.0,
+        "cancel": 48.0
+      },
+      "densityHorizontal": -2.0,
+      "densityVertical": -2.0,
+      "platform": "windows",
+      "touchTargetsStatus": "PASS",
+      "status": "PASS"
+    }
+  ],
+  "frameworkErrors": [],
+  "failure": null,
+  "status": "PASS"
+}

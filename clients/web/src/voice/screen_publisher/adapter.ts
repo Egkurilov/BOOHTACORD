@@ -17,6 +17,7 @@ export class ScreenPublisherAdapter<T> implements ScreenPublisherOperations<T> {
   private stopPublished?: () => void
   constructor(private readonly current: () => ScreenPublisherScope<T> | null) {}
   get currentRevision(): number { return this.revision }
+  get busy(): boolean { return Boolean(this.running || this.pending) }
   get stopping(): boolean { return this.intent === 'stop' }
 
   start(profile: ScreenProfile): Promise<ScreenDiagnostics> {

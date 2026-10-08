@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'controller.dart';
+import '../social_hints/hints.dart';
 
 extension RealtimeEvents on RealtimeController {
   void receive(dynamic raw) {
@@ -19,6 +20,8 @@ extension RealtimeEvents on RealtimeController {
         handshake?.finish('success');
         handshake = null;
       }
+      final socialEvent = RealtimeEvent(eventId, kind, payload);
+      if (SocialHints.forTransport(api.transport).receive(socialEvent)) return;
       dispatch(
         RealtimeEvent(
           eventId,

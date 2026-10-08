@@ -20,7 +20,7 @@ const (
 func TestRepositoryFindsOnlyAttachmentLinkedToCurrentNonDeletedTextMessage(t *testing.T) {
 	database := &fakeDatabase{row: fakeRow{metadata: downloadtextattachment.Metadata{OriginalName: "game-log.svg", StorageKey: storageKey, SizeBytes: 10}}}
 	metadata, err := New(database).Find(context.Background(), downloadtextattachment.Input{ActorID: actorID, ChannelID: channelID, AttachmentID: attachmentID})
-	if err != nil || metadata.OriginalName != "game-log.svg" || len(database.arguments) != 3 || database.arguments[0] != actorID || database.arguments[1] != channelID || database.arguments[2] != attachmentID {
+	if err != nil || metadata.OriginalName != "game-log.svg" || len(database.arguments) != 4 || database.arguments[3] != false || database.arguments[0] != actorID || database.arguments[1] != channelID || database.arguments[2] != attachmentID {
 		t.Fatalf("metadata = %#v, arguments = %#v, error = %v", metadata, database.arguments, err)
 	}
 	for _, fragment := range []string{

@@ -1,0 +1,14 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Readonly archives</title><div id="app"></div>
+<script type="module">
+import { createApp, h, ref } from 'vue'
+import { createPinia } from 'pinia'
+import SearchPanel from '/src/search/SearchPanel.vue'
+import { clearAuthenticatedState } from '/src/identity/clear_authenticated_state.ts'
+import '/src/style.css'
+const open=ref(true), pinia=createPinia()
+createApp({render:()=>h('main',[
+  h('button',{onClick:()=>{open.value=true}},'Открыть поиск'),
+  h('button',{onClick:()=>{open.value=false;clearAuthenticatedState(pinia)}},'Завершить сессию'),
+  open.value?h(SearchPanel,{currentConversation:null,channelLabels:{},directMessageLabels:{},onClose:()=>{open.value=false}}):null,
+])}).use(pinia).mount('#app')
+</script></html>

@@ -68,8 +68,8 @@ void main() {
       'defaultProfileId': 'P720_15',
       'evidenceStatus': 'source-derived-unvalidated',
     });
-    expect(runtime['flutterIOS']['simulcast'], isTrue);
-    expect(runtime['flutterDesktop']['primaryLayers'], {'min': 1, 'max': 2});
+    expect(runtime['flutterIOS']['simulcast'], isFalse);
+    expect(runtime['flutterDesktop']['primaryLayers'], {'min': 1, 'max': 1});
     expect(
       catalog['topologyPolicy']['backupCodecEvidenceStatus'],
       'sfu-negotiated-unvalidated',

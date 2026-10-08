@@ -3,6 +3,16 @@
 This local fork is based on `flutter_webrtc 1.6.2+hotfix.3`. Keep these changes
 when rebasing or restoring the package from pub.dev.
 
+## macOS lazy factory readiness
+
+`ensurePeerConnectionFactoryReady` now exercises the Mac lazy ADM path with an
+empty local PeerConnection, then closes and disposes it before readiness. Normal
+initialize alone is insufficient. No Room, SDP, ICE servers, tracks or capture
+are created. Single-flight success and retryable failure are covered at the real
+MethodChannel boundary in `test/unit/macos_factory_readiness_test.dart`.
+Other platforms keep their prior initialization. See ADR025; physical Mac QA184
+remains required for actual endpoint inventory, privacy, hotplug and selection.
+
 ## Android MediaProjection track settings
 
 `GetUserMediaImpl.getDisplayMedia` includes the actual display width, height,

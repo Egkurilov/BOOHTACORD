@@ -5,16 +5,25 @@ import { tracedOperation } from '../telemetry/client_tracing'
 import { activeAction } from '../telemetry/action_scope/scope'
 import { ScreenPublisherAdapter } from './screen_publisher/adapter'
 import type { ScreenPublisherScope } from './screen_publisher/types'
+import { ScreenAdaptationBinding } from './screen_adaptation/runtime_apply/binding'
+import type { AdaptationRuntimeOptions } from './screen_adaptation/runtime_apply/types'
 
 export interface ScreenVoiceSession { room: VoiceRoom; screenProfile: ScreenProfile | null }
-
 export class VoiceScreenSession {
   private stopEnded?: () => void
   private watchedRoom?: VoiceRoom
   private repairTimer?: ReturnType<typeof setTimeout>
   private repairGeneration = 0
   private readonly publisher = new ScreenPublisherAdapter<LocalVideoTrack>(() => this.scope())
-  constructor(private readonly current: () => ScreenVoiceSession | null) {}
+  private readonly adaptation: ScreenAdaptationBinding<LocalVideoTrack>
+  constructor(private readonly current: () => ScreenVoiceSession | null, adaptation: AdaptationRuntimeOptions = {}) {
+    this.adaptation = new ScreenAdaptationBinding(this.publisher, adaptation, async profile => {
+      const session = this.current()
+      if (!session || session !== this.publisher.active?.scope.owner) return
+      session.screenProfile = profile; this.scheduleRepairWatchdog(session, profile)
+      await session.room.publishScreenProfileMetadata?.(profile).catch(() => undefined)
+    })
+  }
 
   async startScreen(profile: ScreenProfile): Promise<ScreenDiagnostics> {
     return tracedOperation('screen.share.start', async (within) => {
@@ -30,6 +39,7 @@ export class VoiceScreenSession {
   async stopScreen(): Promise<void> {
     return tracedOperation('screen.share.stop', async () => {
       const current = this.current()
+      this.adaptation.reset()
       this.cancelRepairWatchdog()
       try { await this.publisher.stop() } finally { await current?.room.clearScreenProfileMetadata?.().catch(() => undefined) }
       current?.room.stopScreenProfileChecks?.()
@@ -55,9 +65,10 @@ export class VoiceScreenSession {
   async readScreenDiagnostics(): Promise<ScreenDiagnostics> {
     const current = this.current()
     if (!current || !current.screenProfile) throw new Error('Демонстрация экрана не запущена.')
-    return readScreenShareDiagnostics(current.room)
+    return this.adaptation.read(() => readScreenShareDiagnostics(current.room))
   }
   cancel(): void {
+    this.adaptation.reset()
     this.cancelRepairWatchdog()
     this.publisher.cancel()
     const current = this.current(); if (current) current.screenProfile = null

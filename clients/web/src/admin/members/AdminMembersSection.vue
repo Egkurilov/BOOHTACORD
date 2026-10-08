@@ -7,6 +7,7 @@ import { avatarBackground, avatarForeground } from '../../design/avatar_color'
 import { avatarInitials } from '../../design/avatar_initials'
 import { restoreAdminSaveFocus } from './admin_member_save_focus'
 import { copyAdminResetLink } from './admin_reset_link_copy'
+import VoiceTimeoutControl from '../voice_timeout/VoiceTimeoutControl.vue'
 
 const accounts = ref<AdminAccount[]>([]); const cursor = ref<string | undefined>(); const loading = ref(false); const busyID = ref('')
 const error = ref<string | null>(null); const status = ref<string | null>(null)
@@ -57,7 +58,7 @@ onMounted(() => { void load() })
           <td><span class="admin-account-user"><span class="admin-account-avatar" :style="{ backgroundColor: avatarBackground(account.account_id), color: avatarForeground(account.account_id) }">{{ avatarInitials(account.display_name) }}</span><span><strong>{{ account.display_name }}</strong><small>@{{ account.login }}</small></span></span></td>
           <td>{{ account.role === 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь' }}</td>
           <td><span class="admin-account-status" :class="account.blocked ? 'is-blocked' : 'is-active'">{{ account.blocked ? 'Заблокирован' : 'Активен' }}</span></td>
-          <td class="admin-account-actions"><button type="button" :aria-label="`Действия с участником ${account.display_name}`" :aria-expanded="activeActionsID === account.account_id" @click="activeActionsID = activeActionsID === account.account_id ? '' : account.account_id">⋯</button><div v-if="activeActionsID === account.account_id" class="admin-account-actions-menu"><label>Роль<select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></label><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сохранить изменения для ${account.login}`" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сбросить пароль для ${account.login}`" @click="createReset(account, $event)">Сбросить пароль</button></div></td>
+          <td class="admin-account-actions"><button type="button" :aria-label="`Действия с участником ${account.display_name}`" :aria-expanded="activeActionsID === account.account_id" @click="activeActionsID = activeActionsID === account.account_id ? '' : account.account_id">⋯</button><div v-if="activeActionsID === account.account_id" class="admin-account-actions-menu"><label>Роль<select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></label><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сохранить изменения для ${account.login}`" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сбросить пароль для ${account.login}`" @click="createReset(account, $event)">Сбросить пароль</button><VoiceTimeoutControl :key="`timeout-desktop-${account.account_id}`" :account-id="account.account_id" :login="account.login" /></div></td>
         </tr>
       </tbody></table>
     </div>
@@ -69,6 +70,7 @@ onMounted(() => { void load() })
           <label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label>
           <div class="admin-mobile-actions"><button type="button" :disabled="busyID === account.account_id" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" @click="createReset(account, $event)">Сбросить пароль</button></div>
         </div>
+        <VoiceTimeoutControl :key="`timeout-mobile-${account.account_id}`" :account-id="account.account_id" :login="account.login" />
       </details>
     </div>
     <section v-if="resetLink" ref="resetResult" class="admin-reset-result" role="dialog" aria-modal="false" aria-labelledby="reset-link-title" @keydown.esc.stop.prevent="closeReset">

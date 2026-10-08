@@ -5,6 +5,7 @@ import 'dart:ui' show SemanticsRole, Tristate;
 
 import 'package:boohtacord_desktop/src/app.dart';
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/features/voice/roster_state/phase.dart';
 import 'package:boohtacord_desktop/src/features/authorization/permissions/model.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/workspace_screen.dart';
@@ -1658,7 +1659,7 @@ void main() {
       ..notifyListeners();
     await tester.pump();
     final errorStatus = find.text(
-      'Не удалось обновить состав комнаты. Повторяем попытку.',
+      'Не удалось обновить состав комнаты.',
     );
     expect(errorStatus, findsOneWidget);
     expect(find.text('Голосовой канал · состав недоступен'), findsOneWidget);
@@ -1671,8 +1672,10 @@ void main() {
       ..voiceRosterError = null
       ..voiceRosters = const [
         VoiceRoomRoster(channelId: 'voice-1', participants: []),
-      ]
-      ..notifyListeners();
+      ];
+    // This synthetic assignment represents a newly accepted roster snapshot.
+    state.voiceRoster.phase = VoiceRosterPhase.fresh;
+    state.notifyListeners();
     await tester.pump();
     expect(find.text('Голосовой канал · пока пусто'), findsOneWidget);
 
@@ -1851,7 +1854,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Сейчас в канале: 1'), findsOneWidget);
+    expect(find.text('Последний состав: 1'), findsOneWidget);
     expect(find.text('Мика'), findsNWidgets(2));
     expect(find.byTooltip('Показывает экран'), findsNWidgets(2));
     expect(find.text('Идёт трансляция'), findsOneWidget);

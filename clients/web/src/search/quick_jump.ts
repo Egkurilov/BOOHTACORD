@@ -1,6 +1,6 @@
 export interface QuickJumpChannel { id: string; name: string; kind: 'TEXT' | 'VOICE' }
-export interface QuickJumpPerson { id: string; displayName: string }
-export interface QuickJumpTarget { kind: 'CHANNEL' | 'DIRECT_MESSAGE'; id: string }
+export interface QuickJumpPerson { id: string; displayName: string; kind?: 'DIRECT_MESSAGE' | 'MEMBER' }
+export interface QuickJumpTarget { kind: 'CHANNEL' | 'DIRECT_MESSAGE' | 'MEMBER'; id: string }
 export interface QuickJumpEntry {
   kind: QuickJumpTarget['kind']
   id: QuickJumpTarget['id']
@@ -15,7 +15,8 @@ export function buildQuickJumpEntries(query: string, channels: readonly QuickJum
     kind: 'CHANNEL' as const, id: channel.id, title: `#${channel.name}`, subtitle: 'Текстовый канал',
   }))
   const directMessages = people.filter((person) => matches(person.displayName)).map((person) => ({
-    kind: 'DIRECT_MESSAGE' as const, id: person.id, title: person.displayName, subtitle: 'Личное сообщение',
+    kind: person.kind ?? 'DIRECT_MESSAGE' as const, id: person.id, title: person.displayName,
+    subtitle: person.kind === 'MEMBER' ? 'Участник гильдии' : 'Личное сообщение',
   }))
   return [...rooms, ...directMessages].slice(0, 30)
 }

@@ -47,7 +47,7 @@ export const useNotificationStore = defineStore('notifications', () => {
   function start(accountID: string, runtime?: NotificationRuntime): void {
     stop()
     const port=runtime ?? browserNotificationRuntime()
-    delivery = createNotificationDelivery(accountID, port)
+    delivery = createNotificationDelivery(accountID, port, () => guildProfile.name.value)
     conversations=createConversationNotificationController(accountID,port,()=>{preferencesRevision.value++})
     preferencesRevision.value++
     refreshStatus()

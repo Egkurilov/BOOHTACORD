@@ -1,5 +1,14 @@
 package eventhub
 
+func (subscription *Subscription) AllowsKind(kind string) bool {
+	capability := requiredCapability(kind)
+	if capability == "" {
+		return true
+	}
+	_, supported := subscription.capabilities[capability]
+	return supported
+}
+
 func (hub *Hub) SubscribeAccountWithCapabilities(accountID string, onlineEvent Event, capabilities []string) *Subscription {
 	set := make(map[string]struct{}, len(capabilities))
 	for _, capability := range capabilities {

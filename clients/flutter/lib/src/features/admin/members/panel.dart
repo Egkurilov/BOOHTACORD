@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme.dart';
+import 'layout/presentation.dart';
 
 /// Members presentation entry point. Account drafts and actions remain owned
 /// by the screen controller; this widget only arranges the responsive surface.
@@ -45,93 +45,5 @@ class AdminMembersPanel extends StatelessWidget {
   final VoidCallback onLoadMore;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Padding(
-        padding: headerPadding,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Участники $accountsCount',
-                    key: const ValueKey('admin-members-section-title'),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      height: 28 / 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Text(
-                    'Роли и доступ к этой гильдии',
-                    style: TextStyle(
-                      color: GcColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            TextButton.icon(
-              onPressed: loading ? null : onRefresh,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Обновить'),
-            ),
-          ],
-        ),
-      ),
-      filters,
-      if (loading && accountsEmpty)
-        loadingState
-      else if (!loading && accountsEmpty && error == null)
-        const Expanded(child: Center(child: Text('Участников пока нет.')))
-      else
-        Expanded(
-          child: ListView(
-            key: ValueKey('admin-member-list:$search:$roleFilter'),
-            padding: listPadding,
-            children: [
-              ?resetCard,
-              ...conflictCards,
-              if (!accountsEmpty && accountCards.isEmpty)
-                const Text('По запросу участники не найдены.'),
-              ...accountCards,
-              if (loading) const Center(child: CircularProgressIndicator()),
-              if (cursor != null)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: loading ? null : onLoadMore,
-                    child: const Text('Загрузить ещё'),
-                  ),
-                ),
-              if (status != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      status!,
-                      style: const TextStyle(color: GcColors.success),
-                    ),
-                  ),
-                ),
-              if (error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      error!,
-                      style: const TextStyle(color: GcColors.danger),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-    ],
-  );
+  Widget build(BuildContext context) => renderMembers(context);
 }

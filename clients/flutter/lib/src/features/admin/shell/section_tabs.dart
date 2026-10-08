@@ -3,6 +3,7 @@ import 'dart:ui' show SemanticsRole;
 import 'package:flutter/material.dart';
 
 import '../../../theme.dart';
+import 'tab_control/control.dart';
 
 enum AdminSection { members, roles, channels, audit, media, guild, readiness }
 
@@ -29,43 +30,12 @@ class AdminSectionTabs extends StatelessWidget {
   final VoidCallback? onRefreshChannels;
   final bool refreshDisabled;
 
-  Widget _tab(String label, AdminSection section) {
-    final selected = selectedSection == section;
-    return Semantics(
-      key: ValueKey('admin-section-tab-${section.name}'),
-      button: true,
-      selected: selected,
-      role: SemanticsRole.tab,
-      onTap: () => onSelected(section),
-      child: ExcludeSemantics(
-        child: InkWell(
-          onTap: () => onSelected(section),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: selected ? GcColors.accent : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? GcColors.text : GcColors.textSecondary,
-                fontSize: 14,
-                height: 20 / 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _tab(String label, AdminSection section) => AdminTabControl(
+    label: label,
+    section: section.name,
+    selected: selectedSection == section,
+    onSelected: () => onSelected(section),
+  );
 
   @override
   Widget build(BuildContext context) => SizedBox(

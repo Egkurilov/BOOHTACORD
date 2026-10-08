@@ -41,8 +41,11 @@ func seedRussianCorpus(t *testing.T, fixture searchFixture, ctx context.Context,
 	for _, document := range corpus.Documents {
 		insert(document.ID, document.Body)
 	}
-	for index := 0; index < 5000; index++ {
-		insert(fmt.Sprintf("noise-%05d", index), fmt.Sprintf("техническая запись индекса номер %d без целевых терминов", index))
+	if _, err := fixture.pool.Exec(ctx, `INSERT INTO imp17_corpus (id, body)
+ SELECT 'noise-' || lpad(i::text, 5, '0'),
+ 'техническая запись индекса номер ' || i::text || ' без целевых терминов'
+ FROM generate_series(0, 4999) AS noise(i)`); err != nil {
+		t.Fatal("seed synthetic noise:", err)
 	}
 }
 

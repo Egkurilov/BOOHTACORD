@@ -1,6 +1,7 @@
 import { VideoPreset, type ScreenShareCaptureOptions, type TrackPublishOptions } from 'livekit-client'
 import { screenProfile, type ScreenProfile } from '../screen_profile/policy'
 import { browserScreenCodecCapabilities, selectScreenVideoCodec, type ScreenCodecCapability } from './codec_policy'
+import { screenMediaRollout } from '../screen_rollout/policy'
 
 export function screenCapturePlan(profile: ScreenProfile): ScreenShareCaptureOptions {
   const target = screenProfile(profile)
@@ -8,17 +9,15 @@ export function screenCapturePlan(profile: ScreenProfile): ScreenShareCaptureOpt
     resolution: { width: target.width, height: target.height, frameRate: target.frameRate } }
 }
 
-function boundedSimulcastEnabled(): boolean {
-  return import.meta.env.VITE_SCREEN_SHARE_BOUNDED_SIMULCAST === 'true'
-}
-
 export function screenPublishPlan(
   profile: ScreenProfile,
   capabilities: readonly ScreenCodecCapability[] | null | undefined = browserScreenCodecCapabilities(),
-  simulcastEnabled = boundedSimulcastEnabled(),
+  simulcastEnabled = screenMediaRollout().boundedSimulcast,
+  codecPolicyEnabled = screenMediaRollout().codecPolicy,
 ): TrackPublishOptions {
   const target = screenProfile(profile)
-  const decision = selectScreenVideoCodec(capabilities)
+  const decision = selectScreenVideoCodec(codecPolicyEnabled || capabilities == null ? capabilities
+    : capabilities.filter(codec => codec.mimeType.trim().toLowerCase() === 'video/vp8'))
   if (decision.outcome === 'unsupported') {
     throw new Error('No supported screen-sharing video codec is advertised by browser capabilities.')
   }

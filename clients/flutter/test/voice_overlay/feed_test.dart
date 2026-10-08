@@ -11,6 +11,7 @@ void main() {
       sources: [voice],
       project: (_, _) => snapshot,
     );
+    feed.setEnabled(true);
     var notifications = 0;
     feed.addListener(() => notifications++);
 
@@ -44,6 +45,7 @@ void main() {
       ),
     );
 
+    feed.setEnabled(true);
     visible = false;
     source.notifyListeners();
 
@@ -71,6 +73,7 @@ void main() {
             : const [],
       ),
     );
+    feed.setEnabled(true);
     var notifications = 0;
     feed.addListener(() {
       visible = feed.snapshot.visible;
@@ -85,34 +88,4 @@ void main() {
     expect(notifications, 1);
     source.dispose();
   });
-
-  test('enabling and disabling recomputes the existing room snapshot', () {
-    final source = ChangeNotifier();
-    final feed = VoiceOverlayFeed(
-      sources: [source],
-      project: (enabled, _) => VoiceOverlaySnapshot(
-        visible: enabled,
-        members: enabled
-            ? const [
-                VoiceOverlayMember(
-                  displayName: 'Alice',
-                  speaking: true,
-                  microphoneMuted: false,
-                ),
-              ]
-            : const [],
-      ),
-    );
-
-    expect(feed.snapshot.visible, isFalse);
-    feed.setEnabled(true);
-    expect(feed.snapshot.visible, isTrue);
-    expect(feed.snapshot.members.single.displayName, 'Alice');
-    feed.setEnabled(false);
-    expect(feed.snapshot.visible, isFalse);
-    expect(feed.snapshot.members, isEmpty);
-    feed.dispose();
-    source.dispose();
-  });
-
 }

@@ -63,6 +63,9 @@ func TestRunExecutesEmbeddedMigrations(t *testing.T) {
 		{"ALTER TABLE voice_sfu_revocations ADD COLUMN IF NOT EXISTS trace_cause", "ALTER TABLE realtime_events ADD COLUMN IF NOT EXISTS trace_cause", "voice_trace_cause_bounded", "event_trace_cause_bounded"},
 		{"screen_profile_operation_revision BIGINT NOT NULL DEFAULT 0", "screen_profile_operation_hash BYTEA", "octet_length(screen_profile_operation_hash) = 32"},
 		{"ADD COLUMN IF NOT EXISTS profile_revision BIGINT NOT NULL DEFAULT 1", "CHECK (profile_revision > 0)"},
+		{"ADD COLUMN IF NOT EXISTS readonly_archive", "DEFAULT FALSE", "channels_readonly_archive_state", "kind='TEXT' AND archived_at IS NOT NULL"},
+		{"CREATE TABLE IF NOT EXISTS voice_timeouts", "enforce_voice_timeout_on_lease", "voice_timeout_lease_guard", "ERRCODE='42501'"},
+		{"CREATE TABLE IF NOT EXISTS text_message_reactions", "CREATE TABLE IF NOT EXISTS direct_message_reactions", "CREATE TABLE IF NOT EXISTS text_message_pins", "clear_text_message_social", "clear_direct_message_social"},
 	}
 	if len(executor.statements) != len(expected) {
 		t.Fatalf("migration count = %d", len(executor.statements))

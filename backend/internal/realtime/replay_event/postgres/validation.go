@@ -17,7 +17,12 @@ func validateHint(event eventhub.Event, recipients []string) error {
 	}
 	var required []string
 	private := false
+	strict := false
 	switch event.Kind {
+	case "message.reactions_updated", "message.pins_updated":
+		required, strict = []string{"channel_id", "message_id"}, true
+	case "direct_message.reactions_updated":
+		required, private, strict = []string{"direct_message_id", "message_id"}, true, true
 	case "message.created", "message.updated", "message.deleted":
 		required = []string{"channel_id", "message_id"}
 	case "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted":
@@ -31,7 +36,7 @@ func validateHint(event eventhub.Event, recipients []string) error {
 	default:
 		return ErrInvalidHint
 	}
-	if len(recipients) > 0 != private || len(event.Payload) < len(required) || len(event.Payload) > len(required)+1 {
+	if len(recipients) > 0 != private || len(event.Payload) < len(required) || len(event.Payload) > len(required)+1 || strict && len(event.Payload) != len(required) {
 		return ErrInvalidHint
 	}
 	for _, accountID := range recipients {
@@ -88,17 +93,4 @@ func validateHint(event eventhub.Event, recipients []string) error {
 		}
 	}
 	return nil
-}
-
-func allowedReason(value any) bool {
-	reason, ok := value.(string)
-	if !ok {
-		return false
-	}
-	switch reason {
-	case "TRANSFER", "KICK", "CHANNEL_CLOSED", "SESSION_REVOKED", "BANNED", "LOGOUT", "VOLUNTARY_LEAVE":
-		return true
-	default:
-		return false
-	}
 }

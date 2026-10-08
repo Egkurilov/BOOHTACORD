@@ -13,6 +13,7 @@ var (
 	ErrVoiceChannelUnavailable = errors.New("voice channel unavailable")
 	ErrSessionUnavailable      = errors.New("voice session unavailable")
 	ErrActiveLease             = errors.New("active voice lease exists")
+	ErrVoiceTimeout            = errors.New("voice temporarily restricted")
 )
 
 type Input struct {
@@ -54,7 +55,7 @@ func (service Service) Acquire(context context.Context, input Input) (result Res
 	if errors.Is(err, ErrActiveLease) {
 		return result, ErrActiveLease
 	}
-	if errors.Is(err, ErrVoiceChannelUnavailable) || errors.Is(err, ErrSessionUnavailable) {
+	if errors.Is(err, ErrVoiceChannelUnavailable) || errors.Is(err, ErrSessionUnavailable) || errors.Is(err, ErrVoiceTimeout) {
 		return Result{}, err
 	}
 	if err != nil {

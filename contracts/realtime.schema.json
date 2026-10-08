@@ -9,7 +9,7 @@
     "event_id": { "type": "string", "format": "uuid" },
     "kind": {
       "type": "string",
-      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "guild.profile.updated", "member.profile.updated", "presence.snapshot", "presence.changed", "message.created", "message.updated", "message.deleted", "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted", "role.permissions.updated", "auth.permissions.invalidated", "session.state_changed", "screen_preview.updated", "screen_preview.invalidated"]
+      "enum": ["connection.ready", "connection.resync_required", "voice.lease_revoked", "channel.updated", "guild.profile.updated", "member.profile.updated", "presence.snapshot", "presence.changed", "message.created", "message.updated", "message.deleted", "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted", "role.permissions.updated", "auth.permissions.invalidated", "session.state_changed", "screen_preview.updated", "screen_preview.invalidated", "message.reactions_updated", "message.pins_updated", "direct_message.reactions_updated"]
     },
     "occurred_at": { "type": "string", "format": "date-time" },
     "payload": { "type": "object" },
@@ -218,6 +218,8 @@
           }
         }
       }
-    }
+    },
+    {"if": {"properties": {"kind": {"enum": ["message.reactions_updated","message.pins_updated"]}},"required": ["kind"]},"then": {"properties": {"payload": {"type": "object","additionalProperties": false,"required": ["channel_id","message_id"],"properties": {"channel_id": {"type": "string","format": "uuid"},"message_id": {"type": "string","format": "uuid"}}}}}},
+    {"if": {"properties": {"kind": {"enum": ["direct_message.reactions_updated"]}},"required": ["kind"]},"then": {"properties": {"payload": {"type": "object","additionalProperties": false,"required": ["direct_message_id","message_id"],"properties": {"direct_message_id": {"type": "string","format": "uuid"},"message_id": {"type": "string","format": "uuid"}}}}}}
   ]
 }

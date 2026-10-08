@@ -8,6 +8,9 @@ import SearchResultBody from './SearchResultBody.vue'
 import SearchFilters from './filters/SearchFilters.vue'
 import { useSearchFilters } from './filters/state'
 import { searchDateRange, type SearchDateRange } from './filters/date_range'
+import ArchivePanel from '../channel/readonly_archive/ArchivePanel.vue'
+import PinPanel from '../conversation/pins/PinPanel.vue'
+import { useSearchTargetStore } from './search_target_store'
 import PersonalMentionsPanel from './PersonalMentionsPanel.vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { searchMessages, type SearchMessage } from './search_messages_client'
@@ -16,7 +19,9 @@ import type { MentionInboxItem } from './mentions_inbox_client'
 interface SearchConversation { id: string; kind: 'CHANNEL' | 'DIRECT_MESSAGE'; label: string }
 const props = defineProps<{ currentConversation: SearchConversation | null; channelLabels: Record<string, string>; directMessageLabels: Record<string, string> }>()
 const emit = defineEmits<{ open: [message: SearchMessage]; openMention: [mention: MentionInboxItem]; close: [] }>()
-const activeView = ref<'messages' | 'mentions'>('messages')
+const activeView = ref<'messages' | 'mentions' | 'archives' | 'pins'>('messages')
+const searchTarget = useSearchTargetStore()
+watch(()=>props.currentConversation,value=>{if(activeView.value==='pins'&&value?.kind!=='CHANNEL')activeView.value='messages'})
 const filters = useSearchFilters()
 const query = ref('')
 const scope = ref<'all' | 'current'>('all')
@@ -71,12 +76,16 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
 
 <template>
   <section class="search-panel" aria-labelledby="search-panel-title" data-testid="search-panel">
-    <header class="search-panel-heading"><h1 id="search-panel-title">{{ activeView === 'messages' ? 'Поиск сообщений' : 'Упоминания' }}</h1><button class="search-close" type="button" aria-label="Закрыть поиск" @click="emit('close')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg></button></header>
+    <header class="search-panel-heading"><h1 id="search-panel-title">{{ activeView === 'messages' ? 'Поиск сообщений' : activeView === 'archives' ? 'Архив' : activeView==='pins'?'Закреплённые':'Упоминания' }}</h1><button class="search-close" type="button" aria-label="Закрыть поиск" @click="emit('close')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" /></svg></button></header>
     <div class="search-view-tabs" role="group" aria-label="Поиск и упоминания">
       <button id="search-messages-tab" type="button" :aria-pressed="activeView === 'messages'" aria-controls="search-messages-view" @click="activeView = 'messages'">Сообщения</button>
       <button id="search-mentions-tab" type="button" :aria-pressed="activeView === 'mentions'" aria-controls="search-mentions-view" @click="activeView = 'mentions'">Упоминания</button>
+      <button type="button" :aria-pressed="activeView === 'archives'" @click="activeView = 'archives'">Архив</button>
+      <button v-if="currentConversation?.kind==='CHANNEL'" type="button" :aria-pressed="activeView==='pins'" @click="activeView='pins'">Закреплённые</button>
     </div>
-    <div v-if="activeView === 'mentions'" id="search-mentions-view" role="region" aria-label="Упоминания">
+    <PinPanel v-if="activeView==='pins'&&currentConversation?.kind==='CHANNEL'" :channel-id="currentConversation.id" @open="searchTarget.open($event);emit('close')" />
+    <ArchivePanel v-else-if="activeView === 'archives'" />
+    <div v-else-if="activeView === 'mentions'" id="search-mentions-view" role="region" aria-label="Упоминания">
       <PersonalMentionsPanel :channel-labels="channelLabels" :direct-message-labels="directMessageLabels" @open="emit('openMention', $event)" />
     </div>
     <div v-else id="search-messages-view" role="region" aria-label="Поиск сообщений">

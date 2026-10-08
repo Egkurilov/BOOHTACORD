@@ -9,6 +9,7 @@
   "verification": "python -m tools.ci.native.flutter; bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh",
   "return_to_upstream": "Remove the override only after upstream includes these fixes and focused regressions plus affected physical media acceptance pass.",
   "modified_upstream_files": [
+    "lib/flutter_webrtc.dart",
     "android/build.gradle",
     "android/src/main/java/com/cloudwebrtc/webrtc/FlutterWebRTCPlugin.java",
     "android/src/main/java/com/cloudwebrtc/webrtc/GetUserMediaImpl.java",
@@ -28,6 +29,11 @@
     "macos/flutter_webrtc/Sources/flutter_webrtc/include/flutter_webrtc/FlutterScreenCaptureKitCapturer.h"
   ],
   "added_patch_files": [
+    "lib/src/native/factory_bootstrap.dart",
+    "lib/src/native/factory_bootstrap/readiness.dart",
+    "lib/src/web/factory_bootstrap.dart",
+    "test/unit/factory_bootstrap_test.dart",
+    "test/unit/macos_factory_readiness_test.dart",
     "android/src/main/java/com/cloudwebrtc/webrtc/ScreenCaptureDimensions.java",
     "android/src/main/java/com/cloudwebrtc/webrtc/ScreenCaptureConstraints.java",
     "android/src/main/java/com/cloudwebrtc/webrtc/ScreenCaptureFrameRateGate.java",

@@ -10,11 +10,11 @@ import (
 func (repository Repository) Authorize(ctx context.Context, accountID string, event eventhub.Event) (bool, error) {
 	var statement, resourceID string
 	switch event.Kind {
-	case "message.created", "message.updated", "message.deleted":
+	case "message.created", "message.updated", "message.deleted", "message.reactions_updated", "message.pins_updated":
 		statement = `SELECT EXISTS (SELECT 1 FROM channels c JOIN users u ON u.id=$1::uuid
             WHERE c.id=$2::uuid AND c.kind='TEXT' AND c.archived_at IS NULL AND u.blocked_at IS NULL)`
 		resourceID, _ = event.Payload["channel_id"].(string)
-	case "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted":
+	case "direct_message.message_created", "direct_message.message_updated", "direct_message.message_deleted", "direct_message.reactions_updated":
 		statement = `SELECT EXISTS (SELECT 1 FROM direct_messages dm JOIN users u ON u.id=$1::uuid
             WHERE dm.id=$2::uuid AND u.blocked_at IS NULL
             AND u.id IN (dm.participant_one_id,dm.participant_two_id))`

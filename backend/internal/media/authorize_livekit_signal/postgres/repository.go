@@ -22,7 +22,9 @@ WHERE lease.id = $1
   AND channel.kind = 'VOICE'
   AND channel.archived_at IS NULL
   AND channel.admission_closed_at IS NULL
-  AND account.blocked_at IS NULL`
+  AND account.blocked_at IS NULL
+  AND NOT EXISTS(SELECT 1 FROM voice_timeouts restriction
+      WHERE restriction.user_id=account.id AND restriction.expires_at>clock_timestamp())`
 
 type Row interface{ Scan(...any) error }
 

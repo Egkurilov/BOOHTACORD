@@ -15,7 +15,8 @@ const selectCommittedMessage = `
 SELECT id::text, channel_id::text, author_id::text, client_message_id::text,
        body, COALESCE(reply_to_id::text, ''), revision, created_at, mention_user_ids::text[]
 FROM messages
-WHERE author_id = $1 AND channel_id = $2 AND client_message_id = $3 AND kind = 'USER'`
+WHERE author_id = $1 AND channel_id = $2 AND client_message_id = $3 AND kind = 'USER'
+  AND EXISTS (SELECT 1 FROM channels WHERE id=$2 AND kind='TEXT' AND archived_at IS NULL)`
 
 type Row interface{ Scan(...any) error }
 type Database interface {

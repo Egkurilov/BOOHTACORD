@@ -5,6 +5,7 @@ import '../../features/voice/lifecycle/controller.dart';
 import '../../features/voice/preferences/clear.dart';
 import '../../features/voice/roster_state/controller.dart';
 import '../composition/owners.dart';
+import '../media_preferences/screen.dart';
 
 extension AppAccountCleanup on AppOwners {
   void clearPrivateCaches() {
@@ -16,9 +17,13 @@ extension AppAccountCleanup on AppOwners {
     voiceRoster.voiceRosters = null;
     voiceRoster.voiceRosterError = null;
     voice.clearAccountPreferences();
+    resetScreenPreference();
     voiceOverlayPreferences = null;
     voiceOverlay.setEnabled(false);
     voiceOverlay.setOnlySpeakers(false);
+    voiceOverlay.setMaxParticipants(8);
+    voiceOverlayWindowsClient?.configuration.clearAccount();
+    voiceOverlaySettingsRevision++;
     audioDevices.clearAccount();
   }
 

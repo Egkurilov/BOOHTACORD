@@ -24,7 +24,7 @@ extension NotificationDelivery on NotificationController {
       if (!active() || !enabled || seen.contains(eventId)) return;
       await driver.show(
         id: notificationId(eventId),
-        title: 'BOOHTACORD',
+        title: readTitle(),
         body: body,
       );
       if (!active()) return;

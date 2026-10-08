@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { createCoalescedDelivery } from './controller'
 import type { RealtimeEvent } from '../realtime_client'
+import { subscribeSocialHints } from '../../conversation/reactions/hints'
 afterEach(() => vi.useRealTimers())
 function hint(id: string): RealtimeEvent {
   return { eventId: id, kind: 'message.created', occurredAt: '2026-10-05T00:00:00Z', payload: { channel_id: 'room', message_id: id } }
@@ -33,4 +34,12 @@ it('revokes immediately while a REST batch is blocked, without advancing its cur
   expect(delivery.cursor()).toBeNull()
   finish(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve()
   expect(onEvent).toHaveBeenCalledOnce()
+})
+it('delivers every social target independently instead of coalescing away invalidations',async()=>{
+  const listener=vi.fn(),stop=subscribeSocialHints(listener),onEvent=vi.fn(),batch=vi.fn()
+  const delivery=createCoalescedDelivery(onEvent,undefined,vi.fn(),batch)
+  for (const id of ['one','two']) delivery.accept({...hint(id),kind:'message.reactions_updated'})
+  await vi.waitFor(()=>expect(listener.mock.calls.map(call=>call[0].messageId)).toEqual(['one','two']))
+  expect(onEvent).toHaveBeenCalledTimes(2);expect(batch).not.toHaveBeenCalled();expect(delivery.cursor()).toBe('two')
+  stop();delivery.reset()
 })

@@ -5,6 +5,8 @@ import '../profile/quality.dart';
 import '../profile/update.dart';
 import 'android.dart';
 import 'dimensions.dart';
+import '../rollout/policy.dart';
+import '../rollout/publish_plan.dart';
 
 abstract class ScreenShareDriver {
   Future<void> prepare(bool Function() active);
@@ -28,6 +30,8 @@ abstract class ScreenShareDriver {
 }
 
 class NativeScreenShareDriver implements ScreenShareDriver {
+  NativeScreenShareDriver({this.rollout = const ScreenMediaRollout()});
+  final ScreenMediaRollout rollout;
   @override
   Future<void> prepare(bool Function() active) =>
       prepareAndroidScreenShare(active);
@@ -45,9 +49,7 @@ class NativeScreenShareDriver implements ScreenShareDriver {
     if (participant == null) throw StateError('Голосовое подключение закрыто.');
     await participant.publishVideoTrack(
       track,
-      publishOptions: quality.publishOptions(
-        // Preserve the Android single layer pending physical receiver acceptance.
-        simulcast: defaultTargetPlatform != TargetPlatform.android,
+      publishOptions: nativeScreenPublishPlan(quality, rollout, defaultTargetPlatform,
         sourceDimensions:
             defaultTargetPlatform == TargetPlatform.android
                 ? null

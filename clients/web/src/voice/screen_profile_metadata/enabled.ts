@@ -1,3 +1,4 @@
+import { screenMediaRollout } from '../screen_rollout/policy'
 export function screenDescriptorMetadataEnabled(): boolean {
-  return import.meta.env.VITE_SCREEN_SHARE_DESCRIPTOR_V1 !== 'false'
+  return screenMediaRollout().descriptor
 }

@@ -1,4 +1,5 @@
 import type { RealtimeEvent } from './realtime_client'
+import { notifySocialHint,notifySocialRecovery } from '../conversation/reactions/hints'
 
 export type EventHandler = (event: RealtimeEvent) => void | Promise<void>
 type RecoveryHandler = () => void | Promise<void>
@@ -6,6 +7,7 @@ type RecoveryHandler = () => void | Promise<void>
 const durableKinds = new Set<RealtimeEvent['kind']>([
   'voice.lease_revoked', 'channel.updated', 'message.created', 'message.updated', 'message.deleted',
   'direct_message.message_created', 'direct_message.message_updated', 'direct_message.message_deleted',
+  'message.reactions_updated','message.pins_updated','direct_message.reactions_updated',
 ])
 
 export function createRealtimeDelivery(onEvent: EventHandler, onRecovery: RecoveryHandler | undefined, onFailure: (cause: unknown) => void) {
@@ -39,6 +41,7 @@ export function createRealtimeDelivery(onEvent: EventHandler, onRecovery: Recove
           if (!fullResyncNeeded) continue
           work = onRecovery?.()
         } else {
+          notifySocialHint(event)
           work = onEvent(event)
         }
       } catch (cause) { fail(cause); return }
@@ -46,6 +49,7 @@ export function createRealtimeDelivery(onEvent: EventHandler, onRecovery: Recove
         if (!active) return
         if (durable) remember(event.eventId)
         if (event.kind === 'connection.ready' || event.kind === 'connection.resync_required') fullResyncNeeded = false
+        if (event.kind === 'connection.ready' || event.kind === 'connection.resync_required') notifySocialRecovery()
       }
       if (work && typeof work.then === 'function') {
         busy = true

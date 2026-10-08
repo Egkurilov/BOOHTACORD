@@ -20,12 +20,14 @@ var (
 )
 
 type Input struct {
+	ReadArchive                                                  bool
 	ActorID, ChannelID, DirectMessageID, Query, Before, AuthorID string
 	CreatedFrom, CreatedBefore                                   string
 	HasAttachment                                                *bool
 	Limit                                                        int
 }
 type Request struct {
+	ReadArchive                                          bool
 	ActorID, ChannelID, DirectMessageID, Query, AuthorID string
 	CreatedFrom, CreatedBefore                           *time.Time
 	HasAttachment                                        *bool
@@ -53,6 +55,7 @@ func New(store Store) Service { return Service{store: store} }
 func (service Service) Search(ctx context.Context, input Input) (Result, error) {
 	input.Query = strings.TrimSpace(input.Query)
 	if !validUUID(input.ActorID) || (input.ChannelID != "" && !validUUID(input.ChannelID)) ||
+		(input.ReadArchive && input.ChannelID == "") ||
 		(input.DirectMessageID != "" && !validUUID(input.DirectMessageID)) ||
 		(input.AuthorID != "" && !validUUID(input.AuthorID)) ||
 		(input.ChannelID != "" && input.DirectMessageID != "") || utf8.RuneCountInString(input.Query) < 1 ||
@@ -71,7 +74,7 @@ func (service Service) Search(ctx context.Context, input Input) (Result, error) 
 			return Result{}, ErrInvalidInput
 		}
 	}
-	messages, err := service.store.Search(ctx, Request{ActorID: input.ActorID, ChannelID: input.ChannelID, DirectMessageID: input.DirectMessageID, Query: input.Query, AuthorID: input.AuthorID, HasAttachment: input.HasAttachment, CreatedFrom: createdFrom, CreatedBefore: createdBefore, Before: before, Limit: input.Limit})
+	messages, err := service.store.Search(ctx, Request{ActorID: input.ActorID, ChannelID: input.ChannelID, DirectMessageID: input.DirectMessageID, Query: input.Query, AuthorID: input.AuthorID, HasAttachment: input.HasAttachment, CreatedFrom: createdFrom, CreatedBefore: createdBefore, Before: before, Limit: input.Limit, ReadArchive: input.ReadArchive})
 	if errors.Is(err, ErrConversationUnavailable) {
 		return Result{}, ErrConversationUnavailable
 	}

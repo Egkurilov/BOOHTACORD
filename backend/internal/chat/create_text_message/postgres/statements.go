@@ -6,6 +6,7 @@ WITH existing_message AS (
            body, COALESCE(reply_to_id::text, ''), revision, created_at, mention_user_ids::text[]
     FROM messages
     WHERE author_id = $3 AND channel_id = $2 AND client_message_id = $4 AND kind = 'USER'
+      AND EXISTS (SELECT 1 FROM channels WHERE id=$2 AND kind='TEXT' AND archived_at IS NULL)
 ), channel AS (
     SELECT id FROM channels WHERE id = $2 AND kind = 'TEXT' AND archived_at IS NULL
 ), reply AS (

@@ -2,17 +2,21 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'client.dart';
+import '../../screen/rollout/policy.dart';
 
 /// Keeps at most one upload in flight and one newest captured frame queued.
 class LatestScreenPreviewUploader {
-  LatestScreenPreviewUploader(this.client);
+  LatestScreenPreviewUploader(this.client, {bool? enabled})
+      : enabled = enabled ?? const ScreenMediaRollout().jpegPreview;
   final ScreenPreviewClient client;
+  final bool enabled;
   String? _lease, _generation;
   int _epoch = 0, _revision = 0;
   Uint8List? _pending;
   Future<void>? _running, _beginning, _stopping;
 
   void offer(String lease, Uint8List jpeg) {
+    if (!enabled) return;
     if (!validScreenPreviewJpeg(jpeg)) return;
     if (_lease != lease) _switchLease(lease);
     if (_generation == null && _beginning == null) {

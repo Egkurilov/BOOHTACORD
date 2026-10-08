@@ -17,6 +17,7 @@ func TestRussianSearchQualityReport(t *testing.T) {
 		t.Fatal("create synthetic search table:", err)
 	}
 	seedRussianCorpus(t, fixture, ctx, corpus)
+	assertRussianNoisePreserved(t, fixture, ctx, len(corpus.Documents))
 	for _, name := range []string{"simple", "russian"} {
 		vector, index := name+"_vector", "imp17_"+name+"_gin"
 		if _, err := fixture.pool.Exec(ctx, "CREATE INDEX "+index+" ON imp17_corpus USING GIN ("+vector+")"); err != nil {

@@ -61,6 +61,7 @@ func (transaction *fakeTransaction) LockUser(context.Context, string) error {
 	transaction.userLocked = true
 	return nil
 }
+func (transaction *fakeTransaction) CheckVoiceTimeout(context.Context, string) error { return nil }
 func (transaction *fakeTransaction) QueryRow(_ context.Context, statement string, _ ...any) Row {
 	transaction.statements = append(transaction.statements, statement)
 	row := transaction.rows[0]

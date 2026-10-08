@@ -1,8 +1,9 @@
 import { createRealtimeDelivery, type EventHandler } from '../realtime_event_delivery'
 import type { RealtimeEvent } from '../realtime_client'
+import { isSocialHint } from '../../conversation/reactions/hints'
 export type HintBatchHandler = (events: RealtimeEvent[]) => Promise<void>
-const hint = (event: RealtimeEvent) => event.kind.startsWith('message.')
-  || event.kind.startsWith('direct_message.message_') || event.kind === 'channel.updated'
+const hint = (event: RealtimeEvent) => !isSocialHint(event.kind) && (event.kind.startsWith('message.')
+  || event.kind.startsWith('direct_message.message_') || event.kind === 'channel.updated')
 
 export function createCoalescedDelivery(onEvent: EventHandler, recovery: EventHandlerRecovery,
   failure: (cause: unknown) => void, batch: HintBatchHandler) {

@@ -52,6 +52,10 @@ func NewHandler(acquirer Acquirer) http.Handler {
 			writeError(writer, request, http.StatusConflict, "VOICE_CHANNEL_UNAVAILABLE", "Вход в этот голосовой канал недоступен")
 			return
 		}
+		if errors.Is(err, acquirevoicelease.ErrVoiceTimeout) {
+			writeError(writer, request, http.StatusConflict, "VOICE_TIMEOUT", "Вход в голос временно ограничен администратором")
+			return
+		}
 		if err != nil {
 			writeError(writer, request, http.StatusInternalServerError, "INTERNAL", "Не удалось подготовить подключение к голосу")
 			return

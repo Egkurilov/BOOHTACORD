@@ -10,7 +10,8 @@ describe('working UI name and media wording', () => {
     const title = source('../../index.html').match(/<title>([^<]+)<\/title>/)?.[1]
     expect(title).toBe('BOOHTACORD')
     expect(source('../identity/AuthenticationLanding.vue')).toContain('<p class="eyebrow"><GuildName /></p>')
-    expect(source('../notification/notification_delivery.ts')).toContain(`runtime.show('${title}'`)
+    expect(source('../notification/notification_delivery.ts')).toContain(`readTitle: () => string = () => '${title}'`)
+    expect(source('../notification/notification_store.ts')).toContain('() => guildProfile.name.value')
   })
 
   it('uses the supplied artwork as the browser favicon', () => {

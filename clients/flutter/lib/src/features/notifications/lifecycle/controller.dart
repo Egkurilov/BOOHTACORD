@@ -27,6 +27,7 @@ class NotificationController extends ChangeNotifier {
   final bool? supportedOverride;
   final SessionScope accountScope = SessionScope();
   SessionScope? sessionScope;
+  String Function() readTitle = () => 'BOOHTACORD';
   String? accountId;
   bool initialized = false;
   Future<void>? initializing;

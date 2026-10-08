@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+
+import 'dart:async';
+
 import 'package:livekit_client/livekit_client.dart';
 
 import '../../services/api_client.dart';
@@ -19,6 +22,7 @@ import '../../features/voice/roster_state/controller.dart';
 import '../../features/screen/lifecycle/controller.dart';
 import '../../features/authorization/permissions/controller.dart';
 import '../../features/guild/profile/controller.dart';
+import '../overlay_preferences/actions.dart';
 
 abstract class AppOwners extends ChangeNotifier {
   AppOwners(
@@ -54,6 +58,7 @@ abstract class AppOwners extends ChangeNotifier {
   late final VoiceOverlayFeed voiceOverlay;
   VoiceOverlayPreferences? voiceOverlayPreferences;
   WindowsVoiceOverlayClient? voiceOverlayWindowsClient;
+  int voiceOverlaySettingsRevision = 0;
   late final VoiceRosterController voiceRoster;
   late final ScreenShareController screen;
   late final PermissionController permissions;
@@ -62,6 +67,21 @@ abstract class AppOwners extends ChangeNotifier {
 
   void setVoiceOverlayEnabled(bool enabled) {
     voiceOverlay.setEnabled(enabled);
+    final preferences = voiceOverlayPreferences;
+    if (preferences != null) {
+      unawaited(
+        saveOverlayConfiguration(
+          preferences.configuration.copyWith(enabled: enabled),
+        ).then((accepted) {
+          if (!accepted &&
+              !disposed &&
+              identical(preferences, voiceOverlayPreferences)) {
+            error ??= 'Не удалось сохранить или применить настройки overlay.';
+            notifyListeners();
+          }
+        }),
+      );
+    }
     notifyListeners();
   }
 
