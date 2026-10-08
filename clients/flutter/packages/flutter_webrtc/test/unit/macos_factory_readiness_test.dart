@@ -21,9 +21,11 @@ void main() {
       if (call.method == 'peerConnectionClose' && failClose) {
         throw PlatformException(code: 'fixture');
       }
-      if (call.method == 'getSources') return {'sources': [
+      if (call.method == 'getSources') {
+        return {'sources': [
         {'deviceId': ready ? 'physical-fixture' : 'default', 'groupId': 'fixture', 'kind': 'audioinput', 'label': 'Fixture'},
-      ]};
+        ]};
+      }
       return null;
     });
     events.setMockMethodCallHandler((call) async { calls.add('event:${call.method}'); return null; });
