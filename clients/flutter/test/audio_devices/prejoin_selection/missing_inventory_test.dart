@@ -8,8 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../voice_scope/api.dart';
-import '../voice_scope/fakes.dart';
+import '../../voice_scope/api.dart';
+import '../../voice_scope/fakes.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
