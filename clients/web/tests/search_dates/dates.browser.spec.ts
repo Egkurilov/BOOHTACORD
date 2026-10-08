@@ -14,7 +14,7 @@ test('real search panel keeps local day instants on pages and reopening, clears 
   await start.fill('2026-03-08')
   await end.fill('2026-03-08')
   await page.getByRole('searchbox').fill('orbit')
-  await page.getByRole('searchbox').press('Enter')
+  await page.getByRole('button', { name: 'Найти', exact: true }).click()
   await expect.poll(() => reads.length).toBe(1)
   const ny = info.project.name === 'NewYork'
   expect(reads[0].get('created_from')).toBe(ny ? '2026-03-08T05:00:00.000Z' : '2026-03-08T00:00:00.000Z')

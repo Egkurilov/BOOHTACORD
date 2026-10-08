@@ -61,9 +61,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.search-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; border: 0; margin: 0; padding: 0; }
+.search-filters { display: flex; flex-wrap: wrap; min-width: 0; align-items: end; gap: 8px 12px; border: 0; margin: 0; padding: 0; }
 .search-filters legend { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
 .search-filters label { display: grid; gap: 4px; }
 .search-filters input, .search-filters select, .search-filters button { min-height: 36px; }
 .search-filter-error { margin: 0; }
+.search-filters small { flex-basis: 100%; }
 </style>
