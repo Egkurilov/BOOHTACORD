@@ -9,11 +9,11 @@ describe('unified message search client', () => {
       next_cursor: 'opaque-cursor',
     })))
 
-    await expect(searchMessages({ query: '"игра"', channelId: '22222222-2222-4222-8222-222222222222', before: 'opaque-cursor', limit: 20 }, request)).resolves.toMatchObject({
+    await expect(searchMessages({ query: '"игра"', channelId: '22222222-2222-4222-8222-222222222222', authorId: '11111111-1111-4111-8111-111111111111', hasAttachment: false, before: 'opaque-cursor', limit: 20 }, request)).resolves.toMatchObject({
       nextCursor: 'opaque-cursor', messages: [{ kind: 'CHANNEL', channelId: '22222222-2222-4222-8222-222222222222', body: 'игра запущена', revision: 1 }],
     })
     expect(request).toHaveBeenCalledWith(
-      '/api/v1/search/messages?query=%22%D0%B8%D0%B3%D1%80%D0%B0%22&channel_id=22222222-2222-4222-8222-222222222222&before=opaque-cursor&limit=20',
+      '/api/v1/search/messages?query=%22%D0%B8%D0%B3%D1%80%D0%B0%22&channel_id=22222222-2222-4222-8222-222222222222&author_id=11111111-1111-4111-8111-111111111111&has_attachment=false&before=opaque-cursor&limit=20',
       expect.objectContaining({ method: 'GET', credentials: 'same-origin' }),
     )
   })

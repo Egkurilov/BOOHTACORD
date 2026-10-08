@@ -5,6 +5,8 @@ import { avatarBackground, avatarForeground } from '../design/avatar_color'
 import { avatarInitials } from '../design/avatar_initials'
 import SystemWelcomeMessage from '../conversation/system_welcome/SystemWelcomeMessage.vue'
 import SearchResultBody from './SearchResultBody.vue'
+import SearchFilters from './filters/SearchFilters.vue'
+import { useSearchFilters } from './filters/state'
 import PersonalMentionsPanel from './PersonalMentionsPanel.vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { searchMessages, type SearchMessage } from './search_messages_client'
@@ -14,6 +16,7 @@ interface SearchConversation { id: string; kind: 'CHANNEL' | 'DIRECT_MESSAGE'; l
 const props = defineProps<{ currentConversation: SearchConversation | null; channelLabels: Record<string, string>; directMessageLabels: Record<string, string> }>()
 const emit = defineEmits<{ open: [message: SearchMessage]; openMention: [mention: MentionInboxItem]; close: [] }>()
 const activeView = ref<'messages' | 'mentions'>('messages')
+const filters = useSearchFilters()
 const query = ref('')
 const scope = ref<'all' | 'current'>('all')
 const authors = useAuthorDirectory()
@@ -29,6 +32,7 @@ const canSubmit = computed(() => !loading.value && Boolean(query.value.trim()) &
 
 function reset(): void { requestSequence++; messages.value = []; nextCursor.value = ''; activeQuery.value = ''; loading.value = false; searched.value = false; error.value = '' }
 watch(scope, reset)
+watch(() => [filters.authorId, filters.attachment], reset)
 watch(messages, (items) => { for (const item of items) void authors.ensure(item.authorId) })
 watch(() => props.currentConversation?.id, () => { if (scope.value === 'current') { if (!props.currentConversation) scope.value = 'all'; else reset() } })
 
@@ -42,7 +46,7 @@ async function runSearch(before?: string): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    const page = await searchMessages({ query: searchQuery, ...(conversation?.kind === 'CHANNEL' ? { channelId: conversation.id } : {}), ...(conversation?.kind === 'DIRECT_MESSAGE' ? { directMessageId: conversation.id } : {}), before })
+    const page = await searchMessages({ query: searchQuery, ...(conversation?.kind === 'CHANNEL' ? { channelId: conversation.id } : {}), ...(conversation?.kind === 'DIRECT_MESSAGE' ? { directMessageId: conversation.id } : {}), ...(filters.authorId ? { authorId: filters.authorId } : {}), ...(filters.attachment !== 'any' ? { hasAttachment: filters.attachment === 'with' } : {}), before })
     if (sequence !== requestSequence) return
     messages.value = before ? [...messages.value, ...page.messages] : page.messages
     nextCursor.value = page.nextCursor ?? ''
@@ -75,6 +79,7 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
     <form class="search-form" role="search" @submit.prevent="runSearch()">
       <label class="search-query-label"><span class="visually-hidden">Запрос</span><input ref="queryInput" v-model="query" type="search" autocomplete="off" placeholder="Поиск сообщений" :disabled="loading" :aria-describedby="error ? 'search-error' : undefined"></label>
       <div class="search-form-meta"><label class="search-scope-label"><span class="visually-hidden">Область поиска</span><select v-model="scope" :disabled="loading"><option value="all">Везде</option><option v-if="currentConversation" value="current">{{ currentConversation.label }}</option></select></label><span>Enter — найти</span></div>
+      <SearchFilters v-model:author-id="filters.authorId" v-model:attachment="filters.attachment" :disabled="loading" />
       <button class="search-submit" type="submit" :disabled="!canSubmit">{{ loading ? 'Ищем…' : 'Найти' }}</button>
     </form>
     <p v-if="error" id="search-error" class="search-error" role="alert">{{ error }}</p>

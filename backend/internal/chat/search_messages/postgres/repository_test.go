@@ -16,21 +16,24 @@ func TestRepositorySearchesOnlyReadableNonDeletedMessages(t *testing.T) {
 		"11111111-1111-4111-8111-111111111111", "точная фраза", time.Now(), nil, 1,
 	}}}}
 	result, err := New(database).Search(context.Background(), searchmessages.Request{
-		ActorID: "11111111-1111-4111-8111-111111111111", DirectMessageID: "33333333-3333-4333-8333-333333333333", Query: `"точная фраза"`, Limit: 10,
+		ActorID: "11111111-1111-4111-8111-111111111111", DirectMessageID: "33333333-3333-4333-8333-333333333333", AuthorID: "22222222-2222-4222-8222-222222222222", HasAttachment: boolPointer(false), Query: `"точная фраза"`, Limit: 10,
 	})
-	if err != nil || len(result) != 1 || result[0].Kind != searchmessages.KindDirectMessage || database.arguments[2] != "33333333-3333-4333-8333-333333333333" || database.arguments[7] != 11 {
+	if err != nil || len(result) != 1 || result[0].Kind != searchmessages.KindDirectMessage || database.arguments[2] != "33333333-3333-4333-8333-333333333333" || database.arguments[4] != "22222222-2222-4222-8222-222222222222" || database.arguments[5] != false || database.arguments[9] != 11 {
 		t.Fatalf("result=%#v args=%#v err=%v", result, database.arguments, err)
 	}
 	for _, fragment := range []string{
 		"UNION ALL", "m.deleted_at IS NULL", "dm_message.deleted_at IS NULL", "$1::uuid IN (dm.participant_one_id, dm.participant_two_id)",
 		"channel.kind = 'TEXT' AND channel.archived_at IS NULL", "search_vector @@ websearch_to_tsquery('simple', $4)",
-		"ORDER BY created_at DESC, id DESC, kind DESC", "(created_at, id, kind) < ($5::timestamptz, $6::uuid, $7::text)",
+		"message_attachments", "direct_message_attachments", "attachment.state = 'ATTACHED'",
+		"ORDER BY created_at DESC, id DESC, kind DESC", "(created_at, id, kind) < ($7::timestamptz, $8::uuid, $9::text)",
 	} {
 		if !strings.Contains(database.statement, fragment) {
 			t.Fatalf("statement does not include %q", fragment)
 		}
 	}
 }
+
+func boolPointer(value bool) *bool { return &value }
 
 func TestRepositoryRejectsUnreadableDMFilter(t *testing.T) {
 	_, err := New(&fakeDatabase{available: boolRow{value: false}}).Search(context.Background(), searchmessages.Request{DirectMessageID: "33333333-3333-4333-8333-333333333333"})

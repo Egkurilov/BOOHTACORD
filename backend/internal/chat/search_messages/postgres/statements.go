@@ -7,6 +7,12 @@ WITH matching AS (
     FROM messages m JOIN channels channel ON channel.id = m.channel_id
     WHERE channel.kind = 'TEXT' AND channel.archived_at IS NULL AND m.deleted_at IS NULL
       AND ($2::uuid IS NULL OR m.channel_id = $2::uuid) AND $3::uuid IS NULL
+      AND ($5::uuid IS NULL OR m.author_id = $5::uuid)
+      AND ($6::boolean IS NULL OR (EXISTS (
+          SELECT 1 FROM message_attachments link
+          JOIN attachments attachment ON attachment.id = link.attachment_id
+          WHERE link.message_id = m.id AND attachment.state = 'ATTACHED'
+      )) = $6::boolean)
       AND m.search_vector @@ websearch_to_tsquery('simple', $4)
     UNION ALL
     SELECT 'DIRECT_MESSAGE'::text AS kind, dm_message.id, NULL::uuid AS channel_id, dm_message.direct_message_id,
@@ -15,11 +21,17 @@ WITH matching AS (
     WHERE dm_message.deleted_at IS NULL AND $2::uuid IS NULL
       AND ($3::uuid IS NULL OR dm.id = $3::uuid)
       AND $1::uuid IN (dm.participant_one_id, dm.participant_two_id)
+      AND ($5::uuid IS NULL OR dm_message.author_id = $5::uuid)
+      AND ($6::boolean IS NULL OR (EXISTS (
+          SELECT 1 FROM direct_message_attachments link
+          JOIN attachments attachment ON attachment.id = link.attachment_id
+          WHERE link.message_id = dm_message.id AND attachment.state = 'ATTACHED'
+      )) = $6::boolean)
       AND dm_message.search_vector @@ websearch_to_tsquery('simple', $4)
 )
 SELECT kind, id::text, COALESCE(channel_id::text, ''), COALESCE(direct_message_id::text, ''),
        author_id::text, body, created_at, edited_at, revision, message_kind
 FROM matching
-WHERE $5::timestamptz IS NULL OR (created_at, id, kind) < ($5::timestamptz, $6::uuid, $7::text)
+WHERE $7::timestamptz IS NULL OR (created_at, id, kind) < ($7::timestamptz, $8::uuid, $9::text)
 ORDER BY created_at DESC, id DESC, kind DESC
-LIMIT $8`
+LIMIT $10`

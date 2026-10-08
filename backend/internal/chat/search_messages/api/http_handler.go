@@ -30,7 +30,8 @@ func NewHandler(searcher Searcher) http.Handler {
 		directMessageID, directMessageOK := single(request, "direct_message_id")
 		before, beforeOK := single(request, "before")
 		limitValue, limitOK := single(request, "limit")
-		if !valid || !channelOK || !directMessageOK || !beforeOK || !limitOK || query == "" || (channelID != "" && directMessageID != "") {
+		filters, filtersOK := parseFilters(request)
+		if !valid || !channelOK || !directMessageOK || !beforeOK || !limitOK || !filtersOK || query == "" || (channelID != "" && directMessageID != "") {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректный поисковый запрос")
 			return
 		}
@@ -43,7 +44,7 @@ func NewHandler(searcher Searcher) http.Handler {
 			}
 			limit = parsed
 		}
-		result, err := searcher.Search(request.Context(), searchmessages.Input{ActorID: principal.AccountID, ChannelID: channelID, DirectMessageID: directMessageID, Query: query, Before: before, Limit: limit})
+		result, err := searcher.Search(request.Context(), searchmessages.Input{ActorID: principal.AccountID, ChannelID: channelID, DirectMessageID: directMessageID, Query: query, Before: before, AuthorID: filters.authorID, HasAttachment: filters.hasAttachment, Limit: limit})
 		if errors.Is(err, searchmessages.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректный поисковый запрос")
 			return

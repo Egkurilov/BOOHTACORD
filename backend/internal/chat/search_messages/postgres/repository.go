@@ -47,7 +47,7 @@ func (repository Repository) Search(ctx context.Context, request searchmessages.
 	if request.Before != nil {
 		beforeAt, beforeID, beforeKind = request.Before.CreatedAt, request.Before.ID, request.Before.Kind
 	}
-	rows, err := repository.database.Query(ctx, searchMessages, request.ActorID, nullable(request.ChannelID), nullable(request.DirectMessageID), request.Query, beforeAt, beforeID, beforeKind, request.Limit+1)
+	rows, err := repository.database.Query(ctx, searchMessages, request.ActorID, nullable(request.ChannelID), nullable(request.DirectMessageID), request.Query, nullable(request.AuthorID), nullableBool(request.HasAttachment), beforeAt, beforeID, beforeKind, request.Limit+1)
 	if err != nil {
 		return nil, fmt.Errorf("search messages: %w", err)
 	}
@@ -71,4 +71,11 @@ func nullable(value string) any {
 		return nil
 	}
 	return value
+}
+
+func nullableBool(value *bool) any {
+	if value == nil {
+		return nil
+	}
+	return *value
 }
