@@ -60,9 +60,10 @@ export function buildSenderScreenReport(platform: WebPlatform, diagnostics: Scre
   }
 }
 
-export async function postScreenClientReport(report: ScreenClientReport, request: typeof fetch = tracedFetch): Promise<void> {
+export async function postScreenClientReport(report: ScreenClientReport, request: typeof fetch = tracedFetch, leaseId?: string): Promise<void> {
   const response = await request(`${apiBaseUrl}/voice/screen-metrics`, {
-    method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(report),
+    method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify(leaseId ? { ...report, voice_lease_id: leaseId } : report),
   })
   if (!response.ok) throw new Error('screen metrics rejected')
 }
@@ -76,7 +77,7 @@ export function startScreenClientReporting(read: () => ScreenClientReport | null
     if (!report) return
     recordMediaSample({...report},owner)
     busy = true
-    void postScreenClientReport(report).catch(() => {}).finally(() => { busy = false })
+    void postScreenClientReport(report, tracedFetch, owner.leaseId).catch(() => {}).finally(() => { busy = false })
   }, 5000)
   return () => globalThis.clearInterval(interval)
 }

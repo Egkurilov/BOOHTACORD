@@ -13,11 +13,12 @@ class TelemetrySnapshot {
     this.origin,
     this.ticket,
     this.media,
+    this.leaseId,
     this.mediaFlow,
   );
   final int generation;
   final String visit, origin;
-  final String? binding, media, mediaFlow;
+  final String? binding, media, leaseId, mediaFlow;
   final SessionTicket ticket;
 }
 
@@ -27,7 +28,7 @@ class TelemetrySession {
   final String Function() readOrigin;
   int generation = 0;
   String visit = diagnosticId();
-  String? binding, media, mediaFlow;
+  String? binding, media, leaseId, mediaFlow;
   final Set<void Function()> _listeners = {};
   TelemetrySnapshot snapshot() => TelemetrySnapshot(
     generation,
@@ -36,6 +37,7 @@ class TelemetrySession {
     readOrigin(),
     capture(),
     media,
+    leaseId,
     mediaFlow,
   );
   bool current(TelemetrySnapshot s) =>
@@ -48,6 +50,7 @@ class TelemetrySession {
     visit = diagnosticId();
     binding = null;
     media = null;
+    leaseId = null;
     mediaFlow = null;
     for (final f in _listeners.toList()) {
       f();
@@ -66,8 +69,20 @@ class TelemetrySession {
     return media!;
   }
 
+  bool bindMediaLease(String id) {
+    final compact = id.toLowerCase().replaceAll('-', '');
+    if (!RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$', caseSensitive: false).hasMatch(id) ||
+        !validFlowField('app.media.session.id', compact)) {
+      return false;
+    }
+    leaseId = id.toLowerCase();
+    media = compact;
+    return true;
+  }
+
   void endMedia() {
     media = null;
+    leaseId = null;
     mediaFlow = null;
   }
 

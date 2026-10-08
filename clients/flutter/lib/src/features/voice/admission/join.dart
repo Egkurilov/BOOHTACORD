@@ -41,6 +41,7 @@ extension VoiceAdmissionJoin on VoiceController {
           disconnect.generation != disconnectGeneration) {
         throw CancelledVoiceAdmission();
       }
+      api.transport.session.telemetry.bindMediaLease(admittedLease);
       disconnect.bind(admittedLease, channel.id);
       void check() => checkCurrentVoiceAdmission(
         ticket,

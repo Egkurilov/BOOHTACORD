@@ -14,12 +14,15 @@ import (
 
 // This endpoint does not make an HTTP trace. A fresh bounded measurement gets
 // its own span after validation, with identity from the authenticated request.
-func recordMediaSample(ctx context.Context, report httpmetrics.ClientScreenReport) {
+func recordMediaSample(ctx context.Context, report httpmetrics.ClientScreenReport, mediaSessionID string) {
 	principal, ok := sessionapi.PrincipalFrom(ctx)
 	if !ok || principal.AccountID == "" {
 		return
 	}
 	attrs := correlation.NamedAttributes(principal.AccountID, principal.SessionDigest, principal.DisplayName)
+	if mediaSessionID != "" {
+		attrs = append(attrs, attribute.String("app.media.session.id", mediaSessionID))
+	}
 	attrs = append(attrs, measurementAttributes(report.Measurement)...)
 	attrs = append(attrs, attribute.String("media.platform", report.Platform),
 		attribute.String("media.direction", report.Direction), attribute.String("media.state", report.State),

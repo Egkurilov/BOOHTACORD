@@ -2195,7 +2195,7 @@
     "/api/v1/voice/screen-metrics": {
       "post": {
         "operationId": "reportClientScreenMetrics",
-        "description": "Authenticated client report. Strict 2 KiB body with fixed platform/direction/state enums and bounded numeric measurements only; no user, room, track, address, SDP or content fields. Server attaches verified user/session IDs to media.sample spans. Client-reported values are diagnostic and not capability evidence. Mutation requires the deployment Origin.",
+        "description": "Authenticated client report. Strict 2 KiB body with fixed platform/direction/state enums and bounded numeric measurements; no user, room, track, address, SDP or content fields. Optional voice_lease_id is only a server-issued public handle: server revalidates it against the current account, cookie session and active VOICE room before attaching a derived media-session ID. The handle grants no access and is not stored in public metrics. Client-reported values are diagnostic, not capability evidence. Mutation requires the deployment Origin.",
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ClientScreenReport" } } } },
         "responses": {
           "204": { "description": "Authenticated diagnostic report accepted; no body.",
@@ -5329,6 +5329,7 @@
       "ClientScreenReport": {
         "type": "object", "additionalProperties": false, "required": ["platform", "direction", "state"],
         "properties": {
+          "voice_lease_id": { "type": "string", "format": "uuid", "description": "Optional server-issued public handle for the current logical voice media session. If present, the server revalidates account, cookie session, active lease, and active VOICE room. It grants no access and is never retained in public metrics." },
           "platform": { "type": "string", "enum": ["ios_web", "android_web", "desktop_web", "android_native", "ios_native", "windows_native", "macos_native", "desktop_native"] },
           "direction": { "type": "string", "enum": ["sender", "receiver", "connection"] },
           "state": { "type": "string", "enum": ["waiting_subscription", "waiting_first_frame", "playing", "stalled"] },

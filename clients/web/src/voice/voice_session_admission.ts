@@ -43,6 +43,7 @@ export class VoiceSessionAdmission {
         action?.step('lease')
         const acquired = await within(() => this.state.admission.acquire(channelId, transfer))
         lease = acquired
+        telemetrySession.bindMediaLease(acquired.id)
         this.state.monitor.notifyAdmitted(acquired.id, acquired.channelId)
         action?.step('credential')
         const credential = await within(() => this.state.admission.credential(acquired.id))

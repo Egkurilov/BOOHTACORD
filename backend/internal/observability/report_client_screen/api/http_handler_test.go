@@ -25,7 +25,7 @@ func (fake *fakeRecorder) ClientScreenSnapshot() []httpmetrics.ClientScreenSampl
 
 func TestSubmitAcceptsOnlyStrictBoundedMeasurements(t *testing.T) {
 	recorder := httpmetrics.New()
-	handler := NewSubmitHandler(recorder)
+	handler := NewSubmitHandler(recorder, nil)
 	for _, body := range []string{
 		`{"platform":"ios_web","direction":"receiver","state":"playing","account_id":"private"}`,
 		`{"platform":"ios_web","direction":"receiver","state":"playing","frame_width":540}`,

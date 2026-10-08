@@ -9,12 +9,16 @@ class ScreenMetricsReportApi {
 
   Future<void> reportScreenShareMetrics(Map<String, Object> report) async {
     final session = transport.session.telemetry;
-    recordMediaSample(report, session, session.snapshot());
+    final owner = session.snapshot();
+    recordMediaSample(report, session, owner);
     await transport.checked(
       await transport.client.post(
         transport.uri('/voice/screen-metrics'),
         headers: await transport.headers(jsonBody: true),
-        body: jsonEncode(report),
+        body: jsonEncode({
+          ...report,
+          if (owner.leaseId != null) 'voice_lease_id': owner.leaseId!,
+        }),
       ),
     );
   }

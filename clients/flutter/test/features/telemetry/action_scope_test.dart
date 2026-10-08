@@ -76,4 +76,22 @@ void main() {
     a.finish('success');
     expect(records.where((r) => r['app.flow.record'] == 'terminal'), isEmpty);
   });
+
+  test('media correlation uses the server-issued lease handle and clears it on leave', () {
+    final session = TelemetrySession(
+      SessionScope().capture,
+      () => 'https://test.invalid',
+    );
+    session.beginMedia();
+    session.mediaFlow = 'a' * 32;
+    expect(session.bindMediaLease('11111111-1111-4111-8111-111111111111'), isTrue);
+    expect(session.snapshot().media, '11111111111141118111111111111111');
+    expect(session.snapshot().mediaFlow, 'a' * 32);
+    expect(session.snapshot().leaseId, '11111111-1111-4111-8111-111111111111');
+    expect(session.bindMediaLease('not-a-lease'), isFalse);
+    session.endMedia();
+    expect(session.snapshot().media, isNull);
+    expect(session.snapshot().leaseId, isNull);
+    expect(session.snapshot().mediaFlow, isNull);
+  });
 }

@@ -57,6 +57,9 @@ void main() {
       );
       expect(report, isNotNull);
 
+      const leaseId = '11111111-1111-4111-8111-111111111111';
+      expect(api.transport.session.telemetry.bindMediaLease(leaseId), isTrue);
+
       await api.reportScreenShareMetrics(report!);
 
       expect(request.method, 'POST');
@@ -64,7 +67,7 @@ void main() {
       expect(request.headers['origin'], 'https://v.bootybay.ru');
       expect(request.headers['cookie'], 'session=test-session');
       expect(request.headers['content-type'], 'application/json');
-      expect(jsonDecode(request.body), report);
+      expect(jsonDecode(request.body), {...report!, 'voice_lease_id': leaseId});
       expect(request.body, isNot(contains('account_id')));
       expect(request.body, isNot(contains('channel_id')));
       expect(request.body, isNot(contains('track_id')));

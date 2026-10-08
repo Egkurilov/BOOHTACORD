@@ -30,7 +30,7 @@ func TestMediaSampleHasVerifiedIdentityAndMeasuredValues(t *testing.T) {
 	request.Header.Set("X-User-Name", "forged-name")
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), principal))
 	response := httptest.NewRecorder()
-	NewSubmitHandler(httpmetrics.New()).ServeHTTP(response, request)
+	NewSubmitHandler(httpmetrics.New(), nil).ServeHTTP(response, request)
 	if response.Code != 204 {
 		t.Fatalf("status=%d", response.Code)
 	}
@@ -69,7 +69,7 @@ func TestInvalidMediaSamplesAreRejectedBeforeRecording(t *testing.T) {
 		recorder := httpmetrics.New()
 		body := `{"platform":"desktop_web","direction":"sender","state":"playing",` + extra + `}`
 		response := httptest.NewRecorder()
-		NewSubmitHandler(recorder).ServeHTTP(response, httptest.NewRequest("POST", "/", strings.NewReader(body)))
+		NewSubmitHandler(recorder, nil).ServeHTTP(response, httptest.NewRequest("POST", "/", strings.NewReader(body)))
 		if response.Code != 400 || len(recorder.ClientScreenSnapshot()) != 0 {
 			t.Fatalf("accepted %s", extra)
 		}
@@ -79,7 +79,7 @@ func TestInvalidMediaSamplesAreRejectedBeforeRecording(t *testing.T) {
 func TestVoiceConnectionReportDoesNotPolluteScreenSnapshot(t *testing.T) {
 	recorder := httpmetrics.New()
 	response := httptest.NewRecorder()
-	NewSubmitHandler(recorder).ServeHTTP(response, httptest.NewRequest("POST", "/", strings.NewReader(`{"platform":"ios_native","direction":"connection","state":"playing","rtt_ms":12,"connection_quality":"GOOD"}`)))
+	NewSubmitHandler(recorder, nil).ServeHTTP(response, httptest.NewRequest("POST", "/", strings.NewReader(`{"platform":"ios_native","direction":"connection","state":"playing","rtt_ms":12,"connection_quality":"GOOD"}`)))
 	if response.Code != 204 || len(recorder.ClientScreenSnapshot()) != 0 {
 		t.Fatalf("status=%d", response.Code)
 	}
@@ -93,7 +93,7 @@ func TestUnauthenticatedMediaSampleCreatesNoTrace(t *testing.T) {
 	t.Cleanup(func() { otel.SetTracerProvider(old); _ = provider.Shutdown(context.Background()) })
 
 	report := httpmetrics.ClientScreenReport{Platform: "desktop_web", Direction: "sender", State: "playing"}
-	recordMediaSample(context.Background(), report)
+	recordMediaSample(context.Background(), report, "")
 	if spans := exporter.GetSpans(); len(spans) != 0 {
 		t.Fatalf("unauthenticated media sample created %d trace spans", len(spans))
 	}

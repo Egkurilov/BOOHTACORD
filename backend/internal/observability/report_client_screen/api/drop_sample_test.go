@@ -21,9 +21,9 @@ func TestPrivateHistoryKeepsReportedDropsWithoutInventingMissingCounts(t *testin
 	ctx := sessionapi.WithPrincipal(context.Background(), auth.Principal{AccountID: "synthetic-verified"})
 	dropped, lost := int64(3), int64(4)
 	report := httpmetrics.ClientScreenReport{Platform: "desktop_web", Direction: "receiver", State: "playing", DroppedFrames: &dropped, PacketsLost: &lost}
-	recordMediaSample(ctx, report)
+	recordMediaSample(ctx, report, "")
 	report.DroppedFrames, report.PacketsLost = nil, nil
-	recordMediaSample(ctx, report)
+	recordMediaSample(ctx, report, "")
 	spans := exporter.GetSpans()
 	if len(spans) != 2 {
 		t.Fatal(len(spans))

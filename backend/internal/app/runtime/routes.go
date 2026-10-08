@@ -59,7 +59,7 @@ func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *
 	}
 	mediaroutes.ConfigureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
 	mediaroutes.ConfigureVoiceParticipantRoutes(mux, database, sessionService, configuration.MediaSnapshot, metrics, configuration.LiveKitAPIKey, configuration.LiveKitAPISecret)
-	observabilityroutes.ConfigureClientScreenRoutes(mux, sessionService, metrics)
+	observabilityroutes.ConfigureClientScreenRoutes(mux, database, sessionService, metrics)
 	observabilityroutes.ConfigureClientTelemetryRoutes(mux, sessionService, configuration)
 	mediaroutes.ConfigureAdminVoiceRoutes(mux, database, sessionService)
 	mediaroutes.ConfigureMediaCredentialRoutes(mux, database, sessionService, configuration.CredentialSigner)

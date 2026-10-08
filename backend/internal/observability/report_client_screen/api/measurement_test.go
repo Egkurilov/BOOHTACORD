@@ -10,7 +10,7 @@ import (
 
 func TestIntervalReportAcceptedAndUnsafeIdentityRejected(t *testing.T) {
 	recorder := httpmetrics.New()
-	handler := NewSubmitHandler(recorder)
+	handler := NewSubmitHandler(recorder, nil)
 	valid := `{"platform":"desktop_web","direction":"sender","state":"playing","stats_source":"webrtc_interval","stats_window_ms":1000,"collection_state":"active","total_bitrate_kbps":2100,"selected_layer_bitrate_kbps":1800}`
 	for _, tc := range []struct {
 		body   string

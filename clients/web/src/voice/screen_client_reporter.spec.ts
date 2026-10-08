@@ -28,6 +28,14 @@ describe('anonymous screen client reports', () => {
     expect(init.body).toBe('{"platform":"ios_web","direction":"receiver","state":"waiting_first_frame"}')
   })
 
+  it('includes the server-issued voice lease handle when reporting an active media session', async () => {
+    const request = vi.fn(async () => new Response(null, { status: 204 }))
+    const report = { platform: 'desktop_web' as const, direction: 'receiver' as const, state: 'playing' as const }
+    await postScreenClientReport(report, request, '11111111-1111-4111-8111-111111111111')
+    const [, init] = request.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(String(init.body))).toEqual({ ...report, voice_lease_id: '11111111-1111-4111-8111-111111111111' })
+  })
+
   it('reports measured sender FPS without substituting the selected target', () => {
     expect(buildSenderScreenReport('desktop_web', { source: 'ACTIVE', audioTrack: 'ABSENT', connectionQuality: 'GOOD', measured: { width: 1920, height: 1080, framesPerSecond: 27 }, bitrateBps: 1800000, roundTripTimeMs: 45 })).toMatchObject({
       platform: 'desktop_web', direction: 'sender', state: 'playing', connection_quality: 'GOOD', frame_width: 1920, frame_height: 1080, encoded_fps: 27, bitrate_kbps: 1800, rtt_ms: 45,

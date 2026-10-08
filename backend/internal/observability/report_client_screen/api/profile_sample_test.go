@@ -24,7 +24,7 @@ func TestProfileCheckReachesMediaSample(t *testing.T) {
 	request := httptest.NewRequest("POST", "/", strings.NewReader(body))
 	request = request.WithContext(sessionapi.WithPrincipal(request.Context(), auth.Principal{AccountID: "verified-account"}))
 	response := httptest.NewRecorder()
-	NewSubmitHandler(httpmetrics.New()).ServeHTTP(response, request)
+	NewSubmitHandler(httpmetrics.New(), nil).ServeHTTP(response, request)
 	if response.Code != 204 {
 		t.Fatalf("status=%d", response.Code)
 	}

@@ -18,7 +18,7 @@ func TestAcceptedReportReachesOTELAndRejectedReportDoesNot(t *testing.T) {
 	old := otel.GetMeterProvider()
 	otel.SetMeterProvider(provider)
 	t.Cleanup(func() { otel.SetMeterProvider(old); _ = provider.Shutdown(context.Background()) })
-	handler := NewSubmitHandler(httpmetrics.New())
+	handler := NewSubmitHandler(httpmetrics.New(), nil)
 	for _, test := range []struct {
 		body   string
 		status int

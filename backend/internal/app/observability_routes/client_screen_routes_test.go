@@ -38,7 +38,7 @@ func TestClientScreenRoutesRequireSessionAndAdministrator(t *testing.T) {
 		{"MEMBER", http.MethodPost, "/api/v1/voice/screen-metrics", `{"platform":"ios_web","direction":"receiver","state":"playing"}`, http.StatusNoContent},
 	} {
 		mux := http.NewServeMux()
-		ConfigureClientScreenRoutes(mux, authenticatesession.New(screenMetricSessions{role: test.role}), httpmetrics.New())
+		ConfigureClientScreenRoutes(mux, nil, authenticatesession.New(screenMetricSessions{role: test.role}), httpmetrics.New())
 		response := httptest.NewRecorder()
 		mux.ServeHTTP(response, request(test.method, test.path, test.body))
 		if response.Code != test.status {
@@ -46,7 +46,7 @@ func TestClientScreenRoutesRequireSessionAndAdministrator(t *testing.T) {
 		}
 	}
 	mux := http.NewServeMux()
-	ConfigureClientScreenRoutes(mux, authenticatesession.New(screenMetricSessions{role: "ADMINISTRATOR"}), httpmetrics.New())
+	ConfigureClientScreenRoutes(mux, nil, authenticatesession.New(screenMetricSessions{role: "ADMINISTRATOR"}), httpmetrics.New())
 	response := httptest.NewRecorder()
 	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/v1/admin/screen-metrics", nil))
 	if response.Code != http.StatusUnauthorized {
