@@ -34,7 +34,7 @@ def ensure_postgres_connected(compose, project, network_name):
     if endpoint is None:
         connect(network_name, container_id, "PostgreSQL network reattachment failed")
         print("Reattached PostgreSQL with its Compose service alias.")
-    elif "postgres" not in endpoint.get("Aliases", []):
+    elif "postgres" not in (endpoint.get("Aliases") or []):
         run_checked("PostgreSQL endpoint disconnect failed",
                     ["docker", "network", "disconnect", network_name, container_id])
         connect(network_name, container_id, "PostgreSQL service alias reconnect failed")
