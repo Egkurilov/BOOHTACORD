@@ -40,7 +40,8 @@
 
 ### IMP-44 · P2 · L · DEVELOPMENT/QA — временный voice timeout
 - [x] ADR023: отдельное ограничение голоса с `expires_at` до24h и bounded reason-code, без блокировки TEXT/DM. Серверная admin/session ACL, atomic lease KICK + durable SFU queue, проверки lease acquisition/credential/signal, manual clear и database-clock expiry без восстановления старого lease.
-- [ ] Привязать клиентские admin-контролы к API; QA-10 physical revoke и replay на реальном SFU/устройствах. Серверная202 означает committed intent, не physical confirmation. Не вводить remote unmute или кастомные роли.
+- [x] Web admin-контролы в desktop/mobile списке участников: lazy self/admin state, explicit срок/reason, set/lift, pending, bounded 403 и disposal. Реальные Vue-компоненты проверены в Chromium390/1440; media не запускаются.
+- [ ] QA-10 physical revoke и replay на реальном SFU/устройствах. Серверная202 означает committed intent, не physical confirmation. Не вводить remote unmute или кастомные роли. Native Flutter admin UI остаётся отдельным parity-пакетом.
 
 ## Подзадачи действующих гейтов, не новые пакеты
 

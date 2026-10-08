@@ -8,6 +8,9 @@ secure-cookie admin API, and unchanged durable SFU revocation worker.
 - PASS: focused Go tests and vet for manage_voice_timeout, acquire_voice_lease,
   read_locked_voice_admission, issue_livekit_credential, authorize_livekit_signal
   and app/media_routes.
+- PASS: full `go test ./...` and `go vet ./...` after embedded migration
+  regression includes0051 (follow-up ccecdbac). No database was configured for
+  this broad run; integration acceptance is the separate explicit PG run below.
 - PASS: WSL Go1.26.4 `go test -race` on 11 service/API/credential/signal/route
   packages. This invocation did not supply an integration database.
 - PASS: actual PostgreSQL17, disposable database and isolated schemas;
