@@ -51,6 +51,7 @@ class ImmediateMemberProfileApi extends ApiClient {
   ImmediateMemberProfileApi(this.result);
   final GuildMember result;
   int reads = 0;
+  int directReads = 0;
 
   @override
   Future<GuildMember> memberProfile(String accountId) async {
@@ -58,6 +59,11 @@ class ImmediateMemberProfileApi extends ApiClient {
     return result;
   }
 
+  @override
+  Future<List<DirectConversation>> directMessages() async {
+    directReads++;
+    return const [];
+  }
 }
 
 class StaleMembersApi extends ApiClient {
