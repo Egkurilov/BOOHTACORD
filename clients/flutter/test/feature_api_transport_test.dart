@@ -17,7 +17,7 @@ void main() {
     'feature authorization failure invalidates the shared session once',
     () async {
       FlutterSecureStorage.setMockInitialValues({
-        'boohtacord_session_cookie': 'session=expired',
+        'boohtacord_session_cookie:https://v.bootybay.ru:443': 'session=expired',
       });
       var unauthorized = 0;
       final transport = ApiTransport(
