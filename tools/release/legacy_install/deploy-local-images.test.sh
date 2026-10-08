@@ -26,9 +26,14 @@ elif [[ "$1" == "compose" && " $* " == *" ps -q proxy "* ]]; then
   printf '%s\n' proxy-container
 fi
 EOF
+cat > "$bin_dir/python3" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'python3 %s\n' "$*" >> "$FAKE_DOCKER_LOG"
+EOF
 printf '#!/usr/bin/env bash\nexit 0\n' > "$bin_dir/curl"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$bin_dir/sleep"
-chmod 0755 "$bin_dir/docker" "$bin_dir/curl" "$bin_dir/sleep"
+chmod 0755 "$bin_dir/docker" "$bin_dir/python3" "$bin_dir/curl" "$bin_dir/sleep"
 
 api_image="voice-platform-api:0123456789abcdef0123456789abcdef01234567"
 web_image="voice-platform-web:0123456789abcdef0123456789abcdef01234567"
@@ -44,6 +49,7 @@ run_deploy() {
 }
 
 run_deploy
+grep -Fq -- '--ensure-postgres-alias' "$temporary_root/commands.log"
 grep -Fq "image inspect $api_image" "$temporary_root/commands.log"
 grep -Fq "image inspect $web_image" "$temporary_root/commands.log"
 if grep -Fq 'pull api migrate web' "$temporary_root/commands.log"; then exit 1; fi
@@ -65,6 +71,7 @@ web_digest="voice-platform-web@sha256:$(printf '%064d' 2)"
 run_deploy available "$api_digest" "$web_digest"
 grep -Fq "image inspect $api_digest" "$temporary_root/commands.log"
 grep -Fq "image inspect $web_digest" "$temporary_root/commands.log"
+[[ "$(grep -Fc -- '--ensure-postgres-alias' "$temporary_root/commands.log")" == 2 ]]
 if grep -Fq 'pull api migrate web' "$temporary_root/commands.log"; then exit 1; fi
 
 echo 'deploy-local-images tests passed'
