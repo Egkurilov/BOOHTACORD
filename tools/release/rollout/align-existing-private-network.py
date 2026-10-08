@@ -13,6 +13,22 @@ def output(*command):
     return subprocess.check_output(command, text=True, stderr=subprocess.DEVNULL).strip()
 
 
+def ensure_postgres_connected(compose, project, network_name):
+    containers = output(*compose, "ps", "-aq", "postgres").splitlines()
+    if len(containers) != 1:
+        raise RuntimeError("expected exactly one PostgreSQL service container")
+    container_id = containers[0]
+    labels = json.loads(output("docker", "inspect", "--format", "{{json .Config.Labels}}", container_id))
+    if (labels.get("com.docker.compose.project") != project
+            or labels.get("com.docker.compose.service") != "postgres"):
+        raise RuntimeError("PostgreSQL container identity does not match the Compose project")
+    networks = json.loads(output("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", container_id))
+    if network_name not in networks:
+        subprocess.run(["docker", "network", "connect", network_name, container_id], check=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print("Reattached the existing PostgreSQL container to the active private network.")
+
+
 def update_environment(path, values):
     path = Path(path)
     if path.is_symlink() or not path.is_file():
@@ -57,6 +73,7 @@ def main(project_dir, canonical_env):
     canonical_env = Path(canonical_env).resolve()
     if canonical_env != (project_dir / ".env").resolve():
         update_environment(canonical_env, values)
+    ensure_postgres_connected(compose, project, network_name)
     print("Deployment network settings now match the active private subnet and proxy address.")
     return 0
 

@@ -78,7 +78,7 @@ trap cleanup EXIT
 postgres_output=''
 if ! postgres_output="$("${compose[@]}" up -d --wait postgres 2>&1)"; then
   printf '%s\n' "$postgres_output" >&2
-  if [[ "$postgres_output" != *"has active endpoints"* ]]; then
+  if [[ "$postgres_output" != *"has active endpoints"* && "$postgres_output" != *"not connected to the network"* ]]; then
     fail "PostgreSQL service could not be started; deployment containers were not removed."
   fi
   python3 "$script_dir/align-existing-private-network.py" "$project_dir" /opt/voice-platform/.env

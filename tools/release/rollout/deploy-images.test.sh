@@ -24,6 +24,12 @@ set -euo pipefail
 
 printf '%s\n' "$*" >> "$FAKE_DOCKER_LOG"
 
+if [[ "$1" == "compose" && " $* " == *" up -d --wait postgres "* && "${FAKE_POSTGRES_MODE:-allowed}" == "detached" && ! -f "$FAKE_POSTGRES_FAILED" ]]; then
+  touch "$FAKE_POSTGRES_FAILED"
+  printf '%s\n' 'Error response from daemon: container postgres-id is not connected to the network voice-platform_private' >&2
+  exit 1
+fi
+
 if [[ "$1" == "inspect" ]]; then
   [[ "${FAKE_NETWORK_MODE:-allowed}" != "extra" ]] || printf '%s\n' fluxer_fluxer
   printf '%s\n' voice-platform_edge voice-platform_private ''
@@ -37,6 +43,13 @@ if [[ "$1" == "compose" && " $* " == *" ps -q proxy "* ]]; then
 fi
 EOF
 chmod 0755 "$bin_dir/docker"
+
+cat > "$bin_dir/python3" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'python3 %s\n' "$*" >> "$FAKE_DOCKER_LOG"
+EOF
+chmod 0755 "$bin_dir/python3"
 
 cat > "$bin_dir/curl" <<'EOF'
 #!/usr/bin/env bash
@@ -58,13 +71,15 @@ run_deploy() {
   local output="$2"
   FAKE_DOCKER_LOG="$temporary_root/commands-$network_mode.log" \
   FAKE_NETWORK_MODE="$network_mode" \
+  FAKE_POSTGRES_MODE="${5:-allowed}" \
+  FAKE_POSTGRES_FAILED="$temporary_root/postgres-failed-$network_mode" \
   FAKE_HEALTH_MODE="${3:-allowed}" \
   FAKE_DISABLE_MODE="${4:-allowed}" \
   PATH="$bin_dir:$PATH" \
   VOICE_PLATFORM_DIR="$project_dir" \
   API_IMAGE="ghcr.io/example/voice-platform-api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
   WEB_IMAGE="ghcr.io/example/voice-platform-web@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" \
-  bash "$script" > "$output" 2>&1
+  bash "$script" > "$output" 2>&1 || { cat "$output" >&2; return 1; }
 }
 
 line_number() { grep -n -F "$1" "$2" | head -n 1 | cut -d: -f1; }
@@ -106,6 +121,12 @@ extra_log="$temporary_root/commands-extra.log"
 if grep -Fq 'exec -T proxy caddy validate' "$extra_log"; then exit 1; fi
 if grep -Fq 'curl -fsS --retry 5 --retry-connrefused https://v.bootybay.ru/api/v1/health' "$extra_log"; then exit 1; fi
 grep -Fq 'maintenance-admission --disable' "$extra_log"
+
+network_repair_output="$temporary_root/network-repair.out"
+run_deploy repair "$network_repair_output" allowed allowed detached
+network_repair_log="$temporary_root/commands-repair.log"
+grep -Fq 'align-existing-private-network.py' "$network_repair_log"
+[[ "$(grep -Fc 'up -d --wait postgres' "$network_repair_log")" == 4 ]]
 
 health_output="$temporary_root/health.out"
 ! run_deploy allowed "$health_output" fail || { echo 'expected health failure to fail deployment' >&2; exit 1; }
