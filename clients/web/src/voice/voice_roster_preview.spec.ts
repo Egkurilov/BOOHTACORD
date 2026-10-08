@@ -19,6 +19,7 @@ describe('prejoin voice roster', () => {
   })
   it('shows current speakers and stream state in navigation without joining', async () => {
     const html = await renderToString(createSSRApp(ChannelNavigation, {
+      accountId: 'user-1',
       activeVoiceChannelId: undefined, selectedChannelId: 'voice-1', voicePresence: null, voiceRosters: [roster],
       topology: { revision: 1, categories: [{ id: 'cat-1', name: 'Игры', position: 0, channels: [
         { id: 'voice-1', name: 'Команда', kind: 'VOICE', position: 0, admissionClosed: false },

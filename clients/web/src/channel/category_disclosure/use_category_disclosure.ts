@@ -1,13 +1,29 @@
-import { ref } from 'vue'
+import { ref, shallowRef, watch } from 'vue'
 
-export function useCategoryDisclosure() {
-  const collapsed = ref(new Set<string>())
-  function isOpen(categoryId: string): boolean { return !collapsed.value.has(categoryId) }
+import { createCategoryNavigationPreferences } from './preferences'
+
+type StoragePort = Pick<Storage, 'getItem' | 'setItem'>
+
+export function useCategoryDisclosure(accountId: string | (() => string), origin = appOrigin(), storage: StoragePort | null = appStorage()) {
+  const currentAccount = typeof accountId === 'function' ? accountId : () => accountId
+  const preferences = shallowRef(createCategoryNavigationPreferences(currentAccount(), origin, storage))
+  const revision = ref(0)
+  if (typeof accountId === 'function') watch(accountId, value => { preferences.value = createCategoryNavigationPreferences(value, origin, storage); revision.value++ })
+  function isOpen(categoryId: string): boolean { revision.value; return !preferences.value.isCollapsed(categoryId) }
   function toggle(categoryId: string): void {
-    const next = new Set(collapsed.value)
-    if (next.has(categoryId)) next.delete(categoryId)
-    else next.add(categoryId)
-    collapsed.value = next
+    preferences.value.toggleCollapsed(categoryId)
+    revision.value++
   }
-  return { isOpen, toggle }
+  function isFavorite(channelId: string): boolean { revision.value; return preferences.value.favoriteIds().includes(channelId) }
+  function toggleFavorite(channelId: string): void {
+    preferences.value.setFavorite(channelId, !preferences.value.favoriteIds().includes(channelId))
+    revision.value++
+  }
+  function favoriteIds(): string[] { revision.value; return preferences.value.favoriteIds() }
+  function pruneFavorites(validChannelIds: Set<string>): void { preferences.value.pruneFavorites(validChannelIds); revision.value++ }
+  function pruneCollapsed(validCategoryIds: Set<string>): void { preferences.value.pruneCollapsed(validCategoryIds); revision.value++ }
+  return { isOpen, toggle, isFavorite, toggleFavorite, favoriteIds, pruneFavorites, pruneCollapsed }
 }
+
+function appOrigin(): string { return typeof window === 'undefined' ? '' : window.location.origin }
+function appStorage(): StoragePort | null { try { return typeof window === 'undefined' ? null : window.localStorage } catch { return null } }
