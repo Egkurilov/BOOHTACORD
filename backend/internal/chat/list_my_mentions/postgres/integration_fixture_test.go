@@ -2,6 +2,7 @@ package listmymentionspostgres
 
 import (
 	"context"
+	"sort"
 	"testing"
 	"time"
 
@@ -35,6 +36,10 @@ func newMentionsFixture(t *testing.T) mentionsFixture {
 		{`INSERT INTO categories (id,name,position) VALUES ($1,'General',0)`, []any{uuid.NewString()}},
 	}
 	category := seeds[3].args[0]
+	ownParticipants := []string{f.caller, f.author}
+	sort.Strings(ownParticipants)
+	otherParticipants := []string{f.author, f.outsider}
+	sort.Strings(otherParticipants)
 	seeds = append(seeds,
 		struct {
 			sql  string
@@ -43,11 +48,11 @@ func newMentionsFixture(t *testing.T) mentionsFixture {
 		struct {
 			sql  string
 			args []any
-		}{`INSERT INTO direct_messages (id,participant_one_id,participant_two_id) VALUES ($1,$2,$3)`, []any{f.ownDM, f.caller, f.author}},
+		}{`INSERT INTO direct_messages (id,participant_one_id,participant_two_id) VALUES ($1,$2,$3)`, []any{f.ownDM, ownParticipants[0], ownParticipants[1]}},
 		struct {
 			sql  string
 			args []any
-		}{`INSERT INTO direct_messages (id,participant_one_id,participant_two_id) VALUES ($1,$2,$3)`, []any{f.otherDM, f.author, f.outsider}},
+		}{`INSERT INTO direct_messages (id,participant_one_id,participant_two_id) VALUES ($1,$2,$3)`, []any{f.otherDM, otherParticipants[0], otherParticipants[1]}},
 	)
 	for _, seed := range seeds {
 		if _, err := pool.Exec(ctx, seed.sql, seed.args...); err != nil {
