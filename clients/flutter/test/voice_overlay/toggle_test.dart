@@ -32,6 +32,7 @@ void main() {
       await tester.tap(find.byTooltip('Показать панель говорящих'));
       expect(enabled, isTrue);
       await tester.tap(find.byTooltip('Настройки панели говорящих'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Показывать только говорящих'));
       expect(onlySpeakers, isTrue);
     } finally {
