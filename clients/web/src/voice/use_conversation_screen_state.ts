@@ -1,4 +1,4 @@
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, shallowRef, watch } from 'vue'
 import type { TopologyChannel } from '../channel/topology_client'
 import { miniPlayerVisible, screenViewerMounted } from './mini_player_policy'
 import { screenCaptureSupported, screenCaptureUnavailableMessage } from './screen_capture_support'
@@ -24,7 +24,7 @@ export function useConversationScreenState(props: ConversationScreenProps) {
   const miniVisible = computed(() => miniPlayerVisible(screenPinned.value, voiceVisible.value, props.selectedScreenStreamId, props.activeVoiceChannel?.id ?? null))
   const keepVoiceRoom = computed(() => screenViewerMounted(screenPinned.value, voiceVisible.value, props.selectedScreenStreamId, props.activeVoiceChannel?.id ?? null))
   const selectedScreenName = computed(() => props.screenViewerCards.find((screen) => screen.id === props.selectedScreenStreamId)?.participantName ?? null)
-  const screenViewerRef = ref<{ selectStream: (id: string) => void } | null>(null)
+  const screenViewerRef = shallowRef<{ selectStream: (id: string) => void } | null>(null)
   let dismissedLocalPreviewId: string | null = null
   const localScreenId = computed(() => props.screenViewerCards.find((screen) => screen.isLocal)?.id ?? null)
   watch(() => props.selectedScreenStreamId, (id) => { if (!id) screenPinned.value = false })
