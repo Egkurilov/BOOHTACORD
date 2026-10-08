@@ -15,6 +15,8 @@ import { useMessageEditController, type EditResult } from './message_edit_contro
 import { handleMessageEditKeydown } from './message_edit_shortcuts'
 import { useMessageActionDisclosure } from './message_actions/disclosure'
 import SystemWelcomeMessage from './system_welcome/SystemWelcomeMessage.vue'
+import ReactionBar from './reactions/ReactionBar.vue'
+import PinMessageButton from './pins/PinMessageButton.vue'
 
 type RenderedMessage = Omit<TextMessage, 'channelId' | 'attachments' | 'mentionUserIds'> & { channelId?: string; directMessageId?: string; attachments?: TextMessageAttachment[]; mentionUserIds?: string[] }
 
@@ -90,6 +92,7 @@ function remove(): void {
         <p v-if="unmatchedMentionIds.length" class="message-mentions">Упомянуты: <span v-for="id in unmatchedMentionIds" :key="id">@{{ authors.displayName(id) }} </span></p>
         <TextMessageAttachments v-if="textChannelId && textAttachments.length" :channel-id="textChannelId" :attachments="textAttachments" />
         <DirectMessageAttachments v-if="message.directMessageId && textAttachments.length" :direct-message-id="message.directMessageId" :attachments="textAttachments" />
+        <ReactionBar v-if="!message.sendStatus&&(message.channelId||message.directMessageId)" v-slot="{canPin}" :kind="message.directMessageId?'DIRECT_MESSAGE':'CHANNEL'" :conversation-id="message.directMessageId??message.channelId??''" :message-id="message.id"><PinMessageButton v-if="canPin&&message.channelId" :channel-id="message.channelId" :message-id="message.id" /></ReactionBar>
         <p v-if="message.sendStatus === 'sending'" class="message-send-status" role="status">Отправляется…</p>
         <p v-if="message.sendStatus === 'checking'" class="message-send-status" role="status">Проверяем доставку…</p>
         <div v-if="message.sendStatus === 'failed'" class="message-send-status" role="alert"><span>Не отправлено</span><button type="button" :disabled="retryDisabled || message.retryBlocked" @click="emit('retry')">Повторить отправку</button><button type="button" :disabled="retryDisabled" @click="emit('remove')">Убрать из очереди</button><small v-if="message.retryBlocked">Исправьте сообщение или доступ перед новой отправкой.</small></div>

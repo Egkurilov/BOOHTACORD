@@ -14,6 +14,7 @@ import (
 	guildroutes "voice-platform/backend/internal/app/guild_routes"
 	identityroutes "voice-platform/backend/internal/app/identity_routes"
 	mediaroutes "voice-platform/backend/internal/app/media_routes"
+	messagesocialroutes "voice-platform/backend/internal/app/message_social_routes"
 	observabilityroutes "voice-platform/backend/internal/app/observability_routes"
 	storageroutes "voice-platform/backend/internal/app/storage_routes"
 	clientupdates "voice-platform/backend/internal/client_updates/catalog"
@@ -61,6 +62,7 @@ func routes(database *pgxpool.Pool, configuration runtimeconfig.Config, events *
 	if err := archivetextroutes.Register(mux, database, sessionService, events, configuration.AttachmentRoot); err != nil {
 		return nil, err
 	}
+	messagesocialroutes.Register(mux, database, sessionService, events)
 	mediaroutes.ConfigureVoiceLeaseRoutes(mux, database, sessionService, maintenanceService)
 	mediaroutes.ConfigureVoiceParticipantRoutes(mux, database, sessionService, configuration.MediaSnapshot, metrics, configuration.LiveKitAPIKey, configuration.LiveKitAPISecret)
 	observabilityroutes.ConfigureClientScreenRoutes(mux, database, sessionService, metrics)

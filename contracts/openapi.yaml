@@ -6,6 +6,1248 @@
     "description": "Public HTTP API for one deployment guild. Cookie sessions and server ACL protect resources. Every public POST/PUT/PATCH/DELETE requires the exact configured Origin (CSRF boundary), including anonymous auth operations. WebSocket handshake checks same host when Origin is present. Response X-Request-ID is server generated. Most JSON errors use Error; compact code-only errors, flat client-update errors, empty bodies and text/stream errors are described where emitted. Wrong method/unmatched paths are ServeMux operational responses outside declared operations."
   },
   "paths": {
+    "/api/v1/channels/{channelID}/message-reactions": {
+      "get": {
+        "operationId": "listTextMessageReactions",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "channelID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "message_ids",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 3700
+            },
+            "description": "Comma-separated1..100 UUIDs. Missing/empty/duplicate query key returns400. No reactor identities are returned."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "200": {
+            "description": "Authorized current state.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageReactionPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/messages/{messageID}/reactions/{emoji}": {
+      "put": {
+        "operationId": "putTextMessageReaction",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "channelID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "emoji",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "👍",
+                "❤️",
+                "😂",
+                "🎉",
+                "👀",
+                "✅"
+              ]
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact configured same-origin CSRF boundary."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "204": {
+            "description": "Desired state committed; duplicate request is safe.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTextMessageReaction",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "channelID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "emoji",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "👍",
+                "❤️",
+                "😂",
+                "🎉",
+                "👀",
+                "✅"
+              ]
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact configured same-origin CSRF boundary."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "204": {
+            "description": "Desired state committed; duplicate request is safe.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/direct-messages/{directMessageID}/message-reactions": {
+      "get": {
+        "operationId": "listDirectMessageMessageReactions",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "directMessageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "message_ids",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 3700
+            },
+            "description": "Comma-separated1..100 UUIDs. Missing/empty/duplicate query key returns400. No reactor identities are returned."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "200": {
+            "description": "Authorized current state.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageReactionPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/direct-messages/{directMessageID}/messages/{messageID}/reactions/{emoji}": {
+      "put": {
+        "operationId": "putDirectMessageMessageReaction",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "directMessageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "emoji",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "👍",
+                "❤️",
+                "😂",
+                "🎉",
+                "👀",
+                "✅"
+              ]
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact configured same-origin CSRF boundary."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "204": {
+            "description": "Desired state committed; duplicate request is safe.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDirectMessageMessageReaction",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "directMessageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "emoji",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "👍",
+                "❤️",
+                "😂",
+                "🎉",
+                "👀",
+                "✅"
+              ]
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact configured same-origin CSRF boundary."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "204": {
+            "description": "Desired state committed; duplicate request is safe.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/channels/{channelID}/pins": {
+      "get": {
+        "operationId": "listTextMessagePins",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "channelID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "description": "Opaque timestamp/ID cursor bound to this channel."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 50
+            },
+            "description": "Bounded page size."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "200": {
+            "description": "Authorized current state.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextMessagePinPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/text-channels/{channelID}/pins/{messageID}": {
+      "put": {
+        "operationId": "putTextMessagePin",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "channelID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact configured same-origin CSRF boundary."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "204": {
+            "description": "Desired state committed; duplicate request is safe.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTextMessagePin",
+        "description": "Current server-side account/resource ACL. Administrator status grants no DM reading. Explicit PUT/DELETE desired state; no mutation body. Deleted/archived/VOICE scope denied. ID-only realtime hints, metadata cleanup on message deletion.",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "channelID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "messageID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact configured same-origin CSRF boundary."
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid IDs, emoji, cursor, bounds or forbidden mutation body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent or invalid.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Origin rejected or administrator required.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unavailable target; same response for foreign DM, blocked, deleted, archived or wrong scope.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Persistence unavailable; middleware failure may emit an empty body.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "x-empty-body-possible": true
+          },
+          "204": {
+            "description": "Desired state committed; duplicate request is safe.",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/RequestID"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/channels/{channelID}/message-delivery/{clientMessageID}": {"get": {"operationId": "lookupTextMessageDelivery", "description": "Caller-author receipt for one conversation and exact client_message_id. Deleted committed messages remain delivered. null means absent at read time; retry only the exact original UUID and payload. Response account_id guards changed cookie owner. No bodies, no cache.", "parameters": [{"name": "channelID", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}, {"name": "clientMessageID", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}], "responses": {"400": {"description": "Invalid public UUID", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}}}, "401": {"description": "No active caller session", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
             "headers": {"X-Request-ID": {"$ref": "#/components/headers/RequestID"}}}, "404": {"description": "Unavailable conversation or nonparticipant; administrator cannot read foreign DM", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}},
@@ -6006,6 +7248,117 @@
   },
   "components": {
     "schemas": {
+      "MessageReaction": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "message_id",
+          "emoji",
+          "count",
+          "mine"
+        ],
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "emoji": {
+            "type": "string",
+            "enum": [
+              "👍",
+              "❤️",
+              "😂",
+              "🎉",
+              "👀",
+              "✅"
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "mine": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MessageReactionPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reactions",
+          "can_pin"
+        ],
+        "properties": {
+          "reactions": {
+            "type": "array",
+            "maxItems": 600,
+            "items": {
+              "$ref": "#/components/schemas/MessageReaction"
+            }
+          },
+          "can_pin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TextMessagePin": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "message_id",
+          "pinned_at",
+          "author_id",
+          "preview",
+          "message_created_at"
+        ],
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pinned_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "author_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "preview": {
+            "type": "string",
+            "maxLength": 240
+          },
+          "message_created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TextMessagePinPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pins",
+          "can_manage"
+        ],
+        "properties": {
+          "pins": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "$ref": "#/components/schemas/TextMessagePin"
+            }
+          },
+          "next_cursor": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "can_manage": {
+            "type": "boolean"
+          }
+        }
+      },
     "OwnMessageDelivery": {"type": "object", "additionalProperties": false, "required": ["account_id", "message_id"], "properties": {"account_id": {"type": "string", "format": "uuid"}, "message_id": {"type": ["string", "null"], "format": "uuid"}}},
     "OwnSession": {"type": "object", "additionalProperties": false, "required": ["id", "label", "created_at", "last_active_at", "current"], "properties": {"id": {"type": "string", "format": "uuid"}, "label": {"type": "string"}, "created_at": {"type": "string", "format": "date-time"}, "last_active_at": {"type": "string", "format": "date-time"}, "current": {"type": "boolean"}}},
     "OwnSessionPage": {"type": "object", "additionalProperties": false, "required": ["account_id", "sessions", "next_cursor"], "properties": {"account_id": {"type": "string", "format": "uuid"}, "sessions": {"type": "array", "maxItems": 100, "items": {"$ref": "#/components/schemas/OwnSession"}}, "next_cursor": {"type": ["string", "null"], "format": "uuid"}}},
