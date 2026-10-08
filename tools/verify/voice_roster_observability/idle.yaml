@@ -1,0 +1,24 @@
+rule_files:
+- voice-roster-alerts.yaml
+evaluation_interval: 1m
+tests:
+- interval: 1m
+  input_series:
+  - series: voice_platform_voice_roster_observation_enabled{service_name="boohtacord-api"}
+    values: 1+0x15
+  - series: voice_platform_voice_roster_streams_active{service_name="boohtacord-api"}
+    values: 0+0x15
+  - series: voice_platform_voice_roster_initial_total{service_name="boohtacord-api",outcome="failure"}
+    values: 0+0x15
+  - series: voice_platform_voice_roster_initial_total{service_name="boohtacord-api",outcome="success"}
+    values: 0+0x15
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: VoiceRosterInitialBlackout
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: VoiceRosterRefreshBlackout
+    exp_alerts: []
+  - eval_time: 10m
+    alertname: VoiceRosterTelemetryMissing
+    exp_alerts: []

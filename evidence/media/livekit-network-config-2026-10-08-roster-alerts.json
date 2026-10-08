@@ -1,0 +1,20 @@
+{
+  "kind": "source-only-livekit-network-revalidation",
+  "observed_at": "2026-10-08",
+  "status": "PASS",
+  "source_base": "b0bbe27a4618eb831dd33e1e4f2b0ea98488921b",
+  "historical_evidence": "evidence/media/livekit-network-config-2026-10-07.json",
+  "change": "Only private roster alert file/rule mount added; listeners, network peer set, SFU pin and ports preserved. Current checker reads this explicit source supplement.",
+  "physical_acceptance": "NOT_RUN; no historical production/network proof is promoted",
+  "checks": [
+    "Native network model validate PASS",
+    "Compose interpolation PASS",
+    "Pinned promtool four synthetic roster rule scenarios PASS"
+  ],
+  "repository_artifacts": {
+    "docker/observability/compose.yaml": "sha256:1950d78ceb859f63c18f9416b1b9e7fd8fcac2d6edb61d2892bfe4017880d5a6",
+    "docker/observability/prometheus.yaml": "sha256:d4128b61157aee97176f1e2806ac0a8d3721054cc811dda55d3e4926045fe0e9",
+    "docker/observability/voice-roster-alerts.yaml": "sha256:e9ffd50a641c174ef6009b8920be5e30b31cf3afa18549087f2a00c5b5d21cd3",
+    "tools/verify/livekit_network_config/check.py": "sha256:c794a8571f25d0d2ff27a6159b8dbcd978fe36eb7ae313f64c5190bf9059eb1f"
+  }
+}
