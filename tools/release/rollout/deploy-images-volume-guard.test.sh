@@ -19,6 +19,10 @@ cat > "$fixture/bin/curl" <<'EOF'
 #!/usr/bin/env bash
 printf 'curl\n' >> "$TEST_LOG"
 EOF
+cat > "$fixture/bin/python3" <<'EOF'
+#!/usr/bin/env bash
+printf 'python3 %s\n' "$*" >> "$TEST_LOG"
+EOF
 cat > "$fixture/bin/sleep" <<'EOF'
 #!/usr/bin/env bash
 printf 'sleep\n' >> "$TEST_LOG"
@@ -51,8 +55,10 @@ if grep -Fq 'run --rm --no-deps migrate' "$fixture/calls"; then exit 1; fi
 if grep -Fq 'up -d --no-deps --no-build api web' "$fixture/calls"; then exit 1; fi
 grep -Fq 'maintenance-admission --disable' "$fixture/calls"
 
-run_deploy pass
+if ! run_deploy pass; then cat "$fixture/output" >&2; exit 1; fi
 grep -Fq -- "--project-directory $project/deploy --env-file $project/.env -f $project/deploy/compose.yaml" "$fixture/calls"
+grep -Fq -- 'align-existing-private-network.py' "$fixture/calls"
+grep -Fq -- '--ensure-postgres-alias' "$fixture/calls"
 pull="$(grep -n -F 'pull api migrate web' "$fixture/calls" | head -n 1 | cut -d: -f1)"
 guard="$(grep -n -Fx guard "$fixture/calls" | head -n 1 | cut -d: -f1)"
 migrate="$(grep -n -F 'run --rm --no-deps migrate' "$fixture/calls" | head -n 1 | cut -d: -f1)"
