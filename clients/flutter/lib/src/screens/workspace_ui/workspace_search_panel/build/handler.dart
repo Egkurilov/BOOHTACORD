@@ -8,6 +8,7 @@ import '../../native_bindings.dart';
 
 import '../lifecycle/context.dart';
 import '../handler_bindings.dart';
+import 'navigation_panel/handler.dart';
 
 mixin WorkspaceWorkspaceSearchPanelStateBuildBinding
     on WorkspaceWorkspaceSearchPanelStateContext {
@@ -23,6 +24,9 @@ extension WorkspaceWorkspaceSearchPanelStateBuildAction
     final current = workspaceCurrentConversation();
     if (workspaceScope == 'current' && current == null) workspaceScope = 'all';
     final compact = MediaQuery.sizeOf(context).width <= 720;
+    if (navigationMode) {
+      return renderQuickJumpNavigation(compact);
+    }
     final feedback = workspaceFeedback();
     final horizontalPadding = compact ? 16.0 : 20.0;
     final statusMessage = feedback.statusMessage;

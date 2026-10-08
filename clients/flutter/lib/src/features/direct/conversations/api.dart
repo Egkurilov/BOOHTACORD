@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../../models.dart';
 import '../../../core/http/transport.dart';
+import 'candidate_page.dart';
 
 class DirectConversationsApi {
   DirectConversationsApi(this.transport);
@@ -25,23 +26,29 @@ class DirectConversationsApi {
     final result = <DirectCandidate>[];
     String? after;
     do {
-      final data = await transport.checked(
-        await transport.client.get(
-          transport.uri('/direct-message-candidates', {
-            'limit': '100',
-            'after': ?after,
-          }),
-          headers: await transport.headers(),
-        ),
-      ) as Map<String, dynamic>;
-      result.addAll(
-        (data['candidates'] as List<dynamic>).map(
-          (value) => DirectCandidate.fromJson(value as Map<String, dynamic>),
-        ),
-      );
-      after = data['next_after'] as String?;
+      final page = await candidatePage(after: after);
+      result.addAll(page.items);
+      after = page.nextAfter;
     } while (after != null);
     return result;
+  }
+
+  Future<DirectCandidatePage> candidatePage({String? after}) async {
+    final data = await transport.checked(
+      await transport.client.get(
+        transport.uri('/direct-message-candidates', {
+          'limit': '100',
+          'after': ?after,
+        }),
+        headers: await transport.headers(),
+      ),
+    ) as Map<String, dynamic>;
+    return DirectCandidatePage(
+      items: (data['candidates'] as List<dynamic>)
+          .map((v) => DirectCandidate.fromJson(v as Map<String, dynamic>))
+          .toList(growable: false),
+      nextAfter: data['next_after'] as String?,
+    );
   }
 
   Future<String> openDirectMessage(String participantId) async {

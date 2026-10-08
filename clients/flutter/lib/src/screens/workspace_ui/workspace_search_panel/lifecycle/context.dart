@@ -12,6 +12,7 @@ abstract class WorkspaceWorkspaceSearchPanelStateContext
   String? workspaceError;
   bool workspaceLoading = false;
   bool workspaceSearched = false;
+  bool navigationMode = false;
   int workspaceSequence = 0;
   List<SearchMessage> workspaceResults = const [];
   void workspaceQueryChanged();

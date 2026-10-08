@@ -18,16 +18,25 @@ extension WorkspaceSearchPanelHeaderControlsRenderer
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              'Поиск сообщений',
+              navigationMode ? 'Каналы и люди' : 'Поиск сообщений',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
+              style: const TextStyle(
                 color: GcColors.text,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
+            ),
+          ),
+          IconButton(
+            tooltip: navigationMode ? 'Поиск сообщений' : 'Каналы и люди',
+            onPressed: () =>
+                workspaceMutateView(() => navigationMode = !navigationMode),
+            icon: Icon(
+              navigationMode ? Icons.chat_bubble_outline : Icons.people_outline,
+              size: 20,
             ),
           ),
           IconButton(

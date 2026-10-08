@@ -1,6 +1,7 @@
 import '../../../models.dart';
 import '../../../core/http/facade_base.dart';
 import 'api.dart';
+import 'candidate_page.dart';
 
 mixin DirectConversationsFacade on ApiFacadeBase {
   late final _directConversations = DirectConversationsApi(transport);
@@ -10,6 +11,9 @@ mixin DirectConversationsFacade on ApiFacadeBase {
 
   Future<List<DirectCandidate>> directMessageCandidates() =>
       transport.run(() => _directConversations.directMessageCandidates());
+
+  Future<DirectCandidatePage> directMessageCandidatePage({String? after}) =>
+      transport.run(() => _directConversations.candidatePage(after: after));
 
   Future<String> openDirectMessage(String participantId) => transport.run(
     () => _directConversations.openDirectMessage(participantId),
