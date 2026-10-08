@@ -44,7 +44,7 @@ func NewHandler(searcher Searcher) http.Handler {
 			}
 			limit = parsed
 		}
-		result, err := searcher.Search(request.Context(), searchmessages.Input{ActorID: principal.AccountID, ChannelID: channelID, DirectMessageID: directMessageID, Query: query, Before: before, AuthorID: filters.authorID, HasAttachment: filters.hasAttachment, Limit: limit})
+		result, err := searcher.Search(request.Context(), searchmessages.Input{ActorID: principal.AccountID, ChannelID: channelID, DirectMessageID: directMessageID, Query: query, Before: before, AuthorID: filters.authorID, HasAttachment: filters.hasAttachment, CreatedFrom: filters.createdFrom, CreatedBefore: filters.createdBefore, Limit: limit})
 		if errors.Is(err, searchmessages.ErrInvalidInput) {
 			writeError(writer, request, http.StatusBadRequest, "VALIDATION_FAILED", "Некорректный поисковый запрос")
 			return

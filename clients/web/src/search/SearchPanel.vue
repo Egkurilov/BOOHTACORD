@@ -7,6 +7,7 @@ import SystemWelcomeMessage from '../conversation/system_welcome/SystemWelcomeMe
 import SearchResultBody from './SearchResultBody.vue'
 import SearchFilters from './filters/SearchFilters.vue'
 import { useSearchFilters } from './filters/state'
+import { searchDateRange, type SearchDateRange } from './filters/date_range'
 import PersonalMentionsPanel from './PersonalMentionsPanel.vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { searchMessages, type SearchMessage } from './search_messages_client'
@@ -23,6 +24,7 @@ const authors = useAuthorDirectory()
 const messages = ref<SearchMessage[]>([])
 const nextCursor = ref('')
 const activeQuery = ref('')
+const activeDates = ref<SearchDateRange>({})
 const loading = ref(false)
 const searched = ref(false)
 const error = ref('')
@@ -30,9 +32,9 @@ const queryInput = ref<HTMLInputElement | null>(null)
 let requestSequence = 0
 const canSubmit = computed(() => !loading.value && Boolean(query.value.trim()) && (scope.value === 'all' || Boolean(props.currentConversation)))
 
-function reset(): void { requestSequence++; messages.value = []; nextCursor.value = ''; activeQuery.value = ''; loading.value = false; searched.value = false; error.value = '' }
+function reset(): void { requestSequence++; messages.value = []; nextCursor.value = ''; activeQuery.value = ''; activeDates.value = {}; loading.value = false; searched.value = false; error.value = '' }
 watch(scope, reset)
-watch(() => [filters.authorId, filters.attachment], reset)
+watch(() => [filters.authorId, filters.attachment, filters.dateFrom, filters.dateTo], reset)
 watch(messages, (items) => { for (const item of items) void authors.ensure(item.authorId) })
 watch(() => props.currentConversation?.id, () => { if (scope.value === 'current') { if (!props.currentConversation) scope.value = 'all'; else reset() } })
 
@@ -46,11 +48,13 @@ async function runSearch(before?: string): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    const page = await searchMessages({ query: searchQuery, ...(conversation?.kind === 'CHANNEL' ? { channelId: conversation.id } : {}), ...(conversation?.kind === 'DIRECT_MESSAGE' ? { directMessageId: conversation.id } : {}), ...(filters.authorId ? { authorId: filters.authorId } : {}), ...(filters.attachment !== 'any' ? { hasAttachment: filters.attachment === 'with' } : {}), before })
+    const dates = before ? activeDates.value : searchDateRange(filters.dateFrom, filters.dateTo)
+    const page = await searchMessages({ query: searchQuery, ...dates, ...(conversation?.kind === 'CHANNEL' ? { channelId: conversation.id } : {}), ...(conversation?.kind === 'DIRECT_MESSAGE' ? { directMessageId: conversation.id } : {}), ...(filters.authorId ? { authorId: filters.authorId } : {}), ...(filters.attachment !== 'any' ? { hasAttachment: filters.attachment === 'with' } : {}), before })
     if (sequence !== requestSequence) return
     messages.value = before ? [...messages.value, ...page.messages] : page.messages
     nextCursor.value = page.nextCursor ?? ''
     activeQuery.value = searchQuery
+    activeDates.value = dates
     searched.value = true
   } catch (reason) {
     if (sequence === requestSequence) error.value = reason instanceof Error ? reason.message : 'Не удалось выполнить поиск сообщений.'
@@ -79,7 +83,7 @@ onMounted(() => { void nextTick(() => queryInput.value?.focus()) })
     <form class="search-form" role="search" @submit.prevent="runSearch()">
       <label class="search-query-label"><span class="visually-hidden">Запрос</span><input ref="queryInput" v-model="query" type="search" autocomplete="off" placeholder="Поиск сообщений" :disabled="loading" :aria-describedby="error ? 'search-error' : undefined"></label>
       <div class="search-form-meta"><label class="search-scope-label"><span class="visually-hidden">Область поиска</span><select v-model="scope" :disabled="loading"><option value="all">Везде</option><option v-if="currentConversation" value="current">{{ currentConversation.label }}</option></select></label><span>Enter — найти</span></div>
-      <SearchFilters v-model:author-id="filters.authorId" v-model:attachment="filters.attachment" :disabled="loading" />
+      <SearchFilters v-model:author-id="filters.authorId" v-model:attachment="filters.attachment" v-model:date-from="filters.dateFrom" v-model:date-to="filters.dateTo" :disabled="loading" />
       <button class="search-submit" type="submit" :disabled="!canSubmit">{{ loading ? 'Ищем…' : 'Найти' }}</button>
     </form>
     <p v-if="error" id="search-error" class="search-error" role="alert">{{ error }}</p>

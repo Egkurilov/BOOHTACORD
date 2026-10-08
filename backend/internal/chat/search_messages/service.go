@@ -21,11 +21,13 @@ var (
 
 type Input struct {
 	ActorID, ChannelID, DirectMessageID, Query, Before, AuthorID string
+	CreatedFrom, CreatedBefore                                   string
 	HasAttachment                                                *bool
 	Limit                                                        int
 }
 type Request struct {
 	ActorID, ChannelID, DirectMessageID, Query, AuthorID string
+	CreatedFrom, CreatedBefore                           *time.Time
 	HasAttachment                                        *bool
 	Before                                               *Cursor
 	Limit                                                int
@@ -58,6 +60,10 @@ func (service Service) Search(ctx context.Context, input Input) (Result, error) 
 		return Result{}, ErrInvalidInput
 	}
 	var before *Cursor
+	createdFrom, createdBefore, err := parseDateRange(input.CreatedFrom, input.CreatedBefore)
+	if err != nil {
+		return Result{}, ErrInvalidInput
+	}
 	if input.Before != "" {
 		var err error
 		before, err = decodeCursor(input.Before)
@@ -65,7 +71,7 @@ func (service Service) Search(ctx context.Context, input Input) (Result, error) 
 			return Result{}, ErrInvalidInput
 		}
 	}
-	messages, err := service.store.Search(ctx, Request{ActorID: input.ActorID, ChannelID: input.ChannelID, DirectMessageID: input.DirectMessageID, Query: input.Query, AuthorID: input.AuthorID, HasAttachment: input.HasAttachment, Before: before, Limit: input.Limit})
+	messages, err := service.store.Search(ctx, Request{ActorID: input.ActorID, ChannelID: input.ChannelID, DirectMessageID: input.DirectMessageID, Query: input.Query, AuthorID: input.AuthorID, HasAttachment: input.HasAttachment, CreatedFrom: createdFrom, CreatedBefore: createdBefore, Before: before, Limit: input.Limit})
 	if errors.Is(err, ErrConversationUnavailable) {
 		return Result{}, ErrConversationUnavailable
 	}

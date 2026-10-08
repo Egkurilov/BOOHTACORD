@@ -1773,7 +1773,7 @@
     "/api/v1/search/messages": {
       "get": {
         "operationId": "searchMessages",
-        "description": "Authenticated member only. Searches non-deleted text across current TEXT channels and only the caller's own DM pairs. Optional channel_id or direct_message_id restricts the current conversation; the filters are mutually exclusive. Optional author_id and has_attachment filter results inside the same authorized scope. Uses PostgreSQL simple full-text search and a stable mixed-source cursor ordered by created_at, id, and kind.",
+        "description": "Authenticated member only. Searches non-deleted text across current TEXT channels and only the caller's own DM pairs. Optional channel_id or direct_message_id restricts the current conversation; the filters are mutually exclusive. Optional author_id and has_attachment filter results inside the same authorized scope. Uses PostgreSQL simple full-text search and a stable mixed-source cursor ordered by created_at, id, and kind. Optional created_from (inclusive) and created_before (exclusive) are RFC3339 instants with explicit timezone, up to microsecond precision; start must precede end. Resend unchanged filters on each cursor page.",
         "parameters": [
           {
             "name": "query",
@@ -1815,6 +1815,28 @@
             "description": "Optional exact boolean. true requires at least one linked attachment in ATTACHED state; false requires none. Deleted messages remain excluded and file contents are not searched.",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "created_from",
+            "in": "query",
+            "description": "Optional inclusive message-created instant. RFC3339 with explicit Z or numeric offset and at most six fractional digits. Empty/duplicate/malformed values are invalid.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 32,
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
+            }
+          },
+          {
+            "name": "created_before",
+            "in": "query",
+            "description": "Optional exclusive message-created instant. RFC3339 with explicit Z or numeric offset and at most six fractional digits. If created_from is present it must precede created_before; empty/duplicate/malformed values are invalid.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 32,
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"
             }
           },
           {
