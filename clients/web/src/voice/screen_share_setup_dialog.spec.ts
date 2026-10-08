@@ -63,6 +63,8 @@ describe('screen-share setup dialog', () => {
 
   it('shows the current stream quality editor only for an updating sender', async () => {
     const html = await renderToString(createSSRApp(ScreenShareSetupDialog, { initialProfile: 'P1440_60', updating: true }))
+    expect(html).toMatch(/<section class="screen-share-quality" aria-labelledby="screen-share-quality-title">/)
+    expect(html).toMatch(/<h3[^>]*id="screen-share-quality-title"/)
     expect(html).toContain('Качество трансляции')
     expect(html).toContain('Изменения применятся к текущему показу.')
     expect(html).toContain('При ухудшении сети качество может временно снижаться.')
