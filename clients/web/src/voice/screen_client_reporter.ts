@@ -77,7 +77,7 @@ export function startScreenClientReporting(read: () => ScreenClientReport | null
     if (!report) return
     recordMediaSample({...report},owner)
     busy = true
-    void postScreenClientReport(report, tracedFetch, owner.leaseId).catch(() => {}).finally(() => { busy = false })
+    void postScreenClientReport(report, tracedFetch, owner.leaseId ?? undefined).catch(() => {}).finally(() => { busy = false })
   }, 5000)
   return () => globalThis.clearInterval(interval)
 }
