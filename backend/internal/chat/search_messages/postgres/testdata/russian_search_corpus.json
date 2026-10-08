@@ -1,0 +1,24 @@
+{
+  "documents": [
+    {"id": "nick-frostfox", "body": "Ник FrostFox подключился к голосовому каналу"},
+    {"id": "nick-frostfox-genitive", "body": "Игроки обсуждали тактику для FrostFox"},
+    {"id": "name-lera", "body": "Лера включила микрофон перед рейдом"},
+    {"id": "name-lera-inflected", "body": "Настройки микрофона Леры сохранены"},
+    {"id": "morphology-started", "body": "Игроки запустили рейд после обновления клиента"},
+    {"id": "morphology-launch", "body": "Запуск рейда перенесли на вечер"},
+    {"id": "morphology-checked", "body": "Илья проверил микрофон перед игрой"},
+    {"id": "morphology-check", "body": "Проверка микрофона завершена успешно"},
+    {"id": "phrase-voice", "body": "Клановый войс работает после перезапуска"},
+    {"id": "phrase-device", "body": "Настройки устройства сохранены для FrostFox"},
+    {"id": "game-party", "body": "Пати готова к следующему рейду"},
+    {"id": "game-clan", "body": "Клан собрался на вечерний рейд"}
+  ],
+  "queries": [
+    {"query": "FrostFox", "expected_ids": ["nick-frostfox", "nick-frostfox-genitive", "phrase-device"]},
+    {"query": "Лера", "expected_ids": ["name-lera"]},
+    {"query": "запустить рейд", "expected_ids": ["morphology-started"]},
+    {"query": "проверить микрофон", "expected_ids": ["morphology-checked"]},
+    {"query": "\"настройки устройства\"", "expected_ids": ["phrase-device"]},
+    {"query": "войс", "expected_ids": ["phrase-voice"]}
+  ]
+}
