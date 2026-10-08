@@ -16,7 +16,7 @@ const { store, timeline, announcement, jumpCount, historyWindow, onScroll, jumpT
   <div class="message-history-wrap">
   <p class="gc-sr-only" role="status" aria-atomic="true">{{ announcement }}</p>
   <button v-if="jumpCount" class="message-jump-latest" type="button" @click="jumpToLatest">К новым сообщениям ({{ jumpCount }})</button>
-  <ol ref="list" class="messages message-list message-list--virtual" role="log" aria-live="off" aria-label="История сообщений" @scroll.passive="onScroll" @focusin="historyWindow.pinFocused" @focusout="historyWindow.releaseFocus">
+  <ol ref="list" class="messages message-list" :class="{ 'message-list--virtual': true }" role="log" aria-live="off" aria-label="История сообщений" @scroll.passive="onScroll" @focusin="historyWindow.pinFocused" @focusout="historyWindow.releaseFocus">
     <li v-if="store.nextCursor || store.olderError" class="virtual-history-control" data-history-control>
       <button v-if="store.nextCursor" type="button" :disabled="store.olderLoading" @click="loadOlder">{{ store.olderLoading ? 'Загружаем старые сообщения…' : 'Показать предыдущие сообщения' }}</button>
       <span v-if="store.olderError" class="state state-error" role="alert">{{ store.olderError }} <button type="button" :disabled="store.olderLoading" @click="loadOlder">Повторить</button></span>
