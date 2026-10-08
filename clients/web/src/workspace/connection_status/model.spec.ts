@@ -3,6 +3,10 @@ import { connectionStatus } from './model'
 import { createVoiceRosterRealtime, type VoiceRosterEvents } from '../../voice/voice_roster_realtime'
 
 describe('independent chat, media and roster state', () => {
+  it('retains success age while distinguishing expired and retained data', () => {
+    expect(connectionStatus('CONNECTED', 'CONNECTED', false, 1000, 12000, false).roster).toBe('Состав недоступен · 11 с. назад')
+    expect(connectionStatus('CONNECTED', 'CONNECTED', false, 1000, 12000, true).roster).toBe('Состав устарел · 11 с. назад')
+  })
   it('does not mark connected media offline when only chat fails', () => {
     const status = connectionStatus('DISCONNECTED', 'CONNECTED', false, 1000, 6000)
     expect(status.chat).toBe('Чат обновляется')

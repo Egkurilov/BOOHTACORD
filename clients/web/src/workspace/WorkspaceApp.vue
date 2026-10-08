@@ -74,7 +74,7 @@ onBeforeUnmount(() => {mounted=false;props.readiness?.finish('cancelled','dispos
           <SearchLauncher :active="activePanel === 'search'" @open="togglePanel('search')" @close="activePanel = 'none'" />
           <WorkspaceSidebarTabs class="sidebar-tabs" :active="sidebarSection" @select="sidebarSection = $event" />
           <div class="nav-content">
-          <ConnectionStatus :chat="realtimeStore.state" :voice="voiceConnection.state" :roster-available="voiceRoster.channels.value !== null && !voiceRoster.error.value" :last-updated-at="voiceRoster.lastUpdatedAt.value" @retry-chat="realtimeStore.reconnect()" @retry-roster="voiceRoster.reconnect()" />
+          <ConnectionStatus :chat="realtimeStore.state" :voice="voiceConnection.state" :roster-available="voiceRoster.channels.value !== null && !voiceRoster.error.value" :last-updated-at="voiceRoster.lastUpdatedAt.value" :roster-retained="voiceRoster.channels.value !== null" @retry-chat="realtimeStore.reconnect()" @retry-roster="voiceRoster.reconnect()" />
           <template v-if="sidebarSection === 'channels'">
             <p v-if="topologyStore.loading" class="state" aria-live="polite">Загружаем каналы…</p>
             <p v-else-if="topologyStore.error" class="state state-error" role="alert">{{ topologyStore.error }} Войдите в аккаунт или повторите попытку.</p>
