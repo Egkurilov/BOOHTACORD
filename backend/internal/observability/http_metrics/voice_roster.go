@@ -37,7 +37,7 @@ func (recorder *Recorder) ObserveSFURoomServiceCall(method string, failed bool) 
 
 func (recorder *Recorder) ObserveVoiceRosterFailure(stage string) {
 	switch stage {
-	case "visibility_initial", "presence_snapshot", "visibility_recheck":
+	case "visibility_initial", "visibility_initial_timeout", "visibility_initial_canceled", "presence_snapshot", "presence_snapshot_timeout", "presence_snapshot_canceled", "visibility_recheck", "visibility_recheck_timeout", "visibility_recheck_canceled", "stream_snapshot", "stream_session_store", "stream_write":
 	default:
 		stage = "unknown"
 	}
