@@ -83,7 +83,7 @@ mixin AppAudioDevicesAccess on AppOwners {
       audioDevices.audioDeviceWarning = value;
 
   Future<void> refreshAudioDevices() => audioDevices.nativeBootstrap == null
-      ? audioDevices.refreshAudioDevices()
+      ? audioDevices.refreshAfterInvalidation()
       : audioDevices.bootstrap();
 
   Future<void> selectAudioInput(String deviceId) async {
