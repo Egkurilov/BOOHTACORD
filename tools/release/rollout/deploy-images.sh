@@ -96,6 +96,7 @@ else
 fi
 python3 "$script_dir/align-existing-private-network.py" "$project_dir" --ensure-postgres-alias
 [[ "$admission_enabled" -eq 1 ]] || enable_maintenance_admission
+python3 "$script_dir/livekit_private_path.py" "$project_dir"
 sleep 15
 if [[ "$release_mode" == "registry-digest" ]]; then
   API_IMAGE="$api_image" WEB_IMAGE="$web_image" "${compose[@]}" pull api migrate web
