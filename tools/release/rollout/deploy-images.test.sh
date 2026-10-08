@@ -76,6 +76,7 @@ allowed_log="$temporary_root/commands-allowed.log"
 enable_line="$(line_number 'maintenance-admission --enable' "$allowed_log")"
 wait_line="$(line_number 'sleep 15' "$allowed_log")"
 pull_line="$(line_number 'pull api migrate web' "$allowed_log")"
+database_line="$(line_number 'up -d --wait postgres' "$allowed_log")"
 migrate_line="$(line_number 'run --rm --no-deps migrate' "$allowed_log")"
 workload_line="$(line_number 'up -d --no-deps --no-build api web' "$allowed_log")"
 proxy_line="$(line_number 'up -d --no-deps --no-build --force-recreate proxy' "$allowed_log")"
@@ -87,12 +88,15 @@ disable_line="$(line_number 'maintenance-admission --disable' "$allowed_log")"
 [[ "$enable_line" -lt "$wait_line" ]]
 [[ "$wait_line" -lt "$pull_line" ]]
 [[ "$pull_line" -lt "$migrate_line" ]]
+[[ "$pull_line" -lt "$database_line" ]]
+[[ "$database_line" -lt "$migrate_line" ]]
 [[ "$migrate_line" -lt "$workload_line" ]]
 [[ "$workload_line" -lt "$proxy_line" ]]
 [[ "$proxy_line" -lt "$inspect_line" ]]
 [[ "$inspect_line" -lt "$validate_line" ]]
 [[ "$validate_line" -lt "$health_line" ]]
 [[ "$health_line" -lt "$disable_line" ]]
+[[ "$(grep -Fc 'up -d --wait postgres' "$allowed_log")" == 2 ]]
 
 extra_output="$temporary_root/extra.out"
 ! run_deploy extra "$extra_output" || { echo 'expected extra proxy network to fail deployment' >&2; exit 1; }

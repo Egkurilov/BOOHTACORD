@@ -11,6 +11,9 @@ fi
 [[ "$1" == compose ]] || { echo 'unexpected docker command' >&2; exit 1; }
 
 case "$command" in
+  *' up -d --wait postgres '*)
+    [[ "$(cat "$QA12_STATE/maintenance")" == on ]]
+    ;;
   *' maintenance-admission --enable '*)
     printf 'on\n' > "$QA12_STATE/maintenance"
     ;;

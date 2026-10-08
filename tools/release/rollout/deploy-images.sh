@@ -61,6 +61,9 @@ admission_enabled=0
 temporary_env=''
 
 disable_maintenance_admission() {
+  if ! "${compose[@]}" up -d --wait postgres; then
+    return 1
+  fi
   if ! "${compose[@]}" --profile operator run --rm --no-deps maintenance-admission --disable; then
     return 1
   fi
@@ -95,6 +98,7 @@ install -m 600 "$temporary_env" "$env_file"
 rm -f "$temporary_env"
 temporary_env=''
 
+"${compose[@]}" up -d --wait postgres
 "${compose[@]}" run --rm --no-deps migrate
 "${compose[@]}" up -d --no-deps --no-build api web
 "${compose[@]}" up -d --no-deps --no-build --force-recreate proxy
