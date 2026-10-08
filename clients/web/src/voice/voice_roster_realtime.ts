@@ -2,6 +2,7 @@ import { ref } from 'vue'
 
 import { apiBaseUrl } from '../config/runtime'
 import { parseVoiceRosters, type VoiceRoomRoster } from './voice_roster_client'
+import { registerVoiceRosterRetry } from './roster_status/retry_action'
 
 export interface VoiceRosterEvents {
   onmessage: ((event: { data: string }) => void) | null
@@ -40,11 +41,9 @@ export function createVoiceRosterRealtime(
   let source: VoiceRosterEvents | null = null
   let generation = 0
   let staleTimer: ReturnType<typeof setTimeout> | null = null
+  let unregisterRetry: (() => void) | null = null
 
-  function clearStaleTimer(): void {
-    if (staleTimer !== null) clearTimeout(staleTimer)
-    staleTimer = null
-  }
+  function clearStaleTimer(): void { if (staleTimer !== null) clearTimeout(staleTimer); staleTimer = null }
 
   function markUnavailable(currentGeneration: number): void {
     if (generation !== currentGeneration) return
@@ -63,6 +62,8 @@ export function createVoiceRosterRealtime(
   }
 
   function reconnect(): void {
+    unregisterRetry?.()
+    unregisterRetry = registerVoiceRosterRetry(reconnect)
     source?.close()
     const currentGeneration = ++generation
     const currentSource = open(`${apiBaseUrl}/voice/rosters/events`)
@@ -92,6 +93,7 @@ export function createVoiceRosterRealtime(
       error.value = null
       status.value = 'session_expired'
       clearStaleTimer()
+      unregisterRetry?.(); unregisterRetry = null
       onSessionExpired()
     })
     currentSource.onerror = () => markUnavailable(currentGeneration)
@@ -99,6 +101,7 @@ export function createVoiceRosterRealtime(
 
   function stop(): void {
     generation++
+    unregisterRetry?.(); unregisterRetry = null
     clearStaleTimer()
     source?.close()
     source = null

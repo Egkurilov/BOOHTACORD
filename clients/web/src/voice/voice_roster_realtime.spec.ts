@@ -70,7 +70,6 @@ describe('voice roster event stream', () => {
     roster.start()
     source.onmessage?.({ data: JSON.stringify({ channels: [{ channel_id: 'room', participants: [] }] }) })
     expect(roster.status.value).toBe('fresh')
-
     listeners.get('roster-unavailable')?.(new Event('roster-unavailable'))
 
     expect(roster.status.value).toBe('stale_reconnecting')
@@ -92,7 +91,6 @@ describe('voice roster event stream', () => {
     roster.start()
     source.onmessage?.({ data: JSON.stringify({ channels: [] }) })
     expect(roster.status.value).toBe('fresh_empty')
-
     listeners.get('roster-unavailable')?.(new Event('roster-unavailable'))
 
     expect(roster.status.value).toBe('stale_reconnecting')
