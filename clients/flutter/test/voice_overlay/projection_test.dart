@@ -65,19 +65,54 @@ void main() {
     expect(state.members.every((member) => !member.speaking), isTrue);
   });
 
-  test('roster projection resolves speaking accounts without exporting IDs', () {
+  test(
+    'roster projection resolves speaking accounts without exporting IDs',
+    () {
+      final state = projectVoiceOverlayRoster(
+        settings: const VoiceOverlaySettings(
+          enabled: true,
+          onlySpeakers: false,
+        ),
+        voiceChannelId: 'voice-a',
+        rosterChannelId: 'voice-a',
+        voiceStatus: VoiceOverlayVoiceStatus.connected,
+        roster: const [
+          VoiceRosterMember(
+            accountId: 'account-1',
+            displayName: 'Alice',
+            screenSharing: false,
+            microphoneMuted: false,
+          ),
+          VoiceRosterMember(
+            accountId: 'account-2',
+            displayName: 'Bob',
+            screenSharing: false,
+            microphoneMuted: false,
+          ),
+        ],
+        speakingAccountIds: const {'account-2'},
+      );
+
+      expect(
+        state.members.map((member) => member.displayName),
+        ['Alice', 'Bob'],
+      );
+      expect(state.members.map((member) => member.speaking), [false, true]);
+      expect(
+        state.members.map((member) => member.microphoneMuted),
+        [false, false],
+      );
+      expect(state.members.toString(), isNot(contains('account-')));
+    },
+  );
+
+  test('muted roster members cannot appear as active speakers', () {
     final state = projectVoiceOverlayRoster(
       settings: const VoiceOverlaySettings(enabled: true, onlySpeakers: false),
       voiceChannelId: 'voice-a',
       rosterChannelId: 'voice-a',
       voiceStatus: VoiceOverlayVoiceStatus.connected,
       roster: const [
-        VoiceRosterMember(
-          accountId: 'account-1',
-          displayName: 'Alice',
-          screenSharing: false,
-          microphoneMuted: false,
-        ),
         VoiceRosterMember(
           accountId: 'account-2',
           displayName: 'Bob',
@@ -88,10 +123,7 @@ void main() {
       speakingAccountIds: const {'account-2'},
     );
 
-    expect(state.members.map((member) => member.displayName), ['Alice', 'Bob']);
-    expect(state.members.map((member) => member.speaking), [false, true]);
-    expect(state.members.map((member) => member.microphoneMuted), [false, true]);
-    expect(state.members.toString(), isNot(contains('account-')));
+    expect(state.members.single.speaking, isFalse);
+    expect(state.members.single.microphoneMuted, isTrue);
   });
-
 }
