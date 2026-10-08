@@ -88,6 +88,6 @@ void main() {
     );
 
     expect(find.text('Список аудиоустройств обновлён.'), findsOneWidget);
-    expect(find.textContaining('микрофонов: 1'), findsOneWidget);
+    expect(find.textContaining('Микрофонов: 1'), findsOneWidget);
   });
 }
