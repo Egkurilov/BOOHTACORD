@@ -99,11 +99,12 @@ void VoiceOverlayWindow::Position() {
   MONITORINFO info{sizeof(MONITORINFO)};
   if (!GetMonitorInfoW(monitor, &info)) return;
   const RECT work = info.rcWork;
-  const int width = std::min(kWidth, work.right - work.left);
+  const int width = std::min(
+      kWidth, static_cast<int>(work.right - work.left));
   const int height = std::min(
       48 + kRowHeight *
                static_cast<int>(std::max<std::size_t>(1, members_.size())),
-      work.bottom - work.top);
+      static_cast<int>(work.bottom - work.top));
   const int x = std::clamp(work.right - width - kMargin, work.left,
                            work.right - width);
   const int y = std::clamp(work.top + kMargin, work.top, work.bottom - height);
