@@ -3,6 +3,7 @@ package listconnectedparticipants
 import (
 	"context"
 	"errors"
+	snapshotlivekitpresence "voice-platform/backend/internal/media/snapshot_livekit_presence"
 )
 
 func (service Service) observeFailure(stage string) {
@@ -19,6 +20,8 @@ func (service Service) observeOperationFailure(ctx context.Context, err error, s
 		stage += "_timeout"
 	} else if errors.Is(err, context.Canceled) {
 		stage += "_canceled"
+	} else if stage == "presence_snapshot" {
+		stage = "presence_" + snapshotlivekitpresence.FailureStage(err)
 	}
 	service.observeFailure(stage)
 }
