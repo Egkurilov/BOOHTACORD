@@ -1,5 +1,7 @@
 import 'package:boohtacord_desktop/src/widgets/screen_share_setup_dialog.dart';
+import 'package:boohtacord_desktop/src/features/screen/setup/open_dialog/footer.dart';
 import 'package:boohtacord_desktop/src/services/screen_share_quality.dart';
+import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -125,4 +127,139 @@ void main() {
     },
     variant: TargetPlatformVariant({TargetPlatform.android}),
   );
+
+  const viewports = <({String name, Size size})>[
+    (name: 'compact', size: Size(320, 640)),
+    (name: 'medium', size: Size(768, 1024)),
+    (name: 'expanded', size: Size(1440, 900)),
+  ];
+  for (final viewport in viewports) {
+    for (final textScale in [1.0, 2.0]) {
+      for (final keyboardOpen in [false, true]) {
+        testWidgets(
+          'setup actions stay in the safe viewport on ${viewport.name}, '
+          '${textScale}x text, keyboard ${keyboardOpen ? 'open' : 'closed'}',
+          (tester) async {
+            tester.view.devicePixelRatio = 1;
+            tester.view.physicalSize = viewport.size;
+            tester.view.viewPadding = const FakeViewPadding(
+              top: 24,
+              bottom: 24,
+            );
+            tester.view.viewInsets = FakeViewPadding(
+              bottom: keyboardOpen ? 280 : 0,
+            );
+            addTearDown(tester.view.reset);
+
+            ScreenShareSetupSelection? result;
+            await tester.pumpWidget(
+              MaterialApp(
+                theme: guildTheme(),
+                builder: (context, child) => MediaQuery(
+                  data: MediaQuery.of(context)
+                      .copyWith(textScaler: TextScaler.linear(textScale)),
+                  child: child!,
+                ),
+                home: Scaffold(
+                  body: Builder(
+                    builder: (context) => TextButton(
+                      onPressed: () async {
+                        result = await ScreenShareSetupDialog.show(
+                          context,
+                          initialQuality: ScreenShareQuality.balanced,
+                          allowSourceSelection: false,
+                        );
+                      },
+                      child: const Text('Открыть'),
+                    ),
+                  ),
+                ),
+              ),
+            );
+
+            await tester.tap(find.text('Открыть'));
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+
+            final close = find.byTooltip('Закрыть');
+            final start = find.byKey(const ValueKey('start-screen-share'));
+            expect(close, findsOneWidget);
+            expect(start, findsOneWidget);
+            expect(Theme.of(tester.element(start)).brightness, Brightness.dark);
+            await tester.ensureVisible(close);
+            await tester.ensureVisible(start);
+            final startRect = tester.getRect(start);
+            expect(startRect.left, greaterThanOrEqualTo(0));
+            expect(startRect.right, lessThanOrEqualTo(viewport.size.width));
+            expect(
+              startRect.bottom,
+              lessThanOrEqualTo(
+                viewport.size.height -
+                    (keyboardOpen ? 280 : 0) -
+                    (keyboardOpen ? 0 : 24),
+              ),
+            );
+            expect(tester.takeException(), isNull);
+
+            await tester.tap(
+              keyboardOpen && viewport.size.width < 400
+                  ? close
+                  : find.text('Отмена'),
+            );
+            await tester.pumpAndSettle();
+            expect(result, isNull);
+            expect(tester.takeException(), isNull);
+          },
+          variant: TargetPlatformVariant({TargetPlatform.android}),
+        );
+      }
+    }
+  }
+
+  testWidgets(
+    'large text wraps screen-share actions without hiding source context',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(768, 1024);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: guildTheme(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: const Scaffold(
+            body: SizedBox(
+              width: 728,
+              child: SetupFooter(
+                canStart: true,
+                updating: false,
+                selecting: true,
+                keyboardConstrained: false,
+                selectedName: 'Тестовое окно',
+                onCancel: _ignore,
+                onStart: _ignore,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Выбрано: Тестовое окно'), findsOneWidget);
+      expect(find.text('Отмена'), findsOneWidget);
+      expect(find.byKey(const ValueKey('start-screen-share')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      final cancel = tester.getRect(find.text('Отмена'));
+      final start = tester.getRect(
+        find.byKey(const ValueKey('start-screen-share')),
+      );
+      expect(cancel.left, greaterThanOrEqualTo(0));
+      expect(start.right, lessThanOrEqualTo(768));
+    },
+    variant: TargetPlatformVariant({TargetPlatform.android}),
+  );
 }
+
+void _ignore() {}

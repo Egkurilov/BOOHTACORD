@@ -22,6 +22,21 @@ class SetupFooter extends StatelessWidget {
     final media = MediaQuery.of(context);
     final compact = media.size.width < 640;
     final keyboardCompact = keyboardConstrained && media.size.width < 400;
+    final wrapActions =
+        compact || media.textScaler.scale(GcTypography.body) > 18;
+    final sourceStatus = Text(
+      canStart
+          ? 'Выбрано: ${selectedName ?? ''}'
+          : selectedName != null &&
+                defaultTargetPlatform == TargetPlatform.windows
+          ? 'Получаем размер источника…'
+          : 'Сначала выберите экран или окно',
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        color: GcColors.textSecondary,
+        fontSize: GcTypography.small,
+      ),
+    );
     final buttons = [
       TextButton(onPressed: onCancel, child: const Text('Отмена')),
       FilledButton.icon(
@@ -65,24 +80,28 @@ class SetupFooter extends StatelessWidget {
               overflowSpacing: 4,
               children: buttons,
             )
+          : wrapActions
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (selecting)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: sourceStatus,
+                  ),
+                OverflowBar(
+                  alignment: MainAxisAlignment.end,
+                  spacing: 10,
+                  overflowSpacing: 4,
+                  children: buttons,
+                ),
+              ],
+            )
           : Row(
               children: [
                 if (selecting)
-                  Expanded(
-                    child: Text(
-                      canStart
-                          ? 'Выбрано: ${selectedName ?? ''}'
-                          : selectedName != null &&
-                                defaultTargetPlatform == TargetPlatform.windows
-                          ? 'Получаем размер источника…'
-                          : 'Сначала выберите экран или окно',
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: GcColors.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  )
+                  Expanded(child: sourceStatus)
                 else
                   const Spacer(),
                 buttons.first,

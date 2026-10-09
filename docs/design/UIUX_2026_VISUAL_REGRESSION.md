@@ -32,7 +32,7 @@ The images are emitted under `.out/responsive-shell-browser-results/` and retain
 
 - Bind each catalog slot to a dedicated, runnable Web and Flutter fixture; the existing fixtures cover representative behaviors, not all 41 full screens.
 - Add approved, deterministic after captures and before/after comparisons for all critical flows, with documented dynamic-region masks and exceptions.
-- Run the Flutter golden matrix on compact/medium/expanded layouts, text scale 1×/2×, dark theme, safe-area and IME fixtures; retain its review artifacts.
+- Extend Flutter visual coverage beyond the screen-share setup widget matrix, which now checks compact 320×640, medium 768×1024 and expanded 1440×900 at 1×/2× text, dark theme, safe-area and IME fixtures. Add approved goldens for the remaining catalog screens and retain review artifacts.
 - Run the connected GitHub Actions workflow and verify the browser captures are attached. The latest user-requested `[skip ci]` push does not provide a workflow artifact.
 
 Source-image presence and catalog validation are not visual PASS; after captures and comparisons remain outstanding.
