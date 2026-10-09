@@ -308,6 +308,12 @@ test('WCAG smoke distinguishes media metric loading, refresh and failure states'
   await expect(status).toContainText('Загружаем показатели')
   releaseInitial?.()
   await expect(status).toContainText('Есть измерения')
+  const sampleCard = page.locator('.admin-media-sample').first()
+  await expect(sampleCard).toContainText('Воспроизводит')
+  const details = sampleCard.locator('details')
+  await expect(details).not.toHaveAttribute('open', '')
+  await details.locator('summary').click()
+  await expect(details).toHaveAttribute('open', '')
   await expectAxeClear(page, '.admin-media-freshness')
 
   const refresh = page.locator('.admin-media-diagnostics > header > button')
@@ -323,6 +329,36 @@ test('WCAG smoke distinguishes media metric loading, refresh and failure states'
   await refresh.click()
   await expect(status).toContainText('Есть измерения')
   await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('admin media does not present old measurements as fresh after an empty refresh', async ({ page }) => {
+  let requests = 0
+  const oldSample = {
+    sampled_at_utc: new Date(Date.now() - 120_000).toISOString(),
+    report: { platform: 'android_native', direction: 'receiver', state: 'playing', frame_width: 540, frame_height: 1170 },
+  }
+  await page.route('**/api/v1/admin/screen-metrics', route => {
+    requests += 1
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ samples: requests === 1 ? [oldSample] : [] }),
+    })
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/media/AdminMediaDiagnostics.vue')
+
+  const status = page.getByRole('status')
+  await expect(status).toContainText('Данные устарели')
+  await expect(status).toContainText('Свежих отчётов: 0')
+  await expect(page.locator('.admin-media-sample')).toHaveCount(0)
+  await expect(page.locator('.admin-media-stale')).toContainText('Последнее измерение')
+
+  await page.locator('.admin-media-diagnostics > header > button').click()
+  await expect(status).toContainText('Данные устарели')
+  await expect(status).toContainText('Свежих отчётов: 0')
+  await expect(page.locator('.admin-media-stale')).toContainText('Последнее измерение')
+  await expect(page.locator('.admin-media-empty')).toHaveCount(0)
 })
 
 test('admin shell exposes all seven sections at 320–1440px and avoids page overflow', async ({ page }) => {

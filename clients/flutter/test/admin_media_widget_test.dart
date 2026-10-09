@@ -8,6 +8,19 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'admin_topology_fake_api.dart';
 
+class _SequentialMediaApi extends TopologyTestApi {
+  _SequentialMediaApi(this.firstPage);
+
+  final List<AdminScreenSample> firstPage;
+  int requests = 0;
+
+  @override
+  Future<List<AdminScreenSample>> listAdminScreenMetrics() async {
+    requests++;
+    return requests == 1 ? firstPage : const [];
+  }
+}
+
 Future<AppState> _openMedia(WidgetTester tester, TopologyTestApi api) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = const Size(390, 844);
@@ -177,8 +190,8 @@ void main() {
         AdminScreenSample(
           platform: 'android_native',
           direction: 'receiver',
-          state: 'playing',
-          sampledAtUtc: DateTime.utc(2026, 9, 29, 18, 30),
+          state: 'stalled',
+          sampledAtUtc: DateTime.now().toUtc(),
           frameWidth: 540,
           frameHeight: 1170,
           decodedFps: 14.5,
@@ -197,11 +210,57 @@ void main() {
     });
 
     expect(find.text('Android · приложение · приём'), findsOneWidget);
-    expect(find.textContaining('Размер кадра · 540 × 1170'), findsOneWidget);
-    expect(find.textContaining('Декодировано · 14.5 FPS'), findsOneWidget);
-    expect(find.textContaining('Битрейт · 109.5 кбит/с'), findsOneWidget);
+    expect(find.text('Состояние: Кадры остановились'), findsOneWidget);
+    expect(find.text('540 × 1170'), findsOneWidget);
+    expect(find.text('14.5 FPS'), findsOneWidget);
+    expect(find.textContaining('Битрейт · 109.5 кбит/с'), findsNothing);
+    expect(find.textContaining('RTT · 36 мс'), findsNothing);
+    final advanced = find.text('Дополнительные измерения');
+    await tester.ensureVisible(advanced);
+    await tester.pumpAndSettle();
+    await tester.tap(advanced);
+    await tester.pumpAndSettle();
+    final bitrate = find.textContaining('Битрейт · 109.5 кбит/с');
+    await tester.ensureVisible(bitrate);
+    await tester.pumpAndSettle();
+    expect(bitrate, findsOneWidget);
     expect(find.textContaining('RTT · 36 мс'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('stale media measurements stay stale after an empty refresh', (
+    tester,
+  ) async {
+    final staleSample = AdminScreenSample(
+      platform: 'android_native',
+      direction: 'receiver',
+      state: 'playing',
+      sampledAtUtc: DateTime.now().toUtc().subtract(const Duration(minutes: 2)),
+      frameWidth: 540,
+      frameHeight: 1170,
+    );
+    final api = _SequentialMediaApi([staleSample]);
+    final state = await _openMedia(tester, api);
+    addTearDown(() {
+      tester.view.reset();
+      state.dispose();
+    });
+
+    expect(
+      find.textContaining('Состояние: Данные устарели · свежих образцов: 0'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Последнее измерение:'), findsOneWidget);
+    expect(find.text('540 × 1170'), findsNothing);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Обновить'));
+    await tester.pumpAndSettle();
+    expect(api.requests, 2);
+    expect(
+      find.textContaining('Состояние: Данные устарели · свежих образцов: 0'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Последнее измерение:'), findsOneWidget);
   });
 
   testWidgets('media loading failures are announced and can be retried', (

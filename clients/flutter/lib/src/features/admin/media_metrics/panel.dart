@@ -33,6 +33,14 @@ class AdminMediaMetricsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now().toUtc();
+    final freshSamples = samples
+        .where((sample) {
+          final age = now.difference(sample.sampledAtUtc);
+          return age >= const Duration(seconds: -5) &&
+              age <= const Duration(seconds: 60);
+        })
+        .toList(growable: false);
     final header = Padding(
       padding: headerPadding,
       child: Row(
@@ -70,7 +78,7 @@ class AdminMediaMetricsPanel extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 12),
-      _freshnessSummary,
+      _freshnessSummary(freshSamples.length),
       const SizedBox(height: 12),
       if (loading && samples.isEmpty && error == null)
         const Padding(
@@ -82,6 +90,14 @@ class AdminMediaMetricsPanel extends StatelessWidget {
           liveRegion: true,
           child: Text(error!, style: const TextStyle(color: GcColors.danger)),
         )
+      else if (freshSamples.isEmpty &&
+          (samples.isNotEmpty || lastSeenAt != null))
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            'Свежих показателей нет. Последнее измерение: ${lastSeenAt == null ? 'время неизвестно' : formatDate(lastSeenAt!)}.',
+          ),
+        )
       else if (samples.isEmpty)
         Semantics(
           liveRegion: true,
@@ -91,7 +107,7 @@ class AdminMediaMetricsPanel extends StatelessWidget {
         )
       else ...[
         if (loading) const LinearProgressIndicator(minHeight: 2),
-        for (final sample in samples) _sampleCard(context, sample),
+        for (final sample in freshSamples) _sampleCard(context, sample),
       ],
     ];
     final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.5;
@@ -120,26 +136,30 @@ class AdminMediaMetricsPanel extends StatelessWidget {
     );
   }
 
-  Widget get _freshnessSummary {
+  Widget _freshnessSummary(int freshCount) {
     final lastSeen = lastSeenAt;
     final age = lastSeen == null
         ? null
         : DateTime.now().toUtc().difference(lastSeen).inSeconds;
     final state = error != null
         ? 'Ошибка обновления'
-        : samples.isEmpty
-        ? 'Пусто'
-        : age != null && age > 15
-        ? 'Устарело'
-        : 'Свежие данные';
+        : loading && samples.isEmpty
+        ? 'Загружаем показатели'
+        : freshCount > 0
+        ? 'Есть свежие данные'
+        : samples.isNotEmpty || lastSeen != null || (age != null && age > 60)
+        ? 'Данные устарели'
+        : 'Нет данных';
+    final color = error != null
+        ? GcColors.danger
+        : state == 'Есть свежие данные'
+        ? GcColors.success
+        : GcColors.warning;
     return Semantics(
       liveRegion: true,
       child: Text(
-        'Состояние: $state · свежих образцов: ${samples.length} · последнее успешное обновление: ${lastSuccessfulAt == null ? 'нет' : formatDate(lastSuccessfulAt!)}',
-        style: TextStyle(
-          color: state == 'Свежие данные' ? GcColors.success : GcColors.warning,
-          fontWeight: FontWeight.w600,
-        ),
+        'Состояние: $state · свежих образцов: $freshCount · последнее успешное обновление: ${lastSuccessfulAt == null ? 'нет' : formatDate(lastSuccessfulAt!)}',
+        style: TextStyle(color: color, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -177,40 +197,46 @@ class AdminMediaMetricsPanel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
+        Text(
+          'Состояние: ${_stateLabel(sample.state)}',
+          style: TextStyle(
+            color: sample.state == 'stalled'
+                ? GcColors.danger
+                : GcColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            _stage('Отправка', sample.encodedFps, sample.direction == 'sender'),
-            _stage('Приём', sample.decodedFps, sample.direction == 'receiver'),
+            _stage(
+              'Отправка',
+              sample.direction == 'sender'
+                  ? _value(sample.encodedFps, 'FPS')
+                  : 'Нет данных',
+            ),
+            _stage(
+              'Приём',
+              sample.direction == 'receiver' &&
+                      sample.frameWidth != null &&
+                      sample.frameHeight != null
+                  ? '${sample.frameWidth} × ${sample.frameHeight}'
+                  : 'Нет данных',
+            ),
             _stage(
               'Декодирование',
-              sample.decodedFps,
-              sample.direction == 'receiver',
+              sample.direction == 'receiver'
+                  ? _value(sample.decodedFps, 'FPS')
+                  : 'Нет данных',
             ),
-            _stage('Показ', sample.presentedFps, sample.presentedFps != null),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 18,
-          runSpacing: 8,
-          children: [
-            _metric('Состояние', _stateLabel(sample.state)),
-            _metric(
-              'Размер кадра',
-              sample.frameWidth == null
-                  ? 'Нет данных'
-                  : '${sample.frameWidth} × ${sample.frameHeight}',
+            _stage(
+              'Показ',
+              sample.direction == 'receiver'
+                  ? _value(sample.presentedFps, 'FPS')
+                  : 'Нет данных',
             ),
-            _metric('Отправлено', _value(sample.encodedFps, 'FPS')),
-            _metric('Декодировано', _value(sample.decodedFps, 'FPS')),
-            _metric('Показано', _value(sample.presentedFps, 'FPS')),
-            _metric('Битрейт', _value(sample.bitrateKbps, 'кбит/с')),
-            _metric('Потеряно пакетов', _integer(sample.packetsLost)),
-            _metric('Пропущено кадров', _integer(sample.droppedFrames)),
-            _metric('Jitter', _value(sample.jitterMs, 'мс')),
-            _metric('RTT', _value(sample.rttMs, 'мс')),
           ],
         ),
         const SizedBox(height: 4),
@@ -225,16 +251,6 @@ class AdminMediaMetricsPanel extends StatelessWidget {
                 spacing: 18,
                 runSpacing: 8,
                 children: [
-                  _metric('Состояние', _stateLabel(sample.state)),
-                  _metric(
-                    'Размер кадра',
-                    sample.frameWidth == null
-                        ? 'Нет данных'
-                        : '${sample.frameWidth} × ${sample.frameHeight}',
-                  ),
-                  _metric('Отправлено', _value(sample.encodedFps, 'FPS')),
-                  _metric('Декодировано', _value(sample.decodedFps, 'FPS')),
-                  _metric('Показано', _value(sample.presentedFps, 'FPS')),
                   _metric('Битрейт', _value(sample.bitrateKbps, 'кбит/с')),
                   _metric('Потеряно пакетов', _integer(sample.packetsLost)),
                   _metric('Пропущено кадров', _integer(sample.droppedFrames)),
@@ -249,7 +265,7 @@ class AdminMediaMetricsPanel extends StatelessWidget {
     ),
   );
 
-  Widget _stage(String title, double? fps, bool applicable) => Container(
+  Widget _stage(String title, String value) => Container(
     constraints: const BoxConstraints(minWidth: 150, maxWidth: 240),
     padding: const EdgeInsets.all(10),
     decoration: BoxDecoration(
@@ -260,7 +276,7 @@ class AdminMediaMetricsPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        Text(applicable ? _value(fps, 'FPS') : 'Нет данных'),
+        Text(value),
       ],
     ),
   );
