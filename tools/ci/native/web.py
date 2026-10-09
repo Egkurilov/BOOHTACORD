@@ -15,6 +15,7 @@ def main():
     run("node", "--test", "tools/verify/dependencies/web_imports.test.mjs")
     run(sys.executable, "-m", "tools.verify.dependencies.web")
     run("npm", "test", cwd=client("web"))
+    run("npm", "run", "test:accessibility", cwd=client("web"))
     run("npm", "run", "test:screen-profile", cwd=client("web"))
     run("npm", "run", "test:member-popover", cwd=client("web"))
     run("npm", "run", "test:password-generation", cwd=client("web"))

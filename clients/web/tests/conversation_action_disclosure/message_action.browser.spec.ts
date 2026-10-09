@@ -81,7 +81,7 @@ test('R02 keeps only the touched message action disclosure open', async ({ page 
   if (captureDir) await page.locator('.message-list').screenshot({ path: join(captureDir, 'message-actions-closed-actual.png') })
 })
 
-test('R02 preserves touch actions for grouped, system, deleted and failed messages', async ({ page }) => {
+test('R02 preserves touch actions and passes WCAG axe scan for grouped, system, deleted and failed messages', async ({ page }) => {
   await page.goto('/')
   await page.evaluate(async () => {
     const load = (path: string) => import(path)
