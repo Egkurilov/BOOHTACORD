@@ -93,10 +93,11 @@
 .message-jump-latest { position: absolute; right: var(--gc-space-4); bottom: var(--gc-space-3); z-index: 4; min-height: var(--gc-size-control); border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-md); padding: 0 var(--gc-space-4); color: var(--gc-text-primary); background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-popup); }
 @media (hover: none), (pointer: coarse), (max-width: 600px) {
   .message-row .message-actions { width: var(--gc-size-control-sm); flex-direction: column; align-items: flex-end; }
-  .message-row .message-actions-toggle { display: grid; width: 44px; height: 44px; padding: 0; place-items: center; opacity: 0; pointer-events: none; }
-  .message-row:hover .message-actions-toggle, .message-row:focus-within .message-actions-toggle, .message-row .message-actions.is-open .message-actions-toggle { opacity: 1; pointer-events: auto; }
-  .message-row .message-actions .message-action-buttons { position: absolute; top: 0; right: calc(100% + var(--gc-space-1)); display: none; width: max-content; max-width: calc(100vw - 80px); opacity: 1; pointer-events: auto; }
-  .message-row .message-actions.is-open .message-action-buttons { display: flex; }
+  .message-row .message-actions-toggle { display: grid; width: 44px; height: 44px; padding: 0; place-items: center; opacity: 1; pointer-events: auto; }
+  .message-row .message-actions .message-action-buttons { position: absolute; top: 0; right: calc(100% + var(--gc-space-1)); display: none; width: max-content; max-width: calc(100vw - 80px); opacity: 1; pointer-events: none; }
+  .message-row .message-actions .message-action-buttons button { min-height: 44px; }
+  .message-row:hover .message-actions .message-action-buttons, .message-row:focus-within .message-actions .message-action-buttons { display: none; opacity: 1; pointer-events: none; }
+  .message-row .message-actions.is-open .message-action-buttons { display: flex; pointer-events: auto; }
 }
 .conversation-header { height: 64px; min-height: 64px; flex: 0 0 64px; }
 .message-list > li[data-message-id] + li[data-message-id]:not(.grouped-message) { margin-top: 18px; }

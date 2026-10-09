@@ -32,11 +32,36 @@ test('R02 keeps only the touched message action disclosure open', async ({ page 
   })
 
   const rows = page.locator('.message-row')
+  const firstToggle = rows.nth(0).locator('.message-actions-toggle')
   await expect(page.locator('.message-actions.is-open')).toHaveCount(0)
-  await expect(rows.nth(0).locator('.message-actions-toggle')).toHaveCSS('opacity', '0')
-  await rows.nth(0).tap({ position: { x: 70, y: 20 } })
+  await expect(firstToggle).toHaveCSS('opacity', '1')
+  expect((await firstToggle.boundingBox())?.height).toBeGreaterThanOrEqual(44)
+  await rows.nth(0).getByText('Сообщение 1').tap()
+  await expect(rows.nth(0).locator('.message-actions')).not.toHaveClass(/is-open/)
+
+  const firstBounds = await rows.nth(0).boundingBox()
+  await rows.nth(0).dispatchEvent('pointerdown', {
+    pointerType: 'touch', pointerId: 101, isPrimary: true, button: 0,
+    clientX: (firstBounds?.x ?? 20) + 80, clientY: (firstBounds?.y ?? 20) + 12,
+  })
+  await page.waitForTimeout(80)
+  await rows.nth(0).dispatchEvent('pointermove', {
+    pointerType: 'touch', pointerId: 101, isPrimary: true, button: 0,
+    clientX: (firstBounds?.x ?? 20) + 82, clientY: (firstBounds?.y ?? 20) + 42,
+  })
+  await page.waitForTimeout(550)
+  await rows.nth(0).dispatchEvent('pointerup', { pointerType: 'touch', pointerId: 101, isPrimary: true, button: 0 })
+  await expect(rows.nth(0).locator('.message-actions')).not.toHaveClass(/is-open/)
+
+  await rows.nth(0).dispatchEvent('pointerdown', {
+    pointerType: 'touch', pointerId: 102, isPrimary: true, button: 0,
+    clientX: (firstBounds?.x ?? 20) + 80, clientY: (firstBounds?.y ?? 20) + 12,
+  })
+  await page.waitForTimeout(550)
+  await rows.nth(0).dispatchEvent('pointerup', { pointerType: 'touch', pointerId: 102, isPrimary: true, button: 0 })
   await expect(rows.nth(0).locator('.message-actions')).toHaveClass(/is-open/)
-  await rows.nth(1).tap({ position: { x: 70, y: 20 } })
+  expect((await rows.nth(0).getByRole('button', { name: 'Ответить' }).boundingBox())?.height).toBeGreaterThanOrEqual(44)
+  await rows.nth(1).locator('.message-actions-toggle').tap()
   await expect(rows.nth(0).locator('.message-actions')).not.toHaveClass(/is-open/)
   await expect(rows.nth(1).locator('.message-actions')).toHaveClass(/is-open/)
   const captureDir = process.env.BOOHTACORD_VISUAL_CAPTURE_DIR
@@ -46,7 +71,8 @@ test('R02 keeps only the touched message action disclosure open', async ({ page 
   }
   await rows.nth(1).getByRole('button', { name: 'Ответить' }).tap()
   await expect(page.locator('body')).toHaveAttribute('data-replies', '1')
-  await rows.nth(2).tap({ position: { x: 70, y: 20 } })
+  await expect(rows.nth(1).locator('.message-actions-toggle')).toBeFocused()
+  await rows.nth(2).locator('.message-actions-toggle').tap()
   await page.locator('#outside').tap()
   await expect(page.locator('.message-actions.is-open')).toHaveCount(0)
   if (captureDir) await page.locator('.message-list').screenshot({ path: join(captureDir, 'message-actions-closed-actual.png') })

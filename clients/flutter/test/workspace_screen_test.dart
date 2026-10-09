@@ -254,6 +254,67 @@ void main() {
     );
   }
 
+  for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+    testWidgets(
+      'TEXT and DM message action menus expose touch-sized semantics (${platform.name})',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = platform;
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(390, 844);
+        addTearDown(tester.view.reset);
+        final semantics = tester.ensureSemantics();
+        final state = AppState(
+          _PortraitApi(
+            withHistory: true,
+            historyCount: 2,
+            includeDirectMessage: true,
+          ),
+        );
+        await state.initialize();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AnimatedBuilder(
+              animation: state,
+              builder: (_, _) => WorkspaceScreen(state: state),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        Future<void> expectTouchAction(Finder control) async {
+          final rect = tester.getRect(control);
+          expect(rect.width, greaterThanOrEqualTo(48));
+          expect(rect.height, greaterThanOrEqualTo(48));
+          expect(find.bySemanticsLabel('Действия с сообщением'), findsWidgets);
+          await tester.tap(control);
+          await tester.pumpAndSettle();
+          final replyItem = find.ancestor(
+            of: find.text('Ответить').last,
+            matching: find.byType(PopupMenuItem<String>),
+          );
+          expect(replyItem, findsOneWidget);
+          expect(
+            tester.widget<PopupMenuItem<String>>(replyItem).height,
+            greaterThanOrEqualTo(48),
+          );
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+        }
+
+        await expectTouchAction(find.byTooltip('Действия с сообщением').first);
+        await state.openDirectConversation(state.directMessages.single);
+        await tester.pumpAndSettle();
+        await expectTouchAction(find.byTooltip('Действия с сообщением').last);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+        semantics.dispose();
+        debugDefaultTargetPlatformOverride = null;
+      },
+    );
+  }
+
   testWidgets('mobile PTT dock transmits only while mic is held', (
     tester,
   ) async {
@@ -1674,9 +1735,7 @@ void main() {
       ..voiceRosterError = 'Нет связи со списком голосовых каналов.'
       ..notifyListeners();
     await tester.pump();
-    final errorStatus = find.text(
-      'Не удалось обновить состав комнаты.',
-    );
+    final errorStatus = find.text('Не удалось обновить состав комнаты.');
     expect(errorStatus, findsOneWidget);
     expect(find.text('Голосовой канал · состав недоступен'), findsOneWidget);
     expect(
