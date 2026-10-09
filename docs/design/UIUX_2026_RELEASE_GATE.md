@@ -27,6 +27,17 @@ For each attempt, record completion (yes/no), time from task prompt to completio
 
 **Targets:** `TBD — release owner approval required`. No success/time/error threshold has been inferred from this code review. Do not declare improvement until baseline and post-change runs have comparable tester and platform samples.
 
+### Draft for owner approval — not accepted
+
+The release owner, Pistol121, confirmed they will approve the thresholds and rollback owners. The following is a concrete proposal for that review, not an approved gate:
+
+- Compare task success, median time, wrong actions and backtracking separately for desktop and mobile. Require task success to meet or exceed baseline and error/backtracking counts not to increase.
+- Treat median time as non-regressing when it is no more than 10% slower on any critical task. Claim a time improvement only when comparable samples show at least a 10% median reduction on a targeted task without violating the other guardrails.
+- Roll back or halt the affected cohort if a critical task's success rate drops by at least 10 percentage points, median time is more than 20% slower on two or more critical tasks, or a P1 blocker/data-loss/access-control regression appears.
+- Tester count and the named rollback owner for Web, macOS, Windows, Android and iOS still need the release owner's approval.
+
+Until the proposal is accepted or edited and the tester run is complete, `Targets` remain `TBD` and the release decision remains `NO-GO / NOT_RUN`.
+
 ## Platform and artifact matrix
 
 | Surface | Current evidence | Release acceptance |
