@@ -98,6 +98,111 @@ test('WCAG smoke covers profile settings', async ({ page }) => {
   await expectAxeClear(page, '.profile-settings')
 })
 
+test('profile settings preserve a dirty name across tabs and expose pending and saved states', async ({ page }) => {
+  let profileSaveAttempts = 0
+  await page.route('**/api/v1/**', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '{}',
+  }))
+  await page.route('**/api/v1/me', async route => {
+    if (route.request().method() !== 'PATCH') {
+      return route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ account_id: 'self', login: 'member', display_name: 'Участник', role: 'MEMBER' }),
+      })
+    }
+    profileSaveAttempts += 1
+    await new Promise(resolve => setTimeout(resolve, 600))
+    if (profileSaveAttempts === 1) {
+      return route.fulfill({
+        status: 503, contentType: 'application/json',
+        body: JSON.stringify({ error: { message: 'Сервис временно недоступен. Повторите попытку.' } }),
+      })
+    }
+    const body = route.request().postDataJSON() as { display_name: string }
+    return route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ account_id: 'self', login: 'member', display_name: body.display_name, role: 'MEMBER', profile_revision: 2 }),
+    })
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const [{ createApp, h, ref }, { default: Component }] = await Promise.all([
+      import('/node_modules/.vite/deps/vue.js'),
+      import('/src/identity/ProfileSettings.vue'),
+    ]) as any
+    const profile = ref({ account_id: 'self', login: 'member', display_name: 'Участник', role: 'MEMBER' })
+    document.body.innerHTML = '<div id="mount"></div>'
+    createApp({ render: () => h(Component, {
+      profile: profile.value, loading: false, loadError: null,
+      onSaved: (saved: typeof profile.value) => { profile.value = saved },
+    }) }).mount('#mount')
+  })
+
+  const name = page.getByRole('textbox', { name: 'Отображаемое имя' })
+  await name.fill('Новое имя')
+  await expect(page.getByText('Есть несохранённые изменения', { exact: true })).toBeVisible()
+  await page.getByRole('tab', { name: 'Безопасность' }).click()
+  await page.getByRole('tab', { name: 'Профиль' }).click()
+  await expect(name).toHaveValue('Новое имя')
+
+  const save = page.getByRole('button', { name: 'Сохранить профиль' })
+  await save.click()
+  await expect(page.getByText('Сохраняем имя профиля…', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Сохраняем…' })).toBeDisabled()
+  await expect(page.getByText('Сервис временно недоступен. Повторите попытку.', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Сохранить профиль' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Сохранить профиль' }).click()
+  await expect(page.getByText('Сохраняем имя профиля…', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Сохраняем…' })).toBeDisabled()
+  await expect(page.getByText('Имя профиля сохранено.', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Сохранить профиль' })).toBeDisabled()
+  await name.fill('Следующее имя')
+  await expect(page.getByText('Есть несохранённые изменения', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Сохранить профиль' })).toBeEnabled()
+})
+
+test('profile logout waits for an explicit confirmation', async ({ page }) => {
+  await page.route('**/api/v1/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }))
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const [{ createApp, h }, { default: Component }] = await Promise.all([
+      import('/node_modules/.vite/deps/vue.js'),
+      import('/src/identity/ProfileSettings.vue'),
+    ]) as any
+    const profile = { account_id: 'self', login: 'member', display_name: 'Участник', role: 'MEMBER' }
+    document.body.innerHTML = '<div id="mount"></div>'
+    createApp({ render: () => h(Component, {
+      profile, loading: false, loadError: null,
+      onLogout: () => { document.body.dataset.logout = 'confirmed' },
+    }) }).mount('#mount')
+  })
+
+  const name = page.getByRole('textbox', { name: 'Отображаемое имя' })
+  await name.fill('Несохранённое имя')
+  await page.getByRole('tab', { name: 'Безопасность' }).click()
+  await page.getByRole('button', { name: 'Выйти из аккаунта' }).click()
+  const discard = page.getByRole('dialog', { name: 'Несохранённые изменения' })
+  await expect(discard).toBeVisible()
+  await discard.getByRole('button', { name: 'Отмена' }).click()
+  await expect(discard).toHaveCount(0)
+  expect(await page.locator('body').getAttribute('data-logout')).toBeNull()
+
+  await page.getByRole('button', { name: 'Выйти из аккаунта' }).click()
+  await page.getByRole('dialog', { name: 'Несохранённые изменения' }).getByRole('button', { name: 'Выйти без сохранения' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Подтвердите выход из аккаунта' })
+  await expect(dialog).toBeVisible()
+  await dialog.getByRole('button', { name: 'Отмена' }).click()
+  await expect(dialog).toHaveCount(0)
+  expect(await page.locator('body').getAttribute('data-logout')).toBeNull()
+
+  await page.getByRole('button', { name: 'Выйти из аккаунта' }).click()
+  await page.getByRole('dialog', { name: 'Несохранённые изменения' }).getByRole('button', { name: 'Выйти без сохранения' }).click()
+  await page.getByRole('dialog', { name: 'Подтвердите выход из аккаунта' }).getByRole('button', { name: 'Выйти' }).click()
+  await expect(page.locator('body')).toHaveAttribute('data-logout', 'confirmed')
+})
+
 test('empty direct-message navigation offers a visible start-conversation action', async ({ page }) => {
   await page.route('**/api/v1/members?*', route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ members: [{
