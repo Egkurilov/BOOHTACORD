@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import { useDirectMessageCandidateStore } from './direct_message_candidate_store'
 
 const emit = defineEmits<{ open: [directMessageId: string] }>()
+const props = withDefaults(defineProps<{ prominent?: boolean }>(), { prominent: false })
 const store = useDirectMessageCandidateStore()
 const visible = ref(false)
 
@@ -19,7 +20,16 @@ async function choose(participantId: string): Promise<void> {
 </script>
 
 <template>
-  <button class="channel-button direct-message-start-button" type="button" aria-label="Начать диалог" @click="show">＋</button>
+  <button
+    class="channel-button direct-message-start-button"
+    :class="{ 'direct-message-start-button--prominent': props.prominent }"
+    type="button"
+    aria-label="Начать диалог"
+    @click="show"
+  >
+    <span aria-hidden="true">＋</span>
+    <span v-if="props.prominent">Начать диалог</span>
+  </button>
   <section v-if="visible" class="starter" role="dialog" aria-modal="true" aria-labelledby="direct-message-starter-title">
     <header class="starter-header">
       <h3 id="direct-message-starter-title">Новый личный диалог</h3>

@@ -40,6 +40,7 @@ const session = ref<CurrentSession | null>(null)
 const composer = useSavedComposer<DirectMessageHistoryItem, TextMessageAttachment>(props.accountId, 'DIRECT_MESSAGE', () => props.directMessageId)
 const { draft, replyTarget, mentionUserIds, attachments, attachmentPending, attachmentClearToken } = composer
 const searchOpen = ref(false)
+const searchMounted = ref(false)
 const searchTrigger = ref<HTMLButtonElement | null>(null)
 const composerTextarea = ref<HTMLTextAreaElement | null>(null)
 const attachmentPicker = ref<{ addPastedFiles: (files: File[]) => void } | null>(null)
@@ -67,6 +68,8 @@ async function loadSession(): Promise<void> {
 }
 
 const { addEmoji, insertMobileMention, onComposerPaste, onDragOver, onDrop } = useComposerInput(draft, composerTextarea, attachmentPicker, () => props.active && !store.sending)
+function openSearch(): void { searchMounted.value = true; searchOpen.value = true }
+function toggleSearch(): void { searchOpen.value ? closeSearch() : openSearch() }
 function closeSearch(): void { searchOpen.value = false; void nextTick(() => searchTrigger.value?.focus()) }
 
 
@@ -85,9 +88,9 @@ onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessag
         <h2 id="direct-message-title">{{ props.otherParticipantDisplayName }}</h2>
         <small>Личный диалог</small>
       </div>
-      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="props.navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="searchOpen ? closeSearch() : searchOpen = true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu show-files @search="searchOpen = true" @files="filesOpen = true" /></template></WorkspaceHeaderActions>
+      <WorkspaceHeaderActions :members-expanded="false" :nav-expanded="props.navOpen" :show-members="false" @toggle-navigation="emit('toggleNav')"><button ref="searchTrigger" class="header-action" type="button" aria-label="Найти сообщение" :aria-expanded="searchOpen" @click="toggleSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg></button><template #overflow><ConversationOverflowMenu show-files @search="openSearch" @files="filesOpen = true" /></template></WorkspaceHeaderActions>
     </header>
-    <div v-if="searchOpen" v-show="!contextOpen()" class="conversation-tools"><DirectMessageSearch :direct-message-id="props.directMessageId" @open="searchTarget.open({ kind: 'DIRECT_MESSAGE', conversationId: props.directMessageId, messageId: $event })" @close="closeSearch" /></div>
+    <div v-if="searchMounted" v-show="searchOpen && !contextOpen()" class="conversation-tools"><KeepAlive><DirectMessageSearch v-if="searchOpen" :key="props.directMessageId" :direct-message-id="props.directMessageId" @open="searchTarget.open({ kind: 'DIRECT_MESSAGE', conversationId: props.directMessageId, messageId: $event })" @close="closeSearch" /></KeepAlive></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
     <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
     <div v-if="!filesOpen && unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">

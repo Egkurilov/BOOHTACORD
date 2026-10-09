@@ -9,5 +9,10 @@ it.each([
   const parent = readFileSync(new URL(conversation,import.meta.url),'utf8')
   expect(search).toContain("emit('open', message.id)")
   expect(parent).toContain(`searchTarget.open({ kind: '${kind}', conversationId: props.${scope}, messageId: $event })`)
-  expect(parent).toContain('v-show="!contextOpen()" class="conversation-tools"')
+  if (kind === 'DIRECT_MESSAGE') {
+    expect(parent).toContain('v-if="searchMounted" v-show="searchOpen && !contextOpen()" class="conversation-tools"')
+    expect(parent).toContain('<KeepAlive><DirectMessageSearch v-if="searchOpen" :key="props.directMessageId"')
+  } else {
+    expect(parent).toContain('v-show="!contextOpen()" class="conversation-tools"')
+  }
 })

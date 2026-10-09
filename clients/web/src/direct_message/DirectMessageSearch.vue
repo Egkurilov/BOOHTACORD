@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onActivated, onMounted, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import MessageBody from '../conversation/message_body/MessageBody.vue'
@@ -23,6 +23,7 @@ let requestSequence = 0
 const hasQuery = computed(() => query.value.trim().length > 0)
 const canLoadMore = computed(() => Boolean(nextCursor.value) && !loading.value && query.value === activeQuery.value)
 onMounted(() => queryInput.value?.focus())
+onActivated(() => queryInput.value?.focus())
 
 function reset(): void {
   requestSequence++

@@ -98,6 +98,152 @@ test('WCAG smoke covers profile settings', async ({ page }) => {
   await expectAxeClear(page, '.profile-settings')
 })
 
+test('empty direct-message navigation offers a visible start-conversation action', async ({ page }) => {
+  await page.route('**/api/v1/members?*', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ members: [] }),
+  }))
+  await page.route('**/api/v1/direct-message-candidates*', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ candidates: [{ id: 'member-1', display_name: 'Алиса' }] }),
+  }))
+  await page.route('**/api/v1/direct-messages', route => route.fulfill({
+    status: 201,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      id: 'dm-1', participant_one_id: 'self', participant_two_id: 'member-1',
+      created_at: '2026-10-09T12:00:00Z',
+    }),
+  }))
+  await page.setViewportSize({ width: 320, height: 720 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const [{ createApp, h, ref }, { createPinia }, { default: Component }] = await Promise.all([
+      load('/node_modules/.vite/deps/vue.js'),
+      load('/node_modules/.vite/deps/pinia.js'),
+      load('/src/direct_message/DirectMessageNavigation.vue'),
+    ]) as any
+    document.body.innerHTML = '<div id="mount"></div>'
+    createApp({
+      setup() {
+        const opened = ref('')
+        return () => h('main', [
+          h(Component, {
+            directMessages: [], error: null, loading: false,
+            onOpen: (id: string) => { opened.value = id },
+          }),
+          h('output', { 'data-testid': 'opened-direct-message' }, opened.value),
+        ])
+      },
+    }).use(createPinia()).mount('#mount')
+  })
+
+  await expect(page.getByText('Начните личный разговор с участником.', { exact: true })).toBeVisible()
+  const start = page.getByRole('button', { name: 'Начать диалог' })
+  await expect(start).toBeVisible()
+  await expect(start).toContainText('Начать диалог')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await expectAxeClear(page, '.direct-message-navigation')
+  await start.click()
+  await expect(page.getByRole('dialog', { name: 'Новый личный диалог' })).toBeVisible()
+  await page.getByRole('button', { name: 'Алиса' }).click()
+  await expect(page.getByTestId('opened-direct-message')).toHaveText('dm-1')
+})
+
+test('direct-message search keeps its query and results after opening and returning from context', async ({ page }) => {
+  await page.route('**/api/v1/**', route => {
+    const url = new URL(route.request().url())
+    const message = {
+      id: 'message-1', direct_message_id: 'dm-1', author_id: 'member-1',
+      client_message_id: 'client-message-1', body: 'Оригинальный контекст',
+      created_at: '2026-10-09T12:00:00Z', revision: 1, deleted: false,
+      attachments: [], mention_user_ids: [],
+    }
+    if (url.pathname === '/api/v1/auth/session') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ authenticated: true, account_id: 'self', role: 'MEMBER' }) })
+    }
+    if (url.pathname.endsWith('/search')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ messages: [{
+        id: message.id, direct_message_id: 'dm-1', author_id: 'member-1',
+        body: 'Найденный результат', created_at: message.created_at, revision: 1,
+      }] }) })
+    }
+    if (url.pathname.endsWith('/messages')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ messages: url.searchParams.has('at') ? [message] : [] }) })
+    }
+    if (url.pathname === '/api/v1/members') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ members: [{
+        user_id: 'member-1', login: 'alice', display_name: 'Алиса', role: 'MEMBER',
+      }] }) })
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const [{ createApp, h, ref }, { createPinia }, { useDirectMessageStore }, { default: Component }] = await Promise.all([
+      load('/node_modules/.vite/deps/vue.js'),
+      load('/node_modules/.vite/deps/pinia.js'),
+      load('/src/direct_message/direct_message_store.ts'),
+      load('/src/direct_message/DirectMessageConversation.vue'),
+    ]) as any
+    const pinia = createPinia()
+    const store = useDirectMessageStore(pinia)
+    const conversationId = ref('dm-1')
+    await store.open(conversationId.value)
+    document.body.innerHTML = '<div id="mount"></div>'
+    createApp({ render: () => h('main', [
+      h('button', {
+        type: 'button',
+        onClick: () => {
+          conversationId.value = conversationId.value === 'dm-1' ? 'dm-2' : 'dm-1'
+          void store.open(conversationId.value)
+        },
+      }, 'Переключить диалог'),
+      h(Component, {
+        accountId: 'self', active: true, directMessageId: conversationId.value,
+        otherParticipantId: 'member-1',
+        otherParticipantDisplayName: conversationId.value === 'dm-1' ? 'Алиса' : 'Борис',
+        navOpen: false,
+      }),
+    ]) }).use(pinia).mount('#mount')
+  })
+
+  const directSearch = page.getByRole('button', { name: 'Найти сообщение' })
+  const openSearch = async () => {
+    await expect(directSearch).toBeVisible()
+    await directSearch.click()
+  }
+  await expect(directSearch).toBeVisible()
+  const searchBounds = await directSearch.boundingBox()
+  expect(searchBounds?.width).toBeGreaterThanOrEqual(44)
+  expect(searchBounds?.height).toBeGreaterThanOrEqual(44)
+  await openSearch()
+  const query = page.getByRole('searchbox', { name: 'Запрос' })
+  await query.fill('контекст')
+  await page.getByRole('button', { name: 'Найти', exact: true }).click()
+  await expect(page.getByText('Найденный результат')).toBeVisible()
+  await page.getByRole('button', { name: 'Открыть сообщение' }).click()
+  await expect(page.getByRole('heading', { name: 'Контекст найденного сообщения' })).toBeVisible()
+  await page.getByRole('button', { name: 'Вернуться к исходной позиции' }).click()
+  await expect(page.getByText('Найденный результат')).toBeVisible()
+
+  await page.getByRole('searchbox', { name: 'Запрос' }).press('Escape')
+  await expect(page.getByRole('searchbox', { name: 'Запрос' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Переключить диалог' }).click()
+  await expect(page.getByRole('heading', { name: 'Борис' })).toBeVisible()
+  await openSearch()
+  await expect(page.getByRole('searchbox', { name: 'Запрос' })).toHaveValue('')
+  await page.getByRole('searchbox', { name: 'Запрос' }).press('Escape')
+  await page.getByRole('button', { name: 'Переключить диалог' }).click()
+  await expect(page.getByRole('heading', { name: 'Алиса' })).toBeVisible()
+  await openSearch()
+  await expect(page.getByRole('searchbox', { name: 'Запрос' })).toHaveValue('контекст')
+  await expect(page.getByText('Найденный результат')).toBeVisible()
+})
+
 test('profile settings tabs support Arrow, Home and End keyboard navigation', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await mountProductionComponent(page, '/src/identity/ProfileSettings.vue', {

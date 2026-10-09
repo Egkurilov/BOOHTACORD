@@ -20,11 +20,19 @@ onMounted(() => { void memberDirectory.refresh() })
 
 <template>
   <nav class="direct-message-navigation" aria-label="Личные сообщения">
-    <h2>СООБЩЕНИЯ</h2>
-    <DirectMessageStarter @open="emit('open', $event)" />
+    <h2>
+      СООБЩЕНИЯ
+      <DirectMessageStarter
+        v-if="props.loading || props.error || props.directMessages.length"
+        @open="emit('open', $event)"
+      />
+    </h2>
     <p v-if="props.loading" class="empty-category" aria-live="polite">Загружаем диалоги…</p>
     <p v-else-if="props.error" class="empty-category state-error" role="alert">{{ props.error }}</p>
-    <p v-else-if="!props.directMessages.length" class="empty-category">Диалогов пока нет.</p>
+    <div v-else-if="!props.directMessages.length" class="direct-message-empty">
+      <p>Начните личный разговор с участником.</p>
+      <DirectMessageStarter prominent @open="emit('open', $event)" />
+    </div>
     <button
       v-for="directMessage in props.directMessages"
       :key="directMessage.id"
