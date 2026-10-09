@@ -25,18 +25,18 @@ Use the same account fixture, data set, browser/device, viewport, input method, 
 
 For each attempt, record completion (yes/no), time from task prompt to completion, wrong actions, backtracking, help requested, and any blocking error. Run the same tasks for Flutter on each supported release platform after physical builds are available. Report medians and completion/error counts; keep each platform separate.
 
-**Targets:** `TBD — release owner approval required`. No success/time/error threshold has been inferred from this code review. Do not declare improvement until baseline and post-change runs have comparable tester and platform samples.
+**Thresholds:** Approved by release owner Pistol121 on 2026-10-10 (see the recorded criteria below). Tester sample size, baseline/post-change data, and named rollback owners remain `TBD`; no improvement or release decision is claimed until comparable runs are complete.
 
-### Draft for owner approval — not accepted
+### Owner-approved thresholds
 
-The release owner, Pistol121, confirmed they will approve the thresholds and rollback owners. The following is a concrete proposal for that review, not an approved gate:
+Pistol121 approved these criteria in the issue work thread on 2026-10-10:
 
 - Compare task success, median time, wrong actions and backtracking separately for desktop and mobile. Require task success to meet or exceed baseline and error/backtracking counts not to increase.
 - Treat median time as non-regressing when it is no more than 10% slower on any critical task. Claim a time improvement only when comparable samples show at least a 10% median reduction on a targeted task without violating the other guardrails.
 - Roll back or halt the affected cohort if a critical task's success rate drops by at least 10 percentage points, median time is more than 20% slower on two or more critical tasks, or a P1 blocker/data-loss/access-control regression appears.
-- Tester count and the named rollback owner for Web, macOS, Windows, Android and iOS still need the release owner's approval.
+- Tester count and the named rollback owner for Web, macOS, Windows, Android and iOS still need to be supplied.
 
-Until the proposal is accepted or edited and the tester run is complete, `Targets` remain `TBD` and the release decision remains `NO-GO / NOT_RUN`.
+Threshold approval does not complete the release gate. Until tester/device runs and rollback ownership are recorded, the release decision remains `NO-GO / NOT_RUN`.
 
 ## Platform and artifact matrix
 
@@ -46,11 +46,11 @@ Until the proposal is accepted or edited and the tester run is complete, `Target
 | Web / Firefox desktop and mobile | No task-based run recorded for this pass. | `NOT_RUN` — browser/device, screenshot, and task evidence required. |
 | Web / Safari desktop and mobile | No task-based run recorded for this pass. | `NOT_RUN` — desktop Safari plus iOS Safari device, screenshot, and task evidence required. |
 | Flutter / macOS | Device discovery found a native macOS 26.6.1 (25G76), arm64 target. Widget/analyzer results are recorded in the evidence file. | `NOT_RUN` — native task, settings/audio, window/focus, and task-based usability capture. |
-| Flutter / Android portrait and landscape | Platform-specific widget coverage exists. No Android device was discovered on this host. | `NOT_RUN` — physical settings, IME, voice, screen capture, and TalkBack acceptance. |
+| Flutter / Android portrait and landscape | Platform-specific widget coverage exists. Android 15 / API 35 emulator `emulator-5554` was discovered on 2026-10-10; no physical Android device was identified. The app's default API origin is production and has no QA-origin override, so no emulator task was run against a real user account. | `NOT_RUN` — physical settings, IME, voice, screen capture, and TalkBack acceptance. |
 | Flutter / iOS portrait and landscape | Platform-specific widget coverage exists. No iOS device was discovered on this host. | `NOT_RUN` — physical settings, IME, voice, screen capture, system Back/swipe, and VoiceOver acceptance. |
 | Flutter / Windows | Platform-specific widget coverage exists. No Windows device was discovered on this host. | `NOT_RUN` — physical interaction, voice/stream, window controls, and screen-reader acceptance. |
 
-Device discovery on 2026-10-09 at commit `747db023` ran `flutter devices --machine`. It found only the native macOS target (SDK `macOS 26.6.1 25G76 darwin-arm64`) and Chrome (`154.0.8037.98`, `web-javascript`); both reported `emulator: false`. A pre-existing macOS Debug app process was also observed at version `1.0.38+71`. Its executable timestamp (`2026-10-08 21:34 MSK`) predates the current source edit (`2026-10-09 22:06 MSK`), so this binary cannot verify the current source. A 1440×900 audio-settings screen and its accessibility tree were inspected transiently, but no screenshot was archived and no task was counted as passed. The session was already authenticated against a populated guild; `docker ps` found no separate local QA stack. No message, channel, role, voice, or screen-share mutation was attempted in that session. No manual task script, assistive-technology session, or full-app screenshot comparison was performed. The detailed task/device/version/artifact matrix for issue #303 remains `NOT_RUN` until current-code runs are made in a disposable QA environment.
+Device discovery on 2026-10-09 at commit `747db023` ran `flutter devices --machine`. It found only the native macOS target (SDK `macOS 26.6.1 25G76 darwin-arm64`) and Chrome (`154.0.8037.98`, `web-javascript`); both reported `emulator: false`. On 2026-10-10, the same command found those targets plus Android 15 / API 35 emulator `emulator-5554` (`emulator: true`). CoreSimulator discovery failed because CoreSimulatorService was unavailable; no iOS simulator or physical iOS device was found. No physical Android device was identified. A pre-existing macOS Debug app process was also observed at version `1.0.38+71`. Its executable timestamp (`2026-10-08 21:34 MSK`) predates the current source edit (`2026-10-09 22:06 MSK`), so this binary cannot verify the current source. A 1440×900 audio-settings screen and its accessibility tree were inspected transiently, but no screenshot was archived and no task was counted as passed. The session was already authenticated against a populated guild; `docker ps` found no separate local QA stack. The Flutter app defaults to the production API origin and has no QA-origin override in its startup configuration, so the Android emulator was not launched against the populated production account. No message, channel, role, voice, or screen-share mutation was attempted in that session. No manual task script, assistive-technology session, or full-app screenshot comparison was performed. The detailed task/device/version/artifact matrix for issue #303 remains `NOT_RUN` until current-code runs are made in a disposable QA environment.
 
 The original 41 reference screenshots are present in [`artifacts/ui-ux-screenshots.zip`](../../artifacts/ui-ux-screenshots.zip). Current shell/DOM/widget tests are regression evidence, not full-app before/after comparison against those assets. No screenshot or device gate is passed by this document.
 
