@@ -6,6 +6,8 @@ Status: `NOT_RUN` — this is an acceptance protocol, not a release approval. Th
 
 [`evidence/qa/uiux-2026-epic-289-2026-10-09.md`](../../evidence/qa/uiux-2026-epic-289-2026-10-09.md) is the current issue → implementation → test → evidence map. Record the commit, build metadata, commands, artifact paths, viewport, platform, and result in that file as each slice lands. `[skip ci]` pushes have local evidence only; they do not create GitHub Actions artifacts.
 
+The current implemented state behavior and deterministic-test mapping are indexed in [`UIUX_2026_STATE_MATRIX.md`](UIUX_2026_STATE_MATRIX.md). Its `Partial` and `NOT_RUN` rows remain open acceptance gaps until the listed response and device scenarios are executed.
+
 ## User task baseline and comparison
 
 Use the same account fixture, data set, browser/device, viewport, input method, and task wording for baseline and post-change runs. Recruit real testers; do not treat automated checks or developer estimates as user measurements.
