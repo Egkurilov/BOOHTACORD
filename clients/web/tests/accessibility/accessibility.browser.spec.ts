@@ -547,7 +547,7 @@ test('WCAG smoke distinguishes readiness loading, refresh, stale failure and ret
   await expect(refresh).toHaveText('Проверяем…')
   await expect(status).toHaveText('Обновляем проверку; показан предыдущий результат')
   releaseRefresh?.()
-  await expect(page.getByRole('alert')).toHaveText('Сервер не подтвердил готовность.')
+  await expect(page.getByRole('alert')).toHaveText('Сервис временно не отвечает. Попробуйте позже.')
   await expect(status).toHaveText('Нет свежего подтверждения готовности')
   await expect(page.locator('dl dd').first()).toHaveText('устарело')
   await expectAxeClear(page, '#mount')
@@ -555,6 +555,24 @@ test('WCAG smoke distinguishes readiness loading, refresh, stale failure and ret
   await refresh.click()
   await expect(status).toHaveText('Сервисы готовы')
   await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('readiness access denial is explained and stops automatic retry', async ({ page }) => {
+  await page.clock.install()
+  let requests = 0
+  await page.route('**/api/v1/admin/readiness', async route => {
+    requests += 1
+    await route.fulfill({ status: 403, contentType: 'application/json', body: '{}' })
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/readiness/Panel.vue')
+
+  await expect(page.getByRole('alert')).toHaveText('Нет доступа к этому разделу.')
+  const refresh = page.locator('section[aria-labelledby="readiness-title"] > button')
+  await expect(refresh).toBeDisabled()
+  await expect(refresh).toHaveText('Обновление недоступно')
+  await page.clock.fastForward(5_000)
+  expect(requests).toBe(1)
 })
 
 test('screen-share setup keeps keyboard focus inside its modal dialog', async ({ page }) => {
@@ -614,12 +632,49 @@ test('WCAG smoke distinguishes media metric loading, refresh and failure states'
   await expect(status).toContainText('Обновляем показатели; предыдущий ответ сохранён')
   releaseRefresh?.()
   await expect(status).toContainText('Ошибка обновления')
-  await expect(page.getByRole('alert')).toContainText('прежние измерения нельзя считать текущими')
+  await expect(page.getByRole('alert')).toContainText('Сервис временно не отвечает. Попробуйте позже.')
+  await expect(page.getByRole('alert')).toContainText('Прежние измерения нельзя считать текущими')
   await expectAxeClear(page, '.admin-media-freshness')
 
   await refresh.click()
   await expect(status).toContainText('Есть измерения')
   await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('media access denial stops automatic polling and disables retry', async ({ page }) => {
+  await page.clock.install()
+  let requests = 0
+  await page.route('**/api/v1/admin/screen-metrics', async route => {
+    requests += 1
+    await route.fulfill({ status: 403, contentType: 'application/json', body: '{}' })
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/media/AdminMediaDiagnostics.vue')
+
+  const refresh = page.locator('.admin-media-diagnostics > header > button')
+  await expect(page.getByRole('alert')).toHaveText('Нет доступа к этому разделу.')
+  await expect(refresh).toBeDisabled()
+  await page.clock.fastForward(15_000)
+  expect(requests).toBe(1)
+})
+
+test('media rate limit remains retryable and recovers after a manual retry', async ({ page }) => {
+  let requests = 0
+  await page.route('**/api/v1/admin/screen-metrics', async route => {
+    requests += 1
+    if (requests === 1) await route.fulfill({ status: 429, contentType: 'application/json', body: '{}' })
+    else await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ samples: [] }) })
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/media/AdminMediaDiagnostics.vue')
+
+  const refresh = page.locator('.admin-media-diagnostics > header > button')
+  await expect(page.getByRole('alert')).toHaveText('Слишком много запросов. Подождите немного и повторите попытку. Повторите обновление.')
+  await expect(refresh).toBeEnabled()
+  await refresh.click()
+  await expect(page.getByRole('status')).toContainText('Нет данных')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  expect(requests).toBe(2)
 })
 
 test('admin media does not present old measurements as fresh after an empty refresh', async ({ page }) => {
