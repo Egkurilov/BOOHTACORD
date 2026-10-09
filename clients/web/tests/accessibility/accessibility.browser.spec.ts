@@ -100,7 +100,13 @@ test('WCAG smoke covers profile settings', async ({ page }) => {
 
 test('empty direct-message navigation offers a visible start-conversation action', async ({ page }) => {
   await page.route('**/api/v1/members?*', route => route.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify({ members: [] }),
+    status: 200, contentType: 'application/json', body: JSON.stringify({ members: [{
+      user_id: 'member-1', login: 'alice', display_name: 'Алиса', role: 'MEMBER',
+    }] }),
+  }))
+  await page.route('**/api/v1/auth/session', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ authenticated: true, account_id: 'self', role: 'MEMBER' }),
   }))
   await page.route('**/api/v1/direct-message-candidates*', route => route.fulfill({
     status: 200,
@@ -115,28 +121,39 @@ test('empty direct-message navigation offers a visible start-conversation action
       created_at: '2026-10-09T12:00:00Z',
     }),
   }))
+  await page.route('**/api/v1/direct-messages/dm-1/messages*', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ messages: [] }),
+  }))
   await page.setViewportSize({ width: 320, height: 720 })
   await page.goto('/')
   await page.evaluate(async () => {
     const load = (path: string) => import(path)
-    const [{ createApp, h, ref }, { createPinia }, { default: Component }] = await Promise.all([
+    const [{ createApp, h, ref }, { createPinia }, { useDirectMessageStore }, { default: Navigation }, { default: Conversation }] = await Promise.all([
       load('/node_modules/.vite/deps/vue.js'),
       load('/node_modules/.vite/deps/pinia.js'),
+      load('/src/direct_message/direct_message_store.ts'),
       load('/src/direct_message/DirectMessageNavigation.vue'),
+      load('/src/direct_message/DirectMessageConversation.vue'),
     ]) as any
+    const pinia = createPinia()
+    const directMessages = useDirectMessageStore(pinia)
     document.body.innerHTML = '<div id="mount"></div>'
     createApp({
       setup() {
         const opened = ref('')
         return () => h('main', [
-          h(Component, {
+          h(Navigation, {
             directMessages: [], error: null, loading: false,
-            onOpen: (id: string) => { opened.value = id },
+            onOpen: (id: string) => { opened.value = id; void directMessages.open(id) },
           }),
           h('output', { 'data-testid': 'opened-direct-message' }, opened.value),
+          opened.value ? h(Conversation, {
+            accountId: 'self', active: true, directMessageId: opened.value,
+            otherParticipantId: 'member-1', otherParticipantDisplayName: 'Алиса', navOpen: false,
+          }) : null,
         ])
       },
-    }).use(createPinia()).mount('#mount')
+    }).use(pinia).mount('#mount')
   })
 
   await expect(page.getByText('Начните личный разговор с участником.', { exact: true })).toBeVisible()
@@ -149,6 +166,9 @@ test('empty direct-message navigation offers a visible start-conversation action
   await expect(page.getByRole('dialog', { name: 'Новый личный диалог' })).toBeVisible()
   await page.getByRole('button', { name: 'Алиса' }).click()
   await expect(page.getByTestId('opened-direct-message')).toHaveText('dm-1')
+  await expect(page.getByRole('heading', { name: 'Алиса' })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'Сообщение' })).toBeVisible()
+  await expect(page.getByText('Сообщений пока нет.')).toBeVisible()
 })
 
 test('direct-message search keeps its query and results after opening and returning from context', async ({ page }) => {
