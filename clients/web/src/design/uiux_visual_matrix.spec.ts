@@ -32,6 +32,14 @@ type VisualMatrix = {
     sha256: string
     status: string
   }>
+  sourceReviewEvidence: {
+    status: string
+    sourceRevision: string
+    reviewedScreenIds: string[]
+    mobile393ReportSha256: string
+    desktop1440ReportSha256: string
+    dataset: { members: number; categories: number; channels: number; auditRows: number }
+  }
   screens: MatrixEntry[]
 }
 
@@ -115,5 +123,31 @@ describe('UIUX-2026 visual regression inventory', () => {
     }
     expect(desktop.sourceComparisonStatus).toBe('BLOCKED_DUPLICATE_BASELINE')
     expect(desktop.expectedOrException).toContain('desktop-guild-members.png')
+  })
+
+  it('records reviewed full-stack admin captures without treating them as approved goldens', () => {
+    const matrix = JSON.parse(readFileSync(matrixPath, 'utf8')) as VisualMatrix
+    const reviewedAdminIds = new Set([
+      'D05', 'D06', 'D07', 'D08', 'D09', 'D10',
+      'M08', 'M09', 'M10', 'M11', 'M12', 'M13',
+    ])
+
+    for (const entry of matrix.screens.filter(({ id }) => reviewedAdminIds.has(id))) {
+      expect(entry.sourceComparisonStatus, `${entry.id} capture review`).toBe('REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN')
+    }
+
+    expect(matrix.sourceReviewEvidence).toMatchObject({
+      status: 'REVIEWED_RUNTIME_CAPTURES_NOT_APPROVED_GOLDENS',
+      sourceRevision: '55f18d2b179ab87f93a9cb1d08ed9b3fffff338c',
+      reviewedScreenIds: [...reviewedAdminIds].sort(),
+      mobile393ReportSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      desktop1440ReportSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
+      dataset: { members: 20, categories: 3, channels: 8, auditRows: 100 },
+    })
+
+    const settings = matrix.screens.find(({ id }) => id === 'D11')!
+    expect(settings.sourceComparisonStatus).toBe('BLOCKED_DUPLICATE_BASELINE')
+    expect(matrix.screens.filter(({ sourceComparisonStatus }) => sourceComparisonStatus === 'REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN'))
+      .toHaveLength(reviewedAdminIds.size)
   })
 })

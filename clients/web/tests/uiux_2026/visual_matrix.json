@@ -96,13 +96,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Search and filter members, inspect an empty result, and reset filters.",
-      "expectedOrException": "Member controls remain reachable and filtered counts are announced; source screenshot comparison pending.",
+      "expectedOrException": "Member controls remain reachable and filtered counts are announced. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/admin/members/",
       "flutterTestFile": "clients/flutter/test/admin_member_filter_test.dart",
       "referenceRasterPx": {
         "width": 2880,
         "height": 1800
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "D06",
@@ -116,13 +117,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Navigate to roles and inspect permission controls using keyboard and pointer.",
-      "expectedOrException": "Only ACL-authorized controls are actionable; the visual baseline must be compared with the original asset.",
+      "expectedOrException": "Only ACL-authorized controls are actionable. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/admin/role_permissions/",
       "flutterTestFile": "clients/flutter/test/admin_role_permissions_surface_test.dart",
       "referenceRasterPx": {
         "width": 2880,
         "height": 1800
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "D07",
@@ -136,13 +138,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Observe readiness loading, refresh, stale/error feedback, and recovery.",
-      "expectedOrException": "Loading, prior sample, stale failure, and retry success have distinct status messages; reference comparison pending.",
+      "expectedOrException": "Loading, prior sample, stale failure, and retry success have distinct status messages. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/admin/readiness/Panel.vue",
       "flutterTestFile": "clients/flutter/test/admin_readiness_widget_test.dart",
       "referenceRasterPx": {
         "width": 2880,
         "height": 1800
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "D08",
@@ -156,13 +159,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Apply audit filters, read result count, and reset filters.",
-      "expectedOrException": "Audit event content remains protected and scan-friendly; screenshot comparison is not run.",
+      "expectedOrException": "Audit event content remains protected and scan-friendly. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/admin/audit/",
       "flutterTestFile": "clients/flutter/test/admin_audit_filter_test.dart",
       "referenceRasterPx": {
         "width": 2880,
         "height": 1800
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "D09",
@@ -176,13 +180,14 @@
       "fixture": "clients/web/tests/responsive_shell/fixture.html",
       "testFile": "clients/web/tests/responsive_shell/responsive_shell.browser.spec.ts",
       "interaction": "Select a channel through the navigation drawer and return to the workspace.",
-      "expectedOrException": "The navigation closes, the selected channel changes once, and the document remains within the viewport; admin-specific before/after remains pending.",
+      "expectedOrException": "The navigation closes, the selected channel changes once, and the document remains within the viewport. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/channel/ChannelNavigation.vue; clients/web/src/admin/topology/",
       "flutterTestFile": "clients/flutter/test/admin_topology_widget_test.dart",
       "referenceRasterPx": {
         "width": 2880,
         "height": 1800
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "D10",
@@ -196,13 +201,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Refresh media diagnostics and distinguish pending, fresh, stale, and service failure states.",
-      "expectedOrException": "Prior data is not presented as fresh during refresh; reference screenshot comparison pending.",
+      "expectedOrException": "Prior data is not presented as fresh during refresh. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/admin/media/AdminMediaDiagnostics.vue",
       "flutterTestFile": "clients/flutter/test/admin_media_widget_test.dart",
       "referenceRasterPx": {
         "width": 2880,
         "height": 1800
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "D11",
@@ -517,13 +523,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Filter members by query/status, inspect empty results, and reset.",
-      "expectedOrException": "No hidden admin section or action is required for navigating the member list; source visual comparison pending.",
+      "expectedOrException": "No hidden admin section or action is required for navigating the member list. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/admin/members/",
       "flutterTestFile": "clients/flutter/test/admin_member_filter_test.dart",
       "referenceRasterPx": {
         "width": 1179,
         "height": 2556
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "M09",
@@ -537,13 +544,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Reach each admin section and inspect role/permission controls by keyboard and pointer.",
-      "expectedOrException": "Section tabs have a visible compact-width scroll cue and remain labeled; Flutter and screen-reader runtime checks are separate.",
+      "expectedOrException": "Section tabs have a visible compact-width scroll cue and remain labeled. Full-stack source-sized runtime capture reviewed with the #296 fixture; screen-reader and physical-device checks are separate.",
       "owner": "clients/web/src/admin/panel/AdminPanel.vue; clients/web/src/admin/role_permissions/",
       "flutterTestFile": "clients/flutter/test/admin_role_permissions_surface_test.dart",
       "referenceRasterPx": {
         "width": 1179,
         "height": 2556
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "M10",
@@ -557,13 +565,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Observe initial load, stale refresh, 503 failure, and successful readiness retry.",
-      "expectedOrException": "Loading and previous readiness are distinguished and retry status is announced once; comparison to source image pending.",
+      "expectedOrException": "Loading and previous readiness are distinguished and retry status is announced once. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/admin/readiness/Panel.vue",
       "flutterTestFile": "clients/flutter/test/admin_readiness_widget_test.dart",
       "referenceRasterPx": {
         "width": 1179,
         "height": 2556
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "M11",
@@ -577,13 +586,14 @@
       "fixture": "clients/web/tests/responsive_shell/fixture.html",
       "testFile": "clients/web/tests/responsive_shell/responsive_shell.browser.spec.ts",
       "interaction": "Select a channel from the drawer and return to the workspace without changing voice state.",
-      "expectedOrException": "Drawer closes and channel context remains selected; the simplified fixture does not exercise admin mutation permissions.",
+      "expectedOrException": "Drawer closes and channel context remains selected. Full-stack source-sized runtime capture reviewed with the #296 fixture; this is review evidence, not an approved pixel golden.",
       "owner": "clients/web/src/channel/ChannelNavigation.vue; clients/web/src/admin/topology/",
       "flutterTestFile": "clients/flutter/test/admin_topology_widget_test.dart",
       "referenceRasterPx": {
         "width": 1179,
         "height": 2556
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "M12",
@@ -597,13 +607,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Change audit filters, read count/empty state, and reset.",
-      "expectedOrException": "Full event details remain available without horizontal overflow; device and source image comparison remain unverified.",
+      "expectedOrException": "Full event details remain available without horizontal overflow. Full-stack source-sized runtime capture reviewed with the #296 fixture; physical-device acceptance is separate.",
       "owner": "clients/web/src/admin/audit/",
       "flutterTestFile": "clients/flutter/test/admin_audit_filter_test.dart",
       "referenceRasterPx": {
         "width": 1179,
         "height": 2556
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "M13",
@@ -617,13 +628,14 @@
       "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
       "interaction": "Refresh diagnostics and expand advanced technical measurements only when needed.",
-      "expectedOrException": "Stale, pending, and failed states are distinct; mobile physical-device comparison pending.",
+      "expectedOrException": "Stale, pending, and failed states are distinct. Full-stack source-sized runtime capture reviewed with the #296 fixture; physical-device acceptance is separate.",
       "owner": "clients/web/src/admin/media/AdminMediaDiagnostics.vue",
       "flutterTestFile": "clients/flutter/test/admin_media_widget_test.dart",
       "referenceRasterPx": {
         "width": 1179,
         "height": 2556
-      }
+      },
+      "sourceComparisonStatus": "REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN"
     },
     {
       "id": "M14",
@@ -836,5 +848,31 @@
       "sha256": "0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57",
       "status": "BLOCKED_DUPLICATE_BASELINE"
     }
-  ]
+  ],
+  "sourceReviewEvidence": {
+    "status": "REVIEWED_RUNTIME_CAPTURES_NOT_APPROVED_GOLDENS",
+    "sourceRevision": "55f18d2b179ab87f93a9cb1d08ed9b3fffff338c",
+    "reviewedScreenIds": [
+      "D05",
+      "D06",
+      "D07",
+      "D08",
+      "D09",
+      "D10",
+      "M08",
+      "M09",
+      "M10",
+      "M11",
+      "M12",
+      "M13"
+    ],
+    "mobile393ReportSha256": "607432e847d86d4cbbc19026c6ea6707f5879808c0ab3bf51067bf0e0498ca12",
+    "desktop1440ReportSha256": "062afb4fc5554ca84ffc892039debe61479f1e867a52bcb9c0151d0711327d1f",
+    "dataset": {
+      "members": 20,
+      "categories": 3,
+      "channels": 8,
+      "auditRows": 100
+    }
+  }
 }
