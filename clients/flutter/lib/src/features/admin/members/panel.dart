@@ -19,6 +19,10 @@ class AdminMembersPanel extends StatelessWidget {
     required this.accountCards,
     required this.search,
     required this.roleFilter,
+    required this.statusFilter,
+    required this.resultsCount,
+    required this.filtersActive,
+    required this.onResetFilters,
     required this.cursor,
     required this.status,
     required this.loadingState,
@@ -38,6 +42,10 @@ class AdminMembersPanel extends StatelessWidget {
   final List<Widget> accountCards;
   final String search;
   final String roleFilter;
+  final String statusFilter;
+  final int resultsCount;
+  final bool filtersActive;
+  final VoidCallback onResetFilters;
   final String? cursor;
   final String? status;
   final Widget loadingState;

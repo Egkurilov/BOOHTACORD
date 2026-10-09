@@ -36,7 +36,9 @@ describe('V2 administrator member directory', () => {
 
   it('aligns mobile search and account status geometry with R22', () => {
     const css = readFileSync(new URL('./design_v2_admin_members.css', import.meta.url), 'utf8')
-    expect(css).toContain('.admin-member-filters select { width: 81px;')
+    expect(css).toContain('.admin-member-filters { display: grid; height: auto; grid-template-columns: repeat(2, minmax(0, 1fr));')
+    expect(css).toContain('.admin-member-filters select { width: 100%; min-width: 0;')
+    expect(members).toContain('Фильтр по статусу')
     expect(css).toContain('background: var(--gc-sidebar); font-size: 14px;')
     expect(css).toContain('.admin-panel--members .admin-mobile-meta .is-active { border-radius: 4px; padding: 2px 6px; color: #78e6a0; background: #123320; font-size: 12px; font-weight: 600; line-height: 16px; }')
     expect(css).toContain('.admin-account-status { border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 600; line-height: 16px; }')

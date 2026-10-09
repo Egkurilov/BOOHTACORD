@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-class AdminMemberRoleFilter extends StatelessWidget {
-  const AdminMemberRoleFilter({
+class AdminMemberStatusFilter extends StatelessWidget {
+  const AdminMemberStatusFilter({
     super.key,
-    required this.role,
-    required this.onRoleChanged,
+    required this.status,
+    required this.onStatusChanged,
   });
-  final String role;
-  final ValueChanged<String> onRoleChanged;
+
+  final String status;
+  final ValueChanged<String> onStatusChanged;
+
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width <= 720;
@@ -20,16 +22,12 @@ class AdminMemberRoleFilter extends StatelessWidget {
             : double.infinity,
       ),
       child: SizedBox(
-        width: compact
-            ? double.infinity
-            : largeText
-            ? double.infinity
-            : 121,
+        width: compact || largeText ? double.infinity : 146,
         child: Semantics(
-          label: 'Фильтр по роли',
+          label: 'Фильтр по статусу',
           child: DropdownButtonFormField<String>(
-            key: const ValueKey('admin-member-role-filter'),
-            initialValue: role,
+            key: const ValueKey('admin-member-status-filter'),
+            initialValue: status,
             isExpanded: true,
             style: const TextStyle(fontSize: 14),
             selectedItemBuilder: (_) => compact && !largeText
@@ -37,23 +35,23 @@ class AdminMemberRoleFilter extends StatelessWidget {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text('Все', maxLines: 1, softWrap: false),
+                      child: Text('Любой', maxLines: 1, softWrap: false),
                     ),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text('Участ.', maxLines: 1, softWrap: false),
+                      child: Text('Активен', maxLines: 1, softWrap: false),
                     ),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Text('Админ.', maxLines: 1, softWrap: false),
+                      child: Text('Блокир.', maxLines: 1, softWrap: false),
                     ),
                   ]
                 : const [
-                    Text('Все роли'),
-                    Text('Пользователь'),
-                    Text('Администратор'),
+                    Text('Любой статус'),
+                    Text('Активен'),
+                    Text('Заблокирован'),
                   ],
             icon: compact
                 ? const SizedBox.shrink()
@@ -68,19 +66,19 @@ class AdminMemberRoleFilter extends StatelessWidget {
             items: const [
               DropdownMenuItem(
                 value: 'ALL',
-                child: Text('Все роли', overflow: TextOverflow.ellipsis),
+                child: Text('Любой статус', overflow: TextOverflow.ellipsis),
               ),
               DropdownMenuItem(
-                value: 'MEMBER',
-                child: Text('Пользователь', overflow: TextOverflow.ellipsis),
+                value: 'ACTIVE',
+                child: Text('Активен', overflow: TextOverflow.ellipsis),
               ),
               DropdownMenuItem(
-                value: 'ADMINISTRATOR',
-                child: Text('Администратор', overflow: TextOverflow.ellipsis),
+                value: 'BLOCKED',
+                child: Text('Заблокирован', overflow: TextOverflow.ellipsis),
               ),
             ],
             onChanged: (value) {
-              if (value != null) onRoleChanged(value);
+              if (value != null) onStatusChanged(value);
             },
           ),
         ),

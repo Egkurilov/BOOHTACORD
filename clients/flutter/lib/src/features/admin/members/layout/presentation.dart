@@ -7,9 +7,33 @@ import '../heading/presentation.dart';
 extension AdminMembersLayout on AdminMembersPanel {
   List<Widget> get _items => [
     ?resetCard,
+    if (!accountsEmpty)
+      Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+        child: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          children: [
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                'Показано: $resultsCount из $accountsCount загруженных',
+              ),
+            ),
+            if (filtersActive)
+              TextButton(
+                onPressed: onResetFilters,
+                child: const Text('Сбросить фильтры'),
+              ),
+          ],
+        ),
+      ),
     ...conflictCards,
     if (!accountsEmpty && accountCards.isEmpty)
-      const Text('По запросу участники не найдены.'),
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24),
+        child: Text('По текущим фильтрам участников нет.'),
+      ),
     ...accountCards,
     if (loading)
       Semantics(
@@ -44,7 +68,9 @@ extension AdminMembersLayout on AdminMembersPanel {
   ];
 
   Widget renderMembers(BuildContext context) {
-    final key = PageStorageKey('admin-member-list:$search:$roleFilter');
+    final key = PageStorageKey(
+      'admin-member-list:$search:$roleFilter:$statusFilter',
+    );
     if (MediaQuery.textScalerOf(context).scale(14) > 21 ||
         MediaQuery.viewInsetsOf(context).bottom > 0) {
       return ListView(

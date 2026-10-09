@@ -8,15 +8,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'admin_topology_fake_api.dart';
 
-AdminAccount account(String id, String name, String login, String role) =>
-    AdminAccount(
-      accountId: id,
-      login: login,
-      displayName: name,
-      role: role,
-      blocked: false,
-      createdAt: DateTime.utc(2026, 10, 1),
-    );
+AdminAccount account(
+  String id,
+  String name,
+  String login,
+  String role, {
+  bool blocked = false,
+}) => AdminAccount(
+  accountId: id,
+  login: login,
+  displayName: name,
+  role: role,
+  blocked: blocked,
+  createdAt: DateTime.utc(2026, 10, 1),
+);
 
 class _ConflictMemberApi extends ApiClient {
   int loads = 0;
@@ -73,6 +78,22 @@ void main() {
       filterAdminMembers(accounts, search: 'bob', role: 'ADMINISTRATOR'),
       isEmpty,
     );
+    final blockedAccount = account(
+      'c',
+      'Вера',
+      'vera',
+      'MEMBER',
+      blocked: true,
+    );
+    expect(
+      filterAdminMembers(
+        [accounts.last, blockedAccount],
+        search: '',
+        role: 'ALL',
+        status: 'BLOCKED',
+      ),
+      [blockedAccount],
+    );
   });
 
   testWidgets('member directory keeps count and filters visible cards', (
@@ -96,8 +117,8 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('admin-member-role-filter')))
           .width,
-      81,
-      reason: 'the web compact layout reserves 81 px for the role filter',
+      greaterThan(120),
+      reason: 'compact member filters share the available width',
     );
     expect(
       tester
@@ -238,6 +259,59 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'member filters count results, filter status and reset at 320 px',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 640);
+      addTearDown(tester.view.reset);
+      final api = TopologyTestApi()..accounts = accounts;
+      final state = AppState(api)..topology = api.current;
+      addTearDown(state.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: AdminScreen(state: state)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Показано: 2 из 2 загруженных'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const ValueKey('admin-member-search')),
+        'без совпадений',
+      );
+      await tester.pump();
+      expect(find.text('Показано: 0 из 2 загруженных'), findsOneWidget);
+      expect(find.text('По текущим фильтрам участников нет.'), findsOneWidget);
+      expect(find.text('Сбросить фильтры'), findsOneWidget);
+      await tester.tap(find.text('Сбросить фильтры'));
+      await tester.pumpAndSettle();
+      expect(find.text('Показано: 2 из 2 загруженных'), findsOneWidget);
+      expect(find.text('Алиса'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey('admin-member-status-filter')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Заблокирован').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Показано: 0 из 2 загруженных'), findsOneWidget);
+      expect(find.text('По текущим фильтрам участников нет.'), findsOneWidget);
+      await tester.tap(find.text('Сбросить фильтры'));
+      await tester.pumpAndSettle();
+      expect(find.text('Показано: 2 из 2 загруженных'), findsOneWidget);
+      expect(
+        tester
+            .widget<DropdownButtonFormField<String>>(
+              find.byKey(const ValueKey('admin-member-status-filter')),
+            )
+            .initialValue,
+        'ALL',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('member conflict keeps draft and exposes comparison actions', (
     tester,
   ) async {
@@ -302,12 +376,20 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(
-          'Очень длинное отображаемое имя администратора с редкими символами — 0123456789',
-        ),
-        findsOneWidget,
+      final memberName = find.text(
+        'Очень длинное отображаемое имя администратора с редкими символами — 0123456789',
       );
+      await tester.scrollUntilVisible(
+        memberName,
+        250,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(memberName, findsOneWidget);
       expect(
         find.textContaining('@login_with_an_extremely_long_identifier'),
         findsOneWidget,

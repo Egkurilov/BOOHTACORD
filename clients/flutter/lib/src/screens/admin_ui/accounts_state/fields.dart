@@ -5,6 +5,7 @@ mixin AdminAccountsFields {
   final adminAccountSearch = TextEditingController();
   List<AdminAccount> adminAccounts = const [];
   String adminAccountRoleFilter = 'ALL';
+  String adminAccountStatusFilter = 'ALL';
   String? adminAccountCursor;
   final Map<String, AdminAccountDraft> adminAccountDrafts = {};
   final Map<String, AdminAccount> adminAccountBaselines = {};

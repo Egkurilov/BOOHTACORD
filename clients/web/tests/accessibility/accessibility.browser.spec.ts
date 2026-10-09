@@ -57,6 +57,30 @@ test('WCAG smoke covers guild admin members on a phone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await mountProductionComponent(page, '/src/admin/panel/AdminPanel.vue', { categories: [], revision: 1 }, 'workspace-main-panel workspace-main-panel--admin')
   await expect(page.locator('.admin-mobile-card summary strong')).toHaveText('Участник')
+  await expect(page.getByText('Показано: 1 из 1 загруженных', { exact: true })).toBeVisible()
+  const memberSearch = page.getByRole('searchbox', { name: 'Поиск участников' })
+  await memberSearch.fill('без совпадений')
+  await expect(page.getByText('Показано: 0 из 1 загруженных', { exact: true })).toBeVisible()
+  await expect(page.getByText('По текущим фильтрам участников нет.')).toBeVisible()
+  await page.getByRole('button', { name: 'Сбросить фильтры' }).click()
+  await expect(memberSearch).toHaveValue('')
+  await expect(page.locator('.admin-mobile-card summary strong')).toHaveText('Участник')
+  const statusFilter = page.getByRole('combobox', { name: 'Фильтр по статусу' })
+  await statusFilter.selectOption('BLOCKED')
+  await expect(page.getByText('Показано: 0 из 1 загруженных', { exact: true })).toBeVisible()
+  await expect(page.getByText('По текущим фильтрам участников нет.')).toBeVisible()
+  await page.getByRole('button', { name: 'Сбросить фильтры' }).click()
+  await expect(statusFilter).toHaveValue('ALL')
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    for (const select of await page.locator('.admin-member-filters select').all()) {
+      const bounds = await select.boundingBox()
+      expect(bounds).not.toBeNull()
+      expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual(width)
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 844 })
   await expectAxeClear(page, '.admin-panel')
 })
 
@@ -402,4 +426,66 @@ test('admin section selection survives closing and reopening its workspace panel
   await expect(page.getByTestId('admin-panel')).toHaveCount(0)
   await page.evaluate(() => (window as Window & { __adminPanelState: { open: () => void } }).__adminPanelState.open())
   await expect(page.getByRole('button', { name: 'Роли', exact: true })).toHaveAttribute('aria-current', 'page')
+})
+
+test('admin member filters survive switching to another admin section', async ({ page }) => {
+  await page.route('**/api/v1/admin/accounts?*', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ accounts: [{
+      account_id: '11111111-1111-4111-8111-111111111111', login: 'member', display_name: 'Участник',
+      role: 'MEMBER', blocked: false, created_at: '2026-10-01T12:00:00Z', updated_at: '2026-10-01T12:00:00Z',
+    }] }),
+  }))
+  await page.route('**/api/v1/admin/audit?*', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ events: [] }),
+  }))
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h, ref } = await load('/node_modules/.vite/deps/vue.js')
+    const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
+    const { default: AdminPanel } = await load('/src/admin/panel/AdminPanel.vue')
+    document.body.innerHTML = '<div class="workspace-main-panel--admin" id="mount"></div>'
+    const section = ref('members')
+    const app = createApp({ render: () => h(AdminPanel, {
+      categories: [], revision: 1, section: section.value,
+      'onUpdate:section': (next: string) => { section.value = next },
+    }) })
+    app.use(createPinia())
+    app.mount('#mount')
+  })
+
+  const search = page.getByRole('searchbox', { name: 'Поиск участников' })
+  await search.fill('участник')
+  await expect(page.getByText('Показано: 1 из 1 загруженных', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Аудит', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Аудит', exact: true })).toBeVisible()
+  await page.getByLabel('Область').selectOption('voice')
+  await page.getByRole('button', { name: 'Участники', exact: true }).click()
+  await expect(page.getByRole('searchbox', { name: 'Поиск участников' })).toHaveValue('участник')
+  await page.getByRole('button', { name: 'Аудит', exact: true }).click()
+  await expect(page.getByLabel('Область')).toHaveValue('voice')
+})
+
+test('admin audit filters expose result count, empty state and reset', async ({ page }) => {
+  await page.route('**/api/v1/admin/audit?*', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ events: [{
+      id: 'audit-event', event_type: 'CHANNEL_RENAMED', created_at: '2026-10-04T10:00:00Z',
+    }] }),
+  }))
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/audit/AdminAuditSection.vue', {}, 'workspace-main-panel--admin')
+
+  await expect(page.getByText('Показано: 1 из 1 загруженных', { exact: true })).toBeVisible()
+  const scope = page.getByLabel('Область')
+  await scope.selectOption('voice')
+  await expect(page.getByRole('button', { name: 'Сбросить фильтры' })).toBeVisible()
+  await expect(page.getByText('Среди загруженных записей совпадений нет.')).toBeVisible()
+  await page.getByRole('button', { name: 'Сбросить фильтры' }).click()
+  await expect(scope).toHaveValue('all')
+  await expect(page.getByText('Показано: 1 из 1 загруженных', { exact: true })).toBeVisible()
+  await expect(page.getByText('Система → Канал переименован', { exact: true })).toBeVisible()
+  await expectAxeClear(page, '.admin-audit')
 })

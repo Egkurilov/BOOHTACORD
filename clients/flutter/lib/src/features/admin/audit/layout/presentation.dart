@@ -17,9 +17,23 @@ extension AuditLayoutPresentation on AdminAuditPanel {
       final filterBar = renderAuditFilters(context);
       final notice = Padding(
         padding: listPadding.copyWith(top: 0, bottom: 8),
-        child: Text(
-          'Фильтры применяются к ${events.length} уже загруженным записям. Для более ранних событий загрузите следующую страницу.',
-          style: const TextStyle(color: GcColors.textSecondary, fontSize: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                'Показано: ${filtered.length} из ${events.length} загруженных',
+              ),
+            ),
+            Text(
+              'Фильтры применяются к ${events.length} уже загруженным записям. Для более ранних событий загрузите следующую страницу.',
+              style: const TextStyle(
+                color: GcColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       );
       final bodyChildren = renderAuditEvents(context, grouped);

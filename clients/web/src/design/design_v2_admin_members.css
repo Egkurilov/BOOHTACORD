@@ -9,6 +9,10 @@
 .admin-panel--members .admin-section-heading > button { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .admin-member-filters { display: flex; height: 44px; gap: 12px; }
 .admin-panel--members .admin-member-filters { margin-top: 8px; }
+.admin-panel--members .admin-filter-results { display: flex; min-width: 0; min-height: 36px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
+.admin-panel--members .admin-filter-results p { margin: 0; }
+.admin-panel--members .admin-filter-results button { min-height: 36px; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 12px; color: var(--gc-text-primary); background: var(--gc-surface); }
+.admin-panel--members .admin-empty-filter-state { margin: 0; }
 .admin-member-filters label:first-child { min-width: 0; flex: 1; }
 .admin-member-filters input, .admin-member-filters select { height: 44px; border: 1px solid var(--gc-border-control); border-radius: 8px; color: var(--gc-text-primary); background: var(--gc-sidebar); font-size: 14px; }
 .admin-member-filters input { width: 100%; padding: 0 12px; }
@@ -44,8 +48,10 @@
   .workspace-main-panel--admin .admin-panel--members .admin-directory { margin-top: 1px; }
   .admin-panel--members .admin-panel-heading h1 { font-size: 22px; line-height: 28px; }
   .admin-panel--members .admin-panel-description { margin-top: 8px; }
-  .admin-member-filters { gap: 8px; }
-  .admin-member-filters select { width: 81px; padding: 0 10px; appearance: none; }
+  .admin-member-filters { display: grid; height: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .admin-member-filters label:first-child { grid-column: 1 / -1; }
+  .admin-member-filters select { width: 100%; min-width: 0; padding: 0 10px; }
+  .admin-panel--members .admin-filter-results button { min-height: 44px; }
   .admin-panel--members .admin-table-scroll { display: none; }
   .admin-panel--members .admin-mobile-list { display: grid; height: auto; grid-auto-rows: minmax(110px, max-content); gap: 12px; margin-top: 0; }
   .admin-panel--members .admin-mobile-card { min-height: 110px; padding: 16px; }

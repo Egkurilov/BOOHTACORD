@@ -32,12 +32,14 @@ onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(foc
       <button type="button" :aria-current="section === 'readiness' ? 'page' : undefined" @click="section = 'readiness'">Готовность</button>
     </nav>
     <p id="admin-section-tabs-hint" class="admin-section-tabs-hint">Прокрутите список разделов по горизонтали</p>
-    <AdminGuildSettings v-if="section === 'guild'" :categories="categories" />
-    <AdminMembersSection v-else-if="section === 'members'" />
-    <AdminRolePermissions v-else-if="section === 'roles'" />
-    <AdminTopologyControls v-else-if="section === 'channels'" :categories="categories" :revision="revision" @changed="emit('topologyChanged')" />
-    <AdminAuditSection v-else-if="section === 'audit'" />
-    <ReadinessPanel v-else-if="section === 'readiness'" />
-    <AdminMediaDiagnostics v-else />
+    <KeepAlive :max="7">
+      <AdminGuildSettings v-if="section === 'guild'" :categories="categories" />
+      <AdminMembersSection v-else-if="section === 'members'" />
+      <AdminRolePermissions v-else-if="section === 'roles'" />
+      <AdminTopologyControls v-else-if="section === 'channels'" :categories="categories" :revision="revision" @changed="emit('topologyChanged')" />
+      <AdminAuditSection v-else-if="section === 'audit'" />
+      <ReadinessPanel v-else-if="section === 'readiness'" />
+      <AdminMediaDiagnostics v-else />
+    </KeepAlive>
   </section>
 </template>

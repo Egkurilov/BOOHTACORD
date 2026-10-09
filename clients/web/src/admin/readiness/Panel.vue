@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed,onBeforeUnmount,onMounted,ref } from 'vue'
+import { computed,onActivated,onBeforeUnmount,onDeactivated,onMounted,ref } from 'vue'
 import { inspectReadiness,type Readiness } from './client'
 import JourneyPanel from '../../telemetry/journey_intervals/Panel.vue'
 const result=ref<Readiness|null>(null),error=ref(''),busy=ref(false),now=ref(Date.now())
@@ -13,8 +13,16 @@ async function refresh():Promise<void> {
   catch(cause){if(current===generation) error.value=cause instanceof Error?cause.message:'Проверка недоступна.'}
   finally{if(current===generation) busy.value=false}
 }
-onMounted(()=>{void refresh();timer=setInterval(()=>{now.value=Date.now()},1000)})
-onBeforeUnmount(()=>{generation++;abort?.abort();if(timer) clearInterval(timer)})
+function startMonitoring():void {
+  now.value=Date.now()
+  if(!timer) timer=setInterval(()=>{now.value=Date.now()},1000)
+  if(!busy.value&&(!result.value||Date.now()-Date.parse(result.value.checked_at)>15000||error.value)) void refresh()
+}
+function stopMonitoring():void {if(timer) clearInterval(timer);timer=null}
+onMounted(startMonitoring)
+onActivated(startMonitoring)
+onDeactivated(stopMonitoring)
+onBeforeUnmount(()=>{generation++;abort?.abort();stopMonitoring()})
 </script>
 <template>
   <section aria-labelledby="readiness-title">

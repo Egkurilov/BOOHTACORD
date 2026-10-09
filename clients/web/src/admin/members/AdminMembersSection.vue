@@ -15,8 +15,10 @@ const resetLink = ref<(PasswordResetLink & { login: string }) | null>(null)
 const resetTrigger = ref<HTMLButtonElement | null>(null)
 const resetResult = ref<HTMLElement | null>(null)
 const conflictState=createMemberConflictState(),drafts=conflictState.drafts
-const search = ref(''); const roleFilter = ref<'ALL' | AdminAccount['role']>('ALL'); const activeActionsID = ref('')
-const filteredAccounts = computed(() => accounts.value.filter((account) => (roleFilter.value === 'ALL' || account.role === roleFilter.value) && `${account.display_name} ${account.login}`.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase())))
+const search = ref(''); const roleFilter = ref<'ALL' | AdminAccount['role']>('ALL'); const statusFilter = ref<'ALL' | 'ACTIVE' | 'BLOCKED'>('ALL'); const activeActionsID = ref('')
+const filteredAccounts = computed(() => accounts.value.filter((account) => (roleFilter.value === 'ALL' || account.role === roleFilter.value) && (statusFilter.value === 'ALL' || (statusFilter.value === 'BLOCKED') === account.blocked) && `${account.display_name} ${account.login}`.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase())))
+const hasMemberFilters = computed(() => Boolean(search.value.trim()) || roleFilter.value !== 'ALL' || statusFilter.value !== 'ALL')
+function resetMemberFilters(): void { search.value = ''; roleFilter.value = 'ALL'; statusFilter.value = 'ALL' }
 async function load(next?: string): Promise<void> {
   loading.value = true; error.value = null
   try { const page = await listAdminAccounts(next); accounts.value = next ? [...accounts.value, ...page.accounts] : page.accounts; cursor.value = page.next_cursor;conflictState.sync(page.accounts) }
@@ -49,9 +51,11 @@ onMounted(() => { void load() })
 <template>
   <section class="admin-directory" aria-labelledby="admin-members-title">
     <header class="admin-section-heading"><div><h2 id="admin-members-title">Участники <span>{{ accounts.length }}</span></h2></div><button type="button" :disabled="loading" @click="load()">Обновить</button></header>
-    <div class="admin-member-filters"><label><span class="gc-sr-only">Поиск участников</span><input v-model="search" type="search" placeholder="Поиск по имени или логину" autocomplete="off"></label><label><span class="gc-sr-only">Фильтр по роли</span><select v-model="roleFilter"><option value="ALL">Все роли</option><option value="MEMBER">Пользователь</option><option value="ADMINISTRATOR">Администратор</option></select></label></div>
+    <div class="admin-member-filters"><label><span class="gc-sr-only">Поиск участников</span><input v-model="search" type="search" placeholder="Поиск по имени или логину" autocomplete="off"></label><label><span class="gc-sr-only">Фильтр по роли</span><select v-model="roleFilter"><option value="ALL">Все роли</option><option value="MEMBER">Пользователь</option><option value="ADMINISTRATOR">Администратор</option></select></label><label><span class="gc-sr-only">Фильтр по статусу</span><select v-model="statusFilter"><option value="ALL">Любой статус</option><option value="ACTIVE">Активен</option><option value="BLOCKED">Заблокирован</option></select></label></div>
+    <div v-if="accounts.length" class="admin-filter-results"><p role="status" aria-live="polite">Показано: {{ filteredAccounts.length }} из {{ accounts.length }} загруженных</p><button v-if="hasMemberFilters" type="button" @click="resetMemberFilters">Сбросить фильтры</button></div>
     <p v-if="loading && !accounts.length" class="state" aria-live="polite">Загружаем список участников…</p>
     <p v-else-if="!loading && !accounts.length && !error" class="state">Участников пока нет.</p>
+    <p v-else-if="!loading && accounts.length && !filteredAccounts.length" class="state admin-empty-filter-state" role="status">По текущим фильтрам участников нет.</p>
     <div v-if="accounts.length" class="admin-table-scroll" tabindex="0" aria-label="Таблица участников">
       <table class="admin-table"><thead><tr><th>Пользователь</th><th>Роль</th><th>Доступ</th><th></th></tr></thead><tbody>
         <tr v-for="account in filteredAccounts" :key="account.account_id">

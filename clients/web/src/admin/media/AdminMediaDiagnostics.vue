@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref } from 'vue'
 import { listAdminScreenMetrics, type AdminScreenSample } from './admin_media_client'
 import AdminMediaSampleCard from './AdminMediaSampleCard.vue'
 import { isFreshSample, selectAdminMediaState } from './admin_media_state'
@@ -28,8 +28,16 @@ async function load(): Promise<void> {
   } catch { error.value = 'Не удалось загрузить показатели.' }
   finally { loading.value = false }
 }
-onMounted(() => { void load(); timer = setInterval(() => { now.value = Date.now(); if (document.visibilityState === 'visible') void load() }, 5000) })
-onBeforeUnmount(() => { if (timer) clearInterval(timer) })
+function startMonitoring(): void {
+  if (timer) return
+  void load()
+  timer = setInterval(() => { now.value = Date.now(); if (document.visibilityState === 'visible') void load() }, 5000)
+}
+function stopMonitoring(): void { if (timer) clearInterval(timer); timer = null }
+onMounted(startMonitoring)
+onActivated(startMonitoring)
+onDeactivated(stopMonitoring)
+onBeforeUnmount(stopMonitoring)
 </script>
 
 <template>
