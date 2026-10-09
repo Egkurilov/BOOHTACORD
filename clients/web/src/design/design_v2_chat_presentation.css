@@ -29,8 +29,8 @@
 .channel-category-disclosure[aria-expanded="false"] svg { transform: rotate(-90deg); }
 .channel-category-disclosure:hover { color: var(--gc-text-primary); }
 .channel-row { position: relative; }
-.channel-row .channel-button { width: 100%; flex: 0 0 100%; }
-.channel-actions-button { position: absolute; top: 2px; right: 0; }
+.channel-row .channel-button { width: auto; min-width: 0; flex: 1 1 0; }
+.channel-row .channel-actions-button { position: static; flex: 0 0 32px; }
 .channel-state[aria-label^='Непрочитанных'] { min-width: 20px; justify-content: center; color: var(--gc-on-accent); background: var(--gc-accent); }
 .text-conversation .text-message-attachments { margin-top: 12px; }
 .text-conversation .history-start {

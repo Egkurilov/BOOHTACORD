@@ -46,3 +46,7 @@
   .sidebar.is-open .channel-navigation .voice-member-row { min-height: 36px; }
   .sidebar.is-open .channel-navigation .voice-member-share { min-width: 0; height: 14px; border-radius: 6px; padding: 0 4px; color: #FF9AD5; background: #3D1831; }
 }
+@media (max-width: 1023px) {
+  .channel-navigation .channel-row .channel-favorite-toggle,
+  .channel-navigation .channel-row .channel-actions-button { width: 44px; height: 44px; flex: 0 0 44px; }
+}

@@ -16,7 +16,7 @@ The responsive-shell sweep emits fixture captures for geometry and history check
 
 ## Automated viewport coverage
 
-`npm run test:responsive-shell` runs the production responsive-shell CSS and workspace drawer-history/focus helpers at 12 sizes. It checks shell/composer/voice-dock bounds, document overflow, selected-channel retention, drawer behavior, browser Back/Forward, voice context, focus containment and focus restoration. The six required #302 sizes and both exact source-reference CSS sizes are captured on each run:
+`npm run test:responsive-shell` runs the production responsive-shell CSS and workspace drawer-history/focus helpers at 12 sizes. It checks shell/composer/voice-dock bounds, document overflow, selected-channel retention, drawer behavior, browser Back/Forward, voice context, focus containment and focus restoration. A production-style channel row also verifies the favorite and channel-action controls stay inside the row at 320/390/600/840/1024/1440 px; the two mobile actions are at least 44×44 px. The six required #302 sizes and both exact source-reference CSS sizes are captured on each run:
 
 | Viewport | Capture |
 | --- | --- |

@@ -58,6 +58,44 @@ test('the mobile navigation drawer opens inside its available width', async ({ p
   }
 })
 
+test('the channel favorite toggle stays inside its row at responsive widths', async ({ page }) => {
+  for (const width of [320, 390, 600, 840, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/tests/responsive_shell/fixture.html')
+    if (width < 1024) await page.getByRole('button', { name: 'Открыть навигацию' }).click()
+
+    const row = page.getByTestId('channel-favorite-row')
+    const channel = row.locator('.channel-button')
+    const favorite = row.locator('.channel-favorite-toggle')
+    const actions = row.locator('.channel-actions-button')
+    const rowBox = await row.boundingBox()
+    const channelBox = await channel.boundingBox()
+    const favoriteBox = await favorite.boundingBox()
+    const actionsBox = await actions.boundingBox()
+
+    expect(rowBox).not.toBeNull()
+    expect(channelBox).not.toBeNull()
+    expect(favoriteBox).not.toBeNull()
+    expect(actionsBox).not.toBeNull()
+    expect(channelBox!.x).toBeGreaterThanOrEqual(rowBox!.x)
+    expect(channelBox!.x + channelBox!.width).toBeLessThanOrEqual(favoriteBox!.x + 1)
+    expect(favoriteBox!.x + favoriteBox!.width).toBeLessThanOrEqual(actionsBox!.x + 1)
+    expect(actionsBox!.x + actionsBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1)
+    expect(await row.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
+    await expect(favorite).toBeVisible()
+    await expect(actions).toBeVisible()
+    if (width < 1024) {
+      expect(favoriteBox!.width).toBeGreaterThanOrEqual(44)
+      expect(actionsBox!.width).toBeGreaterThanOrEqual(44)
+      if (width <= 720) {
+        await page.getByTestId('workspace-drawer').getByRole('button', { name: 'Закрыть навигацию' }).click()
+      } else {
+        await page.locator('.drawer-scrim').click({ position: { x: width - 8, y: 400 } })
+      }
+    }
+  }
+})
+
 test('browser Back and Forward close and restore overlays without losing workspace or voice state', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/tests/responsive_shell/fixture.html')

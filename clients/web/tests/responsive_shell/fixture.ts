@@ -10,6 +10,15 @@ root.innerHTML = `
       <aside class="sidebar" data-testid="workspace-sidebar">
         <nav class="nav-drawer" data-testid="workspace-drawer">
           <button class="mobile-nav-close" aria-label="Закрыть навигацию">×</button>
+          <div class="channel-navigation">
+            <section class="channel-category">
+              <div class="channel-row" data-testid="channel-favorite-row">
+                <button class="channel-button"><span class="channel-icon">#</span><span class="channel-name">favorite-test-channel</span></button>
+                <button class="channel-favorite-toggle" aria-label="Добавить в избранное" aria-pressed="false">☆</button>
+                <button class="channel-actions-button" aria-label="Действия с каналом favorite-test-channel">⋯</button>
+              </div>
+            </section>
+          </div>
           <button aria-label="Открыть канал" class="channel-button selected">общее</button>
           <button class="channel-button" aria-label="Выбрать канал">Перейти в канал</button>
         </nav>
