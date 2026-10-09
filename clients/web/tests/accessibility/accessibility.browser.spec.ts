@@ -256,3 +256,47 @@ test('screen-share setup keeps keyboard focus inside its modal dialog', async ({
   await page.keyboard.press('Shift+Tab')
   await expect(start).toBeFocused()
 })
+
+test('WCAG smoke distinguishes media metric loading, refresh and failure states', async ({ page }) => {
+  let requests = 0
+  let releaseInitial: (() => void) | undefined
+  let releaseRefresh: (() => void) | undefined
+  const sample = {
+    sampled_at_utc: new Date().toISOString(),
+    report: { platform: 'desktop_web', direction: 'sender', state: 'playing', encoded_fps: 30 },
+  }
+  await page.route('**/api/v1/admin/screen-metrics', async route => {
+    requests += 1
+    if (requests === 1) {
+      await new Promise<void>(resolve => { releaseInitial = resolve })
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ samples: [sample] }) })
+    } else if (requests === 2) {
+      await new Promise<void>(resolve => { releaseRefresh = resolve })
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+    } else {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ samples: [sample] }) })
+    }
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/media/AdminMediaDiagnostics.vue')
+
+  const status = page.getByRole('status')
+  await expect(status).toContainText('Загружаем показатели')
+  releaseInitial?.()
+  await expect(status).toContainText('Есть измерения')
+  await expectAxeClear(page, '.admin-media-freshness')
+
+  const refresh = page.locator('.admin-media-diagnostics > header > button')
+  await refresh.click()
+  await expect(refresh).toBeDisabled()
+  await expect(refresh).toHaveText('Проверяем…')
+  await expect(status).toContainText('Обновляем показатели; предыдущий ответ сохранён')
+  releaseRefresh?.()
+  await expect(status).toContainText('Ошибка обновления')
+  await expect(page.getByRole('alert')).toContainText('прежние измерения нельзя считать текущими')
+  await expectAxeClear(page, '.admin-media-freshness')
+
+  await refresh.click()
+  await expect(status).toContainText('Есть измерения')
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})

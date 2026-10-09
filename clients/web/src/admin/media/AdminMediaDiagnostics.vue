@@ -17,6 +17,7 @@ let timer: ReturnType<typeof setInterval> | null = null
 async function load(): Promise<void> {
   if (loading.value) return
   loading.value = true
+  error.value = null
   try {
     const received = await listAdminScreenMetrics()
     now.value = Date.now()
@@ -34,11 +35,10 @@ onBeforeUnmount(() => { if (timer) clearInterval(timer) })
 <template>
   <section class="admin-media-diagnostics" aria-labelledby="admin-media-title">
     <header class="admin-section-heading"><div><h2 id="admin-media-title">Показатели трансляций</h2><p>Последние 60 секунд · без имён и идентификаторов участников</p></div>
-      <button type="button" :disabled="loading" @click="load()">Обновить</button></header>
-    <div class="admin-media-freshness" role="status" aria-live="polite"><strong>{{ state.kind === 'populated' ? 'Есть измерения' : state.kind === 'stale' ? 'Данные устарели' : state.kind === 'error' ? 'Ошибка обновления' : 'Нет данных' }}</strong>
+      <button type="button" :disabled="loading" @click="load()">{{ loading ? 'Проверяем…' : 'Обновить' }}</button></header>
+    <div class="admin-media-freshness" role="status" aria-live="polite"><strong>{{ loading ? lastSuccessfulAt ? 'Обновляем показатели; предыдущий ответ сохранён' : 'Загружаем показатели' : state.kind === 'populated' ? 'Есть измерения' : state.kind === 'stale' ? 'Данные устарели' : state.kind === 'error' ? 'Ошибка обновления' : 'Нет данных' }}</strong>
       <span>Свежих отчётов: {{ state.freshCount }}</span>
       <span v-if="lastSuccessfulAt">Успешно обновлено: {{ new Date(lastSuccessfulAt).toLocaleTimeString('ru-RU') }}</span></div>
-    <p v-if="loading && !lastSuccessfulAt && !error" class="state">Загружаем показатели…</p>
     <p v-if="error" class="admin-error" role="alert">{{ error }} Повторите обновление; прежние измерения нельзя считать текущими.</p>
     <div v-if="state.kind === 'empty' && !loading" class="admin-media-empty">
       <h3>Как получить отчёты</h3><ol><li>Запустите трансляцию вручную.</li><li>Откройте её на другом клиенте.</li><li>Подождите до 60 секунд и обновите показатели.</li></ol>
