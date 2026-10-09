@@ -35,7 +35,7 @@ For each attempt, record completion (yes/no), time from task prompt to completio
 | Flutter / iOS | Platform-specific widget coverage exists. No iOS device was discovered. | `NOT_RUN` — physical settings, IME, voice, screen capture, and VoiceOver acceptance. |
 | Flutter / Windows | Platform-specific widget coverage exists. No Windows device was discovered. | `NOT_RUN` — physical interaction, voice/stream, and screen-reader acceptance. |
 
-The original 41 reference screenshots are absent from the checkout. Current DOM and widget tests are regression evidence, not before/after comparison against those assets. No screenshot or device gate is passed by this document.
+The original 41 reference screenshots are present in [`artifacts/ui-ux-screenshots.zip`](../../artifacts/ui-ux-screenshots.zip). Current shell/DOM/widget tests are regression evidence, not full-app before/after comparison against those assets. No screenshot or device gate is passed by this document.
 
 ## Rollout and rollback
 

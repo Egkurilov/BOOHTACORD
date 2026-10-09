@@ -30,6 +30,13 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
         title: 'Удалить раздел?',
         content: 'Удалить пустой раздел «${current.name}»?',
         confirmLabel: 'Удалить',
+        stillCurrent: () {
+          final latest = currentCategory(category.id);
+          return topology?.revision == revision &&
+              latest != null &&
+              latest.name == current.name &&
+              latest.channels.isEmpty;
+        },
       ),
     );
     if (approved != true || !await validateRevision(revision)) return;

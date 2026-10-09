@@ -10,7 +10,7 @@ import AdminRolePermissions from '../role_permissions/AdminRolePermissions.vue'
 import AdminGuildSettings from '../guild_settings/AdminGuildSettings.vue'
 import ReadinessPanel from '../readiness/Panel.vue'
 
-const props = withDefaults(defineProps<{ categories: TopologyCategory[]; revision: number; section?: AdminSection }>(), { section: 'members' })
+const props = withDefaults(defineProps<{ accountId?: string; categories: TopologyCategory[]; revision: number; section?: AdminSection }>(), { section: 'members' })
 const emit = defineEmits<{ topologyChanged: []; 'update:section': [section: AdminSection] }>()
 const section = computed({ get: () => props.section, set: (value: AdminSection) => emit('update:section', value) })
 const tabs = ref<HTMLElement | null>(null)
@@ -36,7 +36,7 @@ onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(foc
       <AdminGuildSettings v-if="section === 'guild'" :categories="categories" />
       <AdminMembersSection v-else-if="section === 'members'" />
       <AdminRolePermissions v-else-if="section === 'roles'" />
-      <AdminTopologyControls v-else-if="section === 'channels'" :categories="categories" :revision="revision" @changed="emit('topologyChanged')" />
+      <AdminTopologyControls v-else-if="section === 'channels'" :account-id="accountId" :categories="categories" :revision="revision" @changed="emit('topologyChanged')" />
       <AdminAuditSection v-else-if="section === 'audit'" />
       <ReadinessPanel v-else-if="section === 'readiness'" />
       <AdminMediaDiagnostics v-else />

@@ -35,10 +35,43 @@ describe('TEXT archive editor', () => {
     const confirm = vi.fn().mockReturnValue(false)
     const editor = createTextArchiveEditor(() => ({ categories, revision: 7, selectedChannelId: 'text-1' }), vi.fn(), vi.fn(), confirm, request)
     await expect(editor.archive()).resolves.toBe(false)
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('История сообщений сохранится'))
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('История сообщений сохранится'), expect.any(Function))
     expect(request).not.toHaveBeenCalled()
     const voice = createTextArchiveEditor(() => ({ categories, revision: 7, selectedChannelId: 'voice-1' }), vi.fn(), vi.fn(), vi.fn().mockReturnValue(true), request)
     await expect(voice.archive()).resolves.toBe(false)
+    expect(request).not.toHaveBeenCalled()
+  })
+
+  it('does not archive when account or confirmed target changes during the prompt', async () => {
+    let accountId = 'account-1'
+    let revision = 7
+    let currentCategories = categories
+    const request = vi.fn()
+    const editor = createTextArchiveEditor(
+      () => ({ accountId, categories: currentCategories, revision, selectedChannelId: 'text-1' }),
+      vi.fn(), vi.fn(), async (_message, stillCurrent) => {
+        accountId = 'account-2'
+        expect(stillCurrent()).toBe(false)
+        return true
+      }, request,
+    )
+
+    await expect(editor.archive()).resolves.toBe(false)
+    expect(request).not.toHaveBeenCalled()
+
+    accountId = 'account-1'
+    revision = 8
+    currentCategories = [{ id: 'cat-1', name: 'Игры', position: 0, channels: [] }]
+    const staleTarget = createTextArchiveEditor(
+      () => ({ accountId, categories: currentCategories, revision: 7, selectedChannelId: 'text-1' }),
+      vi.fn(), vi.fn(), async (_message, stillCurrent) => {
+        currentCategories = [{ id: 'cat-1', name: 'Игры', position: 0, channels: [] }]
+        revision = 8
+        expect(stillCurrent()).toBe(false)
+        return true
+      }, request,
+    )
+    await expect(staleTarget.archive()).resolves.toBe(false)
     expect(request).not.toHaveBeenCalled()
   })
 

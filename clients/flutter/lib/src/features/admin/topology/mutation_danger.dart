@@ -13,6 +13,13 @@ mixin _TopologyDangerActions on _AdminTopologyMutationBase {
         content:
             'Архивировать текстовый канал «${current.name}»? История сообщений сохранится, канал исчезнет из навигации.',
         confirmLabel: 'Архивировать канал',
+        stillCurrent: () {
+          final latest = currentChannel(channel.id);
+          return topology?.revision == revision &&
+              latest != null &&
+              latest.name == current.name &&
+              latest.kind == ChannelKind.text;
+        },
       ),
     );
     if (approved != true || !await validateRevision(revision)) return;
@@ -44,6 +51,14 @@ mixin _TopologyDangerActions on _AdminTopologyMutationBase {
         content:
             'Закрыть вход в голосовой канал «${current.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.',
         confirmLabel: 'Закрыть вход',
+        stillCurrent: () {
+          final latest = currentChannel(channel.id);
+          return topology?.revision == revision &&
+              latest != null &&
+              latest.name == current.name &&
+              latest.kind == ChannelKind.voice &&
+              !latest.admissionClosed;
+        },
       ),
     );
     if (approved != true || !await validateRevision(revision)) return;

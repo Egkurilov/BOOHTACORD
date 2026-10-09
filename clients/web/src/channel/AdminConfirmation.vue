@@ -30,7 +30,12 @@ function settle(confirmed: boolean): void {
 }
 
 onBeforeUnmount(() => settle(false))
-defineExpose({ ask })
+function cancel(): boolean {
+  if (!answer) return false
+  settle(false)
+  return true
+}
+defineExpose({ ask, cancel })
 </script>
 
 <template>

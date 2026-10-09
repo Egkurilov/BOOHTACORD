@@ -14,6 +14,7 @@ const error = ref<string | null>(null)
 const status = ref<string | null>(null)
 
 async function submit(): Promise<void> {
+  if (pending.value) return
   error.value = null
   status.value = null
   if (!selected.value) { error.value = 'Сначала выберите раздел.'; return }
@@ -35,7 +36,7 @@ async function submit(): Promise<void> {
 <template>
   <form class="admin-topology-form admin-topology-form--channel" @submit.prevent="submit">
     <h4>Добавить канал в «{{ selected?.name ?? 'раздел' }}»</h4>
-    <label>Новый канал<input v-model="channelName" :disabled="pending || !selected" name="channel-name" required :aria-describedby="error ? 'admin-topology-error' : undefined"></label>
+    <label>Новый канал<input v-model="channelName" :disabled="pending || !selected" name="channel-name" required :aria-invalid="error ? 'true' : undefined" :aria-describedby="error ? 'admin-topology-error' : undefined"></label>
     <label>Тип канала<select v-model="channelKind" :disabled="pending || !selected" name="channel-kind">
       <option value="VOICE">Голосовой</option><option value="TEXT">Текстовый</option>
     </select></label>

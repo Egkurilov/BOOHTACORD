@@ -6,17 +6,24 @@ import ClosureStatus from './voice_closure/Status.vue'
 import { createVoiceCloseEditor } from './voice_close_editor'
 import type { TopologyCategory } from './topology_client'
 
-const props = defineProps<{ categories: TopologyCategory[]; revision: number; channelId?: string }>()
+const props = defineProps<{ accountId?: string; categories: TopologyCategory[]; revision: number; channelId?: string }>()
 const emit = defineEmits<{ changed: [] }>()
 const localChannelId = ref('')
 const selectedChannelId = computed({ get: () => props.channelId ?? localChannelId.value, set: (id: string) => { localChannelId.value = id } })
-const confirmation = ref<{ ask: (message: string) => Promise<boolean> } | null>(null)
+const confirmation = ref<{ ask: (message: string) => Promise<boolean>; cancel: () => boolean } | null>(null)
 const statusNode = ref<HTMLElement | null>(null)
 const errorNode = ref<HTMLElement | null>(null)
 const voiceChannels = computed(() => props.categories.flatMap(({ channels }) => channels).filter(({ kind }) => kind === 'VOICE'))
 const selected = computed(() => voiceChannels.value.find(({ id }) => id === selectedChannelId.value))
-const editor = createVoiceCloseEditor(() => ({ categories: props.categories, revision: props.revision, selectedChannelId: selectedChannelId.value }),
-  () => emit('changed'), (message) => confirmation.value?.ask(message) ?? false)
+async function confirmCurrentTarget(message: string, stillCurrent: () => boolean): Promise<boolean> {
+  const stopWatching = watch(() => [props.accountId, props.categories, props.revision], () => {
+    if (!stillCurrent()) confirmation.value?.cancel()
+  }, { deep: true })
+  try { return await confirmation.value?.ask(message) ?? false }
+  finally { stopWatching() }
+}
+const editor = createVoiceCloseEditor(() => ({ accountId: props.accountId, categories: props.categories, revision: props.revision, selectedChannelId: selectedChannelId.value }),
+  () => emit('changed'), confirmCurrentTarget)
 
 watch(voiceChannels, (channels) => {
   if (props.channelId !== undefined) return

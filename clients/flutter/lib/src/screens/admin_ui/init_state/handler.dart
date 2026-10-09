@@ -15,23 +15,31 @@ extension AdminScreenStateInitStateBindingAction on AdminScreenStateContext {
       api: widget.state.api,
       topologyProvider: () => widget.state.topology,
       refreshTopology: widget.state.refreshTopology,
-      confirm: (confirmation) => showConfirmationDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(confirmation.title),
-          content: Text(confirmation.content),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Отмена'),
-            ),
-            FilledButton.tonal(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(confirmation.confirmLabel),
-            ),
-          ],
-        ),
-      ),
+      confirm: (confirmation) {
+        final accountId = widget.state.session.user?.accountId;
+        return showConfirmationDialog<bool>(
+          context: context,
+          cancelOn: widget.state,
+          shouldCancel: () =>
+              widget.state.session.user?.accountId != accountId ||
+              !(confirmation.stillCurrent?.call() ?? true),
+          builder: (dialogContext) => AlertDialog(
+            title: Text(confirmation.title),
+            content: Text(confirmation.content),
+            actions: [
+              TextButton(
+                autofocus: true,
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Отмена'),
+              ),
+              FilledButton.tonal(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(confirmation.confirmLabel),
+              ),
+            ],
+          ),
+        );
+      },
     )..addListener(adminOnTopologyMutationChanged);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {

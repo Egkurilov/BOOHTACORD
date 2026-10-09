@@ -79,4 +79,50 @@ void main() {
     expect(button.selected, {1080});
     expect(tester.takeException(), isNull);
   }, variant: TargetPlatformVariant({TargetPlatform.android}));
+
+  testWidgets(
+    'setup keeps its actions reachable with the mobile keyboard and 2x text',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 568);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: const TextScaler.linear(2),
+              viewInsets: const EdgeInsets.only(bottom: 280),
+            ),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => ScreenShareSetupDialog.show(
+                  context,
+                  initialQuality: ScreenShareQuality.balanced,
+                  allowSourceSelection: false,
+                ),
+                child: const Text('Открыть'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Открыть'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final cancel = find.byTooltip('Закрыть');
+      final start = find.byKey(const ValueKey('start-screen-share'));
+      await tester.ensureVisible(cancel);
+      await tester.ensureVisible(start);
+      expect(tester.getRect(start).top, greaterThanOrEqualTo(0));
+      expect(tester.getRect(start).bottom, lessThanOrEqualTo(568));
+      expect(tester.takeException(), isNull);
+      await tester.tap(start);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant({TargetPlatform.android}),
+  );
 }

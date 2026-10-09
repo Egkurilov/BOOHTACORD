@@ -120,7 +120,7 @@ bindWorkspaceReady({ readiness: props.readiness,
           :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="memberHeaderExpandedState" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection" :voice-roster="voiceRoster.channels.value?.find((room) => room.channelId === selectedChannel?.id) ?? null" :voice-roster-error="voiceRoster.error.value"
           @return-voice="requestReturnToVoice" @toggle-nav="toggleNavigation" @toggle-members="toggleMembers" @open-search="requestPanel('search')" @close-panel="requestPanel($event)">
           <template #admin>
-            <AdminPanel v-if="props.role === 'ADMINISTRATOR'" v-model:section="adminSection" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />
+            <AdminPanel v-if="props.role === 'ADMINISTRATOR'" v-model:section="adminSection" :account-id="props.accountId" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />
           </template>
           <template #profile><ProfileSettings ref="profileSettings" :profile="profile" :loading="profileLoading" :load-error="profileError" :logout-busy="logoutBusy" :logout-error="logoutError" @saved="setProfile" @logout="signOut" @session-expired="expireSession" /></template>
           <template #audio>

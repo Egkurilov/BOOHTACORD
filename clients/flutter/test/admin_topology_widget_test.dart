@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/features/admin/topology/mutation_controller.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
 import 'package:flutter/material.dart';
@@ -97,7 +98,44 @@ class _DescriptionTopologyApi extends TopologyTestApi {
   }
 }
 
+class _TopologyDeleteApi extends TopologyTestApi {
+  bool deleteCalled = false;
+
+  @override
+  Future<void> deleteEmptyCategory({
+    required String categoryId,
+    required int expectedRevision,
+  }) async {
+    deleteCalled = true;
+  }
+}
+
 void main() {
+  test(
+    'admin confirmation revalidates a target changed while the prompt is open',
+    () async {
+      const empty = ChannelCategory(id: 'empty', name: 'Пустой', channels: []);
+      final api = _TopologyDeleteApi()
+        ..current = const ChannelTopology(revision: 7, categories: [empty]);
+      final controller = AdminTopologyMutationController(
+        api: api,
+        topologyProvider: () => api.current,
+        refreshTopology: () async {},
+        confirm: (confirmation) async {
+          expect(confirmation.stillCurrent?.call(), isTrue);
+          api.current = const ChannelTopology(revision: 8, categories: [empty]);
+          expect(confirmation.stillCurrent?.call(), isFalse);
+          return true;
+        },
+      );
+      addTearDown(controller.dispose);
+
+      await controller.deleteCategory(empty, 7);
+
+      expect(api.deleteCalled, isFalse);
+    },
+  );
+
   testWidgets('compact member directory matches web typography and targets', (
     tester,
   ) async {

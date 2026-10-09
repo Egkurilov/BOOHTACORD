@@ -9,25 +9,45 @@ class SetupFooter extends StatelessWidget {
     required this.canStart,
     required this.updating,
     required this.selecting,
+    required this.keyboardConstrained,
     required this.selectedName,
     required this.onCancel,
     required this.onStart,
   });
-  final bool canStart, updating, selecting;
+  final bool canStart, updating, selecting, keyboardConstrained;
   final String? selectedName;
   final VoidCallback onCancel, onStart;
   @override
   Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 640;
+    final media = MediaQuery.of(context);
+    final compact = media.size.width < 640;
+    final keyboardCompact = keyboardConstrained && media.size.width < 400;
     final buttons = [
       TextButton(onPressed: onCancel, child: const Text('Отмена')),
       FilledButton.icon(
         key: const ValueKey('start-screen-share'),
         onPressed: canStart ? onStart : null,
         icon: const Icon(Icons.screen_share_outlined),
-        label: Text(updating ? 'Применить качество' : 'Начать трансляцию'),
+        label: Text(
+          keyboardCompact
+              ? updating
+                    ? 'Применить'
+                    : 'Начать показ'
+              : updating
+              ? 'Применить качество'
+              : 'Начать трансляцию',
+        ),
       ),
     ];
+    if (keyboardCompact) {
+      return Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: GcColors.border)),
+        ),
+        child: SizedBox(width: double.infinity, child: buttons.last),
+      );
+    }
     return Container(
       padding: EdgeInsets.fromLTRB(
         compact ? 12 : 24,

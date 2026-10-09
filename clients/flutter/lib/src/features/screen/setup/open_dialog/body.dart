@@ -94,6 +94,7 @@ class _SetupState extends State<SetupBody> {
           canStart: canStart,
           updating: widget.updating,
           selecting: widget.allowSourceSelection,
+          keyboardConstrained: MediaQuery.of(context).viewInsets.bottom > 0,
           selectedName: inventory.selected?.name,
           onCancel: close,
           onStart: () => close(
