@@ -9,7 +9,7 @@ import Comparison from '../../channel/conflict_review/Comparison.vue'
 const labels: Record<PermissionKey, string> = {
   'channel.text.create': 'Создавать текстовые каналы', 'channel.text.delete': 'Удалять текстовые каналы',
   'channel.voice.create': 'Создавать голосовые каналы', 'channel.voice.delete': 'Закрывать голосовые каналы',
-  'category.create': 'Создавать категории', 'category.delete': 'Удалять пустые категории',
+  'category.create': 'Создавать разделы', 'category.delete': 'Удалять пустые разделы',
 }
 const permissionRows: Array<{ name: string; description: string; icon: 'text' | 'voice' | 'folder'; create: PermissionKey; remove: PermissionKey }> = [
   { name: 'Текстовые каналы', description: 'Удаление архивирует историю', icon: 'text', create: 'channel.text.create', remove: 'channel.text.delete' },

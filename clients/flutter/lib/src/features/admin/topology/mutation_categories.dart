@@ -10,7 +10,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     final current = currentCategory(category.id);
     if (current == null) return recoverStaleTopology();
     await mutate(
-      'Категория переименована. Топология обновлена.',
+      'Раздел переименован. Структура обновлена.',
       () => api.renameCategory(
         categoryId: current.id,
         name: name,
@@ -27,8 +27,8 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     if (current.channels.isNotEmpty) return;
     final approved = await confirm(
       TopologyConfirmation(
-        title: 'Удалить категорию?',
-        content: 'Удалить пустую категорию «${current.name}»?',
+        title: 'Удалить раздел?',
+        content: 'Удалить пустой раздел «${current.name}»?',
         confirmLabel: 'Удалить',
       ),
     );
@@ -37,7 +37,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     if (latest == null) return recoverStaleTopology();
     if (latest.channels.isNotEmpty) return;
     await mutate(
-      'Пустая категория удалена. Топология обновлена.',
+      'Пустой раздел удалён. Структура обновлена.',
       () => api.deleteEmptyCategory(
         categoryId: latest.id,
         expectedRevision: revision,
@@ -64,7 +64,7 @@ mixin _TopologyCategories on _AdminTopologyMutationBase {
     ids[index] = ids[target];
     ids[target] = moved;
     await mutate(
-      'Порядок категорий сохранён. Топология обновлена.',
+      'Порядок разделов сохранён. Структура обновлена.',
       () => api.reorderCategories(categoryIds: ids, expectedRevision: revision),
       revisionBound: true,
     );

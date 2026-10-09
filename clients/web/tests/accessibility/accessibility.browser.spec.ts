@@ -98,6 +98,26 @@ test('WCAG smoke covers profile settings', async ({ page }) => {
   await expectAxeClear(page, '.profile-settings')
 })
 
+test('reduced-motion preference suppresses UI transitions and smooth scrolling', async ({ page }) => {
+  await page.goto('/')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  const style = await page.evaluate(() => {
+    const button = document.createElement('button')
+    button.className = 'gc-button'
+    button.textContent = 'Проверка движения'
+    document.body.append(button)
+    const computed = getComputedStyle(button)
+    const result = { transitionDuration: computed.transitionDuration, scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior }
+    button.remove()
+    return result
+  })
+  const transitionSeconds = style.transitionDuration.endsWith('ms')
+    ? Number.parseFloat(style.transitionDuration) / 1000
+    : Number.parseFloat(style.transitionDuration)
+  expect(transitionSeconds).toBeLessThanOrEqual(0.0001)
+  expect(style.scrollBehavior).toBe('auto')
+})
+
 test('profile settings preserve a dirty name across tabs and expose pending and saved states', async ({ page }) => {
   let profileSaveAttempts = 0
   await page.route('**/api/v1/**', route => route.fulfill({

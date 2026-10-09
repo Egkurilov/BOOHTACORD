@@ -2780,9 +2780,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('admin-screen-title')), findsOneWidget);
-    expect(find.text('Создать категорию'), findsOneWidget);
+    expect(find.text('Создать раздел'), findsOneWidget);
     expect(find.text('Создать канал'), findsOneWidget);
-    expect(find.text('Категорию выше'), findsOneWidget);
+    expect(find.text('Раздел выше'), findsOneWidget);
     expect(find.text('Канал выше'), findsOneWidget);
     expect(find.text('Перенести канал'), findsNWidgets(2));
     expect(find.text('Текстовый канал для архивации'), findsOneWidget);
@@ -2837,7 +2837,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: WorkspaceScreen(state: memberState)),
     );
-    expect(find.text('Создать категорию'), findsNothing);
+    expect(find.text('Создать раздел'), findsNothing);
     expect(find.text('Создать канал'), findsNothing);
     expect(find.text('Добро пожаловать в #общий'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());

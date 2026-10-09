@@ -14,7 +14,7 @@ Future<void> deleteTopologyTarget(BuildContext context, AppState state, Object t
   final channel = target is GuildChannel ? target : null; final category = target is ChannelCategory ? target : null;
   final name = channel?.name ?? category!.name;
   final verb = channel?.kind == ChannelKind.voice ? 'Закрыть' : channel != null ? 'Архивировать' : 'Удалить';
-  final confirmed = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: Text('$verb «$name»?'), content: Text(channel?.kind == ChannelKind.text ? 'История сообщений будет сохранена.' : channel != null ? 'Участники будут отключены после завершения закрытия.' : 'Удалить пустую категорию?'), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')), FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(verb))])) ?? false;
+  final confirmed = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: Text('$verb «$name»?'), content: Text(channel?.kind == ChannelKind.text ? 'История сообщений будет сохранена.' : channel != null ? 'Участники будут отключены после завершения закрытия.' : 'Удалить пустой раздел?'), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Отмена')), FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(verb))])) ?? false;
   if (!confirmed) return;
   final revision = state.topology?.revision ?? 0; final id = channel?.id ?? category!.id; final signature = '${target.runtimeType}:$id:$revision'; final requestId = _retryKeys.putIfAbsent(signature, () => const Uuid().v4());
   try {

@@ -41,7 +41,7 @@ function containTab(event: KeyboardEvent): void {
 }
 async function submit(): Promise<void> {
   if (!name.value.trim() || !validCodePointLength(name.value, 1, 80)) { error.value = 'Введите имя до 80 символов.'; return }
-  if (kind.value !== 'CATEGORY' && !categoryId.value) { error.value = 'Сначала создайте категорию.'; return }
+  if (kind.value !== 'CATEGORY' && !categoryId.value) { error.value = 'Сначала создайте раздел.'; return }
   busy.value = true; error.value = ''
   try {
     if (kind.value === 'CATEGORY') await createMemberCategory(name.value, requestId)

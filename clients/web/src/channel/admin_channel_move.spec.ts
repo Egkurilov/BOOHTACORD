@@ -12,7 +12,7 @@ describe('administrator channel move form', () => {
     ] })
     const html = await renderToString(app)
     expect(html).toContain('Перенести канал')
-    expect(html).toContain('В категорию')
+    expect(html).toContain('В раздел')
     expect(html).toContain('Команда')
     expect(html).toContain('Канал останется голосовым')
     expect(html).toContain('disabled')

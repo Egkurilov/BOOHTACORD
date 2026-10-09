@@ -8,24 +8,24 @@ export interface CategoryRevision { revision: number }
 
 export class CategoryMutationError extends Error {
   constructor(readonly status: number) {
-    super(status === 409 ? 'Категории изменились. Обновите список и повторите действие.'
-      : status === 403 ? 'Недостаточно прав для изменения категорий.'
-        : `Не удалось изменить категории (${status}).`)
+    super(status === 409 ? 'Разделы изменились. Обновите список и повторите действие.'
+      : status === 403 ? 'Недостаточно прав для изменения разделов.'
+        : `Не удалось изменить разделы (${status}).`)
   }
 }
 
 function record(value: unknown): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error('Сервер вернул некорректные данные категории.')
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error('Сервер вернул некорректные данные раздела.')
   return value as Record<string, unknown>
 }
 
 function revision(value: unknown): number {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) throw new Error('Сервер вернул некорректную ревизию категорий.')
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) throw new Error('Сервер вернул некорректную ревизию разделов.')
   return value
 }
 
 function expectedRevision(value: number): void {
-  if (!Number.isInteger(value) || value < 1) throw new Error('Некорректная ревизия категорий.')
+  if (!Number.isInteger(value) || value < 1) throw new Error('Некорректная ревизия разделов.')
 }
 
 async function mutate(path: string, method: 'PATCH' | 'PUT', body: unknown, request: AdminTopologyRequest): Promise<Record<string, unknown>> {
@@ -40,15 +40,15 @@ async function mutate(path: string, method: 'PATCH' | 'PUT', body: unknown, requ
 
 export async function renameCategory(id: string, name: string, expected: number, request: AdminTopologyRequest = tracedFetch): Promise<CategoryRenameResult> {
   expectedRevision(expected)
-  if (!id || !name.trim() || !validCodePointLength(name, 1, 80)) throw new Error('Введите имя категории до 80 символов.')
+  if (!id || !name.trim() || !validCodePointLength(name, 1, 80)) throw new Error('Введите название раздела до 80 символов.')
   const result = await mutate(`/admin/categories/${encodeURIComponent(id)}`, 'PATCH', { name, expected_revision: expected }, request)
-  if (typeof result.id !== 'string' || result.id !== id || typeof result.name !== 'string' || !result.name) throw new Error('Сервер вернул некорректные данные категории.')
+  if (typeof result.id !== 'string' || result.id !== id || typeof result.name !== 'string' || !result.name) throw new Error('Сервер вернул некорректные данные раздела.')
   return { id: result.id, name: result.name, revision: revision(result.revision) }
 }
 
 export async function reorderCategories(ids: string[], expected: number, request: AdminTopologyRequest = tracedFetch): Promise<CategoryRevision> {
   expectedRevision(expected)
-  if (!ids.length || ids.some((id) => !id) || new Set(ids).size !== ids.length) throw new Error('Некорректный порядок категорий.')
+  if (!ids.length || ids.some((id) => !id) || new Set(ids).size !== ids.length) throw new Error('Некорректный порядок разделов.')
   const result = await mutate('/admin/categories/order', 'PUT', { expected_revision: expected, ids }, request)
   return { revision: revision(result.revision) }
 }

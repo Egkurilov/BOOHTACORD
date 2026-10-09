@@ -11,7 +11,7 @@ class AdminCategoriesApi {
   Future<void> createCategory(String name) async {
     final normalized = name.trim();
     if (normalized.isEmpty || normalized.runes.length > 80) {
-      throw const ApiFailure('Введите имя категории до 80 символов.');
+      throw const ApiFailure('Введите название раздела до 80 символов.');
     }
     await transport.checked(
       await transport.client.post(
@@ -27,9 +27,9 @@ class AdminCategoriesApi {
     required String name,
     required int expectedRevision,
   }) async {
-    validateAdminName(name, 'категории');
+    validateAdminName(name, 'раздела');
     if (categoryId.isEmpty || expectedRevision < 1) {
-      throw const ApiFailure('Обновите список категорий и повторите действие.');
+      throw const ApiFailure('Обновите список разделов и повторите действие.');
     }
     await transport.checked(
       await transport.client.patch(
@@ -45,7 +45,7 @@ class AdminCategoriesApi {
     required int expectedRevision,
   }) async {
     if (categoryId.isEmpty || expectedRevision < 1) {
-      throw const ApiFailure('Обновите список категорий и повторите действие.');
+      throw const ApiFailure('Обновите список разделов и повторите действие.');
     }
     await transport.checked(
       await transport.client.delete(

@@ -40,9 +40,9 @@ async function create(): Promise<void> {
     const category = await createCategory({ name: newName.value })
     newName.value = ''
     emit('update:selectedCategoryId', category.id)
-    localStatus.value = 'Категория создана. Обновляем список.'
+    localStatus.value = 'Раздел создан. Обновляем список.'
     emit('changed')
-  } catch (cause) { localError.value = cause instanceof Error ? cause.message : 'Не удалось создать категорию.' }
+  } catch (cause) { localError.value = cause instanceof Error ? cause.message : 'Не удалось создать раздел.' }
   finally { mutating.value = false }
 }
 
@@ -52,10 +52,10 @@ async function remove(): Promise<void> {
   mutating.value = true
   try {
     await deleteEmptyCategory(selected.value.id, props.revision)
-    localStatus.value = 'Пустая категория удалена. Обновляем список.'
+    localStatus.value = 'Пустой раздел удалён. Обновляем список.'
     emit('changed')
   } catch (cause) {
-    localError.value = cause instanceof Error ? cause.message : 'Не удалось удалить категорию.'
+    localError.value = cause instanceof Error ? cause.message : 'Не удалось удалить раздел.'
     emit('changed')
   } finally { mutating.value = false }
 }
@@ -66,7 +66,7 @@ async function remove(): Promise<void> {
     <AdminConfirmation ref="confirmation" id="admin-category-delete-confirm" title="Удалить раздел" confirm-label="Удалить раздел" />
     <form class="admin-topology-form" @submit.prevent="create">
       <label>Новый раздел<input v-model="newName" :disabled="busy" name="category-name" required :aria-describedby="editor.error.value || localError ? 'category-error' : undefined"></label>
-      <button type="submit" :disabled="busy">Создать категорию</button>
+      <button type="submit" :disabled="busy">Создать раздел</button>
     </form>
     <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="rename">
       <label v-if="!embedded">Раздел
@@ -77,9 +77,9 @@ async function remove(): Promise<void> {
       <label>Новое название раздела
         <input :value="editor.renameDraft.value" :disabled="busy || !selected" name="rename-category" required :aria-describedby="editor.error.value || localError ? 'category-error' : undefined" @input="changeRename">
       </label>
-      <button type="submit" :disabled="busy || !selected">Переименовать категорию</button>
+      <button type="submit" :disabled="busy || !selected">Переименовать раздел</button>
     </form>
-    <div class="admin-category-order" role="group" aria-label="Порядок категорий">
+    <div class="admin-category-order" role="group" aria-label="Порядок разделов">
       <button type="button" :disabled="busy || !editor.canMove(-1)" :aria-label="`Переместить раздел «${selected?.name ?? ''}» выше`" @click="move(-1)">Выше</button>
       <button type="button" :disabled="busy || !editor.canMove(1)" :aria-label="`Переместить раздел «${selected?.name ?? ''}» ниже`" @click="move(1)">Ниже</button>
     </div>

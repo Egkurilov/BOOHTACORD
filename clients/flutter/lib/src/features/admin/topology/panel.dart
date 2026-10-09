@@ -120,7 +120,7 @@ class TopologyTree extends StatelessWidget {
           if (categories.isEmpty)
             const Padding(
               padding: EdgeInsets.all(12),
-              child: Text('Категорий пока нет.'),
+              child: Text('Разделов пока нет.'),
             ),
         ],
       ),

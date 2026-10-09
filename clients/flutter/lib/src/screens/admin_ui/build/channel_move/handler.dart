@@ -40,7 +40,7 @@ extension RenderAdminChannelMoveAction on AdminScreenStateContext {
             ? adminMoveTargetCategoryId
             : null,
         isExpanded: true,
-        decoration: const InputDecoration(labelText: 'В категорию'),
+        decoration: const InputDecoration(labelText: 'В раздел'),
         items: [
           for (final category in categories)
             DropdownMenuItem(value: category.id, child: Text(category.name)),

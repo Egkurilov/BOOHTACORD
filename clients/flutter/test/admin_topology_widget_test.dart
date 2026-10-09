@@ -23,7 +23,7 @@ Future<AppState> _openChannels(WidgetTester tester, TopologyTestApi api) async {
   expect(
     tester
         .widget<OutlinedButton>(
-          find.widgetWithText(OutlinedButton, 'Категорию выше'),
+          find.widgetWithText(OutlinedButton, 'Раздел выше'),
         )
         .onPressed,
     isNull,
@@ -310,13 +310,13 @@ void main() {
       state.dispose();
     });
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Категорию выше'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Раздел выше'));
     await tester.pump();
     expect(api.revisions, [1]);
     expect(
       tester
           .widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Категорию выше'),
+            find.widgetWithText(OutlinedButton, 'Раздел выше'),
           )
           .onPressed,
       isNull,
@@ -338,7 +338,7 @@ void main() {
     expect(state.topology!.categories.first.id, 'second');
     expect(api.revisions, [1]);
     expect(
-      find.text('Порядок категорий сохранён. Топология обновлена.'),
+      find.text('Порядок разделов сохранён. Структура обновлена.'),
       findsOneWidget,
     );
     expect(
@@ -410,7 +410,7 @@ void main() {
       state.dispose();
     });
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Категорию выше'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Раздел выше'));
     await tester.pumpAndSettle();
     expect(api.revisions, [1]);
     expect(state.topology!.revision, 2);
@@ -421,13 +421,13 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Категорию выше'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Раздел выше'));
     await tester.pumpAndSettle();
     expect(api.revisions, [1, 2]);
     expect(state.topology!.revision, 3);
     expect(state.topology!.categories.first.id, 'second');
     expect(
-      find.text('Порядок категорий сохранён. Топология обновлена.'),
+      find.text('Порядок разделов сохранён. Структура обновлена.'),
       findsOneWidget,
     );
   });

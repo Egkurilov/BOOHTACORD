@@ -27,8 +27,8 @@ class TopologyCreateButton extends StatelessWidget {
     return IconButton(
       icon: const Icon(Icons.add, size: 19),
       tooltip: category == null
-          ? 'Создать категорию или канал'
-          : 'Создать канал в категории ${category!.name}',
+          ? 'Создать раздел или канал'
+          : 'Создать канал в разделе ${category!.name}',
       onPressed: () =>
           showTopologyCreateDialog(context, state, category: category),
     );

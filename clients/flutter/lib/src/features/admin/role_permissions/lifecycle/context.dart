@@ -6,8 +6,8 @@ abstract class RolePermissionsContext extends State<RolePermissionsPanel> {
     GuildPermission.textDelete: 'Удалять текстовые каналы',
     GuildPermission.voiceCreate: 'Создавать голосовые каналы',
     GuildPermission.voiceDelete: 'Закрывать голосовые каналы',
-    GuildPermission.categoryCreate: 'Создавать категории',
-    GuildPermission.categoryDelete: 'Удалять пустые категории',
+    GuildPermission.categoryCreate: 'Создавать разделы',
+    GuildPermission.categoryDelete: 'Удалять пустые разделы',
   };
   final deleteKeys = const {
     GuildPermission.textDelete,

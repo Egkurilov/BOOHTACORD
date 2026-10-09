@@ -16,7 +16,7 @@ const status = ref<string | null>(null)
 async function submit(): Promise<void> {
   error.value = null
   status.value = null
-  if (!selected.value) { error.value = 'Сначала выберите категорию.'; return }
+  if (!selected.value) { error.value = 'Сначала выберите раздел.'; return }
   if (!channelName.value.trim() || !validCodePointLength(channelName.value, 1, 80)) {
     error.value = 'Введите имя канала до 80 символов.'
     return

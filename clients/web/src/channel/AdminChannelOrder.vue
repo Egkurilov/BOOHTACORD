@@ -33,7 +33,7 @@ watch(() => [props.categories, props.revision, selectedCategoryId.value], editor
 
 <template>
   <div class="admin-channel-order admin-topology-form admin-topology-form--rename">
-    <label v-if="props.channelId === undefined">Порядок в категории
+    <label v-if="props.channelId === undefined">Порядок в разделе
       <select v-model="selectedCategoryId" :disabled="editor.pending.value || editor.needsRefresh.value || !categories.length" name="order-category">
         <option v-for="item in categories" :key="item.id" :value="item.id">{{ item.name }}</option>
       </select>

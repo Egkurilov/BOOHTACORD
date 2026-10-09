@@ -16,7 +16,7 @@ extension RenderAdminCategorySelectionAction on AdminScreenStateContext {
       key: ValueKey(selectedId),
       initialValue: selectedId,
       isExpanded: true,
-      decoration: const InputDecoration(labelText: 'Категория'),
+      decoration: const InputDecoration(labelText: 'Раздел'),
       items: [
         for (final category in categories)
           DropdownMenuItem(value: category.id, child: Text(category.name)),

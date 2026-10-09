@@ -8,7 +8,7 @@ mixin _TopologyCreate on _AdminTopologyMutationBase {
       await refreshTopology();
       if (_disposed) return null;
       final id = topology?.categories.lastOrNull?.id;
-      status = 'Категория создана. Топология обновлена.';
+      status = 'Раздел создан. Структура обновлена.';
       notifyListeners();
       return id;
     } catch (cause) {

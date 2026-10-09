@@ -45,7 +45,7 @@ describe('category editor', () => {
     editor.sync()
     editor.setRenameDraft('  ')
     await expect(editor.rename()).resolves.toBe(false)
-    expect(editor.error.value).toContain('имя')
+    expect(editor.error.value).toContain('название раздела')
     expect(editor.canMove(-1)).toBe(false)
     await expect(editor.move(-1)).resolves.toBe(false)
     expect(request).not.toHaveBeenCalled()
