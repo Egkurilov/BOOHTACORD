@@ -10,6 +10,7 @@ import 'admin_topology_fake_api.dart';
 
 void main() {
   for (final viewport in const [
+    Size(320, 640),
     Size(360, 844),
     Size(390, 844),
     Size(430, 932),
@@ -40,6 +41,15 @@ void main() {
         );
         await tester.pumpAndSettle();
 
+        final scrollHint = find.text(
+          'Прокрутите список разделов по горизонтали',
+        );
+        if (viewport.width < 600) {
+          expect(scrollHint, findsOneWidget);
+        } else {
+          expect(scrollHint, findsNothing);
+        }
+
         final panel = tester.getRect(
           find.byKey(const ValueKey('admin-content-panel')),
         );
@@ -51,32 +61,41 @@ void main() {
     );
   }
 
-  testWidgets('admin shell remains usable at text scale 2.0', (tester) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    addTearDown(tester.view.reset);
-    final api = TopologyTestApi();
-    final state = AppState(api)..topology = api.current;
-    addTearDown(state.dispose);
+  for (final viewport in const [Size(320, 640), Size(390, 844)]) {
+    testWidgets(
+      'admin shell remains usable at text scale 2.0 on ${viewport.width} px',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = viewport;
+        addTearDown(tester.view.reset);
+        final api = TopologyTestApi();
+        final state = AppState(api)..topology = api.current;
+        addTearDown(state.dispose);
 
-    await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-        child: MaterialApp(
-          home: Scaffold(body: AdminScreen(state: state)),
-        ),
-      ),
+        await tester.pumpWidget(
+          MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: MaterialApp(
+              home: Scaffold(body: AdminScreen(state: state)),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        for (final section in AdminSection.values) {
+          final tab = find.byKey(ValueKey('admin-section-tab-${section.name}'));
+          await tester.ensureVisible(tab);
+          await tester.tap(tab);
+          await tester.pump(const Duration(milliseconds: 250));
+          expect(tester.takeException(), isNull, reason: section.name);
+        }
+        expect(
+          find.text('Прокрутите список разделов по горизонтали'),
+          findsOneWidget,
+        );
+      },
     );
-    await tester.pumpAndSettle();
-
-    for (final section in AdminSection.values) {
-      final tab = find.byKey(ValueKey('admin-section-tab-${section.name}'));
-      await tester.ensureVisible(tab);
-      await tester.tap(tab);
-      await tester.pump(const Duration(milliseconds: 250));
-      expect(tester.takeException(), isNull, reason: section.name);
-    }
-  });
+  }
 
   testWidgets('resizing keeps the selected admin section', (tester) async {
     tester.view.devicePixelRatio = 1;

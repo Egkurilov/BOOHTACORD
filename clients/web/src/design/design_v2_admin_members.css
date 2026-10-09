@@ -1,5 +1,4 @@
 /* R21–R22: real directory with server mutations in per-account actions. */
-.workspace-main-panel--admin .admin-panel--members .admin-panel-heading { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; }
 .admin-panel--members .admin-eyebrow { display: none; }
 .admin-panel--members .admin-panel-heading h1 { font-size: var(--gc-text-page); line-height: var(--gc-line-page); font-weight: var(--gc-weight-semibold); }
 .admin-panel--members .admin-panel-description { margin: 8px 0 0; color: var(--gc-text-secondary); font-size: 14px; line-height: 20px; }

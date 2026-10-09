@@ -301,7 +301,7 @@ test('WCAG smoke distinguishes media metric loading, refresh and failure states'
   await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
-test('admin shell exposes all seven sections at 320–430px and avoids page overflow', async ({ page }) => {
+test('admin shell exposes all seven sections at 320–1440px and avoids page overflow', async ({ page }) => {
   await page.route('**/api/v1/**', route => route.fulfill({
     status: 200, contentType: 'application/json', body: '{}',
   }))
@@ -309,17 +309,27 @@ test('admin shell exposes all seven sections at 320–430px and avoids page over
   await page.goto('/')
   await page.evaluate(async () => {
     const load = (path: string) => import(path)
-    const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+    const { createApp, h, ref } = await load('/node_modules/.vite/deps/vue.js')
     const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
     const { default: AdminPanel } = await load('/src/admin/panel/AdminPanel.vue')
-    document.body.innerHTML = '<div id="mount"></div>'
-    const app = createApp({ render: () => h(AdminPanel, { categories: [], revision: 1 }) })
+    document.body.innerHTML = '<div class="workspace-main-panel--admin" style="display:flex;width:100%;height:100vh;flex-direction:column"><header class="settings-workspace-header"><strong>Администрирование</strong></header><div id="mount"></div></div>'
+    const section = ref('members')
+    const app = createApp({ render: () => h(AdminPanel, { categories: [], revision: 1, section: section.value, 'onUpdate:section': (next: string) => { section.value = next } }) })
     app.use(createPinia())
     app.mount('#mount')
   })
 
+  const panelHeading = page.getByRole('heading', { name: 'Администрирование', exact: true })
+  await expect(panelHeading).toBeAttached()
+  expect(await panelHeading.evaluate(element => {
+    const style = getComputedStyle(element.parentElement!.parentElement!)
+    return { position: style.position, width: style.width, overflow: style.overflow, clip: style.clip }
+  })).toEqual({ position: 'absolute', width: '1px', overflow: 'hidden', clip: 'rect(0px, 0px, 0px, 0px)' })
+  await expect(page.getByRole('heading', { name: /Участники/ })).toBeVisible()
+
   const nav = page.getByRole('navigation', { name: 'Разделы администрирования' })
   const hint = page.getByText('Прокрутите список разделов по горизонтали', { exact: true })
+  await expect(nav.getByRole('button', { name: 'Участники', exact: true })).toBeFocused()
   await expect(hint).toBeVisible()
   const dimensions = await nav.evaluate(element => ({ client: element.clientWidth, scroll: element.scrollWidth }))
   expect(dimensions.scroll).toBeGreaterThan(dimensions.client)
@@ -342,11 +352,54 @@ test('admin shell exposes all seven sections at 320–430px and avoids page over
     await expect(button).toBeInViewport()
   }
 
-  for (const width of [375, 390, 430]) {
+  for (const width of [375, 390, 430, 600, 840, 1440]) {
     await page.setViewportSize({ width, height: 844 })
-    await expect(hint).toBeVisible()
+    if (width <= 540) await expect(hint).toBeVisible()
+    else await expect(hint).toBeHidden()
     const viewport = await nav.evaluate(element => ({ client: element.clientWidth, scroll: element.scrollWidth }))
-    expect(viewport.scroll).toBeGreaterThan(viewport.client)
+    if (width <= 430) expect(viewport.scroll).toBeGreaterThan(viewport.client)
+    else expect(viewport.scroll).toBeLessThanOrEqual(viewport.client)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    const panelBounds = await page.locator('.admin-panel').boundingBox()
+    expect(panelBounds).not.toBeNull()
+    expect(panelBounds!.width).toBeLessThanOrEqual(Math.min(width, 880))
+    for (const label of labels) {
+      const button = nav.getByRole('button', { name: label, exact: true })
+      await button.click()
+      await expect(button).toHaveAttribute('aria-current', 'page')
+      await expect(button).toBeInViewport()
+    }
   }
+})
+
+test('admin section selection survives closing and reopening its workspace panel', async ({ page }) => {
+  await page.route('**/api/v1/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }))
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h, ref } = await load('/node_modules/.vite/deps/vue.js')
+    const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
+    const { default: AdminPanel } = await load('/src/admin/panel/AdminPanel.vue')
+    document.body.innerHTML = '<div class="workspace-main-panel--admin" id="mount"></div>'
+    const visible = ref(true)
+    const section = ref('members')
+    Object.assign(window, { __adminPanelState: {
+      close: () => { visible.value = false },
+      open: () => { visible.value = true },
+    } })
+    const app = createApp({ render: () => visible.value ? h(AdminPanel, {
+      categories: [], revision: 1, section: section.value,
+      'onUpdate:section': (next: string) => { section.value = next },
+    }) : null })
+    app.use(createPinia())
+    app.mount('#mount')
+  })
+
+  const roles = page.getByRole('button', { name: 'Роли', exact: true })
+  await roles.click()
+  await expect(roles).toHaveAttribute('aria-current', 'page')
+  await page.evaluate(() => (window as Window & { __adminPanelState: { close: () => void } }).__adminPanelState.close())
+  await expect(page.getByTestId('admin-panel')).toHaveCount(0)
+  await page.evaluate(() => (window as Window & { __adminPanelState: { open: () => void } }).__adminPanelState.open())
+  await expect(page.getByRole('button', { name: 'Роли', exact: true })).toHaveAttribute('aria-current', 'page')
 })

@@ -84,35 +84,40 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
           : result.status == 'ready' && !result.hasFailedProbe
           ? 'Сервисы готовы'
           : 'Есть проблемы готовности';
+      const titleAndDescription = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Готовность сервисов',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            'Приватная проверка PostgreSQL, LiveKit и хранилища.',
+            style: TextStyle(color: GcColors.textSecondary, fontSize: 12),
+          ),
+        ],
+      );
+      final refreshAction = TextButton.icon(
+        onPressed: _busy ? null : _refresh,
+        icon: const Icon(Icons.refresh),
+        label: Text(_busy ? 'Проверяем…' : 'Обновить'),
+      );
       final header = Padding(
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
-        child: Row(
-          children: [
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: compact
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Готовность сервисов',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    'Приватная проверка PostgreSQL, LiveKit и хранилища.',
-                    style: TextStyle(
-                      color: GcColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
+                  titleAndDescription,
+                  Align(alignment: Alignment.centerRight, child: refreshAction),
+                ],
+              )
+            : Row(
+                children: [
+                  const Expanded(child: titleAndDescription),
+                  refreshAction,
                 ],
               ),
-            ),
-            TextButton.icon(
-              onPressed: _busy ? null : _refresh,
-              icon: const Icon(Icons.refresh),
-              label: Text(_busy ? 'Проверяем…' : 'Обновить'),
-            ),
-          ],
-        ),
       );
       final bodyChildren = <Widget>[
         Semantics(

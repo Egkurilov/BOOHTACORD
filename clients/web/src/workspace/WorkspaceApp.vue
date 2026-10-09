@@ -24,6 +24,7 @@ import ProfileSettings from '../identity/ProfileSettings.vue'
 import { useCurrentProfile } from '../identity/current_profile'
 import { useAuthorDirectoryLifecycle } from '../identity/author_directory_lifecycle'
 import AdminPanel from '../admin/panel/AdminPanel.vue'
+import type { AdminSection } from '../admin/panel/admin_section'
 import SearchLauncher from '../search/SearchLauncher.vue'
 import WorkspaceSearchPanel from './search/WorkspaceSearchPanel.vue'
 import { usePermissionStore } from '../authorization/permission_store'
@@ -34,6 +35,7 @@ import type { ActionScope } from '../telemetry/action_scope/scope'
 import { bindWorkspaceReady } from './ready_lifecycle/bind'
 const props = defineProps<{ role: 'MEMBER' | 'ADMINISTRATOR'; accountId: string;readiness?:ActionScope }>()
 const emit = defineEmits<{ sessionExpired: []; loggedOut: [] }>()
+const adminSection = ref<AdminSection>('members')
 const { activeVoiceChannel, audioSettings, loadAudioDevices, joinVoice, leaveVoice, selectAudioDevice, selectedChannel, selectedChannelId, selectChannel: selectWorkspaceChannel, selectDirectMessage: selectWorkspaceDirectMessage, startScreen, topologyStore, voiceActivation, voiceConnection } = useWorkspaceVoiceControls(props.accountId)
 const { confirmScreenShare, openScreenShareSetup, screenShareSetupOpen, selectedScreenProfile } = useScreenShareSetup(() => voiceConnection.screenState, startScreen, props.accountId)
 const { activePanel, closeDrawers, directMessageStore, memberHeaderExpandedState, membersOpen, modalDrawer, navOpen, openDirectMessageFromMember, openGuildPanel, returnToVoice, selectedDirectMessage, selectChannel, selectDirectMessage, selectOpenedDirectMessage, sidebarSection, toggleMembers, toggleNavigation, togglePanel, voiceStageWide } = useWorkspaceNavigation(props.role, selectedChannel, topologyStore, selectWorkspaceChannel, selectWorkspaceDirectMessage)
@@ -101,7 +103,7 @@ bindWorkspaceReady({ readiness: props.readiness,
           :self-display-name="profile?.display_name ?? null" :nav-open="navOpen" :members-open="memberHeaderExpandedState" :show-members="!selectedDirectMessage && activePanel === 'none'" :voice-connection="voiceConnection" :voice-roster="voiceRoster.channels.value?.find((room) => room.channelId === selectedChannel?.id) ?? null" :voice-roster-error="voiceRoster.error.value"
           @return-voice="returnToVoice" @toggle-nav="toggleNavigation" @toggle-members="toggleMembers" @open-search="togglePanel('search')" @close-panel="togglePanel($event)">
           <template #admin>
-            <AdminPanel v-if="props.role === 'ADMINISTRATOR'" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />
+            <AdminPanel v-if="props.role === 'ADMINISTRATOR'" v-model:section="adminSection" :categories="topologyStore.topology?.categories ?? []" :revision="topologyStore.topology?.revision ?? 0" @topology-changed="refreshTopology" />
           </template>
           <template #profile><ProfileSettings :profile="profile" :loading="profileLoading" :load-error="profileError" :logout-busy="logoutBusy" :logout-error="logoutError" @saved="setProfile" @logout="signOut" @session-expired="expireSession" /></template>
           <template #audio>
