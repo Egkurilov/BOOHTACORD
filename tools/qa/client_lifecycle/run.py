@@ -22,7 +22,9 @@ def main():
     origin = local_origin('https://localhost:4810')
     destination = root/'.out/client-lifecycle'/str(args.width)
     destination.mkdir(parents=True, exist_ok=True)
-    run('npm', 'run', 'build', cwd=root/'clients/web', stdout=subprocess.DEVNULL)
+    build_environment = dict(os.environ, VITE_PUBLIC_ORIGIN=origin)
+    run('npm', 'run', 'build', cwd=root/'clients/web', env=build_environment,
+        stdout=subprocess.DEVNULL)
     print('stage=production-client-built', flush=True)
     with tempfile.TemporaryDirectory(prefix='boohtacord-client-qa-', dir=root/'.out') as temporary:
         work = Path(temporary)
@@ -70,7 +72,8 @@ def main():
             sources += [root/'clients/web/src/identity/AuthenticationLanding.vue', root/'clients/web/package-lock.json']
             report['source_files'] = {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
                                       for path in sources}
-            report['api_binary_sha256'] = hashlib.sha256(stack.binary.read_bytes()).hexdigest()
+            report['api_image_id'] = output('docker', 'image', 'inspect', stack.image,
+                                            '--format', '{{.Id}}')
             report['screenshots'] = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
                                      for path in destination.glob('*.png')}
             (destination/'report.json').write_text(json.dumps(report, indent=2)+'\n')

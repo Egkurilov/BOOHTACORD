@@ -8,7 +8,7 @@ The original archive is checked in at [`artifacts/ui-ux-screenshots.zip`](../../
 
 The source archive does not include the current branch's “after” screenshots. The 1440×900 and 393×852 targets below match the source capture dimensions; the separate #302 regression sweep also includes 390×844 from #290.
 
-Current browser captures are runtime review artifacts, not before/after comparisons against the audit. A synthetic fixture must not be presented as an application screenshot or an approved visual golden.
+Current browser captures are runtime review artifacts, not before/after comparisons against the audit. The autonomous client lifecycle run also captures the actual production Web app at 1024×768 and 1440×900 against an isolated Go API, PostgreSQL and Tempo stack; its screenshots and bounded reports are under ignored `.out/client-lifecycle/{1024,1440}/`. These two full-stack captures are current-code runtime evidence, not approved visual goldens or coverage of the 41 source screens. A synthetic fixture must not be presented as an application screenshot or an approved visual golden.
 
 ## Automated viewport coverage
 
@@ -27,6 +27,10 @@ Current browser captures are runtime review artifacts, not before/after comparis
 The images are emitted under `.out/responsive-shell-browser-results/` and retained as the `ux-responsive-shell-<commit>` artifact by `ci-frontend.yaml`. They are review captures; the current test checks geometry and state invariants, not pixel equality to a golden. CI wiring is in `tools/ci/native/web.py`.
 
 `python3 -m tools.verify.uiux_visual_matrix` validates the pinned archive SHA-256, all 41 archive entries, PNG dimensions and catalog mappings. The catalog contract test validates the counts and references. The current shell sweep complements focused production-component browser fixtures for message actions, DM/search, admin states, settings, dialogs and voice/stream setup. Flutter has focused widget/layout coverage listed per catalog entry. These suites do not collectively prove that every one of the 41 source screens has a matching, source-backed golden.
+
+The full-stack lifecycle runner exercises a production Web build at 1024 px and 1440 px using two independent Chrome sessions, real session cookies and ACLs, a disposable Linux API container, PostgreSQL and Tempo. It checks data persistence after an API restart and verifies that its labeled resources are removed. Use its screenshots to review the actual application flows; use the report hashes to bind them to their source files. The run is recorded in the issue evidence file. It does not replace per-screen visual comparison, device acceptance or GitHub artifact retention.
+
+This lifecycle run does not include the critical real-SFU outage/restart flow. That separate flow remains `NOT_RUN`: macOS Chrome could not establish ICE through the local Colima host-network boundary, while a Linux browser reached voice join and chat-WebSocket-only recovery but could not control the owned SFU for the later stop/restart stage. Do not count either partial run as voice fault-recovery acceptance.
 
 ## Remaining work for #302
 

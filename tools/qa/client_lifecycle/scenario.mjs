@@ -11,7 +11,9 @@ import { prepareSessionRevoke, checkSessionRevoke } from '../critical_client_acc
 const input = JSON.parse(readFileSync(process.env.QA_INPUT, 'utf8'))
 assert.equal(origin, 'https://localhost:4810')
 // The owned SFU advertises only loopback ICE candidates; permit that interface in this local fixture.
-const browser = await chromium.launch({ headless: true, args: ['--allow-loopback-in-peer-connection'] })
+const browserOptions = { headless: true, args: ['--allow-loopback-in-peer-connection'] }
+if (process.env.QA_BROWSER_EXECUTABLE) browserOptions.executablePath = process.env.QA_BROWSER_EXECUTABLE
+const browser = await chromium.launch(browserOptions)
 const report = { schema_version: 1, width: input.width, mocks: false, synthetic_accounts: true }
 const redactions = [input.password]
 try {
