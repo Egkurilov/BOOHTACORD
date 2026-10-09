@@ -11,7 +11,7 @@ root.innerHTML = `
         <nav class="nav-drawer" data-testid="workspace-drawer">
           <button class="mobile-nav-close" aria-label="Закрыть навигацию">×</button>
           <button aria-label="Открыть канал" class="channel-button selected">общее</button>
-          <button aria-label="Выбрать канал">Перейти в канал</button>
+          <button class="channel-button" aria-label="Выбрать канал">Перейти в канал</button>
         </nav>
         <footer class="user-footer">Егор · В сети</footer>
         <div class="mobile-voice-dock mobile-visible" data-testid="mobile-voice-dock">
@@ -36,9 +36,9 @@ root.innerHTML = `
         </section>
       </main>
       <aside class="members" data-testid="members-rail"><h2 class="members-heading">Участники</h2><p>Егор</p></aside>
-      <aside id="search-aside-panel" class="members search-aside" data-testid="search-drawer" hidden><button aria-label="Закрыть поиск">×</button><input aria-label="Поиск по беседе" /></aside>
+      <aside id="search-aside-panel" class="members search-aside" data-testid="search-drawer" hidden><header class="search-panel-heading"><h1>Поиск сообщений</h1><button class="search-close" aria-label="Закрыть поиск">×</button></header><input aria-label="Поиск по беседе" /></aside>
       <aside data-testid="admin-panel" hidden><button aria-label="Закрыть администрирование">×</button><h1>Управление гильдией</h1></aside>
-      <button class="drawer-scrim" aria-hidden="true" style="display: none"></button>
+      <button class="drawer-scrim" aria-label="Закрыть навигацию и участников" aria-hidden="true" style="display: none"></button>
     </div>
   </div>
 `

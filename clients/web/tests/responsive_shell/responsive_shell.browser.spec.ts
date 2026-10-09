@@ -59,7 +59,7 @@ test('the mobile navigation drawer opens inside its available width', async ({ p
     expect(drawer?.width).toBe(Math.min(320, width - 40))
     expect(drawer?.x).toBe(0)
     if (width <= 720) {
-      await page.getByRole('button', { name: 'Закрыть навигацию' }).click()
+      await page.getByTestId('workspace-drawer').getByRole('button', { name: 'Закрыть навигацию' }).click()
     } else {
       await page.locator('.drawer-scrim').click({ position: { x: width - 8, y: 400 } })
     }
@@ -86,7 +86,7 @@ test('browser Back and Forward close and restore overlays without losing workspa
 
   await page.goForward()
   await expect(drawer).toBeVisible()
-  await page.getByRole('button', { name: 'Закрыть навигацию' }).click()
+  await page.getByTestId('workspace-drawer').getByRole('button', { name: 'Закрыть навигацию' }).click()
   await expect(drawer).toBeHidden()
   await page.getByRole('button', { name: 'Открыть поиск' }).click()
   await expect(page.locator('#app')).toHaveAttribute('data-drawer-state', 'search')

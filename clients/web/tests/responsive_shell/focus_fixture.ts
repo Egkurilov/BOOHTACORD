@@ -19,7 +19,7 @@ createApp({
             role: drawers.modalDrawer.value === 'nav' ? 'dialog' : undefined,
             'aria-modal': drawers.modalDrawer.value === 'nav' ? 'true' : undefined,
             'aria-label': 'Навигация по каналам',
-          }, [h('button', { onClick: drawers.closeDrawersForNavigation }, 'Выбрать канал')]),
+          }, [h('button', { class: 'channel-button', onClick: drawers.closeDrawersForNavigation }, 'Выбрать канал')]),
         ]),
         h('main', { id: 'main-region', tabindex: -1 }, [
           h('button', { 'aria-label': 'Открыть навигацию', onClick: drawers.toggleNavigation }, 'Открыть навигацию'),

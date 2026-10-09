@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { changeOwnPassword, deleteAvatar, loadOwnProfile, saveOwnProfile, uploadAvatar, type OwnProfile } from './profile_client'
 import NotificationSettings from '../notification/NotificationSettings.vue'
@@ -12,12 +12,27 @@ const emit = defineEmits<{ saved: [profile: OwnProfile]; logout: []; sessionExpi
 const displayName = ref(''); const currentPassword = ref(''); const newPassword = ref('')
 const busy = ref(false); const error = ref<string | null>(null); const status = ref<string | null>(null)
 const activeTab = ref<ProfileTab>('profile')
+const profileTabs: readonly ProfileTab[] = ['profile', 'security', 'notifications', 'about']
 const nameChanged = computed(() => displayName.value !== (props.profile?.display_name ?? ''))
 const title = ref<HTMLElement | null>(null)
 let focusFrame: number | null = null
 onMounted(() => { focusFrame = window.requestAnimationFrame(() => title.value?.focus()) })
 onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(focusFrame) })
 watch(() => props.profile, (profile) => { displayName.value = profile?.display_name ?? '' }, { immediate: true })
+function onProfileTabKeydown(event: KeyboardEvent): void {
+  const currentIndex = profileTabs.indexOf(activeTab.value)
+  let nextIndex: number
+  switch (event.key) {
+    case 'ArrowRight': nextIndex = (currentIndex + 1) % profileTabs.length; break
+    case 'ArrowLeft': nextIndex = (currentIndex - 1 + profileTabs.length) % profileTabs.length; break
+    case 'Home': nextIndex = 0; break
+    case 'End': nextIndex = profileTabs.length - 1; break
+    default: return
+  }
+  event.preventDefault()
+  activeTab.value = profileTabs[nextIndex]
+  void nextTick(() => document.getElementById(`profile-tab-${activeTab.value}`)?.focus())
+}
 function fail(cause: unknown, fallback: string): void { error.value = cause instanceof Error ? cause.message : fallback; status.value = null }
 async function saveName(): Promise<void> {
   error.value = null; status.value = null
@@ -45,16 +60,16 @@ async function changePassword(): Promise<void> {
 <template>
   <section class="profile-settings" aria-labelledby="profile-settings-title" data-testid="profile-settings">
     <header><h1 id="profile-settings-title" ref="title" tabindex="-1">Настройки</h1><p>Ваш профиль и параметры приложения.</p></header>
-    <nav class="profile-tabs" role="tablist" aria-label="Настройки аккаунта">
-      <button type="button" role="tab" :aria-selected="activeTab === 'profile'" @click="activeTab = 'profile'">Профиль</button>
-      <button type="button" role="tab" :aria-selected="activeTab === 'security'" @click="activeTab = 'security'">Безопасность</button>
-      <button type="button" role="tab" :aria-selected="activeTab === 'notifications'" @click="activeTab = 'notifications'">Уведомления</button>
-      <button type="button" role="tab" :aria-selected="activeTab === 'about'" @click="activeTab = 'about'">О приложении</button>
+    <nav class="profile-tabs" role="tablist" aria-label="Настройки аккаунта" @keydown="onProfileTabKeydown">
+      <button id="profile-tab-profile" type="button" role="tab" aria-controls="profile-panel-profile" :aria-selected="activeTab === 'profile'" :tabindex="activeTab === 'profile' ? 0 : -1" @click="activeTab = 'profile'">Профиль</button>
+      <button id="profile-tab-security" type="button" role="tab" aria-controls="profile-panel-security" :aria-selected="activeTab === 'security'" :tabindex="activeTab === 'security' ? 0 : -1" @click="activeTab = 'security'">Безопасность</button>
+      <button id="profile-tab-notifications" type="button" role="tab" aria-controls="profile-panel-notifications" :aria-selected="activeTab === 'notifications'" :tabindex="activeTab === 'notifications' ? 0 : -1" @click="activeTab = 'notifications'">Уведомления</button>
+      <button id="profile-tab-about" type="button" role="tab" aria-controls="profile-panel-about" :aria-selected="activeTab === 'about'" :tabindex="activeTab === 'about' ? 0 : -1" @click="activeTab = 'about'">О приложении</button>
     </nav>
     <p v-if="props.loading" class="state" aria-live="polite">Загружаем профиль…</p>
     <p v-else-if="props.loadError" class="state state-error" role="alert">{{ props.loadError }}</p>
     <template v-else-if="props.profile && activeTab === 'profile'">
-      <section class="profile-panel" role="tabpanel" aria-label="Профиль">
+      <section id="profile-panel-profile" class="profile-panel" role="tabpanel" aria-labelledby="profile-tab-profile" tabindex="0">
       <div class="profile-avatar-row">
         <img v-if="props.profile.avatar_url" class="profile-avatar" :src="props.profile.avatar_url" alt="Аватар профиля">
         <span v-else class="profile-avatar profile-avatar--empty" aria-hidden="true">{{ props.profile.display_name.slice(0, 2).toLocaleUpperCase('ru-RU') }}</span>
@@ -69,7 +84,7 @@ async function changePassword(): Promise<void> {
       </section>
     </template>
     <template v-else-if="props.profile && activeTab === 'security'">
-      <section class="profile-panel" role="tabpanel" aria-label="Безопасность">
+      <section id="profile-panel-security" class="profile-panel" role="tabpanel" aria-labelledby="profile-tab-security" tabindex="0">
       <form class="profile-form profile-password-form" @submit.prevent="changePassword">
         <h2>Изменить пароль</h2>
         <label>Текущий пароль<input v-model="currentPassword" type="password" autocomplete="current-password" required :aria-describedby="error ? 'profile-error' : undefined"></label>
@@ -85,8 +100,8 @@ async function changePassword(): Promise<void> {
       <OwnSessionsPanel :account-id="props.profile.account_id" @session-expired="emit('sessionExpired')" />
       </section>
     </template>
-    <template v-else-if="props.profile && activeTab === 'notifications'"><section class="profile-panel" role="tabpanel" aria-label="Уведомления"><NotificationSettings /></section></template>
-    <template v-else-if="props.profile && activeTab === 'about'"><section class="profile-panel" role="tabpanel" aria-label="О приложении"><UpdateStatus /></section></template>
+    <template v-else-if="props.profile && activeTab === 'notifications'"><section id="profile-panel-notifications" class="profile-panel" role="tabpanel" aria-labelledby="profile-tab-notifications" tabindex="0"><NotificationSettings /></section></template>
+    <template v-else-if="props.profile && activeTab === 'about'"><section id="profile-panel-about" class="profile-panel" role="tabpanel" aria-labelledby="profile-tab-about" tabindex="0"><UpdateStatus /></section></template>
     <p v-if="status && activeTab !== 'profile'" class="profile-status" aria-live="polite">{{ status }}</p>
     <p v-if="error" id="profile-error" class="profile-error" role="alert">{{ error }}</p>
   </section>
