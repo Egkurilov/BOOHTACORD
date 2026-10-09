@@ -1,20 +1,20 @@
 /* R21–R22: real directory with server mutations in per-account actions. */
 .workspace-main-panel--admin .admin-panel--members .admin-panel-heading { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; }
 .admin-panel--members .admin-eyebrow { display: none; }
-.admin-panel--members .admin-panel-heading h1 { font-size: 24px; line-height: 32px; font-weight: 600; }
-.admin-panel--members .admin-panel-description { margin: 8px 0 0; color: #b6bdce; font-size: 14px; line-height: 20px; }
+.admin-panel--members .admin-panel-heading h1 { font-size: var(--gc-text-page); line-height: var(--gc-line-page); font-weight: var(--gc-weight-semibold); }
+.admin-panel--members .admin-panel-description { margin: 8px 0 0; color: var(--gc-text-secondary); font-size: 14px; line-height: 20px; }
 .workspace-main-panel--admin .admin-panel--members { gap: 24px; }
 .workspace-main-panel--admin .admin-panel--members .admin-directory { gap: 20px; }
-.admin-panel--members .admin-section-heading h2 { font-size: 20px; line-height: 28px; font-weight: 600; }
-.admin-panel--members .admin-section-heading h2 span { color: #a0a9be; }
+.admin-panel--members .admin-section-heading h2 { font-size: var(--gc-text-section); line-height: var(--gc-line-section); font-weight: var(--gc-weight-semibold); }
+.admin-panel--members .admin-section-heading h2 span { color: var(--gc-text-muted); }
 .admin-panel--members .admin-section-heading > button { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .admin-member-filters { display: flex; height: 44px; gap: 12px; }
 .admin-panel--members .admin-member-filters { margin-top: 8px; }
 .admin-member-filters label:first-child { min-width: 0; flex: 1; }
-.admin-member-filters input, .admin-member-filters select { height: 44px; border: 1px solid #707b91; border-radius: 8px; color: #f4f5fa; background: #11131a; font-size: 14px; }
+.admin-member-filters input, .admin-member-filters select { height: 44px; border: 1px solid var(--gc-border-control); border-radius: 8px; color: var(--gc-text-primary); background: var(--gc-sidebar); font-size: 14px; }
 .admin-member-filters input { width: 100%; padding: 0 12px; }
-.admin-member-filters input::placeholder { color: #f4f5fa; opacity: 1; }
-.admin-member-filters select { width: 121px; padding: 0 12px; background: #222631; }
+.admin-member-filters input::placeholder { color: var(--gc-text-primary); opacity: 1; }
+.admin-member-filters select { width: 121px; padding: 0 12px; background: var(--gc-surface-raised); }
 .admin-panel--members .admin-table-scroll { height: auto; min-height: 478px; overflow: visible; margin-top: 0; padding: 0 20px; }
 .admin-panel--members .admin-table { table-layout: fixed; }
 .admin-panel--members .admin-table thead th { height: 44px; border-bottom-color: #303542; background: transparent; }
@@ -34,8 +34,8 @@
 .admin-account-status.is-active { color: #78e6a0; background: #123320; }
 .admin-account-status.is-blocked { color: #fbb5bd; background: #4a1c25; }
 .admin-account-actions { position: relative; text-align: right; }
-.admin-panel--members .admin-account-actions > button { width: 32px; min-height: 32px; border: 0; padding: 0; color: #a0a9be; background: transparent; font-size: 20px; }
-.admin-account-actions-menu { position: absolute; top: 52px; right: 0; z-index: 6; display: grid; width: 244px; gap: 12px; border: 1px solid #303542; border-radius: 12px; padding: 16px; background: #222631; box-shadow: 0 20px 60px #0008; text-align: left; }
+.admin-panel--members .admin-account-actions > button { width: 32px; min-height: 32px; border: 0; padding: 0; color: var(--gc-text-muted); background: transparent; font-size: 20px; }
+.admin-account-actions-menu { position: absolute; top: 52px; right: 0; z-index: 6; display: grid; width: 244px; gap: 12px; border: 1px solid #303542; border-radius: 12px; padding: 16px; background: var(--gc-surface-raised); box-shadow: 0 20px 60px #0008; text-align: left; }
 .admin-account-actions-menu > label:not(.admin-block-toggle) { display: grid; gap: 6px; }
 .admin-account-actions-menu select { min-height: 36px; }
 .admin-account-actions-menu button { min-height: 36px; }
@@ -52,7 +52,7 @@
   .admin-panel--members .admin-mobile-card { min-height: 110px; padding: 16px; }
   .admin-panel--members .admin-mobile-card:not([open]) { height: 110px; overflow: hidden; }
   .admin-panel--members .admin-mobile-card summary { position: relative; gap: 16px; }
-  .admin-panel--members .admin-mobile-menu-mark { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; color: #a0a9be; stroke-width: 1.8; pointer-events: none; }
+  .admin-panel--members .admin-mobile-menu-mark { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; color: var(--gc-text-muted); stroke-width: 1.8; pointer-events: none; }
   .admin-panel--members .admin-mobile-user { gap: 12px; }
   .admin-panel--members .admin-mobile-avatar { width: 36px; height: 36px; font-size: 12px; }
   .admin-panel--members .admin-mobile-user strong { font-size: 16px; line-height: 20px; font-weight: 600; }

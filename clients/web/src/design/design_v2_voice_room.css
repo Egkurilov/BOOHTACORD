@@ -1,4 +1,4 @@
-.voice-room:has(.room-wrap) { background: #0B0D12; }
+.voice-room:has(.room-wrap) { background: var(--gc-canvas); }
 .voice-room .room-wrap { display: flex; flex-direction: column; align-items: center; overflow: auto; padding: 0 16px; }
 .voice-room .room-intro { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .voice-room .room-wrap > .state { position: absolute; top: 76px; left: 304px; }

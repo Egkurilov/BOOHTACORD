@@ -4,28 +4,28 @@
 .authentication-card:has(.authentication-hint), .authentication-card:has(.authentication-recovery-details) { height: auto; }
 .authentication-brand { display: flex; height: 36px; align-items: center; justify-content: center; gap: 10px; }
 .authentication-brand img { width: 32px; height: 32px; object-fit: contain; }
-.authentication-brand .eyebrow { margin: 0; color: #f4f5fa; font-size: 18px; font-weight: 700; letter-spacing: 0; }
-.authentication-card h1 { margin: 32px 0 0; text-align: center; font-size: 24px; line-height: 32px; font-weight: 600; }
-.authentication-intro { margin: 8px 0 0; color: #b6bdce; text-align: center; }
+.authentication-brand .eyebrow { margin: 0; color: var(--gc-text-primary); font-size: 18px; font-weight: 700; letter-spacing: 0; }
+.authentication-card h1 { margin: 32px 0 0; text-align: center; font-size: var(--gc-text-page); line-height: var(--gc-line-page); font-weight: var(--gc-weight-semibold); }
+.authentication-intro { margin: 8px 0 0; color: var(--gc-text-secondary); text-align: center; }
 .authentication-form { gap: 20px; margin-top: 28px; }
-.authentication-field { gap: 8px; color: #f4f5fa; font-size: 14px; line-height: 20px; }
+.authentication-field { gap: 8px; color: var(--gc-text-primary); font-size: 14px; line-height: 20px; }
 .authentication-field input { height: 44px; min-height: 44px; background: #101218; }
 .authentication-password-control { position: relative; display: block; }
 .authentication-password-control input { padding-right: 44px; }
 .authentication-password-toggle { position: absolute; top: 0; right: 0; display: grid; width: 44px; height: 44px; place-items: center; border: 0; color: #aab2c4; background: transparent; }
 .authentication-password-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .authentication-password-generation { gap: 8px; margin-top: 8px; }
-.authentication-password-generate, .authentication-password-confirm-actions button { min-height: 36px; border-radius: 8px; padding: 0 12px; color: #f4f5fa; background: #1b1f2a; }
+.authentication-password-generate, .authentication-password-confirm-actions button { min-height: 36px; border-radius: 8px; padding: 0 12px; color: var(--gc-text-primary); background: #1b1f2a; }
 .authentication-password-confirm, .authentication-password-status { color: #aab2c4; font-size: 12px; line-height: 16px; }
 .authentication-password-confirm-actions { display: flex; gap: 8px; }
 .authentication-submit { height: 44px; min-height: 44px; margin-top: 0; font-weight: 500; }
 .authentication-account-help { display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 20px; border: 0; padding: 0; text-align: center; }
-.authentication-account-help .authentication-recovery-title { color: #a0a9be; font-size: 12px; font-weight: 400; line-height: 18px; }
-.authentication-recovery-toggle { min-height: 18px; margin-top: 2px; color: #acaeff; font-size: 12px; line-height: 18px; text-decoration: underline; }
+.authentication-account-help .authentication-recovery-title { color: var(--gc-text-muted); font-size: 12px; font-weight: 400; line-height: 18px; }
+.authentication-recovery-toggle { min-height: 18px; margin-top: 2px; color: var(--gc-accent-text); font-size: 12px; line-height: 18px; text-decoration: underline; }
 .authentication-recovery-details { max-width: 320px; margin-top: 8px !important; font-size: 12px; }
-.authentication-registration-footer { display: grid; width: 100%; justify-items: center; margin-top: 20px; border-top: 1px solid #2a2f3a; padding-top: 20px; }
-.authentication-account-help .authentication-registration-note { margin: 0; color: #a0a9be; font-size: 12px; line-height: 18px; }
-.authentication-mode-toggle { width: auto; min-height: 20px; height: 20px; border: 0; padding: 0; color: #acaeff; background: transparent; font-size: 12px; text-decoration: underline; }
+.authentication-registration-footer { display: grid; width: 100%; justify-items: center; margin-top: 20px; border-top: 1px solid var(--gc-border-subtle); padding-top: 20px; }
+.authentication-account-help .authentication-registration-note { margin: 0; color: var(--gc-text-muted); font-size: 12px; line-height: 18px; }
+.authentication-mode-toggle { width: auto; min-height: 20px; height: 20px; border: 0; padding: 0; color: var(--gc-accent-text); background: transparent; font-size: 12px; text-decoration: underline; }
 @media (max-width: 720px) {
   .authentication-card { width: min(358px, 100%); height: 555px; min-height: 555px; padding: 24px; }
   .authentication-brand .eyebrow { font-size: 16px; }

@@ -1,5 +1,5 @@
 .voice-room .screen-viewer.stream-wrap { grid-template-rows: minmax(0, 1fr) 48px 100px; gap: 16px; }
-.voice-room:has(.screen-viewer) { background: #0B0D12; }
+.voice-room:has(.screen-viewer) { background: var(--gc-canvas); }
 .voice-room .screen-stage { position: relative; overflow: hidden; border-radius: 12px; }
 .voice-room .screen-player { width: 100%; height: 100%; max-height: 100%; object-fit: contain; background: #050608; }
 .voice-room .screen-stage-top { inset: 16px auto auto 16px; }

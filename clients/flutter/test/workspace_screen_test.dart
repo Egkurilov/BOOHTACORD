@@ -134,6 +134,9 @@ void main() {
         addTearDown(tester.view.reset);
         final state = AppState(_PortraitApi());
         await state.initialize();
+        state.selectedChannel = _PortraitApi.voiceChannel;
+        state.voiceChannel = _PortraitApi.voiceChannel;
+        state.voicePhase = VoicePhase.connected;
         await tester.pumpWidget(
           MaterialApp(
             home: AnimatedBuilder(
@@ -151,6 +154,19 @@ void main() {
         await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
         expect(find.byType(WorkspaceScreen), findsOneWidget);
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        expect(state.voicePhase, VoicePhase.connected);
+        expect(state.voiceChannel, _PortraitApi.voiceChannel);
+
+        await tester.dragFrom(const Offset(0, 220), const Offset(140, 0));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey('workspace-channel-row:channel-1')),
+        );
+        await tester.pumpAndSettle();
+        expect(state.selectedChannel, _PortraitApi.channel);
+        expect(state.voiceChannel, _PortraitApi.voiceChannel);
+        expect(state.voicePhase, VoicePhase.connected);
         expect(find.byTooltip('Закрыть навигацию'), findsNothing);
 
         await tester.dragFrom(const Offset(180, 220), const Offset(-120, 0));
@@ -1972,10 +1988,15 @@ void main() {
     for (final viewport in [
       (size: const Size(320, 640), mainLeft: 0.0, mainWidth: 320.0),
       (size: const Size(360, 800), mainLeft: 0.0, mainWidth: 360.0),
+      (size: const Size(375, 812), mainLeft: 0.0, mainWidth: 375.0),
       (size: const Size(390, 844), mainLeft: 0.0, mainWidth: 390.0),
+      (size: const Size(430, 932), mainLeft: 0.0, mainWidth: 430.0),
+      (size: const Size(600, 900), mainLeft: 0.0, mainWidth: 600.0),
+      (size: const Size(840, 390), mainLeft: 0.0, mainWidth: 840.0),
       (size: const Size(1024, 768), mainLeft: 280.0, mainWidth: 744.0),
       (size: const Size(1280, 800), mainLeft: 280.0, mainWidth: 752.0),
       (size: const Size(1440, 900), mainLeft: 280.0, mainWidth: 912.0),
+      (size: const Size(1920, 1080), mainLeft: 280.0, mainWidth: 1392.0),
     ]) {
       tester.view.physicalSize = viewport.size;
       await tester.pumpAndSettle();
@@ -1990,6 +2011,10 @@ void main() {
       );
       expect(main.left, viewport.mainLeft);
       expect(main.width, viewport.mainWidth);
+      expect(state.selectedChannel?.id, _PortraitApi.channel.id);
+      expect(state.messages, hasLength(2));
+      expect(main.left, greaterThanOrEqualTo(0));
+      expect(main.right, lessThanOrEqualTo(viewport.size.width));
       if (!compact) {
         expect(
           tester
@@ -2076,7 +2101,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Открыть навигацию'));
     await tester.pumpAndSettle();
-    for (final width in [320.0, 360.0, 390.0]) {
+    for (final width in [320.0, 360.0, 375.0, 390.0, 430.0, 600.0, 840.0]) {
       tester.view.physicalSize = Size(width, 844);
       await tester.pumpAndSettle();
       expect(
@@ -2101,6 +2126,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(state.selectedDirectMessage, isNotNull);
     expect(state.directMessageHistory, isNotEmpty);
+    final selectedDirectMessageId = state.selectedDirectMessage!.id;
     expect(
       tester
           .widget<ListView>(
@@ -2149,6 +2175,31 @@ void main() {
       98,
     );
     expect(find.text('До 25 МБ на файл'), findsOneWidget);
+
+    for (final viewport in [
+      const Size(320, 640),
+      const Size(375, 812),
+      const Size(390, 844),
+      const Size(430, 932),
+      const Size(600, 900),
+      const Size(840, 390),
+      const Size(1024, 768),
+      const Size(1280, 800),
+      const Size(1440, 900),
+      const Size(1920, 1080),
+    ]) {
+      tester.view.physicalSize = viewport;
+      await tester.pumpAndSettle();
+      expect(state.selectedDirectMessage?.id, selectedDirectMessageId);
+      expect(state.directMessageHistory, isNotEmpty);
+      final composerRect = tester.getRect(
+        find.byKey(const ValueKey('direct-message-composer-wrap')),
+      );
+      expect(composerRect.left, greaterThanOrEqualTo(0));
+      expect(composerRect.right, lessThanOrEqualTo(viewport.width));
+      expect(composerRect.bottom, lessThanOrEqualTo(viewport.height));
+      expect(tester.takeException(), isNull);
+    }
 
     const longDisplayName =
         'ОченьДлинноеИмяПользователяБезПробеловДляПроверкиЭллипсиса';

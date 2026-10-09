@@ -1,6 +1,6 @@
 /* R18: live member profile card floats outside the roster column. */
 .members-panel.has-popover { overflow: visible; }
-.members-panel .member-popover { box-sizing: border-box; width: 320px; min-height: 314px; border: 1px solid #303542; border-radius: 12px; padding: 24px; background: #222631; }
+.members-panel .member-popover { box-sizing: border-box; width: 320px; min-height: 314px; border: 1px solid #303542; border-radius: 12px; padding: 24px; background: var(--gc-surface-raised); }
 .member-popover > header { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; opacity: 1; }
 .member-popover > header > span { display: none; }
 .member-popover > header button { width: 32px; height: 32px; }
@@ -8,19 +8,19 @@
 .member-popover-avatar-wrap { position: relative; display: block; width: 64px; height: 64px; }
 .member-popover .member-popover-avatar { display: grid; width: 64px; height: 64px; place-items: center; font-size: 24px; font-weight: 600; }
 .member-popover-avatar-presence { box-sizing: content-box; position: absolute; right: -1px; bottom: 0; width: 10px; height: 10px; border: 2px solid var(--gc-sidebar); border-radius: 50%; background: #778094; }
-.member-popover-identity[data-presence='online'] .member-popover-avatar-presence { background: #22c55e; }
+.member-popover-identity[data-presence='online'] .member-popover-avatar-presence { background: var(--gc-success); }
 .member-popover-identity[data-presence='online'] .member-popover-presence::before { color: #78e6a0; }
 .member-popover-identity[data-presence='offline'] .member-popover-presence::before,
 .member-popover-identity[data-presence='unknown'] .member-popover-presence::before { color: #778094; }
 .member-popover .member-popover-identity > div { margin-top: 16px; }
-.member-popover .member-popover-identity h2 { font-size: 20px; line-height: 28px; font-weight: 600; }
+.member-popover .member-popover-identity h2 { font-size: var(--gc-text-section); line-height: var(--gc-line-section); font-weight: var(--gc-weight-semibold); }
 .member-popover .member-popover-identity p { margin: 4px 0 0; font-size: 12px; line-height: 16px; }
 .member-popover .member-popover-identity small { display: block; margin-top: 16px; font-size: 12px; line-height: 16px; }
-.member-popover .member-popover-identity small:not(.member-popover-presence) { width: max-content; border-radius: 6px; padding: 2px 6px; background: #222631; color: var(--gc-text-primary); font-weight: 600; }
+.member-popover .member-popover-identity small:not(.member-popover-presence) { width: max-content; border-radius: 6px; padding: 2px 6px; background: var(--gc-surface-raised); color: var(--gc-text-primary); font-weight: 600; }
 .member-popover .member-popover-identity .member-popover-presence { display: flex; align-items: center; gap: 12px; margin-top: 20px; color: var(--gc-text-secondary); font-size: 14px; line-height: 20px; }
 .member-popover-presence::before { flex: 0 0 auto; color: #78e6a0; content: '●'; }
 .member-popover .member-popover-actions { margin-top: 24px; }
-.member-popover .member-popover-actions button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 0 14px; border: 1px solid #5865f2; border-radius: 8px; color: #fff; background: #5865f2; font-size: 14px; font-weight: 500; }
+.member-popover .member-popover-actions button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 0 14px; border: 1px solid var(--gc-accent); border-radius: 8px; color: #fff; background: var(--gc-accent); font-size: 14px; font-weight: 500; }
 .member-popover .member-popover-actions svg { width: 20px; height: 20px; flex: none; }
 @media (max-width: 1023px) {
   .members-panel.has-popover { overflow: visible; }

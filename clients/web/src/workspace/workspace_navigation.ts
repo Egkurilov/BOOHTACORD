@@ -14,21 +14,21 @@ export function useWorkspaceNavigation(role: 'MEMBER' | 'ADMINISTRATOR', selecte
   const directMessageCandidateStore = useDirectMessageCandidateStore()
   const sidebarSection = ref<'channels' | 'messages'>('channels')
   const activePanel = ref<Panel>('none')
-  const { navOpen, membersOpen, modalDrawer, closeDrawers, toggleNavigation, toggleMembers } = useWorkspaceDrawers(activePanel)
+  const { navOpen, membersOpen, modalDrawer, closeDrawers, closeDrawersForNavigation, toggleNavigation, toggleMembers } = useWorkspaceDrawers(activePanel)
   const selectedDirectMessage = computed(() => directMessageStore.directMessages.find((item) => item.id === directMessageStore.directMessageId) ?? null)
   const voiceStageWide = computed(() => selectedChannel.value?.kind === 'VOICE' && !selectedDirectMessage.value && activePanel.value === 'none')
   const memberHeaderExpandedState = useMemberHeaderExpanded(voiceStageWide, membersOpen, closeDrawers)
-  function selectChannel(channel: TopologyChannel): void { closeDrawers(); activePanel.value = 'none'; sidebarSection.value = 'channels'; directMessageStore.close(); selectWorkspaceChannel(channel) }
+  function selectChannel(channel: TopologyChannel): void { closeDrawersForNavigation(); activePanel.value = 'none'; sidebarSection.value = 'channels'; directMessageStore.close(); selectWorkspaceChannel(channel) }
   function returnToVoice(channelId: string): void { const channel = topologyStore.topology?.categories.flatMap(({ channels }) => channels).find(({ id, kind }) => id === channelId && kind === 'VOICE'); if (channel) selectChannel(channel) }
-  function selectDirectMessage(id: string): void { closeDrawers(); activePanel.value = 'none'; sidebarSection.value = 'messages'; selectWorkspaceDirectMessage(id); void directMessageStore.open(id) }
+  function selectDirectMessage(id: string): void { closeDrawersForNavigation(); activePanel.value = 'none'; sidebarSection.value = 'messages'; selectWorkspaceDirectMessage(id); void directMessageStore.open(id) }
   async function selectOpenedDirectMessage(id: string): Promise<void> { await directMessageStore.refreshNavigation(); selectDirectMessage(id) }
   async function openDirectMessageFromMember(userID: string): Promise<void> {
-    activePanel.value = 'none'; sidebarSection.value = 'messages'; directMessageStore.close()
+    closeDrawersForNavigation(); activePanel.value = 'none'; sidebarSection.value = 'messages'; directMessageStore.close()
     const directMessageID = await directMessageCandidateStore.open(userID)
     if (directMessageID) await selectOpenedDirectMessage(directMessageID)
     else directMessageStore.error = directMessageCandidateStore.error ?? 'Не удалось открыть личное сообщение.'
   }
-  function togglePanel(panel: Exclude<Panel, 'none'>): void { closeDrawers(); activePanel.value = activePanel.value === panel ? 'none' : panel }
+  function togglePanel(panel: Exclude<Panel, 'none'>): void { closeDrawersForNavigation(); activePanel.value = activePanel.value === panel ? 'none' : panel }
   function openGuildPanel(): void { if (role === 'ADMINISTRATOR') togglePanel('admin') }
   return { activePanel, closeDrawers, directMessageStore, memberHeaderExpandedState, membersOpen, modalDrawer, navOpen, openDirectMessageFromMember, openGuildPanel, returnToVoice, selectedDirectMessage, selectChannel, selectDirectMessage, selectOpenedDirectMessage, sidebarSection, toggleMembers, toggleNavigation, togglePanel, voiceStageWide }
 }
