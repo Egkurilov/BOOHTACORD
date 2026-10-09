@@ -121,4 +121,75 @@ void main() {
     expect(find.text('Сервисы готовы'), findsNothing);
     expect(find.text('устарело'), findsNWidgets(3));
   });
+
+  testWidgets('readiness cards and refresh stay within responsive layouts', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    const widths = [320.0, 390.0, 600.0, 840.0, 1440.0];
+    const scales = [1.0, 2.0];
+
+    for (final scale in scales) {
+      for (final width in widths) {
+        tester.view.physicalSize = Size(width, 844);
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!,
+            ),
+            home: Scaffold(
+              body: AdminReadinessPanel(api: _ReadinessApi(_result())),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: '$width px at ${scale}x text',
+        );
+        for (final label in ['PostgreSQL', 'LiveKit', 'Хранилище']) {
+          final rect = tester.getRect(find.text(label));
+          expect(
+            rect.left,
+            greaterThanOrEqualTo(0),
+            reason: '$label at $width px/${scale}x',
+          );
+          expect(
+            rect.right,
+            lessThanOrEqualTo(width),
+            reason: '$label at $width px/${scale}x',
+          );
+        }
+        final refresh = tester.getRect(find.text('Обновить'));
+        expect(
+          refresh.left,
+          greaterThanOrEqualTo(0),
+          reason: 'refresh at $width px/${scale}x',
+        );
+        expect(
+          refresh.right,
+          lessThanOrEqualTo(width),
+          reason: 'refresh at $width px/${scale}x',
+        );
+        final storageMetric = tester.getRect(
+          find.textContaining('Ожидают отзыва SFU'),
+        );
+        expect(
+          storageMetric.left,
+          greaterThanOrEqualTo(0),
+          reason: 'storage at $width px/${scale}x',
+        );
+        expect(
+          storageMetric.right,
+          lessThanOrEqualTo(width),
+          reason: 'storage at $width px/${scale}x',
+        );
+      }
+    }
+  });
 }
