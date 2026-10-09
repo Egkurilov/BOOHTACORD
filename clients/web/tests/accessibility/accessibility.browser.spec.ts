@@ -85,6 +85,7 @@ test('profile settings tabs support Arrow, Home and End keyboard navigation', as
     loadError: null,
   }, 'workspace-main-panel workspace-main-panel--profile')
 
+  await expect(page.getByRole('heading', { name: 'Настройки' })).toBeFocused()
   const profile = page.getByRole('tab', { name: 'Профиль' })
   const security = page.getByRole('tab', { name: 'Безопасность' })
   const about = page.getByRole('tab', { name: 'О приложении' })
@@ -188,4 +189,55 @@ test('destructive confirmation defaults to cancel, traps focus and requires an e
   await confirm.click()
   await expect(dialog).toBeHidden()
   await expect(page.locator('#confirmation-result')).toHaveText('true')
+})
+
+test('WCAG smoke distinguishes readiness loading, refresh, stale failure and retry states', async ({ page }) => {
+  let requests = 0
+  let releaseInitial: (() => void) | undefined
+  let releaseRefresh: (() => void) | undefined
+  const checkedAt = new Date().toISOString()
+  const readyProbe = {
+    status: 'ready', sampled_at: checkedAt, pending_revocations: 0,
+    available_bytes: 1024, total_bytes: 2048, reserved_bytes: 0,
+    protected_bytes: 0, headroom_bytes: 1024,
+  }
+  const ready = {
+    status: 'ready', checked_at: checkedAt,
+    database: readyProbe, sfu: readyProbe, storage: readyProbe,
+  }
+  await page.route('**/api/v1/admin/readiness', async route => {
+    requests += 1
+    if (requests === 1) {
+      await new Promise<void>(resolve => { releaseInitial = resolve })
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ready) })
+    } else if (requests === 2) {
+      await new Promise<void>(resolve => { releaseRefresh = resolve })
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+    } else {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ready) })
+    }
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/readiness/Panel.vue')
+
+  const status = page.getByRole('status')
+  await expect(status).toHaveText('Проверяем готовность сервисов')
+  releaseInitial?.()
+  await expect(status).toHaveText('Сервисы готовы')
+  await expectAxeClear(page, '#mount')
+
+  const refresh = page.locator('section[aria-labelledby="readiness-title"] > button')
+  await refresh.click()
+  await expect(refresh).toBeDisabled()
+  await expect(refresh).toHaveText('Проверяем…')
+  await expect(status).toHaveText('Обновляем проверку; показан предыдущий результат')
+  releaseRefresh?.()
+  await expect(page.getByRole('alert')).toHaveText('Сервер не подтвердил готовность.')
+  await expect(status).toHaveText('Нет свежего подтверждения готовности')
+  await expect(page.locator('dl dd').first()).toHaveText('устарело')
+  await expectAxeClear(page, '#mount')
+
+  await refresh.click()
+  await expect(status).toHaveText('Сервисы готовы')
+  await expect(page.getByRole('alert')).toHaveCount(0)
 })
