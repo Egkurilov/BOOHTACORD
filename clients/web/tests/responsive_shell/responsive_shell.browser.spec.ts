@@ -1,17 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { ux2026ReferenceViewports, ux2026RequiredViewports, ux2026ShellViewports } from '../uiux_2026/viewport_matrix'
 
-const viewports = [
-  { width: 320, height: 640 },
-  { width: 375, height: 812 },
-  { width: 390, height: 844 },
-  { width: 430, height: 932 },
-  { width: 600, height: 900 },
-  { width: 840, height: 390 },
-  { width: 1024, height: 768 },
-  { width: 1280, height: 800 },
-  { width: 1440, height: 900 },
-  { width: 1920, height: 1080 },
-]
+const viewports = ux2026ShellViewports
+const screenshotViewports = new Set([...ux2026RequiredViewports, ...ux2026ReferenceViewports].map(({ width, height }) => `${width}x${height}`))
 
 test('production shell CSS stays within the viewport and preserves its workspace while resizing', async ({ page }, testInfo) => {
   await page.setViewportSize(viewports[2])
@@ -44,7 +35,7 @@ test('production shell CSS stays within the viewport and preserves its workspace
       expect(dockBox?.x).toBeGreaterThanOrEqual(sidebar?.x ?? 0)
       expect((dockBox?.x ?? 0) + (dockBox?.width ?? 0)).toBeLessThanOrEqual((sidebar?.x ?? 0) + (sidebar?.width ?? 0))
     }
-    if (viewport.width === 390 || viewport.width === 1440) {
+    if (screenshotViewports.has(`${viewport.width}x${viewport.height}`)) {
       await page.screenshot({ path: testInfo.outputPath(`shell-${viewport.width}x${viewport.height}.png`), fullPage: true })
     }
   }
