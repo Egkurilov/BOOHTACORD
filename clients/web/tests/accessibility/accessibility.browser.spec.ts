@@ -136,3 +136,56 @@ test('WCAG smoke covers screen share setup and destructive confirmation dialogs'
   await expect(page.getByRole('dialog', { name: 'Удалить канал' })).toBeVisible()
   await expectAxeClear(page, '.admin-confirm-dialog')
 })
+
+test('destructive confirmation defaults to cancel, traps focus and requires an explicit choice', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h, ref } = await load('/node_modules/.vite/deps/vue.js')
+    const { default: Confirm } = await load('/src/channel/AdminConfirmation.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    const prompt = ref(null)
+    const answer = ref('pending')
+    createApp({ render: () => h('div', [
+      h('button', {
+        onClick: () => void prompt.value.ask('Удалить канал «общее»?').then((confirmed: boolean) => { answer.value = String(confirmed) }),
+      }, 'Удалить канал'),
+      h('output', { id: 'confirmation-result' }, answer.value),
+      h(Confirm, { ref: prompt, id: 'delete-channel', title: 'Удалить канал', confirmLabel: 'Удалить' }),
+    ]) }).mount('#mount')
+  })
+
+  const trigger = page.getByRole('button', { name: 'Удалить канал', exact: true })
+  await trigger.click()
+  const dialog = page.getByRole('dialog', { name: 'Удалить канал' })
+  const cancel = dialog.getByRole('button', { name: 'Отмена' })
+  const confirm = dialog.getByRole('button', { name: 'Удалить', exact: true })
+  await expect(cancel).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(dialog).toBeHidden()
+  await expect(trigger).toBeFocused()
+  await expect(page.locator('#confirmation-result')).toHaveText('false')
+
+  await trigger.click()
+  await expect(cancel).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(confirm).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(cancel).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(confirm).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(cancel).toBeFocused()
+  await page.mouse.click(1, 1)
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await expect(trigger).toBeFocused()
+  await expect(page.locator('#confirmation-result')).toHaveText('false')
+
+  await trigger.click()
+  await expect(cancel).toBeFocused()
+  await confirm.click()
+  await expect(dialog).toBeHidden()
+  await expect(page.locator('#confirmation-result')).toHaveText('true')
+})
