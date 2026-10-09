@@ -21,7 +21,7 @@ onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(foc
 <template>
   <section class="admin-panel" :class="{ 'admin-panel--members': section === 'members' }" aria-labelledby="admin-panel-title" data-testid="admin-panel">
     <header class="admin-panel-heading"><div><p class="admin-eyebrow">УПРАВЛЕНИЕ ГИЛЬДИЕЙ</p><h1 id="admin-panel-title" ref="title" tabindex="-1">Администрирование</h1><p class="admin-panel-description">Управление гильдией и доступом участников.</p></div></header>
-    <nav class="admin-section-tabs" aria-label="Разделы администрирования">
+    <nav class="admin-section-tabs" aria-label="Разделы администрирования" aria-describedby="admin-section-tabs-hint">
       <button type="button" :aria-current="section === 'guild' ? 'page' : undefined" @click="section = 'guild'">Гильдия</button>
       <button type="button" :aria-current="section === 'members' ? 'page' : undefined" @click="section = 'members'">Участники</button>
       <button type="button" :aria-current="section === 'roles' ? 'page' : undefined" @click="section = 'roles'">Роли</button>
@@ -30,6 +30,7 @@ onBeforeUnmount(() => { if (focusFrame !== null) window.cancelAnimationFrame(foc
       <button type="button" :aria-current="section === 'media' ? 'page' : undefined" @click="section = 'media'">Медиа</button>
       <button type="button" :aria-current="section === 'readiness' ? 'page' : undefined" @click="section = 'readiness'">Готовность</button>
     </nav>
+    <p id="admin-section-tabs-hint" class="admin-section-tabs-hint">Прокрутите список разделов по горизонтали</p>
     <AdminGuildSettings v-if="section === 'guild'" :categories="categories" />
     <AdminMembersSection v-else-if="section === 'members'" />
     <AdminRolePermissions v-else-if="section === 'roles'" />

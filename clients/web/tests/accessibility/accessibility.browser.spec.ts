@@ -300,3 +300,53 @@ test('WCAG smoke distinguishes media metric loading, refresh and failure states'
   await expect(status).toContainText('Есть измерения')
   await expect(page.getByRole('alert')).toHaveCount(0)
 })
+
+test('admin shell exposes all seven sections at 320–430px and avoids page overflow', async ({ page }) => {
+  await page.route('**/api/v1/**', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '{}',
+  }))
+  await page.setViewportSize({ width: 320, height: 640 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+    const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
+    const { default: AdminPanel } = await load('/src/admin/panel/AdminPanel.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    const app = createApp({ render: () => h(AdminPanel, { categories: [], revision: 1 }) })
+    app.use(createPinia())
+    app.mount('#mount')
+  })
+
+  const nav = page.getByRole('navigation', { name: 'Разделы администрирования' })
+  const hint = page.getByText('Прокрутите список разделов по горизонтали', { exact: true })
+  await expect(hint).toBeVisible()
+  const dimensions = await nav.evaluate(element => ({ client: element.clientWidth, scroll: element.scrollWidth }))
+  expect(dimensions.scroll).toBeGreaterThan(dimensions.client)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+
+  const labels = ['Гильдия', 'Участники', 'Роли', 'Каналы', 'Аудит', 'Медиа', 'Готовность']
+  const first = nav.getByRole('button', { name: labels[0], exact: true })
+  await first.focus()
+  for (const label of labels) {
+    const button = nav.getByRole('button', { name: label, exact: true })
+    await expect(button).toBeFocused()
+    await expect(button).toBeInViewport()
+    await page.keyboard.press('Tab')
+  }
+
+  for (const label of labels) {
+    const button = nav.getByRole('button', { name: label, exact: true })
+    await button.click()
+    await expect(button).toHaveAttribute('aria-current', 'page')
+    await expect(button).toBeInViewport()
+  }
+
+  for (const width of [375, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 })
+    await expect(hint).toBeVisible()
+    const viewport = await nav.evaluate(element => ({ client: element.clientWidth, scroll: element.scrollWidth }))
+    expect(viewport.scroll).toBeGreaterThan(viewport.client)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  }
+})
