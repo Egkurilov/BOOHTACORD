@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { ScreenProfile } from './livekit_gateway'
 import type { ScreenFrameRate, ScreenResolution } from './media_publishing'
 import { screenProfileMode, screenShareBandwidthEstimate } from './screen_profile_metadata/profile'
+import { containModalTab } from '../accessibility/modal_tab_focus'
 import ScreenCaptureCapabilitySummary from './ScreenCaptureCapabilitySummary.vue'
 import ScreenShareQualityOptions from './ScreenShareQualityOptions.vue'
 const props = defineProps<{ initialProfile: ScreenProfile; updating?: boolean }>()
@@ -64,6 +65,7 @@ function start(): void {
     aria-labelledby="screen-share-setup-title"
     :aria-describedby="updating ? 'screen-share-setup-description' : 'screen-share-setup-guidance'"
     @cancel.prevent="emit('cancel')"
+    @keydown="containModalTab($event, dialog)"
   >
     <header class="screen-share-setup__header">
       <span v-if="!updating" class="screen-share-setup__icon" aria-hidden="true">

@@ -241,3 +241,18 @@ test('WCAG smoke distinguishes readiness loading, refresh, stale failure and ret
   await expect(status).toHaveText('Сервисы готовы')
   await expect(page.getByRole('alert')).toHaveCount(0)
 })
+
+test('screen-share setup keeps keyboard focus inside its modal dialog', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/voice/ScreenShareSetupDialog.vue', { initialProfile: 'P1080_30' })
+
+  const dialog = page.getByRole('dialog', { name: 'Демонстрация экрана' })
+  const close = dialog.getByRole('button', { name: 'Закрыть' })
+  const start = dialog.getByRole('button', { name: 'Начать трансляцию' })
+  await expect(close).toBeFocused()
+  await start.focus()
+  await page.keyboard.press('Tab')
+  await expect(close).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(start).toBeFocused()
+})
