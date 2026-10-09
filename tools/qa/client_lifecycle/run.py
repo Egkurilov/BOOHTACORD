@@ -12,11 +12,35 @@ from .stack import Stack
 from .telemetry import verify
 
 
+VIEWPORT_PROFILES = {
+    393: {
+        'name': 'mobile-393x852', 'width': 393, 'height': 852,
+        'is_mobile': True, 'device_scale_factor': 3, 'has_touch': True,
+    },
+    1024: {
+        'name': 'tablet-1024x768', 'width': 1024, 'height': 768,
+        'is_mobile': False, 'device_scale_factor': 1, 'has_touch': False,
+    },
+    1440: {
+        'name': 'desktop-1440x900', 'width': 1440, 'height': 900,
+        'is_mobile': False, 'device_scale_factor': 2, 'has_touch': False,
+    },
+}
+
+
+def viewport_profile(width):
+    try:
+        return dict(VIEWPORT_PROFILES[width])
+    except KeyError as error:
+        raise ValueError(f'unsupported client lifecycle viewport width: {width}') from error
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--width', type=int, choices=(1024, 1440), default=1440)
+    parser.add_argument('--width', type=int, choices=tuple(VIEWPORT_PROFILES), default=1440)
     parser.add_argument('--critical', action='store_true')
     args = parser.parse_args()
+    viewport = viewport_profile(args.width)
     started = time.monotonic()
     root = Path(__file__).resolve().parents[3]
     origin = local_origin('https://localhost:4810')
@@ -39,7 +63,8 @@ def main():
             private = work/'private.json'
             inputs = work/'input.json'
             inputs.write_text(json.dumps({'password': stack.password, 'width': args.width,
-                                         'directory': str(destination), 'critical': args.critical}))
+                                         'viewport': viewport, 'directory': str(destination),
+                                         'critical': args.critical}))
             inputs.chmod(0o600)
             environment = dict(os.environ, QA_ORIGIN=origin, QA_INPUT=str(inputs), QA_PRIVATE=str(private), QA_DB_OWNER=stack.owner)
             script = root/'tools/qa/client_lifecycle/scenario.mjs'

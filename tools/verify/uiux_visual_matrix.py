@@ -4,6 +4,7 @@ import hashlib
 import json
 import struct
 import sys
+from collections import defaultdict
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -46,6 +47,7 @@ def main() -> int:
         if set(png_entries) != {row["referenceAsset"] for row in screens}:
             return fail("catalog asset names do not exactly match the source archive")
 
+        hashes = {}
         for row in screens:
             expected_viewport = {"width": 1440, "height": 900} if row["surface"] == "desktop" else {"width": 393, "height": 852}
             if row["targetViewport"] != expected_viewport:
@@ -56,6 +58,7 @@ def main() -> int:
             png = archive.read(png_entries[row["referenceAsset"]])
             if png[:8] != b"\x89PNG\r\n\x1a\n" or len(png) < 24:
                 return fail(f"{row['referenceAsset']} is not a valid PNG header")
+            hashes[row["referenceAsset"]] = hashlib.sha256(png).hexdigest()
             width, height = struct.unpack(">II", png[16:24])
             if {"width": width, "height": height} != row["referenceRasterPx"]:
                 return fail(f"{row['referenceAsset']} raster dimensions differ from the catalog")
@@ -67,7 +70,34 @@ def main() -> int:
                 if not row[key].strip():
                     return fail(f"{row['id']} is missing {key}")
 
-    print("PASS: 41 source screenshots verified (18 desktop, 23 mobile), names, CSS/raster sizes, SHA-256, and test mappings")
+        by_hash = defaultdict(list)
+        for asset, digest in hashes.items():
+            by_hash[digest].append(asset)
+        actual_findings = []
+        for digest, assets in by_hash.items():
+            if len(assets) < 2:
+                continue
+            ordered = sorted(assets)
+            for asset in ordered[1:]:
+                actual_findings.append({
+                    "asset": asset,
+                    "duplicateOf": ordered[0],
+                    "sha256": digest,
+                    "status": "BLOCKED_DUPLICATE_BASELINE",
+                })
+        actual_findings.sort(key=lambda finding: finding["asset"])
+        declared_findings = matrix.get("sourceIntegrityFindings", [])
+        if declared_findings != actual_findings:
+            return fail("source screenshot duplicate-content findings differ from the archive")
+        for finding in actual_findings:
+            row = next(row for row in screens if row["referenceAsset"] == finding["asset"])
+            if row.get("sourceComparisonStatus") != finding["status"]:
+                return fail(f"{finding['asset']} is duplicated but not blocked as an independent baseline")
+            if finding["duplicateOf"] not in row["expectedOrException"]:
+                return fail(f"{finding['asset']} does not identify its duplicate reference")
+
+    duplicate_count = len(actual_findings)
+    print(f"PASS: 41 source screenshots verified (18 desktop, 23 mobile), names, CSS/raster sizes, SHA-256, test mappings; {duplicate_count} duplicate source asset(s) explicitly blocked from independent comparison")
     return 0
 
 

@@ -14,12 +14,26 @@ assert.equal(origin, 'https://localhost:4810')
 const browserOptions = { headless: true, args: ['--allow-loopback-in-peer-connection'] }
 if (process.env.QA_BROWSER_EXECUTABLE) browserOptions.executablePath = process.env.QA_BROWSER_EXECUTABLE
 const browser = await chromium.launch(browserOptions)
-const report = { schema_version: 1, width: input.width, mocks: false, synthetic_accounts: true }
+const report = {
+  schema_version: 1,
+  width: input.viewport.width,
+  height: input.viewport.height,
+  is_mobile: input.viewport.is_mobile,
+  device_scale_factor: input.viewport.device_scale_factor,
+  has_touch: input.viewport.has_touch,
+  mocks: false,
+  synthetic_accounts: true,
+}
 const redactions = [input.password]
 try {
-  const contexts = await Promise.all([0, 1, 2].map(() => browser.newContext({
-    ignoreHTTPSErrors: true, viewport: { width: input.width, height: 900 },
-  })))
+  const contextOptions = {
+    ignoreHTTPSErrors: true,
+    viewport: { width: input.viewport.width, height: input.viewport.height },
+    isMobile: input.viewport.is_mobile,
+    deviceScaleFactor: input.viewport.device_scale_factor,
+    hasTouch: input.viewport.has_touch,
+  }
+  const contexts = await Promise.all([0, 1, 2].map(() => browser.newContext(contextOptions)))
   contexts.forEach(context => { context.setDefaultTimeout(15000); context.setDefaultNavigationTimeout(15000) })
   const [a, b, guest] = await Promise.all(contexts.map(context => context.newPage()))
   await login(a, 'qa_admin', input.password)
@@ -48,8 +62,7 @@ try {
   } : undefined)
   const refreshed = (await api(a, '/guild-profile')).body
   assert.equal(refreshed.name, 'Автономная гильдия')
-  const anonymous = await browser.newContext({ ignoreHTTPSErrors: true,
-    viewport: { width: input.width, height: 900 } })
+  const anonymous = await browser.newContext(contextOptions)
   const auth = await anonymous.newPage()
   await auth.goto(origin)
   await expect(auth.locator('.authentication-brand .guild-profile-name')).toHaveText(refreshed.name)

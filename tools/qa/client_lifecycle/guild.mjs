@@ -5,9 +5,10 @@ export async function guild(a, b, guest, password, report, directory) {
   status(category, 201)
   const target = await api(a, `/admin/categories/${category.body.id}/channels`, 'POST', { name: 'WelcomeLab', kind: 'TEXT' })
   status(target, 201)
-  await expect(b.locator('.channel-button').filter({ hasText: 'WelcomeLab' })).toBeVisible()
+  await channel(b)
   await guildPanel(a)
   const settings = (await api(a, '/admin/guild-settings')).body
+  await a.screenshot({ path: directory+'/guild-settings-initial.png' })
   await a.getByLabel('Название гильдии', { exact: true }).fill('Автономная гильдия')
   await a.getByLabel('Приветствия новых участников').selectOption(target.body.id)
   await a.getByRole('button', { name: 'Сохранить', exact: true }).click()

@@ -1,7 +1,7 @@
 {
   "issue": "Egkurilov/BOOHTACORD#289",
   "expectedCount": 41,
-  "sourceArchiveStatus": "PRESENT; 41 PNG entries verified against the embedded README",
+  "sourceArchiveStatus": "PRESENT; 41 PNG entries verified against the embedded README; 40 unique payloads, one duplicate source asset flagged",
   "targetViewportBasis": "Use the source CSS viewport for side-by-side recapture. The separate #302 regression sweep also includes 390x844 as specified by #290.",
   "screens": [
     {
@@ -213,16 +213,17 @@
         "width": 1440,
         "height": 900
       },
-      "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
-      "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
-      "interaction": "Move between profile tabs, edit, save, and retry after a failed save.",
-      "expectedOrException": "Dirty values survive tab changes and explicit unsaved-navigation confirmation; native settings states remain unverified.",
-      "owner": "clients/web/src/identity/ProfileSettings.vue; clients/web/src/notification/NotificationSettings.vue; clients/web/src/voice/AudioSettings.vue",
+      "fixture": "clients/web/tests/guild_lifecycle/fixture.html",
+      "testFile": "clients/web/tests/guild_lifecycle/guild.browser.spec.ts",
+      "interaction": "Edit the guild name and welcome channel in Настройки гильдии, then save and retry after a 409 conflict.",
+      "expectedOrException": "Draft survives a 409 and retry uses the refreshed revision. This archive entry is byte-identical to desktop-guild-members.png, so it is not an independent desktop settings baseline until the source screenshot is corrected.",
+      "owner": "clients/web/src/admin/guild_settings/AdminGuildSettings.vue",
       "flutterTestFile": "clients/flutter/test/admin_guild_settings_test.dart",
       "referenceRasterPx": {
         "width": 2880,
         "height": 1800
-      }
+      },
+      "sourceComparisonStatus": "BLOCKED_DUPLICATE_BASELINE"
     },
     {
       "id": "D12",
@@ -633,12 +634,12 @@
         "width": 393,
         "height": 852
       },
-      "fixture": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
-      "testFile": "clients/web/tests/accessibility/accessibility.browser.spec.ts",
-      "interaction": "Navigate between personal settings and guild administration while preserving the workspace context.",
-      "expectedOrException": "Personal settings and guild settings are clearly distinguished; actual account/device settings are not covered by the synthetic fixture.",
-      "owner": "clients/web/src/identity/ProfileSettings.vue; clients/web/src/admin/panel/AdminPanel.vue",
-      "flutterTestFile": "clients/flutter/test/profile_screen_test.dart",
+      "fixture": "clients/web/tests/guild_lifecycle/fixture.html",
+      "testFile": "clients/web/tests/guild_lifecycle/guild.browser.spec.ts",
+      "interaction": "Inspect and save Настройки гильдии at the mobile source viewport while preserving the selected workspace.",
+      "expectedOrException": "Guild name and welcome-channel controls remain distinct from personal profile settings; mobile source-image comparison is pending.",
+      "owner": "clients/web/src/admin/guild_settings/AdminGuildSettings.vue",
+      "flutterTestFile": "clients/flutter/test/admin_guild_settings_test.dart",
       "referenceRasterPx": {
         "width": 1179,
         "height": 2556
@@ -827,5 +828,13 @@
   ],
   "sourceArchive": "artifacts/ui-ux-screenshots.zip",
   "sourceArchiveReadme": "ui-ux-screenshots/README.md (inside the archive)",
-  "sourceArchiveSha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
+  "sourceArchiveSha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c",
+  "sourceIntegrityFindings": [
+    {
+      "asset": "desktop-guild-settings.png",
+      "duplicateOf": "desktop-guild-members.png",
+      "sha256": "0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57",
+      "status": "BLOCKED_DUPLICATE_BASELINE"
+    }
+  ]
 }

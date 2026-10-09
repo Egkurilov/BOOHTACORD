@@ -17,6 +17,7 @@ type MatrixEntry = {
   interaction: string
   expectedOrException: string
   owner: string
+  sourceComparisonStatus?: string
 }
 
 type VisualMatrix = {
@@ -25,6 +26,12 @@ type VisualMatrix = {
   sourceArchive: string
   sourceArchiveSha256: string
   sourceArchiveStatus: string
+  sourceIntegrityFindings: Array<{
+    asset: string
+    duplicateOf: string
+    sha256: string
+    status: string
+  }>
   screens: MatrixEntry[]
 }
 
@@ -86,5 +93,27 @@ describe('UIUX-2026 visual regression inventory', () => {
       expect(entry.referenceAsset).toMatch(/^(desktop|mobile)-.+\.png$/)
       expect(entry.referenceStatus).toBe('PRESENT_IN_ARCHIVE')
     }
+  })
+
+  it('maps guild settings to the admin settings flow and marks the duplicated desktop source', () => {
+    const matrix = JSON.parse(readFileSync(matrixPath, 'utf8')) as VisualMatrix
+    const desktop = matrix.screens.find(({ referenceAsset }) => referenceAsset === 'desktop-guild-settings.png')!
+    const mobile = matrix.screens.find(({ referenceAsset }) => referenceAsset === 'mobile-guild-settings.png')!
+
+    expect(matrix.sourceIntegrityFindings).toEqual([{
+      asset: 'desktop-guild-settings.png',
+      duplicateOf: 'desktop-guild-members.png',
+      sha256: '0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57',
+      status: 'BLOCKED_DUPLICATE_BASELINE',
+    }])
+    for (const entry of [desktop, mobile]) {
+      expect(entry.fixture).toBe('clients/web/tests/guild_lifecycle/fixture.html')
+      expect(entry.testFile).toBe('clients/web/tests/guild_lifecycle/guild.browser.spec.ts')
+      expect(entry.owner).toBe('clients/web/src/admin/guild_settings/AdminGuildSettings.vue')
+      expect(entry.flutterTestFile).toBe('clients/flutter/test/admin_guild_settings_test.dart')
+      expect(entry.interaction).toContain('Настройки гильдии')
+    }
+    expect(desktop.sourceComparisonStatus).toBe('BLOCKED_DUPLICATE_BASELINE')
+    expect(desktop.expectedOrException).toContain('desktop-guild-members.png')
   })
 })
