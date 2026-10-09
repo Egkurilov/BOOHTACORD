@@ -15,6 +15,27 @@ export async function guild(a, b, guest, password, report, directory) {
   await expect(a.getByRole('status').filter({ hasText: 'Настройки сохранены' })).toBeVisible()
   await expect(b.locator('#app-title')).toHaveText('Автономная гильдия')
   await expect(b).toHaveTitle('Автономная гильдия')
+  const adminNav = a.getByRole('navigation', { name: 'Разделы администрирования' })
+  const adminScreens = [
+    { tab: 'Участники', selector: '.admin-directory', file: 'guild-members.png', ready: () => expect(a.locator('.admin-filter-results')).toBeVisible() },
+    { tab: 'Роли', selector: '.role-permissions', file: 'guild-roles.png', ready: () => expect(a.getByRole('heading', { name: 'Роли и разрешения', exact: true })).toBeVisible() },
+    { tab: 'Каналы', selector: '.admin-topology-controls', file: 'guild-channels.png', ready: () => expect(a.getByRole('heading', { name: 'Управление каналами', exact: true })).toBeVisible() },
+    { tab: 'Аудит', selector: '.admin-audit', file: 'guild-audit.png', ready: () => expect(a.getByRole('heading', { name: 'Аудит', exact: true })).toBeVisible() },
+    { tab: 'Медиа', selector: '.admin-media-diagnostics', file: 'guild-media.png', ready: () => expect(a.getByRole('heading', { name: 'Показатели трансляций', exact: true })).toBeVisible() },
+    { tab: 'Готовность', selector: '[aria-labelledby="readiness-title"]', file: 'guild-readiness.png', ready: () => expect(a.getByRole('heading', { name: 'Готовность сервисов', exact: true })).toBeVisible() },
+    { tab: 'Гильдия', selector: '.guild-settings', file: 'guild-settings.png', ready: () => expect(a.getByLabel('Название гильдии', { exact: true })).toHaveValue('Автономная гильдия') },
+  ]
+  const capturedAdminScreens = []
+  for (const screen of adminScreens) {
+    const tab = adminNav.getByRole('button', { name: screen.tab, exact: true })
+    await tab.click()
+    await expect(tab).toHaveAttribute('aria-current', 'page')
+    await expect(a.locator(screen.selector)).toBeVisible()
+    await screen.ready()
+    await a.screenshot({ path: directory+'/'+screen.file })
+    capturedAdminScreens.push(screen.file)
+  }
+  report.adminScreens = { captured: capturedAdminScreens, dataSource: 'disposable Go API + PostgreSQL + Tempo' }
   const publicProfile = (await api(guest, '/guild-profile')).body
   assert.deepEqual(Object.keys(publicProfile).sort(), ['name', 'revision'])
   status(await api(b, '/admin/guild-settings', 'PATCH', { name: 'StaleOverwrite', expected_revision: settings.revision }), 409)

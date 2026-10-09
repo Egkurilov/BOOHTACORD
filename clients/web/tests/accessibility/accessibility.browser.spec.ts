@@ -557,6 +557,58 @@ test('WCAG smoke distinguishes readiness loading, refresh, stale failure and ret
   await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
+test('readiness service and capacity values use a responsive dashboard layout', async ({ page }) => {
+  const sampledAt = new Date().toISOString()
+  await page.route('**/api/v1/**', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '{}',
+  }))
+  await page.route('**/api/v1/admin/readiness', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      status: 'ready', checked_at: sampledAt,
+      database: { status: 'ready', reason: null, sampled_at: sampledAt, pending_revocations: 2,
+        available_bytes: null, total_bytes: null, reserved_bytes: null, protected_bytes: null, headroom_bytes: null },
+      sfu: { status: 'ready', reason: null, sampled_at: sampledAt, pending_revocations: null,
+        available_bytes: null, total_bytes: null, reserved_bytes: null, protected_bytes: null, headroom_bytes: null },
+      storage: { status: 'ready', reason: null, sampled_at: sampledAt, pending_revocations: null,
+        available_bytes: 67108864, total_bytes: 134217728, reserved_bytes: 1048576,
+        protected_bytes: 2097152, headroom_bytes: 63963136 },
+    }),
+  }))
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/panel/AdminPanel.vue', { categories: [], revision: 1, section: 'readiness' }, 'workspace-main-panel workspace-main-panel--admin')
+
+  const section = page.locator('[aria-labelledby="readiness-title"]')
+  const tab = page.getByRole('button', { name: 'Готовность', exact: true })
+  await expect(tab).toHaveAttribute('aria-current', 'page')
+  for (const width of [320, 390, 600, 840, 1440]) {
+    await page.setViewportSize({ width, height: 844 })
+    await expect(page.getByRole('status').filter({ hasText: 'Сервисы готовы' })).toBeVisible()
+    for (const selector of ['.readiness-dependencies', '.readiness-capacity']) {
+      const grid = page.locator(selector)
+      const bounds = await grid.boundingBox()
+      const sectionBounds = await section.boundingBox()
+      expect(bounds).not.toBeNull()
+      expect(sectionBounds).not.toBeNull()
+      expect(bounds!.width).toBeGreaterThan(sectionBounds!.width * 0.9)
+      expect(bounds!.x).toBeGreaterThanOrEqual(sectionBounds!.x)
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(sectionBounds!.x + sectionBounds!.width + 1)
+    }
+    for (const pair of await page.locator('.readiness-dependencies > div, .readiness-capacity > div').all()) {
+      const bounds = await pair.boundingBox()
+      const label = await pair.locator('dt').boundingBox()
+      const value = await pair.locator('dd').boundingBox()
+      expect(bounds).not.toBeNull()
+      expect(label).not.toBeNull()
+      expect(value).not.toBeNull()
+      expect(label!.x).toBeGreaterThanOrEqual(bounds!.x)
+      expect(value!.x + value!.width).toBeLessThanOrEqual(bounds!.x + bounds!.width + 1)
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  }
+})
+
 test('readiness access denial is explained and stops automatic retry', async ({ page }) => {
   await page.clock.install()
   let requests = 0
