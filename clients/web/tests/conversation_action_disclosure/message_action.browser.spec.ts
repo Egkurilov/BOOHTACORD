@@ -77,3 +77,54 @@ test('R02 keeps only the touched message action disclosure open', async ({ page 
   await expect(page.locator('.message-actions.is-open')).toHaveCount(0)
   if (captureDir) await page.locator('.message-list').screenshot({ path: join(captureDir, 'message-actions-closed-actual.png') })
 })
+
+test('R02 preserves touch actions for grouped, system, deleted and failed messages', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+    const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
+    const { default: MessageItem } = await load('/src/conversation/MessageItem.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    const base = {
+      authorId: 'user-1',
+      clientMessageId: 'client-1',
+      body: 'Сообщение для проверки',
+      createdAt: '2026-10-04T12:00:00Z',
+      revision: 1,
+      deleted: false,
+    }
+    const messages = [
+      { ...base, id: 'grouped', channelId: 'channel-1' },
+      { ...base, id: 'system', kind: 'SYSTEM_WELCOME' },
+      { ...base, id: 'deleted', channelId: 'channel-1', deleted: true },
+      { ...base, id: 'failed', channelId: 'channel-1', sendStatus: 'failed', retryBlocked: false },
+    ]
+    const app = createApp({ render: () => h('div', { class: 'message-list' }, messages.map((message, index) =>
+      h(MessageItem, { message, grouped: index === 0, canEdit: false, canDelete: index === 1,
+        retryDisabled: false,
+        onReply: () => {}, onRetry: () => {}, onRemove: () => {},
+      }))) })
+    app.use(createPinia())
+    app.mount('#mount')
+  })
+
+  const rows = page.locator('.message-row')
+  const grouped = rows.filter({ has: page.getByText('Сообщение для проверки') }).first()
+  const groupedButton = grouped.locator('.message-actions-toggle')
+  await expect(groupedButton).toBeVisible()
+  expect((await groupedButton.boundingBox())?.height).toBeGreaterThanOrEqual(44)
+
+  const systemDelete = page.getByRole('button', { name: 'Удалить системное приветствие' })
+  await expect(systemDelete).toBeVisible()
+  expect((await systemDelete.boundingBox())?.height).toBeGreaterThanOrEqual(44)
+
+  const deleted = rows.filter({ hasText: 'Сообщение удалено' })
+  await expect(deleted.locator('.message-actions-toggle')).toHaveCount(0)
+
+  const failed = rows.filter({ hasText: 'Не отправлено' })
+  const retry = failed.getByRole('button', { name: 'Повторить отправку' })
+  await expect(retry).toBeVisible()
+  await expect(failed.locator('.message-actions-toggle')).toHaveCount(0)
+  expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44)
+})
