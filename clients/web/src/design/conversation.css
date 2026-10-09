@@ -96,7 +96,7 @@
   .message-row .message-actions-toggle { display: grid; width: 44px; height: 44px; padding: 0; place-items: center; opacity: 1; pointer-events: auto; }
   .message-row .message-actions .message-action-buttons { position: absolute; top: 0; right: calc(100% + var(--gc-space-1)); display: none; width: max-content; max-width: calc(100vw - 80px); opacity: 1; pointer-events: none; }
   .message-row .message-actions .message-action-buttons button { min-height: 44px; }
-  .system-welcome-message > button, .message-send-status button { min-height: var(--gc-size-touch); }
+  .message-send-status button { min-height: var(--gc-size-touch); }
   .message-row:hover .message-actions .message-action-buttons, .message-row:focus-within .message-actions .message-action-buttons { display: none; opacity: 1; pointer-events: none; }
   .message-row .message-actions.is-open .message-action-buttons { display: flex; pointer-events: auto; }
 }

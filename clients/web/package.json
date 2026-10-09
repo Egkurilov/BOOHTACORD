@@ -46,6 +46,7 @@
     "@types/node": "24.13.6",
     "@types/sdp-transform": "^2.15.0",
     "@vitejs/plugin-vue": "6.0.9",
+    "axe-core": "4.11.4",
     "livekit-server-sdk": "2.19.1",
     "postcss": "8.5.28",
     "typescript": "5.9.3",

@@ -1,6 +1,9 @@
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
+
+const axeScript = fileURLToPath(new URL('../../node_modules/axe-core/axe.min.js', import.meta.url))
 
 test('R02 keeps only the touched message action disclosure open', async ({ page }) => {
   await page.goto('/')
@@ -127,4 +130,18 @@ test('R02 preserves touch actions for grouped, system, deleted and failed messag
   await expect(retry).toBeVisible()
   await expect(failed.locator('.message-actions-toggle')).toHaveCount(0)
   expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44)
+
+  await page.addScriptTag({ path: axeScript })
+  const accessibility = await page.evaluate(async () => {
+    const axe = (window as any).axe
+    return axe.run(document.querySelector('.message-list'), {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+    })
+  })
+  const violations = accessibility.violations.map((violation: any) => ({
+    id: violation.id,
+    help: violation.help,
+    nodes: violation.nodes.map((node: any) => ({ target: node.target, summary: node.failureSummary })),
+  }))
+  expect(violations, JSON.stringify(violations, null, 2)).toEqual([])
 })
