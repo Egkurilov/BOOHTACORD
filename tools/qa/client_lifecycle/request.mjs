@@ -27,8 +27,8 @@ export async function openNavigation(page) {
     await expect(guildHeader).toBeVisible()
   }
 }
-export async function channel(page) {
-  const target = page.locator('.channel-button').filter({ hasText: 'WelcomeLab' })
+export async function channel(page, channelName = 'WelcomeLab') {
+  const target = page.locator('.channel-button').filter({ hasText: channelName })
   await openNavigation(page)
   await expect(target).toBeVisible()
   await target.click()

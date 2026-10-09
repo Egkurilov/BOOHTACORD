@@ -70,6 +70,7 @@ class Stack:
         self.resources.append(('image', self.image))
         self.migrate()
         self.bootstrap()
+        self.seed_admin_members()
         self.restart()
         (self.work/'Caddyfile').write_text(caddy_config(self.root))
         self.container('proxy', 'caddy:2.10.0-alpine', '-v', str(self.root)+':'+str(self.root)+':ro',
@@ -86,6 +87,17 @@ class Stack:
             '--env', 'DATABASE_URL='+self.environment['DATABASE_URL'], '--entrypoint', '/bootstrap-admin',
             self.image, '--login', 'qa_admin', '--password-stdin', input=self.password+'\n',
             text=True, stdout=subprocess.DEVNULL)
+
+    def seed_admin_members(self):
+        sql = """INSERT INTO users (id, login, display_name, password_hash, role)
+SELECT gen_random_uuid(),
+       'qa_member_' || lpad(member_index::text, 2, '0'),
+       'Участник ' || lpad(member_index::text, 2, '0'),
+       'qa-screenshot-fixture-disabled',
+       'MEMBER'
+FROM generate_series(1, 19) AS member_index;"""
+        run('docker', 'exec', self.owner+'-db', 'psql', '-U', 'qa', '-d', 'qa',
+            '-v', 'ON_ERROR_STOP=1', '-c', sql, stdout=subprocess.DEVNULL)
 
     def start_api(self):
         arguments = [

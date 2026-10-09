@@ -1,3 +1,4 @@
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -48,6 +49,18 @@ class StackLinuxRuntimeTests(unittest.TestCase):
 
         self.assertIn('-i', run.call_args.args)
         self.assertEqual(run.call_args.kwargs['input'], stack.password+'\n')
+
+    def test_admin_reference_fixture_seeds_nineteen_non_login_members(self):
+        stack = self.make_stack()
+        with patch('tools.qa.client_lifecycle.stack.run') as run:
+            stack.seed_admin_members()
+
+        command = run.call_args.args
+        self.assertEqual(command[:5], ('docker', 'exec', stack.owner+'-db', 'psql', '-U'))
+        self.assertIn('generate_series(1, 19)', command[-1])
+        self.assertIn('qa_member_', command[-1])
+        self.assertIn('qa-screenshot-fixture-disabled', command[-1])
+        self.assertIs(run.call_args.kwargs['stdout'], subprocess.DEVNULL)
 
     def test_close_removes_api_container_before_image_and_network(self):
         stack = self.make_stack()
