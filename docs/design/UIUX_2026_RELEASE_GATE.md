@@ -29,11 +29,15 @@ For each attempt, record completion (yes/no), time from task prompt to completio
 
 | Surface | Current evidence | Release acceptance |
 | --- | --- | --- |
-| Web / Chrome desktop and mobile viewports | Local unit/build/accessibility and selected Playwright fixtures are recorded in the evidence file. | `NOT_RUN` — task-based tester baseline/post-change, final screenshots, and owner review. |
-| Flutter / macOS | Widget and analyzer results are recorded in the evidence file; physical macOS/Chrome targets were discovered. | `NOT_RUN` — native settings/audio smoke and task-based usability capture. |
-| Flutter / Android | Platform-specific widget coverage exists. No Android device was discovered. | `NOT_RUN` — physical settings, IME, voice, screen capture, and TalkBack acceptance. |
-| Flutter / iOS | Platform-specific widget coverage exists. No iOS device was discovered. | `NOT_RUN` — physical settings, IME, voice, screen capture, and VoiceOver acceptance. |
-| Flutter / Windows | Platform-specific widget coverage exists. No Windows device was discovered. | `NOT_RUN` — physical interaction, voice/stream, and screen-reader acceptance. |
+| Web / Chrome desktop and mobile viewports | Local unit/build/accessibility and selected Playwright fixtures are recorded in the evidence file; Chrome 154.0.8037.98 is installed on the macOS host. | `NOT_RUN` — manual task-based tester baseline/post-change and full-app screenshots. Automated fixtures are not physical acceptance. |
+| Web / Firefox desktop and mobile | No task-based run recorded for this pass. | `NOT_RUN` — browser/device, screenshot, and task evidence required. |
+| Web / Safari desktop and mobile | No task-based run recorded for this pass. | `NOT_RUN` — desktop Safari plus iOS Safari device, screenshot, and task evidence required. |
+| Flutter / macOS | Device discovery found a native macOS 26.6.1 (25G76), arm64 target. Widget/analyzer results are recorded in the evidence file. | `NOT_RUN` — native task, settings/audio, window/focus, and task-based usability capture. |
+| Flutter / Android portrait and landscape | Platform-specific widget coverage exists. No Android device was discovered on this host. | `NOT_RUN` — physical settings, IME, voice, screen capture, and TalkBack acceptance. |
+| Flutter / iOS portrait and landscape | Platform-specific widget coverage exists. No iOS device was discovered on this host. | `NOT_RUN` — physical settings, IME, voice, screen capture, system Back/swipe, and VoiceOver acceptance. |
+| Flutter / Windows | Platform-specific widget coverage exists. No Windows device was discovered on this host. | `NOT_RUN` — physical interaction, voice/stream, window controls, and screen-reader acceptance. |
+
+Device discovery on 2026-10-09 at commit `747db023` ran `flutter devices --machine`. It found only the native macOS target (SDK `macOS 26.6.1 25G76 darwin-arm64`) and Chrome (`154.0.8037.98`, `web-javascript`); both reported `emulator: false`. This is a discovery result only. No manual task script, assistive-technology session, or full-app screenshot comparison was performed in that run. The detailed task/device/version/artifact matrix for issue #303 remains `NOT_RUN` until the corresponding runs are made.
 
 The original 41 reference screenshots are present in [`artifacts/ui-ux-screenshots.zip`](../../artifacts/ui-ux-screenshots.zip). Current shell/DOM/widget tests are regression evidence, not full-app before/after comparison against those assets. No screenshot or device gate is passed by this document.
 
