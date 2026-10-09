@@ -1,4 +1,5 @@
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/features/admin/audit/filter.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_member_filter.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
@@ -311,6 +312,62 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('member and audit filters survive section changes', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final api = TopologyTestApi()..accounts = accounts;
+    final state = AppState(api)..topology = api.current;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AdminScreen(state: state)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('admin-member-search')),
+      'ALICE',
+    );
+    await tester.pumpAndSettle();
+
+    final auditTab = find.byKey(const ValueKey('admin-section-tab-audit'));
+    await tester.ensureVisible(auditTab);
+    await tester.tap(auditTab);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('admin-audit-scope-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Голос').last);
+    await tester.pumpAndSettle();
+
+    final membersTab = find.byKey(const ValueKey('admin-section-tab-members'));
+    await tester.ensureVisible(membersTab);
+    await tester.tap(membersTab);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('admin-member-search')))
+          .controller!
+          .text,
+      'ALICE',
+    );
+
+    await tester.ensureVisible(auditTab);
+    await tester.tap(auditTab);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<DropdownButtonFormField<AdminAuditScope>>(
+            find.byKey(const ValueKey('admin-audit-scope-filter')),
+          )
+          .initialValue,
+      AdminAuditScope.voice,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('member conflict keeps draft and exposes comparison actions', (
     tester,
