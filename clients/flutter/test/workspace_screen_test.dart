@@ -4834,8 +4834,24 @@ void main() {
   });
 
   for (final profile in [
-    (name: 'mobile', size: const Size(393, 852), pixelRatio: 3.0),
-    (name: 'desktop', size: const Size(1440, 900), pixelRatio: 2.0),
+    (
+      name: 'mobile',
+      size: const Size(393, 852),
+      pixelRatio: 3.0,
+      textScale: 1.0,
+    ),
+    (
+      name: 'mobile-large-text',
+      size: const Size(393, 852),
+      pixelRatio: 3.0,
+      textScale: 2.0,
+    ),
+    (
+      name: 'desktop',
+      size: const Size(1440, 900),
+      pixelRatio: 2.0,
+      textScale: 1.0,
+    ),
   ]) {
     testWidgets('captures production Flutter text workspace at ${profile.name}', (
       tester,
@@ -4855,6 +4871,11 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: guildTheme(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(profile.textScale)),
+            child: child!,
+          ),
           home: RepaintBoundary(
             key: captureKey,
             child: AnimatedBuilder(
