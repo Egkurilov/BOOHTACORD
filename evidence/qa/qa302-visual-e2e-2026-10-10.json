@@ -187,9 +187,20 @@
       "ciWiring": {
         "workflow": ".github/workflows/ci-frontend.yaml",
         "step": "Test review-only UI/UX screenshot region deltas",
-        "command": "python3 -m unittest tools.verify.test_uiux_visual_diff",
-        "workflowRun": "NOT_RUN_THIS_CHECKPOINT_SKIP_CI"
+        "command": "python3 -m unittest tools.verify.test_uiux_visual_diff tools.verify.test_uiux_visual_matrix",
+        "workflowRun": "PASS_FRONTEND_STEP_RUN_38067761994"
       }
+    },
+    {
+      "name": "Clean-checkout missing-source-archive verifier regression",
+      "command": "python3 -m unittest tools.verify.test_uiux_visual_matrix",
+      "result": "PASS",
+      "unit_tests_passed": 1,
+      "workflow": ".github/workflows/ci-frontend.yaml",
+      "workflow_run": 38067761994,
+      "workflow_run_url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/38067761994",
+      "commit": "61ac0b7672106aa5dbd8819dcb85f6887046a7a1",
+      "scope": "The frontend test step passed on the PR commit; the missing-archive path is exercised with an isolated temporary catalog."
     }
   ],
   "source_archive": {
@@ -402,15 +413,27 @@
       "workflow": ".github/workflows/ci-frontend.yaml",
       "path": ".out/responsive-shell-browser-results/**",
       "retention_days": 30,
-      "status": "CONFIGURED"
+      "status": "AVAILABLE",
+      "run_id": 38065703202,
+      "head_sha": "72ed7aa44b587618a8cfd3a6a807c89273405515",
+      "artifact_name": "ux-responsive-shell-32309e75a9ecdc32e22cba878f59c750c99c2916",
+      "artifact_id": 11675068418,
+      "size_in_bytes": 207479,
+      "expires_at": "2026-11-09T16:06:15Z"
     },
     "flutter": {
       "workflow": ".github/workflows/ci-flutter.yaml",
       "path": ".out/visual/flutter/**",
       "retention_days": 30,
-      "status": "CONFIGURED_IN_THIS_CHANGE"
+      "status": "AVAILABLE",
+      "run_id": 38065703202,
+      "head_sha": "72ed7aa44b587618a8cfd3a6a807c89273405515",
+      "artifact_name": "uiux-flutter-visual-review-32309e75a9ecdc32e22cba878f59c750c99c2916",
+      "artifact_id": 11675158222,
+      "size_in_bytes": 3996177,
+      "expires_at": "2026-11-09T16:03:54Z"
     },
-    "actions_run_for_current_checkpoint": "NOT_RUN_SKIP_CI_REQUEST"
+    "actions_run_for_current_checkpoint": "PASS_MERGED_PR_306_RUN_38065703202; PR_307_FRONTEND_STEP_PASS_FULL_RUN_IN_PROGRESS"
   },
   "golden_comparison": {
     "status": "NOT_APPROVED_FOR_FULL_CATALOG",
@@ -425,7 +448,7 @@
     "flutter_widget_capture_set": "PASS_25_CAPTURES",
     "deterministic_keyboard/navigation/modal/semantics_smokes": "PASS_SCOPED_BY_UX_ISSUE_SUITES",
     "all_critical_flows_approved_pixel_goldens": "NOT_RUN",
-    "current_github_actions_artifact_bundle": "NOT_RUN_SKIP_CI_REQUEST",
+    "current_github_actions_artifact_bundle": "PASS_WEB_AND_FLUTTER_VISUAL_ARTIFACTS_RUN_38065703202",
     "no_live_production_service_dependency": "PASS_FIXTURE_AND_DISPOSABLE_STACK",
     "issue_state_at_capture": "OPEN",
     "responsive_shell_cross_browser": "PASS_21_CASES_CHROMIUM_WEBKIT_FIREFOX"
@@ -436,7 +459,7 @@
     "The user requested [skip ci] for checkpoint pushes, so no GitHub Actions artifact from this checkpoint can be linked yet; the workflows are configured to retain Web and Flutter capture bundles for 30 days when CI runs.",
     "The 2026-10-10 rerun at 2cdc9b2c passed locally. The commits use [skip ci], so there is still no GitHub Actions artifact bundle for this source revision."
   ],
-  "artifact_storage": "All 37 PNG captures remain ignored local .out files; only the manifest and workflow/test/docs edits will be staged.",
+  "artifact_storage": "Local PNG captures remain ignored in .out. GitHub Actions run 38065703202 retains responsive-shell and Flutter UI/UX review artifacts through 2026-11-09; no generated screenshots were committed.",
   "latest_revalidation": {
     "commit": "a89ef57d",
     "date": "2026-10-10",
@@ -444,13 +467,14 @@
     "web_responsive_shell": "PASS_7_TESTS_12_VIEWPORTS",
     "flutter_visual_capture": "PASS_5_TESTS_25_CAPTURES",
     "current_shared_accessibility_suite": "PASS_47_BROWSER_CASES_EACH_CHROMIUM_WEBKIT_FIREFOX_PLUS_1_AXE",
-    "ci_artifact_run": "NOT_RUN_SKIP_CI_REQUEST",
+    "ci_artifact_run": "PASS_MERGED_PR_306_RUN_38065703202_WEB_AND_FLUTTER_ARTIFACTS",
     "accessibility_cross_browser_runs": {
       "Chromium": "47/47",
       "WebKit": "47/47",
       "Firefox": "47/47",
       "message_action_axe": "1/1 Chrome PASS"
-    }
+    },
+    "clean_checkout_matrix_test": "PASS_FRONTEND_STEP_RUN_38067761994; full PR workflow still running"
   },
   "region_delta_follow_up": {
     "date": "2026-10-10",
