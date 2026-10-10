@@ -23,7 +23,8 @@ describe('screen-share setup dialog', () => {
     expect(html).toContain('Рекомендуемый профиль')
     expect(html).toContain('<strong>1080p · 60 FPS</strong>')
     expect(html).toContain('Текущий выбор: 1080p · 30 FPS')
-    expect(html).toContain('<summary>Дополнительные настройки качества</summary>')
+    expect(html).toContain('<section class="screen-share-quality__settings" aria-labelledby="screen-share-quality-settings-title">')
+    expect(html).toContain('<h4 id="screen-share-quality-settings-title">Качество изображения</h4>')
     expect(html).toContain('720p')
     expect(html).toContain('1080p')
     expect(html).toContain('1440p')
@@ -42,13 +43,13 @@ describe('screen-share setup dialog', () => {
 
   it('keeps motion at 60 FPS while leaving the 1440p option available', async () => {
     const html = await renderToString(createSSRApp(ScreenShareSetupDialog, { initialProfile: 'P1080_60' }))
-    expect(html).toContain('<legend>Частота кадров для плавности</legend>')
+    expect(html).toContain('<span class="screen-share-quality__frame-rate-label">Частота кадров для плавности</span>')
     expect(html).toContain('screen-share-quality__single-value')
     expect(html).toContain('Игры и видео · 60 FPS')
     expect(html).toContain('Документы и код · 15–30 FPS')
     expect(html).toMatch(/<input[^>]*name="screen-share-resolution" value="1440"[^>]*>/)
     expect(html).not.toMatch(/<input[^>]*disabled[^>]*value="1440"[^>]*>/)
-    expect(html).toContain('При выборе 1440p он включится автоматически')
+    expect(html).toContain('Выбор 1440p автоматически переключит сценарий')
   })
 
   it('moves to the compatible text profile when 1440p is selected from motion', () => {
@@ -88,7 +89,7 @@ describe('screen-share setup dialog', () => {
     expect(html).toContain('Изменения применятся к текущему показу.')
     expect(html).toContain('При ухудшении сети качество может временно снижаться.')
     expect(html).toContain('<circle cx="12" cy="12" r="9"></circle>')
-    expect(html).toContain('<details class="screen-share-quality__advanced" open>')
+    expect(html).toContain('<section class="screen-share-quality__settings" aria-labelledby="screen-share-quality-settings-title">')
     expect(html).toContain('Применить')
     expect(html).not.toContain('браузер покажет системный запрос')
   })
@@ -123,6 +124,8 @@ describe('screen-share setup dialog', () => {
     expect(styles).toContain('.screen-share-quality__scenario-title {')
     expect(styles).toContain('white-space: normal;')
     expect(styles).toContain('.screen-share-quality__single-value {')
+    expect(styles).toContain('.screen-share-quality__segments { display: grid;')
+    expect(styles).toContain('box-shadow: inset 0 0 0 1px var(--gc-accent-text);')
     const updating = readFileSync(new URL('../design/design_v2_screen_quality.css', import.meta.url), 'utf8')
     expect(updating).toContain('.screen-share-setup-dialog--updating::backdrop { background: var(--gc-overlay); backdrop-filter: none; }')
     expect(updating).toContain('background: var(--gc-surface)')

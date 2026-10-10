@@ -132,7 +132,6 @@ function start(): void {
           :resolution="resolution"
           v-model:frame-rate="frameRate"
           :mode="mode"
-          :advanced-open="updating"
           @update:resolution="selectResolution"
           @update:mode="selectMode"
         >
