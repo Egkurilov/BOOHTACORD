@@ -5,6 +5,7 @@ This glossary covers user-facing copy reviewed for issue #304. It keeps the Web 
 | Meaning | Preferred UI copy | Usage |
 | --- | --- | --- |
 | Guild | гильдия | Use for the one deployed server/workspace users belong to. Keep channel and guild settings visibly separate. |
+| Compact admin shell title | Админ | Use only as the narrow-shell visual title. Keep the full accessible title “Администрирование” and the admin panel heading. |
 | Group of channels | раздел | Use in navigation, role permissions, ordering, mutation feedback, and audit summaries. The API value remains `CATEGORY`. |
 | Text or voice destination | канал, текстовый канал, голосовой канал | Use “раздел” for its parent and “канал” for the destination itself. |
 | Join a voice channel | Подключиться | Use for the primary join action; describe active state as “Вы подключены”. |

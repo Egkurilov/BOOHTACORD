@@ -1,6 +1,8 @@
 /* Shared settings chrome; panel content, stores and navigation remain independent. */
-.settings-workspace-header { display: flex; height: 64px; min-height: 64px; flex: none; align-items: center; gap: 12px; border-bottom: 1px solid var(--gc-border-subtle); padding: 0 24px; background: var(--gc-content); }
-.settings-workspace-header strong { min-width: 0; overflow: hidden; font-size: 1rem; font-weight: 600; line-height: 1.5rem; text-overflow: ellipsis; white-space: nowrap; }
+.settings-workspace-header { display: flex; height: auto; min-height: 64px; flex: none; align-items: center; gap: 12px; border-bottom: 1px solid var(--gc-border-subtle); padding: 8px 24px; background: var(--gc-content); }
+.settings-workspace-header strong { min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; font-size: var(--gc-text-title); font-weight: var(--gc-weight-semibold); line-height: var(--gc-line-title); }
+.settings-workspace-header .settings-workspace-title-full.gc-sr-only { position: static; width: auto; height: auto; padding: 0; margin: 0; overflow: visible; clip: auto; white-space: normal; border: 0; }
+.settings-workspace-header .settings-workspace-title-compact { display: none; }
 .settings-workspace-icon-wrap { width: 24px; height: 24px; flex: none; color: var(--gc-text-muted); }
 .settings-workspace-header svg { display: block; width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .settings-workspace-close { display: flex; width: 36px; height: 36px; flex: none; align-items: center; justify-content: center; margin-left: auto; border: 0; border-radius: 8px; color: var(--gc-text-secondary); background: transparent; }
@@ -12,8 +14,10 @@
   .settings-workspace-header { padding: 0 20px; }
 }
 @media (max-width: 1023px) {
-  .settings-workspace-header { height: 56px; min-height: 56px; gap: 8px; padding: 0 12px; }
+  .settings-workspace-header { min-height: 56px; gap: 8px; padding: 8px 12px; }
   .settings-workspace-header .workspace-header-toggle--nav, .settings-workspace-close { width: 44px; height: 44px; }
+  .settings-workspace-header .settings-workspace-title-full.gc-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .settings-workspace-header .settings-workspace-title-compact { display: inline; }
   .settings-workspace-header .workspace-header-actions { order: -1; flex: none; }
   .settings-workspace-icon-wrap { display: none; }
 }

@@ -41,6 +41,9 @@
 @media (max-width: 540px) {
   .admin-section-tabs-hint { display: block; }
 }
+@media (min-width: 1024px) {
+  .workspace-main-panel--admin .admin-section-tabs { flex-wrap: wrap; overflow-x: visible; }
+}
 @media (max-width: 1023px) {
   .workspace-main-panel--admin .admin-panel { gap: 20px; padding: 24px 16px 84px; }
   .workspace-main-panel--admin .admin-section-tabs { gap: 0; }

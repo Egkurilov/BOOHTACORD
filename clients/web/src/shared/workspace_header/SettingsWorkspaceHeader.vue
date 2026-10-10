@@ -8,6 +8,7 @@ const labels = {
   profile: { title: 'Настройки', close: 'Закрыть настройки' },
   admin: { title: 'Администрирование', close: 'Закрыть администрирование' },
 }
+const compactTitles = { audio: 'Аудио', profile: 'Настройки', admin: 'Админ' }
 </script>
 
 <template>
@@ -19,7 +20,10 @@ const labels = {
         <template v-else><path d="m9 3 1-1h4l1 3 3 1 3 1v4l-2 2 1 3-3 3-3-1-2 2H8l-1-3-3-1-2-2 1-4 3-1 1-3Z"/><circle cx="12" cy="11" r="3"/></template>
       </svg>
     </span>
-    <strong>{{ labels[panel].title }}</strong>
+    <strong>
+      <span class="settings-workspace-title-full gc-sr-only">{{ labels[panel].title }}</span>
+      <span class="settings-workspace-title-compact" aria-hidden="true">{{ compactTitles[panel] }}</span>
+    </strong>
     <button class="settings-workspace-close" type="button" :aria-label="labels[panel].close" @click="emit('close')">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>

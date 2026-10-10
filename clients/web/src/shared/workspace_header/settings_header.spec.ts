@@ -5,12 +5,13 @@ import SettingsWorkspaceHeader from './SettingsWorkspaceHeader.vue'
 
 describe('shared settings workspace header', () => {
   it.each([
-    ['audio', 'Настройки аудио', 'Закрыть настройки аудио'],
-    ['profile', 'Настройки', 'Закрыть настройки'],
-    ['admin', 'Администрирование', 'Закрыть администрирование'],
-  ] as const)('preserves the %s title and navigation contract', async (panel, title, closeLabel) => {
+    ['audio', 'Настройки аудио', 'Аудио', 'Закрыть настройки аудио'],
+    ['profile', 'Настройки', 'Настройки', 'Закрыть настройки'],
+    ['admin', 'Администрирование', 'Админ', 'Закрыть администрирование'],
+  ] as const)('preserves the %s title and navigation contract', async (panel, title, compactTitle, closeLabel) => {
     const html = await renderToString(createSSRApp(SettingsWorkspaceHeader, { panel, navExpanded: true }))
-    expect(html).toContain(`<strong>${title}</strong>`)
+    expect(html).toContain(`<span class="settings-workspace-title-full gc-sr-only">${title}</span>`)
+    expect(html).toContain(`<span class="settings-workspace-title-compact" aria-hidden="true">${compactTitle}</span>`)
     expect(html).toContain(`aria-label="${closeLabel}"`)
     expect(html).toContain('aria-controls="nav-sidebar" aria-expanded="true"')
     expect(html).not.toContain('members-panel')

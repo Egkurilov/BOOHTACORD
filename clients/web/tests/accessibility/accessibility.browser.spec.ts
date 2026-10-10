@@ -146,6 +146,17 @@ test('browser text scaling to 200 percent reflows channel, admin, and settings c
     await page.setViewportSize({ width, height: 844 })
     await expectNoDocumentOverflow()
     await expect(page.getByRole('navigation', { name: 'Разделы администрирования' }).getByRole('button', { name: 'Участники' })).toBeVisible()
+    if (width >= 1024) {
+      const tabs = page.locator('.admin-section-tabs')
+      const tabsBounds = await tabs.boundingBox()
+      expect(tabsBounds).not.toBeNull()
+      for (const tab of await tabs.getByRole('button').all()) {
+        const bounds = await tab.boundingBox()
+        expect(bounds).not.toBeNull()
+        expect(bounds?.x ?? 0).toBeGreaterThanOrEqual(tabsBounds?.x ?? 0)
+        expect((bounds?.x ?? 0) + (bounds?.width ?? 0)).toBeLessThanOrEqual((tabsBounds?.x ?? 0) + (tabsBounds?.width ?? 0))
+      }
+    }
   }
 
   await page.goto('/')
@@ -166,10 +177,42 @@ test('browser text scaling to 200 percent reflows channel, admin, and settings c
     await expectNoDocumentOverflow()
     if (width <= 600) {
       await expect(page.getByRole('button', { name: 'Действия с сообщением' })).toBeVisible()
+      const message = await page.locator('.message-item p').first().boundingBox()
+      const actions = await page.getByRole('button', { name: 'Действия с сообщением' }).boundingBox()
+      expect(message).not.toBeNull()
+      expect(actions).not.toBeNull()
+      expect((message?.x ?? 0) + (message?.width ?? 0)).toBeLessThanOrEqual(actions?.x ?? 0)
     } else {
       await page.locator('.message-item').hover()
       await expect(page.getByRole('button', { name: 'Ответить' })).toBeVisible()
     }
+  }
+
+  await mountProductionComponent(page, '/src/shared/workspace_header/SettingsWorkspaceHeader.vue', {
+    panel: 'admin',
+    navExpanded: false,
+  })
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%' })
+  const adminTitleFull = page.locator('.settings-workspace-title-full')
+  const adminTitleCompact = page.locator('.settings-workspace-title-compact')
+  await expect(adminTitleFull).toHaveText('Администрирование')
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 844 })
+    const adminTitle = width <= 1023 ? adminTitleCompact : adminTitleFull
+    await expect(adminTitle).toBeVisible()
+    const bounds = await adminTitle.evaluate(element => {
+      const text = element as HTMLElement
+      const titleRect = text.getBoundingClientRect()
+      const headerRect = text.parentElement!.getBoundingClientRect()
+      return {
+        clientWidth: text.clientWidth,
+        scrollWidth: text.scrollWidth,
+        titleBottom: titleRect.bottom,
+        headerBottom: headerRect.bottom,
+      }
+    })
+    expect(bounds.scrollWidth, JSON.stringify(bounds)).toBeLessThanOrEqual(bounds.clientWidth)
+    expect(bounds.titleBottom, JSON.stringify(bounds)).toBeLessThanOrEqual(bounds.headerBottom + 1)
   }
 })
 

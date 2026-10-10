@@ -33,8 +33,13 @@ export async function openNavigation(page) {
   }
   const guildHeader = page.locator('.guild-header')
   if (!(await guildHeader.isVisible())) {
-    await page.getByRole('button', { name: 'Открыть навигацию', exact: true }).click()
-    await expect(guildHeader).toBeVisible()
+    const viewport = page.viewportSize() ?? { width: 320, height: 600 }
+    if (viewport.width >= 1024) {
+      await expect(guildHeader).toBeVisible()
+    } else {
+      await page.getByRole('button', { name: 'Открыть навигацию', exact: true }).click()
+      await expect(guildHeader).toBeVisible()
+    }
   }
 }
 export async function channel(page, channelName = 'WelcomeLab') {
