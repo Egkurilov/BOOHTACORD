@@ -31,6 +31,23 @@ extension WorkspaceConversationStateWorkspaceScheduleVisibleReadAction
           !workspaceScroll.hasClients) {
         return;
       }
+      final restoreOffset = workspaceRestoreScrollOffset;
+      if (restoreOffset != null && !workspaceFollowLatest) {
+        final position = workspaceScroll.position;
+        final target = restoreOffset
+            .clamp(position.minScrollExtent, position.maxScrollExtent)
+            .toDouble();
+        workspaceRestoreScrollOffset = null;
+        if ((position.pixels - target).abs() > 0.5) {
+          position.jumpTo(target);
+        }
+        workspaceRememberScrollPosition();
+        workspaceScheduleVisibleRead(
+          renderedMessages,
+          correctLatestLayout: correctLatestLayout,
+        );
+        return;
+      }
       if (correctLatestLayout &&
           workspaceFollowLatest &&
           workspaceScroll.position.extentAfter > 1) {

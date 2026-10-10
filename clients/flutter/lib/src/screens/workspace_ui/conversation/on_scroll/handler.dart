@@ -14,6 +14,7 @@ extension WorkspaceConversationStateWorkspaceOnScrollAction
   void executeWorkspaceConversationStateWorkspaceOnScroll() {
     if (!workspaceScroll.hasClients) return;
     workspaceFollowLatest = workspaceScroll.position.extentAfter <= 48;
+    workspaceRememberScrollPosition();
     workspaceScheduleVisibleRead(widget.state.messages);
   }
 }

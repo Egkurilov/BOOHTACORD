@@ -11,6 +11,7 @@ import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/workspace_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/services/composer_draft_memory.dart';
+import 'package:boohtacord_desktop/src/services/conversation_scroll_memory.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:boohtacord_desktop/src/widgets/audio_device_check.dart';
@@ -31,7 +32,10 @@ import 'uiux_2026/capture_support.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
-  setUp(ComposerDraftMemory.clear);
+  setUp(() {
+    ComposerDraftMemory.clear();
+    ConversationScrollMemory.clear();
+  });
 
   testWidgets('volume menu aligns with the avatar on macOS and Android', (
     tester,
@@ -490,6 +494,78 @@ void main() {
       tester.widget<TextField>(composer).controller!.text,
       'неотправленный текст',
     );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('workspace resize preserves the channel scroll and voice state', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi(withHistory: true, historyCount: 30));
+    await state.initialize();
+    state
+      ..selectedChannel = _PortraitApi.channel
+      ..voiceChannel = _PortraitApi.voiceChannel
+      ..voicePhase = VoicePhase.connected;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final messageList = find.byKey(const ValueKey('text-channel-messages'));
+    double messageScrollOffset() => tester
+        .state<ScrollableState>(
+          find
+              .descendant(of: messageList, matching: find.byType(Scrollable))
+              .first,
+        )
+        .position
+        .pixels;
+
+    await tester.drag(messageList, const Offset(0, 420));
+    await tester.pumpAndSettle();
+    final desktopOffset = messageScrollOffset();
+    expect(desktopOffset, greaterThan(0));
+    expect(
+      tester
+          .state<ScrollableState>(
+            find
+                .descendant(of: messageList, matching: find.byType(Scrollable))
+                .first,
+          )
+          .position
+          .extentAfter,
+      greaterThan(48),
+    );
+    final composer = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Написать сообщение…',
+    );
+    await tester.enterText(composer, 'Черновик после resize');
+    await tester.pump();
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expect(state.selectedChannel?.id, _PortraitApi.channel.id);
+    expect(state.voiceChannel, _PortraitApi.voiceChannel);
+    expect(state.voicePhase, VoicePhase.connected);
+    expect(messageScrollOffset(), closeTo(desktopOffset, 24));
+    expect(
+      tester.widget<TextField>(composer).controller!.text,
+      'Черновик после resize',
+    );
+    expect(find.byTooltip('Выйти из голосового канала'), findsOneWidget);
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();

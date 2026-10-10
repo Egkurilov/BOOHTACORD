@@ -1,4 +1,5 @@
 import '../../../services/composer_draft_memory.dart';
+import '../../../services/conversation_scroll_memory.dart';
 import 'controller.dart';
 
 extension ConversationCleanup on ConversationController {
@@ -7,6 +8,7 @@ extension ConversationCleanup on ConversationController {
     cacheGeneration++;
     invalidateSelection();
     ComposerDraftMemory.clear();
+    ConversationScrollMemory.clear();
     clearText();
     clearDirect();
     sending = false;

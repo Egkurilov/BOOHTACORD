@@ -16,6 +16,7 @@ extension WorkspaceConversationStateDisposeAction
     on WorkspaceConversationStateContext {
   void executeWorkspaceConversationStateDispose() {
     workspaceRememberDraft();
+    workspaceRememberScrollPosition();
     workspaceController.removeListener(workspaceRememberDraft);
     WidgetsBinding.instance.removeObserver(this);
     workspaceController.dispose();
