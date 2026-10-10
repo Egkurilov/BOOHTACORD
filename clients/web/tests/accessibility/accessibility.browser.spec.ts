@@ -784,6 +784,54 @@ test('screen-share setup shows the recommended profile before progressive qualit
   }
 })
 
+test('screen-share selectors fit their options and allow the 1440p text profile', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 637, height: 584 })
+  await mountProductionComponent(page, '/src/voice/ScreenShareSetupDialog.vue', { initialProfile: 'P1080_60' })
+
+  const dialog = page.getByRole('dialog', { name: 'Демонстрация экрана' })
+  const header = dialog.locator('.screen-share-setup__header')
+  const body = dialog.locator('.screen-share-setup__body')
+  const footer = dialog.locator('.screen-share-setup__footer')
+
+  await expect(header).toBeInViewport({ ratio: 0.99 })
+  await expect(footer).toBeInViewport({ ratio: 0.99 })
+  await expect(body).toHaveCSS('overflow-y', 'auto')
+  expect(await body.evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true)
+  await dialog.locator('.screen-share-quality__advanced > summary').click()
+
+  const groups = dialog.locator('.screen-share-quality__row')
+  const readSelectorLayout = () => groups.evaluateAll(elements => elements.map(field => {
+    const selector = field.querySelector<HTMLElement>('.screen-share-quality__segments')!
+    const legend = field.querySelector('legend')!
+    const selectorBox = selector.getBoundingClientRect()
+    const legendBox = legend.getBoundingClientRect()
+    const columns = getComputedStyle(selector).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+    const labelsFit = [...selector.querySelectorAll('span')].every(label => label.scrollWidth <= label.clientWidth)
+    return { columns, labelsFit, legendAboveSelector: legendBox.bottom <= selectorBox.top + 1 }
+  }))
+  const motionLayout = await readSelectorLayout()
+  expect(motionLayout.map(group => group.columns)).toEqual([2, 3, 1])
+  expect(motionLayout.every(group => group.labelsFit && group.legendAboveSelector)).toBe(true)
+
+  const resolution = dialog.getByRole('radio', { name: '1440p' })
+  await expect(resolution).toBeDisabled()
+  await expect(dialog.getByText(/1440p60 пока недоступно/)).toBeVisible()
+  await expectAxeClear(page, '.screen-share-setup-dialog')
+  await dialog.getByRole('radio', { name: 'Текст — документы и код' }).check()
+  await expect(resolution).toBeEnabled()
+  const textLayout = await readSelectorLayout()
+  expect(textLayout.map(group => group.columns)).toEqual([2, 3, 2])
+  expect(textLayout.every(group => group.labelsFit && group.legendAboveSelector)).toBe(true)
+  await resolution.check()
+  await expect(dialog.getByText('Текущий выбор: 1440p · 30 FPS', { exact: true })).toBeVisible()
+  await expectAxeClear(page, '.screen-share-setup-dialog')
+  await page.screenshot({ path: testInfo.outputPath('screen-share-selector-layout-637x584.png') })
+
+  const layout = await Promise.all([header, body, footer].map(element => element.boundingBox()))
+  expect(layout[0]!.y + layout[0]!.height).toBeLessThanOrEqual(layout[1]!.y + 1)
+  expect(layout[1]!.y + layout[1]!.height).toBeLessThanOrEqual(layout[2]!.y + 1)
+})
+
 test('WCAG smoke covers screen share setup and destructive confirmation dialogs', async ({ page }) => {
   await mountProductionComponent(page, '/src/voice/ScreenShareSetupDialog.vue', { initialProfile: 'P1080_30' })
   await expect(page.getByRole('dialog', { name: 'Демонстрация экрана' })).toBeVisible()
