@@ -41,6 +41,31 @@
       "command": "cd clients/flutter && flutter analyze --no-pub test/admin_accessibility test/admin_media_widget_test.dart test/theme_tokens_test.dart test/workspace_screen_test.dart test/confirmation_dialog_test.dart test/screen_setup/dialog_test.dart test/profile_screen_test.dart test/voice_connection_badge_test.dart test/voice_shortcut_preferences_test.dart test/features/voice/prejoin/header_status_test.dart",
       "result": "PASS",
       "observation": "No issues found; 10 items analyzed."
+    },
+    {
+      "name": "Flutter voice-dock microphone action semantics",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart --plain-name 'voice dock reports accurate microphone actions in all states'",
+      "result": "PASS",
+      "tests_passed": 1,
+      "revision": "ef6990e2",
+      "before_fix": "The new assertion failed: an unavailable microphone was exposed as ‘Выключить микрофон’.",
+      "observations": [
+        "The unavailable-microphone control exposes the retry action as its semantic label and retains its tap action.",
+        "In push-to-talk mode, the label states that the microphone is controlled by push-to-talk and the button has no tap action."
+      ],
+      "full_workspace_suite": {
+        "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart",
+        "result": "PASS",
+        "tests_passed": 90,
+        "revision": "ef6990e2"
+      },
+      "analyzer": {
+        "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/workspace_ui/voice_dock/build/connected_controls/handler.dart test/workspace_screen_test.dart",
+        "result": "PASS",
+        "observation": "No issues found."
+      },
+      "test_stability_note": "The test explicitly initializes VAD and microphone state so prior workspace tests cannot leave it in push-to-talk mode.",
+      "limitation": "Flutter widget semantics are not physical TalkBack, VoiceOver or Narrator acceptance."
     }
   ],
   "contrast": {

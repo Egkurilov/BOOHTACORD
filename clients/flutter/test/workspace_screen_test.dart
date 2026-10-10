@@ -2632,7 +2632,7 @@ void main() {
     state.dispose();
   });
 
-  testWidgets('voice dock announces reconnect and deafen transition states', (
+  testWidgets('voice dock reports accurate microphone actions in all states', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -2644,6 +2644,9 @@ void main() {
     state.selectedChannel = _PortraitApi.voiceChannel;
     state.voiceChannel = _PortraitApi.voiceChannel;
     state.voicePhase = VoicePhase.connected;
+    state.audioActivationMode = AudioActivationMode.vad;
+    state.microphoneMuted = false;
+    state.microphoneUnavailable = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -2714,6 +2717,42 @@ void main() {
     );
     expect(microphoneButton.label, 'Выключить микрофон');
     expect(microphoneButton.flagsCollection.isToggled, Tristate.isTrue);
+    state.microphoneUnavailable = true;
+    state.notifyListeners();
+    await tester.pump();
+    final unavailableMicrophoneButton = tester.getSemantics(
+      find.byTooltip('Микрофон недоступен · повторить включение'),
+    );
+    expect(
+      unavailableMicrophoneButton.label,
+      'Повторить включение микрофона — микрофон недоступен',
+    );
+    expect(
+      unavailableMicrophoneButton.getSemanticsData().hasAction(
+        SemanticsAction.tap,
+      ),
+      isTrue,
+    );
+    state.microphoneUnavailable = false;
+    state.audioActivationMode = AudioActivationMode.ptt;
+    state.notifyListeners();
+    await tester.pump();
+    final pushToTalkMicrophoneButton = tester.getSemantics(
+      find.byTooltip('Микрофон управляется push-to-talk'),
+    );
+    expect(
+      pushToTalkMicrophoneButton.label,
+      'Микрофон управляется push-to-talk',
+    );
+    expect(
+      pushToTalkMicrophoneButton.getSemanticsData().hasAction(
+        SemanticsAction.tap,
+      ),
+      isFalse,
+    );
+    state.audioActivationMode = AudioActivationMode.vad;
+    state.notifyListeners();
+    await tester.pump();
     final deafenSemantics = tester.getSemantics(
       find.byTooltip('Выключить удалённый звук'),
     );
