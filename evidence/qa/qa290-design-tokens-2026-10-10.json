@@ -2,9 +2,9 @@
   "id": "QA-290-DESIGN-TOKENS",
   "date": "2026-10-10",
   "task": "UIUX-2026 issue #290 — Design V2 tokens, typography and visual hierarchy",
-  "source_revision": "077f62a524ced029282e1c895a1bd8ca97b89a50",
-  "working_tree_changes": true,
-  "working_tree_change_note": "The only uncommitted change is an unrelated .gitignore addition; tested Web/QA sources match source_revision.",
+  "source_revision": "d856ecac6c9397ae99468c1e6c9492fec4d35e71",
+  "working_tree_changes": false,
+  "working_tree_change_note": "After screenshots were captured from source d856ecac. Before screenshots use clients/web/src from pre-UIUX base 674fb79c over the same current API and QA harness source.",
   "source_archive": {
     "path": "artifacts/ui-ux-screenshots.zip",
     "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c",
@@ -184,12 +184,137 @@
     "The current channel list shows favorite stars inside their rows; the reported .channel-favorite-toggle overflow has dedicated responsive-shell regression coverage in QA-302.",
     "Desktop channel-participants.png is the same capture as channel-text.png because the member rail is already visible in the desktop layout; the separate mobile participant drawer capture is available at .out/client-lifecycle/393/channel-participants.png.",
     "Source and after data differ; review covers layout, hierarchy and control placement, not pixel identity or content parity.",
-    "The latest desktop/mobile member screenshot review and named-region delta measurements are recorded separately under region_delta_follow_up; both remain review-only without an approved golden."
+    "The latest desktop/mobile member screenshot review and named-region delta measurements are recorded separately under region_delta_follow_up; both remain review-only without an approved golden.",
+    "Source-matched pre-UIUX screenshots for channel, guild members and guild settings were captured at desktop and mobile viewports and visually reviewed against d856 after captures; see baseline_comparison. The pre-UIUX capture is partial because legacy URL and newer lifecycle selectors are unavailable."
   ],
   "limitations": [
     "The independent desktop guild-settings before image remains blocked because its source PNG is an exact duplicate of the Members image (D11). The archive is preserved unchanged.",
     "The full-stack browser scenario is automated acceptance on Chrome, not real-user task measurement, cross-browser acceptance, or physical device acceptance.",
-    "Captured PNGs and extracted archive images remain untracked in ignored .out and /private/tmp paths."
+    "Captured PNGs and extracted archive images remain untracked in ignored .out and /private/tmp paths.",
+    "The pre-UIUX screenshot run is capture-only: channel deep-link/reload and newer admin result markers were skipped, then the full flow stopped at a legacy session-dialog selector. It does not replace complete acceptance evidence."
   ],
-  "status": "PARTIAL — current-source desktop/mobile Web lifecycle and selected screenshot comparisons pass; desktop guild-settings baseline (D11), complete Flutter before/after review and physical/device/system-text acceptance remain open."
+  "status": "PARTIAL — current-source desktop/mobile Web lifecycle and selected screenshot comparisons pass; pre-UIUX desktop/mobile captures are visually reviewed but capture-only; desktop guild-settings archive baseline (D11), Flutter before/after review and physical/device/system-text acceptance remain open.",
+  "baseline_comparison": {
+    "status": "CAPTURE_ONLY_PARTIAL",
+    "frontend_before_revision": "674fb79ca57ce7207bd75ce6e8dcd3d86b5deee6",
+    "frontend_after_revision": "d856ecac6c9397ae99468c1e6c9492fec4d35e71",
+    "capture_harness_and_backend_revision": "d856ecac6c9397ae99468c1e6c9492fec4d35e71",
+    "runtime": "Google Chrome 154.0.8037.98; disposable Go API, PostgreSQL and Tempo; synthetic accounts and seeded UI samples.",
+    "viewports": {
+      "desktop": {
+        "css": "1440x900",
+        "dpr": 2,
+        "raster": "2880x1800"
+      },
+      "mobile": {
+        "css": "393x852",
+        "dpr": 3,
+        "touch": true,
+        "raster": "1179x2556"
+      }
+    },
+    "harness_adjustments": [
+      "The baseline frontend predates channel URL/deep-link restoration, so URL and reload assertions were skipped for this capture.",
+      "Assertions for newer admin result-count markers were skipped; visible section navigation and screenshot capture remained enabled.",
+      "The full lifecycle later stopped at a session-dialog selector mismatch after the target screenshots had been written. This run is capture-only and does not establish lifecycle, telemetry, persistence or release acceptance."
+    ],
+    "comparisons": [
+      {
+        "screen": "Channel conversation",
+        "viewport": "desktop",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/1440/channel-text.png",
+          "sha256": "596eb0f10846ce0d21d2dd6edc9a13dd20aa6d3061596878403d1ebcb7e768cc",
+          "raster": "2880x1800"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/1440/channel-text.png",
+          "sha256": "04e3053e7eba2d7e995f657aae5c7391a071b343f05a7b8a5216dc32e0ffa386",
+          "raster": "2880x1800"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Guild members",
+        "viewport": "desktop",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/1440/guild-members.png",
+          "sha256": "4ff27837fa66fdbcde1d8a78e27d48db849256a4d771f05e5ef22ff24e008250",
+          "raster": "2880x1800"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/1440/guild-members.png",
+          "sha256": "828e1dbed19895ab4b526393e866ffe2cfdf40a136e78dd144a7f4493c14bb4e",
+          "raster": "2880x1800"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Guild settings",
+        "viewport": "desktop",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/1440/guild-settings.png",
+          "sha256": "8eb7a20c57c2c2578fadc572dc39dc3907de25366f6f679706f342426e9260e6",
+          "raster": "2880x1800"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/1440/guild-settings.png",
+          "sha256": "56874fc0803b9009d7147eac531eff49c34314ccd91dd10e137a741c9690123d",
+          "raster": "2880x1800"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Channel conversation",
+        "viewport": "mobile",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/393/channel-text.png",
+          "sha256": "22f6bac4df50fa0fdbbf6b1100cf694b510e8e8d8f7015b1ec4ea0b779c7a09e",
+          "raster": "1179x2556"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/393/channel-text.png",
+          "sha256": "58578830195fccb253cef980118b34df78f999afb9e23931c9a1067b474fa309",
+          "raster": "1179x2556"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Guild members",
+        "viewport": "mobile",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/393/guild-members.png",
+          "sha256": "3cc0e1c404d1abb5d5113ffe691837a3bce427028e99c7350631b3506986dd80",
+          "raster": "1179x2556"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/393/guild-members.png",
+          "sha256": "4633d1611a829fe0ea92281baa3b3e07db40e65526fb8b9b11f2d213e67f4f19",
+          "raster": "1179x2556"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Guild settings",
+        "viewport": "mobile",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/393/guild-settings.png",
+          "sha256": "2b62b0ed9096d74216ebe5f042147991ffd7a492f47d89dd1214613fcd9bb68e",
+          "raster": "1179x2556"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/393/guild-settings.png",
+          "sha256": "6bf95c0266e9d020d1af1885479af5c6c53f4ad8ef9448b9854f0bcc14a53093",
+          "raster": "1179x2556"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      }
+    ],
+    "review_notes": [
+      "All before and after screenshots were visually reviewed at matching CSS viewports and DPR; fixture-backed dynamic data varies between runs.",
+      "The mobile after view includes an explicit horizontal-tabs hint and compact Admin title; the old baseline lacks those layout cues.",
+      "Desktop guild members and channel participants share a view because the desktop member rail is already visible.",
+      "These records support visual review only and do not claim pixel parity or user acceptance."
+    ]
+  }
 }
