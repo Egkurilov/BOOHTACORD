@@ -62,11 +62,33 @@
     "flutter_system_back_swipes_voice_focus": "PASS — target-platform widget scenarios recorded in docs/design/UIUX_2026_MOBILE_NAVIGATION.md",
     "physical_navigation_and_livekit": "NOT_RUN — tracked under #303"
   },
+  "channel_route_revalidation": {
+    "date": "2026-10-10",
+    "code_revision": "b69b635c",
+    "environment": "Google Chrome 154.0.8037.98; Playwright fixture mounts the production useWorkspaceNavigation composable and Pinia stores with a synthetic authorized topology.",
+    "checks": [
+      {
+        "name": "Workspace location and drawer-history unit tests",
+        "command": "npm test -- --run src/workspace/workspace_location.spec.ts src/workspace/workspace_drawer_history.spec.ts",
+        "result": "PASS — 14/14"
+      },
+      {
+        "name": "Responsive shell browser suite",
+        "command": "CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:responsive-shell",
+        "result": "PASS — 11/11, including direct channel load/refresh, inaccessible channel fallback, browser Back/Forward, and drawer selection history."
+      },
+      {
+        "name": "Web production build",
+        "command": "VITE_PUBLIC_ORIGIN='https://voice.example.test' npm run build",
+        "result": "PASS — existing LiveKit chunk and bundle-size warnings remain."
+      }
+    ]
+  },
   "limitations": [
     "This is production Web in Chrome, not physical iOS Safari, Android system Back, or a native Flutter device run.",
     "The disposable stack has no SFU; no LiveKit-call preservation is claimed by this lifecycle.",
-    "The Web app has no direct channel-route mapping, so channel URL refresh behavior remains unsupported and is not marked PASS.",
+    "Channel-route browser tests use a synthetic authorized topology; authenticated production-API direct-link startup is not claimed by this follow-up.",
     "VoiceOver/TalkBack acceptance remains NOT_RUN under #301/#303."
   ],
-  "status": "PASS_SCOPED_DESKTOP_AND_MOBILE_WEB_CONTEXT_HEADERS; physical/device, direct-route and screen-reader criteria remain open"
+  "status": "PASS_AUTOMATED_CHANNEL_ROUTE_AND_SCOPED_DESKTOP_AND_MOBILE_WEB_CONTEXT_HEADERS; physical/device and screen-reader criteria remain open"
 }
