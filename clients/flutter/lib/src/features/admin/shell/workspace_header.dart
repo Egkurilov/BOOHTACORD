@@ -23,6 +23,7 @@ class AdminWorkspaceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
     final buttonConstraints = BoxConstraints.tightFor(
       width: compact ? 44 : 36,
       height: compact ? 44 : 36,
@@ -68,8 +69,9 @@ class AdminWorkspaceHeader extends StatelessWidget {
                   child: Semantics(
                     key: const ValueKey('admin-screen-title'),
                     header: true,
-                    child: const Text(
-                      'Администрирование',
+                    child: Text(
+                      largeText ? 'Админ-панель' : 'Администрирование',
+                      semanticsLabel: 'Администрирование',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

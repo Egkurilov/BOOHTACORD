@@ -451,6 +451,8 @@ void main() {
         find.textContaining('@login_with_an_extremely_long_identifier'),
         findsOneWidget,
       );
+      expect(find.text('Роль'), findsOneWidget);
+      expect(find.textContaining('Роль: login_with_'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
