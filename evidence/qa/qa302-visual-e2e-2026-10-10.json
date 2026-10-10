@@ -5,7 +5,7 @@
   "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/302",
   "source_revision": "a89ef57d",
   "working_tree_changes": true,
-  "status": "AUTOMATED_SCOPED_PASS_REVIEW_ONLY_REGION_DELTAS_RECORDED_GOLDEN_AND_CI_ARTIFACT_RUN_PENDING",
+  "status": "AUTOMATED_SCOPED_PASS_REVIEW_ONLY_REGION_DELTAS_RECORDED_CI_ARTIFACTS_AVAILABLE_GOLDEN_APPROVAL_PENDING",
   "checks": [
     {
       "name": "Pinned source screenshot/catalog verifier",
@@ -187,8 +187,24 @@
       "ciWiring": {
         "workflow": ".github/workflows/ci-frontend.yaml",
         "step": "Test review-only UI/UX screenshot region deltas",
-        "command": "python3 -m unittest tools.verify.test_uiux_visual_diff",
-        "workflowRun": "NOT_RUN_THIS_CHECKPOINT_SKIP_CI"
+        "command": "python3 -m unittest tools.verify.test_uiux_visual_diff tools.verify.test_uiux_visual_matrix",
+        "workflowRun": "PASS_FRONTEND_STEP_RUN_38067761994"
+      }
+    },
+    {
+      "name": "Clean-checkout missing-source-archive verifier regression",
+      "command": "python3 -m unittest tools.verify.test_uiux_visual_matrix",
+      "result": "PASS",
+      "unit_tests_passed": 1,
+      "workflow": ".github/workflows/ci-frontend.yaml",
+      "workflow_run": 38068041885,
+      "workflow_run_url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/38068041885",
+      "commit": "8b46e4e033b8c78d08590023ba2070ec7ff4f8e5",
+      "scope": "The full PR workflow passed on the final code commit; the frontend job ran the missing-archive path with an isolated temporary catalog.",
+      "previous_frontend_step_run": {
+        "workflow_run": 38067761994,
+        "commit": "61ac0b7672106aa5dbd8819dcb85f6887046a7a1",
+        "result": "PASS_FRONTEND_STEP"
       }
     }
   ],
@@ -402,15 +418,61 @@
       "workflow": ".github/workflows/ci-frontend.yaml",
       "path": ".out/responsive-shell-browser-results/**",
       "retention_days": 30,
-      "status": "CONFIGURED"
+      "status": "AVAILABLE",
+      "run_id": 38068041885,
+      "head_sha": "8b46e4e033b8c78d08590023ba2070ec7ff4f8e5",
+      "artifact_name": "ux-responsive-shell-d4fbb8348e5266f5aef4ecfd425bb38e4cca1212",
+      "artifact_id": 11675652573,
+      "size_in_bytes": 207479,
+      "expires_at": "2026-11-09T16:40:42Z"
     },
     "flutter": {
       "workflow": ".github/workflows/ci-flutter.yaml",
       "path": ".out/visual/flutter/**",
       "retention_days": 30,
-      "status": "CONFIGURED_IN_THIS_CHANGE"
+      "status": "AVAILABLE",
+      "run_id": 38068041885,
+      "head_sha": "8b46e4e033b8c78d08590023ba2070ec7ff4f8e5",
+      "artifact_name": "uiux-flutter-visual-review-d4fbb8348e5266f5aef4ecfd425bb38e4cca1212",
+      "artifact_id": 11675692462,
+      "size_in_bytes": 3996967,
+      "expires_at": "2026-11-09T16:39:07Z"
     },
-    "actions_run_for_current_checkpoint": "NOT_RUN_SKIP_CI_REQUEST"
+    "actions_run_for_current_checkpoint": "PASS_PR_307_RUN_38068041885",
+    "latest_run": {
+      "workflow": "CI",
+      "run_id": 38068041885,
+      "url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/38068041885",
+      "branch": "codex/uiux-289-ci-followup",
+      "commit": "8b46e4e033b8c78d08590023ba2070ec7ff4f8e5",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "changes",
+          "result": "success"
+        },
+        {
+          "name": "contracts",
+          "result": "success"
+        },
+        {
+          "name": "frontend",
+          "result": "success"
+        },
+        {
+          "name": "backend",
+          "result": "success"
+        },
+        {
+          "name": "flutter",
+          "result": "success"
+        },
+        {
+          "name": "windows",
+          "result": "success"
+        }
+      ]
+    }
   },
   "golden_comparison": {
     "status": "NOT_APPROVED_FOR_FULL_CATALOG",
@@ -425,7 +487,7 @@
     "flutter_widget_capture_set": "PASS_25_CAPTURES",
     "deterministic_keyboard/navigation/modal/semantics_smokes": "PASS_SCOPED_BY_UX_ISSUE_SUITES",
     "all_critical_flows_approved_pixel_goldens": "NOT_RUN",
-    "current_github_actions_artifact_bundle": "NOT_RUN_SKIP_CI_REQUEST",
+    "current_github_actions_artifact_bundle": "PASS_WEB_AND_FLUTTER_VISUAL_ARTIFACTS_RUN_38068041885",
     "no_live_production_service_dependency": "PASS_FIXTURE_AND_DISPOSABLE_STACK",
     "issue_state_at_capture": "OPEN",
     "responsive_shell_cross_browser": "PASS_21_CASES_CHROMIUM_WEBKIT_FIREFOX"
@@ -433,24 +495,27 @@
   "limitations": [
     "Only the six admin screens listed above have reviewed source-sized full-stack comparisons; the other catalog slots do not yet have source-backed full-app after captures.",
     "Source screenshots are audit evidence, not approved goldens. desktop-guild-settings.png is byte-identical to desktop-guild-members.png.",
-    "The user requested [skip ci] for checkpoint pushes, so no GitHub Actions artifact from this checkpoint can be linked yet; the workflows are configured to retain Web and Flutter capture bundles for 30 days when CI runs.",
+    "Earlier [skip ci] checkpoints produced no GitHub Actions bundle. PR #307 now has a full successful CI run and retained Web/Flutter review artifacts; the run does not approve pixel goldens.",
     "The 2026-10-10 rerun at 2cdc9b2c passed locally. The commits use [skip ci], so there is still no GitHub Actions artifact bundle for this source revision."
   ],
-  "artifact_storage": "All 37 PNG captures remain ignored local .out files; only the manifest and workflow/test/docs edits will be staged.",
+  "artifact_storage": "Local PNG captures remain ignored in .out. GitHub Actions CI run 38068041885 on PR #307 retains the Web responsive-shell bundle (artifact 11675652573, 207,479 bytes) and Flutter UI/UX review bundle (artifact 11675692462, 3,996,967 bytes) through 2026-11-09.",
   "latest_revalidation": {
-    "commit": "a89ef57d",
+    "commit": "8b46e4e033b8c78d08590023ba2070ec7ff4f8e5",
     "date": "2026-10-10",
     "source_catalog": "PASS_41_ENTRIES",
     "web_responsive_shell": "PASS_7_TESTS_12_VIEWPORTS",
     "flutter_visual_capture": "PASS_5_TESTS_25_CAPTURES",
     "current_shared_accessibility_suite": "PASS_47_BROWSER_CASES_EACH_CHROMIUM_WEBKIT_FIREFOX_PLUS_1_AXE",
-    "ci_artifact_run": "NOT_RUN_SKIP_CI_REQUEST",
+    "ci_artifact_run": "PASS_PR_307_RUN_38068041885_WEB_AND_FLUTTER_ARTIFACTS",
     "accessibility_cross_browser_runs": {
       "Chromium": "47/47",
       "WebKit": "47/47",
       "Firefox": "47/47",
       "message_action_axe": "1/1 Chrome PASS"
-    }
+    },
+    "clean_checkout_matrix_test": "PASS_FULL_WORKFLOW_RUN_38068041885",
+    "ci_artifact_run_url": "https://github.com/Egkurilov/BOOHTACORD/actions/runs/38068041885",
+    "clean_checkout_matrix_commit": "8b46e4e033b8c78d08590023ba2070ec7ff4f8e5"
   },
   "region_delta_follow_up": {
     "date": "2026-10-10",
