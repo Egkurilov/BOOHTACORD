@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { ux2026ReferenceViewports, ux2026RequiredViewports, ux2026ShellViewports } from '../../tests/uiux_2026/viewport_matrix'
+import { ux2026ReferenceViewports, ux2026RequiredViewports, ux2026ShellViewports } from './viewport_matrix'
 
 type MatrixEntry = {
   id: string
@@ -44,7 +44,7 @@ type VisualMatrix = {
 }
 
 const repoRoot = resolve(fileURLToPath(new URL('../../../..', import.meta.url)))
-const matrixPath = new URL('../../tests/uiux_2026/visual_matrix.json', import.meta.url)
+const matrixPath = new URL('./visual_matrix.json', import.meta.url)
 
 describe('UIUX-2026 visual regression inventory', () => {
   it('runs the required viewport matrix and captures each required target size', () => {
@@ -61,7 +61,8 @@ describe('UIUX-2026 visual regression inventory', () => {
     const matrix = JSON.parse(readFileSync(matrixPath, 'utf8')) as VisualMatrix
 
     expect(matrix.issue).toBe('Egkurilov/BOOHTACORD#289')
-    expect(matrix.sourceArchiveStatus).toContain('41 PNG entries verified')
+    expect(matrix.sourceArchiveStatus).toContain('41 PNG entries verified when the ignored archive is supplied')
+    expect(matrix.sourceArchiveStatus).toContain('not tracked in clean checkouts')
     expect(matrix.expectedCount).toBe(41)
     expect(matrix.screens).toHaveLength(41)
     expect(matrix.screens.filter(({ surface }) => surface === 'desktop')).toHaveLength(18)
@@ -70,7 +71,7 @@ describe('UIUX-2026 visual regression inventory', () => {
     expect(new Set(matrix.screens.map(({ id }) => id)).size).toBe(41)
     expect(new Set(matrix.screens.map(({ referenceAsset }) => referenceAsset)).size).toBe(41)
 
-    expect(existsSync(resolve(repoRoot, matrix.sourceArchive))).toBe(true)
+    expect(matrix.sourceArchive).toBe('artifacts/ui-ux-screenshots.zip')
   })
 
   it('maps each slot to an existing test surface, viewport, expected result, and owner', () => {

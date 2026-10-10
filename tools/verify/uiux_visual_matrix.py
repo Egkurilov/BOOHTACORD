@@ -21,11 +21,6 @@ def fail(message: str) -> int:
 def main() -> int:
     matrix = json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
     archive_path = ROOT / matrix["sourceArchive"]
-    archive_bytes = archive_path.read_bytes()
-    actual_sha = hashlib.sha256(archive_bytes).hexdigest()
-    if actual_sha != matrix["sourceArchiveSha256"]:
-        return fail("source archive SHA-256 does not match the pinned review asset")
-
     screens = matrix["screens"]
     if len(screens) != matrix["expectedCount"] or len(screens) != 41:
         return fail(f"expected 41 catalog rows, got {len(screens)}")
@@ -35,6 +30,23 @@ def main() -> int:
         return fail("expected 18 desktop reference screens")
     if sum(row["surface"] == "mobile" for row in screens) != 23:
         return fail("expected 23 mobile reference screens")
+
+    for row in screens:
+        for key in ("fixture", "testFile", "flutterTestFile"):
+            if not (ROOT / row[key]).is_file():
+                return fail(f"{row['id']} references missing {key}: {row[key]}")
+        for key in ("interaction", "expectedOrException", "owner"):
+            if not row[key].strip():
+                return fail(f"{row['id']} is missing {key}")
+
+    if not archive_path.is_file():
+        print("NOT_RUN: source archive is not present in this checkout; validated the 41-slot catalog and its test mappings, but archive bytes, hashes, and raster dimensions were not checked")
+        return 0
+
+    archive_bytes = archive_path.read_bytes()
+    actual_sha = hashlib.sha256(archive_bytes).hexdigest()
+    if actual_sha != matrix["sourceArchiveSha256"]:
+        return fail("source archive SHA-256 does not match the pinned review asset")
 
     with ZipFile(archive_path) as archive:
         png_entries = {
@@ -62,13 +74,6 @@ def main() -> int:
             width, height = struct.unpack(">II", png[16:24])
             if {"width": width, "height": height} != row["referenceRasterPx"]:
                 return fail(f"{row['referenceAsset']} raster dimensions differ from the catalog")
-
-            for key in ("fixture", "testFile", "flutterTestFile"):
-                if not (ROOT / row[key]).is_file():
-                    return fail(f"{row['id']} references missing {key}: {row[key]}")
-            for key in ("interaction", "expectedOrException", "owner"):
-                if not row[key].strip():
-                    return fail(f"{row['id']} is missing {key}")
 
         by_hash = defaultdict(list)
         for asset, digest in hashes.items():
