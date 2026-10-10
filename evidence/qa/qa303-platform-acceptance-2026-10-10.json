@@ -3,25 +3,49 @@
   "date": "2026-10-10",
   "task": "UIUX-2026 issue #303 — physical platform and assistive-technology acceptance inventory",
   "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/303",
-  "source_revision": "74bf5a79",
+  "source_revision": "2f1ab525",
   "application_manifest_version": "1.0.38+71",
   "status": "BLOCKED_DEVICE_MATRIX_NOT_RUN",
   "inventory_commands": [
     {
       "command": "cd clients/flutter && flutter devices --machine",
       "result": "PASS_INVENTORY",
-      "available": ["macOS 26.6.1 25G76 arm64", "Chrome 154.0.8037.98"],
-      "unavailable": ["Android device/emulator", "iOS device/simulator", "Windows device/VM"]
+      "available": [
+        "macOS 26.6.1 25G76 darwin-arm64",
+        "Chrome 154.0.8037.98"
+      ],
+      "unavailable": [
+        "Android device/emulator",
+        "iOS device/simulator",
+        "Windows device/VM"
+      ]
     },
     {
       "command": "adb devices -l",
       "result": "PASS_INVENTORY_EMPTY",
-      "connected_devices": []
+      "connected_devices": [],
+      "note": "ADB daemon started successfully in the authorized inventory check; no USB or emulator targets were listed."
     },
     {
       "command": "Check /Users/pistol121/Library/Android/sdk/emulator/emulator -list-avds",
       "result": "NOT_AVAILABLE",
       "observation": "Android emulator binary is not installed at the configured SDK path."
+    },
+    {
+      "command": "Check installed desktop browsers and Safari WebDriver",
+      "result": "PASS_INVENTORY",
+      "available": [
+        "Google Chrome 154.0.8037.98",
+        "Safari 26.6 (21624.4.5.11.5), safaridriver available"
+      ],
+      "unavailable": [
+        "Firefox application/browser binary"
+      ]
+    },
+    {
+      "command": "xcrun simctl list devices available",
+      "result": "NOT_RUN_CORE_SIMULATOR_UNAVAILABLE",
+      "observation": "CoreSimulatorService connection failed and no simulator devices could be enumerated; Flutter device discovery also reported no iOS target."
     }
   ],
   "historical_observations": [
@@ -36,9 +60,35 @@
       "target": "Web Chrome desktop/mobile viewport automation",
       "available": true,
       "result": "PASS_AUTOMATED_ONLY",
-      "evidence": ["evidence/qa/qa302-visual-e2e-2026-10-10.json", "evidence/qa/qa301-accessibility-2026-10-10.json"],
+      "browserVersion": "154.0.8037.98",
+      "evidence": [
+        "evidence/qa/qa302-visual-e2e-2026-10-10.json",
+        "evidence/qa/qa301-accessibility-2026-10-10.json"
+      ],
       "manualTaskSmoke": "NOT_RUN",
-      "limitation": "One browser engine and viewport/device emulation do not establish Firefox/Safari or physical mobile acceptance."
+      "limitation": "Chrome viewport emulation is not physical mobile acceptance."
+    },
+    {
+      "target": "Web Safari desktop",
+      "available": true,
+      "result": "NOT_RUN",
+      "browserVersion": "Safari 26.6",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "Safari is installed, but no task-based run was executed for this candidate."
+    },
+    {
+      "target": "Web Firefox desktop/mobile",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "Firefox browser is not installed on this host."
+    },
+    {
+      "target": "Web Safari on iOS / physical mobile browser",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "No physical iOS device is connected; a desktop browser or viewport emulation is not mobile Safari acceptance."
     },
     {
       "target": "Flutter macOS desktop",
@@ -47,7 +97,7 @@
       "manifestVersion": "1.0.38+71",
       "applicationLaunched": false,
       "manualTaskSmoke": "NOT_RUN",
-      "limitation": "The macOS host is detected, but no current-candidate native task script or screen-reader run was performed."
+      "limitation": "The host is detected, but the current candidate was not launched against an isolated QA account and no screen-reader task was run."
     },
     {
       "target": "Flutter Windows desktop",
@@ -61,30 +111,52 @@
       "available": false,
       "result": "NOT_RUN",
       "manualTaskSmoke": "NOT_RUN",
-      "limitation": "ADB lists no device and no Android emulator binary/AVD is installed. No physical handset is connected."
+      "limitation": "ADB device list is empty and the configured Android emulator binary/AVD is absent."
     },
     {
       "target": "Flutter iOS portrait/landscape",
       "available": false,
       "result": "NOT_RUN",
       "manualTaskSmoke": "NOT_RUN",
-      "limitation": "No iOS device or simulator is available to Flutter on this host."
+      "limitation": "No device is reported by Flutter; CoreSimulatorService could not enumerate simulators during this inventory."
     }
   ],
   "physical_task_scripts": [
-    {"scenario": "channel/DM search, message send/edit/react", "result": "NOT_RUN"},
-    {"scenario": "voice join, screen setup, cancel, reconnect and stop", "result": "NOT_RUN"},
-    {"scenario": "admin member/role/channel management", "result": "NOT_RUN"},
-    {"scenario": "settings save and destructive-action cancel", "result": "NOT_RUN"},
-    {"scenario": "system Back/swipe, keyboard overlays, SafeArea and dynamic text", "result": "NOT_RUN"},
-    {"scenario": "TalkBack, VoiceOver, macOS VoiceOver and Windows Narrator", "result": "NOT_RUN"}
+    {
+      "scenario": "channel/DM search, message send/edit/react",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "voice join, screen setup, cancel, reconnect and stop",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "admin member/role/channel management",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "settings save and destructive-action cancel",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "system Back/swipe, keyboard overlays, SafeArea and dynamic text",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "TalkBack, VoiceOver, macOS VoiceOver and Windows Narrator",
+      "result": "NOT_RUN"
+    }
   ],
   "automated_evidence_is_not_physical_acceptance": {
     "web_responsive_suite": "PASS_7_TESTS_12_VIEWPORTS",
-    "web_accessibility_suite": "PASS_46_CASES_PLUS_1_AXE_CASE",
+    "web_accessibility_suite": "PASS_47_CASES_PLUS_1_AXE_CASE",
     "flutter_accessibility_suite": "PASS_197_WIDGET_TESTS",
     "flutter_voice_stream_suite": "PASS_51_WIDGET_TESTS",
-    "details": ["evidence/qa/qa301-accessibility-2026-10-10.json", "evidence/qa/qa300-voice-stream-2026-10-10.json", "evidence/qa/qa302-visual-e2e-2026-10-10.json"]
+    "details": [
+      "evidence/qa/qa301-accessibility-2026-10-10.json",
+      "evidence/qa/qa300-voice-stream-2026-10-10.json",
+      "evidence/qa/qa302-visual-e2e-2026-10-10.json"
+    ]
   },
   "open_release_gates": [
     "Obtain and run a current Android physical device and iOS physical device/simulator.",
@@ -101,5 +173,6 @@
     "all_supported_platforms_unblocked": "NOT_RUN",
     "issue_state_at_capture": "OPEN"
   },
-  "artifact_storage": "No physical captures/video exist for this run; artifact paths are not invented. Automated .out evidence remains local/ignored."
+  "artifact_storage": "No physical captures/video exist for this run; artifact paths are not invented. Automated .out evidence remains local/ignored.",
+  "scope_note": "Platform media QoE is separate from UI acceptance and remains under #173/#174; no media capacity or quality claim is made here."
 }
