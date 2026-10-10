@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from tools.audio.livekit_fixture import IMAGE
 from .stack import Stack
 
 
