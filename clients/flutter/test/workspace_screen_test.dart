@@ -134,7 +134,7 @@ void main() {
         addTearDown(tester.view.reset);
         final state = AppState(_PortraitApi());
         await state.initialize();
-        state.selectedChannel = _PortraitApi.voiceChannel;
+        state.selectedChannel = _PortraitApi.channel;
         state.voiceChannel = _PortraitApi.voiceChannel;
         state.voicePhase = VoicePhase.connected;
         await tester.pumpWidget(
@@ -145,6 +145,24 @@ void main() {
             ),
           ),
         );
+        await tester.pumpAndSettle();
+
+        final composer = find.byType(TextField).first;
+        await tester.tap(composer);
+        await tester.pump();
+        final returnFocus = FocusManager.instance.primaryFocus;
+        expect(returnFocus, isNotNull);
+        await tester.tap(find.byTooltip('Открыть навигацию'));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        expect(FocusManager.instance.primaryFocus, same(returnFocus));
+        expect(state.voicePhase, VoicePhase.connected);
+        expect(state.voiceChannel, _PortraitApi.voiceChannel);
+        returnFocus?.unfocus();
         await tester.pumpAndSettle();
 
         await tester.dragFrom(const Offset(0, 220), const Offset(140, 0));
