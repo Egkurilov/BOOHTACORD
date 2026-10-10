@@ -800,6 +800,30 @@
       "WebKit": "Playwright WebKit 26.6 (v2359)",
       "Firefox": "Playwright Firefox 155.0 (v1543)"
     },
+    "production_lifecycle": {
+      "source_revision": "f273c59a",
+      "environment": "Production Web client against owned disposable Go API, PostgreSQL and Tempo; synthetic QA accounts; Chrome 154; no mocks and no live SFU.",
+      "runs": [
+        {
+          "viewport": "393x852 CSS px, DPR 3, touch enabled",
+          "result": "PASS",
+          "channel_url": "PASS",
+          "channel_refresh": "PASS",
+          "persisted_after_restart": true,
+          "owned_resources_removed": true,
+          "report_sha256": "dede09a5c013daea1f5c72fc590307f755d3bcfbaf0d1c47fdd7ca5cd5f99d61"
+        },
+        {
+          "viewport": "1440x900 CSS px, DPR 2",
+          "result": "PASS",
+          "channel_url": "PASS",
+          "channel_refresh": "PASS",
+          "persisted_after_restart": true,
+          "owned_resources_removed": true,
+          "report_sha256": "6de825851daead3ef50daf9bc03b22e13024d4d2cefe510d5a0eee2b7bdeb6f3"
+        }
+      ]
+    },
     "coverage": [
       "Direct channel fragment load and refresh",
       "Inaccessible channel id falls back without granting access",
@@ -807,6 +831,6 @@
       "Selecting from the mobile navigation drawer leaves no stale drawer history",
       "Favorite toggle remains within its row across responsive widths"
     ],
-    "fixture_limit": "The fixture mounts production navigation code with a synthetic authorized topology; this is not authenticated full-app API startup, native Safari, physical device, or screen-reader acceptance."
+    "fixture_limit": "The browser fixture mounts production navigation code with a synthetic authorized topology for inaccessible-ID fallback; the separate full-stack lifecycle verifies authenticated selected-channel URL restoration after refresh against disposable API/PostgreSQL/Tempo at desktop and mobile sizes. Neither run is native Safari, physical-device, or screen-reader acceptance."
   }
 }

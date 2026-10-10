@@ -65,6 +65,7 @@
   "channel_route_revalidation": {
     "date": "2026-10-10",
     "code_revision": "b69b635c",
+    "qa_harness_revision": "f273c59a",
     "environment": "Google Chrome 154.0.8037.98, Playwright WebKit 26.6 and Firefox 155; Playwright fixture mounts the production useWorkspaceNavigation composable and Pinia stores with a synthetic authorized topology.",
     "checks": [
       {
@@ -86,12 +87,60 @@
         "command": "VITE_PUBLIC_ORIGIN='https://voice.example.test' npm run build",
         "result": "PASS — existing LiveKit chunk and bundle-size warnings remain."
       }
-    ]
+    ],
+    "production_lifecycle": {
+      "source_revision": "f273c59a",
+      "environment": "Production Web client against owned disposable Go API, PostgreSQL and Tempo; synthetic QA accounts; Chrome 154; no mocks and no live SFU.",
+      "runs": [
+        {
+          "viewport": "393x852 CSS px, DPR 3, touch enabled",
+          "result": "PASS",
+          "navigation_context": {
+            "channel_header": "PASS",
+            "channel_url": "PASS",
+            "channel_refresh": "PASS",
+            "direct_message_header": "PASS"
+          },
+          "persisted_after_restart": true,
+          "owned_resources_removed": true,
+          "report": {
+            "path": ".out/client-lifecycle/393/report.json",
+            "sha256": "dede09a5c013daea1f5c72fc590307f755d3bcfbaf0d1c47fdd7ca5cd5f99d61"
+          },
+          "channelCapture": {
+            "path": ".out/client-lifecycle/393/channel-text.png",
+            "sha256": "9b88b80f2ccb46e77dbdba1e4697c8fed719aea2508482b3757b6e24dbdd1705",
+            "raster": "1179x2556"
+          }
+        },
+        {
+          "viewport": "1440x900 CSS px, DPR 2",
+          "result": "PASS",
+          "navigation_context": {
+            "channel_header": "PASS",
+            "channel_url": "PASS",
+            "channel_refresh": "PASS",
+            "direct_message_header": "PASS"
+          },
+          "persisted_after_restart": true,
+          "owned_resources_removed": true,
+          "report": {
+            "path": ".out/client-lifecycle/1440/report.json",
+            "sha256": "6de825851daead3ef50daf9bc03b22e13024d4d2cefe510d5a0eee2b7bdeb6f3"
+          },
+          "channelCapture": {
+            "path": ".out/client-lifecycle/1440/channel-text.png",
+            "sha256": "c3bebc6ae96c0a59fbe0e3c6378d8ee9f0b0ccaf389ee329068deb7bfde83468",
+            "raster": "2880x1800"
+          }
+        }
+      ]
+    }
   },
   "limitations": [
     "This is production Web in Chrome, not physical iOS Safari, Android system Back, or a native Flutter device run.",
     "The disposable stack has no SFU; no LiveKit-call preservation is claimed by this lifecycle.",
-    "Channel-route browser tests use a synthetic authorized topology; authenticated production-API direct-link startup is not claimed by this follow-up.",
+    "The inaccessible-ID fallback is tested with a synthetic authorized topology; the separate full-stack lifecycle verifies authenticated selected-channel URLs and refresh against the disposable API at desktop and mobile sizes.",
     "VoiceOver/TalkBack acceptance remains NOT_RUN under #301/#303."
   ],
   "status": "PASS_AUTOMATED_CHANNEL_ROUTE_AND_SCOPED_DESKTOP_AND_MOBILE_WEB_CONTEXT_HEADERS; physical/device and screen-reader criteria remain open"
