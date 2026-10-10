@@ -30,7 +30,8 @@ test('scenario names stay readable and selecting 1440p chooses the supported tex
   const resolutionGroupBox = await page.locator('[aria-label="Верхний предел разрешения трансляции"]').boundingBox()
   expect(fpsGroupBox?.width).toBe(resolutionGroupBox?.width)
 
-  await resolution1440.check()
+  await page.getByRole('radio', { name: '1080p' }).focus()
+  await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('radio', { name: /Чёткость текста/ })).toBeChecked()
   await expect(resolution1440).toBeChecked()
   await expect(page.getByRole('radio', { name: '30 FPS', exact: true })).toBeVisible()
