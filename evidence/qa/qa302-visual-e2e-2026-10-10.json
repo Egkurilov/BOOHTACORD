@@ -3,8 +3,8 @@
   "date": "2026-10-10",
   "task": "UIUX-2026 issue #302 — visual matrix, responsive smoke and retained review captures",
   "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/302",
-  "source_revision": "bdf30c30 plus the tested working tree",
-  "working_tree_changes": true,
+  "source_revision": "2cdc9b2c",
+  "working_tree_changes": false,
   "status": "AUTOMATED_SCOPED_PASS_GOLDEN_AND_CI_ARTIFACT_RUN_PENDING",
   "checks": [
     {
@@ -99,7 +99,7 @@
         },
         {
           "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-1920x1080.png",
-          "sha256": "5f5a4df1dc5f88b81a82c0a7955a62c773b11d388ec1b2a64be49b77a5f43bad",
+          "sha256": "3c6f716951bd154f61a323232b1200738f01d9649067f1db3f4a0bbee1a8743b",
           "raster": "1920x1080"
         },
         {
@@ -199,12 +199,12 @@
         },
         {
           "path": ".out/visual/flutter/flutter-admin-media-desktop-1440x900.png",
-          "sha256": "214ba47419c618a74aecc2c70e488260e7a731d204698ef04c9ee5ab1e167a95",
+          "sha256": "b670c5f94601b455d41e6a31e4aad86196583413c81bdc946e8f8f5ed79fc52e",
           "raster": "2880x1800"
         },
         {
           "path": ".out/visual/flutter/flutter-admin-media-mobile-393x852.png",
-          "sha256": "26b89be31f9b513606fd0700c5cedfcf9a4e32e11d25ad59b1a6b4c69a47ab39",
+          "sha256": "6d64cb5d30df2daca4a0efb41fd9c98bcc1aedb5333aeff897c0e5b67db22f65",
           "raster": "1179x2556"
         },
         {
@@ -310,7 +310,17 @@
   "limitations": [
     "Only the six admin screens listed above have reviewed source-sized full-stack comparisons; the other catalog slots do not yet have source-backed full-app after captures.",
     "Source screenshots are audit evidence, not approved goldens. desktop-guild-settings.png is byte-identical to desktop-guild-members.png.",
-    "The user requested [skip ci] for checkpoint pushes, so no GitHub Actions artifact from this checkpoint can be linked yet; the workflows are configured to retain Web and Flutter capture bundles for 30 days when CI runs."
+    "The user requested [skip ci] for checkpoint pushes, so no GitHub Actions artifact from this checkpoint can be linked yet; the workflows are configured to retain Web and Flutter capture bundles for 30 days when CI runs.",
+    "The 2026-10-10 rerun at 2cdc9b2c passed locally. The commits use [skip ci], so there is still no GitHub Actions artifact bundle for this source revision."
   ],
-  "artifact_storage": "All 37 PNG captures remain ignored local .out files; only the manifest and workflow/test/docs edits will be staged."
+  "artifact_storage": "All 37 PNG captures remain ignored local .out files; only the manifest and workflow/test/docs edits will be staged.",
+  "latest_revalidation": {
+    "commit": "2cdc9b2c",
+    "date": "2026-10-10",
+    "source_catalog": "PASS_41_ENTRIES",
+    "web_responsive_shell": "PASS_7_TESTS_12_VIEWPORTS",
+    "flutter_visual_capture": "PASS_5_TESTS_25_CAPTURES",
+    "current_shared_accessibility_suite": "PASS_47_BROWSER_PLUS_1_AXE",
+    "ci_artifact_run": "NOT_RUN_SKIP_CI_REQUEST"
+  }
 }
