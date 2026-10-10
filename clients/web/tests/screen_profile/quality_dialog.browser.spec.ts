@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
 
 test('scenario names stay readable and selecting 1440p chooses the supported text profile', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 637, height: 584 })
@@ -35,6 +38,16 @@ test('scenario names stay readable and selecting 1440p chooses the supported tex
   await expect(page.getByRole('radio', { name: /Чёткость текста/ })).toBeChecked()
   await expect(resolution1440).toBeChecked()
   await expect(page.getByRole('radio', { name: '30 FPS', exact: true })).toBeVisible()
+  await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') })
+  const violations = await page.evaluate(async () => {
+    const result = await (window as any).axe.run(document.querySelector('dialog'), {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] },
+    })
+    return result.violations.map(({ id, impact, nodes }: { id: string; impact: string; nodes: { target: string[] }[] }) => ({
+      id, impact, targets: nodes.flatMap(node => node.target),
+    }))
+  })
+  expect(violations).toEqual([])
   await page.screenshot({ path: testInfo.outputPath('screen-share-quality-637x584.png') })
 
   await page.getByRole('button', { name: 'Начать трансляцию' }).click()
