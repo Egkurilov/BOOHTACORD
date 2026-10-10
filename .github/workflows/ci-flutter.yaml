@@ -31,6 +31,14 @@ jobs:
           path: .out/visual/flutter/R14-navigation-top.png
           if-no-files-found: error
           retention-days: 30
+      - name: Retain Flutter UI/UX screenshot review set
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uiux-flutter-visual-review-${{ github.sha }}
+          path: .out/visual/flutter/**
+          if-no-files-found: error
+          retention-days: 30
       - name: Verify Android Kotlin build modes
         run: bash tools/verify/android_kotlin/verify_android_kotlin_modes.sh
       - name: Build Android debug APK
