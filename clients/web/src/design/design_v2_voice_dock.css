@@ -1,6 +1,14 @@
 /* Connected dock presentation; state, controls and measured quality remain live. */
 .voice-dock .voice-icon { stroke-width: 1.8; }
 .voice-dock .voice-icon-button { border-radius: 8px; }
+.voice-dock .voice-icon-button.voice-icon-button--danger-active,
+.voice-dock .voice-icon-button.voice-icon-button--danger-active:hover:not(:disabled),
+.mobile-voice-dock .voice-actions .voice-icon-button.voice-icon-button--danger-active,
+.mobile-voice-dock .voice-actions .voice-icon-button.voice-icon-button--danger-active:hover:not(:disabled) {
+  border: 1px solid var(--gc-danger);
+  color: var(--gc-on-danger);
+  background: var(--gc-danger-solid);
+}
 @media (max-width: 1023px) {
   .sidebar:not(.is-open) .mobile-voice-dock.mobile-visible { padding: 4px 12px; }
   .sidebar:not(.is-open) .mobile-voice-dock .voice-actions { gap: 8px; }

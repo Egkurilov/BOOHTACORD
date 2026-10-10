@@ -11,6 +11,7 @@ class WorkspaceVoiceDockButton extends StatelessWidget {
     this.enabled = true,
     this.semanticsLabel,
     this.toggled,
+    this.dangerActive = false,
   });
   final IconData icon;
   final String tooltip;
@@ -20,6 +21,7 @@ class WorkspaceVoiceDockButton extends StatelessWidget {
   final bool enabled;
   final String? semanticsLabel;
   final bool? toggled;
+  final bool dangerActive;
   @override
   Widget build(BuildContext context) => Semantics(
     container: true,
@@ -32,8 +34,18 @@ class WorkspaceVoiceDockButton extends StatelessWidget {
       message: tooltip,
       child: ExcludeSemantics(
         child: Material(
-          color: danger ? const Color(0x33422830) : GcColors.raised,
-          borderRadius: BorderRadius.circular(10),
+          color: dangerActive
+              ? GcColors.dangerSolid
+              : danger
+              ? GcColors.dangerBackground
+              : GcColors.raised,
+          shape: RoundedRectangleBorder(
+            side: dangerActive
+                ? const BorderSide(color: GcColors.danger, width: 1.5)
+                : BorderSide.none,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: enabled ? onTap : null,
             borderRadius: BorderRadius.circular(10),
@@ -42,7 +54,11 @@ class WorkspaceVoiceDockButton extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 19,
-                color: danger ? GcColors.danger : GcColors.textSecondary,
+                color: dangerActive
+                    ? GcColors.onDanger
+                    : danger
+                    ? GcColors.danger
+                    : GcColors.textSecondary,
               ),
             ),
           ),
