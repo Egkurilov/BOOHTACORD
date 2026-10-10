@@ -14,7 +14,7 @@ class LoopbackTransportTests(unittest.TestCase):
                     patch('tools.qa.critical_client_acceptance.stack.ports_available'), \
                     patch('tools.qa.critical_client_acceptance.stack.ready'), \
                     patch('tools.qa.critical_client_acceptance.stack.Base.start'), \
-                    patch.object(stack, 'container'):
+                    patch.object(stack, 'container') as container:
                 stack.start()
             config = (work/'livekit.yaml').read_text()
             self.assertIn('enable_loopback_candidate: true', config)
