@@ -1,0 +1,133 @@
+{
+  "id": "QA-301-ACCESSIBILITY",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #301 — scoped Web/Flutter accessibility checks and manual acceptance status",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/301",
+  "source_revision": "f6c27eab plus the tested working tree",
+  "working_tree_changes": true,
+  "status": "AUTOMATED_PASS_MANUAL_ACCEPTANCE_NOT_RUN",
+  "checks": [
+    {
+      "name": "Web accessibility and message-action axe suite on installed Chrome",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:accessibility",
+      "result": "PASS",
+      "accessibility_browser_cases_passed": 46,
+      "message_action_axe_cases_passed": 1,
+      "observations": [
+        "Coverage includes accessible names/roles in selected rendered states, keyboard focus and modal containment/restoration, profile tab keyboard navigation, responsive 200% text, reduced motion, stream/dialog states, admin states and selected axe checks.",
+        "The message-action axe fixture covers grouped, system, deleted and failed messages.",
+        "The shared workflow invokes this command through tools/ci/native/web.py; CI therefore includes the accessibility suite."
+      ]
+    },
+    {
+      "name": "Focused Web contrast, settings and message/DM semantics contracts",
+      "command": "cd clients/web && npm test -- --run src/design/contrast_contract.spec.ts src/workspace/settings_exit_guard.spec.ts src/workspace/settings_panel_focus.spec.ts src/conversation/message_log_semantics.spec.ts src/direct_message/direct_message_search_client.spec.ts",
+      "result": "PASS",
+      "test_files_passed": 5,
+      "tests_passed": 9
+    },
+    {
+      "name": "Flutter scoped accessibility, semantics, keyboard, scaling and focus suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/admin_accessibility test/admin_media_widget_test.dart test/theme_tokens_test.dart test/workspace_screen_test.dart test/confirmation_dialog_test.dart test/screen_setup/dialog_test.dart test/profile_screen_test.dart test/voice_connection_badge_test.dart test/voice_shortcut_preferences_test.dart test/features/voice/prejoin/header_status_test.dart",
+      "result": "PASS",
+      "tests_passed": 197,
+      "observations": [
+        "Includes named/selected semantics for all seven admin tabs, keyboard activation/focus, dialog traversal, selected responsive and 2x text cases, contrast tokens, workspace controls and selected voice/stream states.",
+        "This is widget/semantics-tree evidence; it does not represent a physical TalkBack or VoiceOver traversal."
+      ]
+    },
+    {
+      "name": "Flutter analysis for the scoped accessibility suite",
+      "command": "cd clients/flutter && flutter analyze --no-pub test/admin_accessibility test/admin_media_widget_test.dart test/theme_tokens_test.dart test/workspace_screen_test.dart test/confirmation_dialog_test.dart test/screen_setup/dialog_test.dart test/profile_screen_test.dart test/voice_connection_badge_test.dart test/voice_shortcut_preferences_test.dart test/features/voice/prejoin/header_status_test.dart",
+      "result": "PASS",
+      "observation": "No issues found; 10 items analyzed."
+    }
+  ],
+  "contrast": {
+    "status": "PASS_SAMPLED",
+    "evidence": "docs/design/DESIGN_V2_TOKEN_CROSSWALK.md#opaque-color-pair-contrast-snapshot",
+    "selected_ratios": {
+      "primary_text_content_sidebar_surface": "15.98 / 17.04 / 15.46:1",
+      "secondary_text_content_sidebar_surface": "9.24 / 9.86 / 8.94:1",
+      "white_on_accent": "4.61:1",
+      "focus_content_surface": "8.03 / 7.77:1",
+      "control_outline_surface": "3.95:1"
+    },
+    "coverage_note": "Sampled opaque tokens and selected rendered states only; not a whole-app or composited/translucent-state certification."
+  },
+  "touch_targets": {
+    "product_target_css_or_logical_px": 44,
+    "status": "PASS_SCOPED",
+    "coverage_note": "Automated evidence covers selected message actions and compact admin controls. WCAG 2.2 AA exceptions remain applicable; no claim is made that every rendered control was measured."
+  },
+  "before_after_captures": [
+    {
+      "scenario": "Desktop destructive channel confirmation",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/desktop-modal-close-channel-confirmation.png",
+        "sha256": "835bb2f7d0a5072312f1ef484eb92bed9115f44460a7439960fa8c13d2775ba0",
+        "raster": "2880x1800"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/dialogs/web-topology-destructive-confirmation-after.png",
+        "sha256": "41459c0a3279117deb5e476bbb105dca7d03dba67ff961004dde88c917d0872c",
+        "raster": "2880x1800"
+      },
+      "note": "Current production-component after capture; modal keyboard behavior is also covered by the browser suite."
+    },
+    {
+      "scenario": "Mobile guild roles",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-guild-roles.png",
+        "sha256": "8d771f365cb60522535eeebb5e293f5d5310330007d68f2379213e9c5e49b276",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/client-lifecycle/393/guild-roles.png",
+        "sha256": "728326ac7ac84fbd29afbcf6fc72dafb0635a288b92e6b9317785e64698cc970",
+        "raster": "1179x2556"
+      },
+      "note": "Production Web capture at the matching source raster; values are QA fixture data."
+    },
+    {
+      "scenario": "Mobile audio settings",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-audio-settings.png",
+        "sha256": "e481a5536679278d7a23087acd6894c28e0d8e70cf6dff3170430ecbf0073ea0",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/settings/393/mobile-audio-settings-after.png",
+        "sha256": "71fe011e00d75bd647b1d1e3b02724ec63cf5e51ac10d8e42c4b01b62412b36d",
+        "raster": "1179x2556"
+      },
+      "note": "Production Web capture at the matching source raster; host browser device labels are runtime values."
+    }
+  ],
+  "source_archive": {
+    "path": "artifacts/ui-ux-screenshots.zip",
+    "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
+  },
+  "manual_acceptance": {
+    "web_keyboard_browser_automation": "PASS_SCOPED",
+    "web_voiceover_or_nvda": "NOT_RUN",
+    "flutter_talkback": "NOT_RUN",
+    "flutter_ios_voiceover": "NOT_RUN",
+    "macos_voiceover": "NOT_RUN",
+    "windows_narrator_and_keyboard": "NOT_RUN",
+    "device_inventory": {
+      "available": ["macOS 26.6.1 arm64", "Chrome 154.0.8037.98"],
+      "unavailable": ["Android physical device/emulator", "iOS device/simulator", "Windows device/VM"]
+    },
+    "limitation": "Widget and browser automation cannot confirm announcements or traversal through a real screen reader. Keep #301 open until the manual acceptance is performed and recorded; platform runtime scheduling is tracked with #303."
+  },
+  "acceptance": {
+    "seven_scenario_control_inventory": "PASS_DOCUMENTED",
+    "automated_web_scoped_accessibility": "PASS",
+    "automated_flutter_scoped_semantics": "PASS",
+    "sampled_contrast_and_target_sizes": "PASS_SCOPED",
+    "physical_screen_reader_acceptance": "NOT_RUN",
+    "issue_state_at_capture": "OPEN"
+  },
+  "artifact_storage": "All PNGs referenced here remain ignored local .out captures; only this manifest and code/docs changes are committed."
+}
