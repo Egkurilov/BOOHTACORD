@@ -1627,7 +1627,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('profile-screen-title-focus')),
-        matching: find.text('Профиль'),
+        matching: find.text('Настройки'),
       ),
       findsOneWidget,
     );
@@ -1661,7 +1661,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('profile-screen-title-focus')),
-        matching: find.text('Профиль'),
+        matching: find.text('Настройки'),
       ),
       findsOneWidget,
     );
