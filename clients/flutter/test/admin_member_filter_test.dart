@@ -452,6 +452,24 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Роль'), findsOneWidget);
+      final roleLabelRect = tester.getRect(find.text('Роль'));
+      final roleField = find.byWidgetPredicate(
+        (widget) =>
+            widget is DropdownButtonFormField<String> &&
+            widget.key is ValueKey<String> &&
+            (widget.key! as ValueKey<String>).value.startsWith('role:long:'),
+      );
+      final roleFieldRect = tester.getRect(roleField);
+      expect(
+        roleLabelRect.bottom,
+        lessThanOrEqualTo(roleFieldRect.top),
+        reason: 'the 2× role label stays outside the outlined control',
+      );
+      expect(
+        tester.getSemantics(roleField).getSemanticsData().label,
+        contains('Роль'),
+        reason: 'the dropdown keeps its accessible role label',
+      );
       expect(find.textContaining('Роль: login_with_'), findsNothing);
       expect(tester.takeException(), isNull);
     },

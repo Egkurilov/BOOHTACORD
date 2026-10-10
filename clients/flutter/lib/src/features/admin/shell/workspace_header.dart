@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../theme.dart';
@@ -23,14 +25,17 @@ class AdminWorkspaceHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final largeText = MediaQuery.textScalerOf(context).scale(16) > 24;
+    final titleScale = MediaQuery.textScalerOf(context).scale(16);
+    final largeText = titleScale > 24;
+    final titleMaxLines = compact && largeText ? 2 : 1;
+    final compactHeight = math.max(56.0, titleScale * 1.25 * titleMaxLines + 8);
     final buttonConstraints = BoxConstraints.tightFor(
       width: compact ? 44 : 36,
       height: compact ? 44 : 36,
     );
     return SizedBox(
       key: const ValueKey('admin-workspace-header'),
-      height: compact ? 56 : 64,
+      height: compact ? compactHeight : 64,
       child: DecoratedBox(
         decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: GcColors.borderSubtle)),
@@ -72,10 +77,11 @@ class AdminWorkspaceHeader extends StatelessWidget {
                     child: Text(
                       largeText ? 'Админ-панель' : 'Администрирование',
                       semanticsLabel: 'Администрирование',
-                      maxLines: 1,
+                      maxLines: titleMaxLines,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 16,
+                        height: 1.25,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

@@ -52,7 +52,7 @@ class GuildSettingsPresentation extends StatelessWidget {
                       helperText:
                           'Название показывается участникам и на экране входа. '
                           'От 1 до 80 символов, без переводов строк.',
-                      helperMaxLines: 6,
+                      helperMaxLines: 10,
                     ),
                   ),
                   const SizedBox(height: 24),
