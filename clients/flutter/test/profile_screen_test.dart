@@ -8,6 +8,7 @@ import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/profile_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/services/native_notifications.dart';
+import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -398,6 +399,9 @@ void main() {
   testWidgets('moves keyboard focus to the profile heading like web', (
     tester,
   ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 600);
+    addTearDown(tester.view.reset);
     final state = AppState(ApiClient());
     addTearDown(state.dispose);
 
@@ -428,6 +432,20 @@ void main() {
           .flagsCollection
           .isHeader,
       isTrue,
+    );
+    final titleStyle = tester.widget<Text>(find.text('Настройки')).style!;
+    expect(titleStyle.fontSize, GcTypography.page);
+    expect(titleStyle.height, GcTypography.pageLine / GcTypography.page);
+    expect(titleStyle.fontWeight, GcTypography.bold);
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    final compactTitleStyle = tester
+        .widget<Text>(find.text('Настройки'))
+        .style!;
+    expect(compactTitleStyle.fontSize, GcTypography.pageCompact);
+    expect(
+      compactTitleStyle.height,
+      GcTypography.pageCompactLine / GcTypography.pageCompact,
     );
     expect(find.text('Ваш профиль и параметры приложения.'), findsOneWidget);
   });

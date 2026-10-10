@@ -51,6 +51,7 @@
   --gc-text-title: 1rem;
   --gc-text-section: 1.25rem;
   --gc-text-page: 1.5rem;
+  --gc-text-page-compact: 1.375rem;
   --gc-line-caption: 1rem;
   --gc-line-small: 1.125rem;
   --gc-line-body: 1.25rem;
@@ -58,6 +59,7 @@
   --gc-line-title: 1.5rem;
   --gc-line-section: 1.75rem;
   --gc-line-page: 2rem;
+  --gc-line-page-compact: 1.75rem;
   --gc-weight-regular: 400;
   --gc-weight-medium: 500;
   --gc-weight-semibold: 600;

@@ -66,6 +66,7 @@ The CSS variable and Flutter constant in each opaque-color row have the same RGB
 | Title | `--gc-text-title`, `--gc-line-title` | `GcTypography.title`, `titleLine` | `16 / 24 px` |
 | Section | `--gc-text-section`, `--gc-line-section` | `GcTypography.section`, `sectionLine` | `20 / 28 px` |
 | Page | `--gc-text-page`, `--gc-line-page` | `GcTypography.page`, `pageLine` | `24 / 32 px` |
+| Compact page | `--gc-text-page-compact`, `--gc-line-page-compact` | `GcTypography.pageCompact`, `pageCompactLine` | `22 / 28 px` |
 | Weights | `--gc-weight-regular`, `medium`, `semibold`, `bold` | `GcTypography.regular`, `medium`, `semibold`, `bold` | `400`, `500`, `600`, `700` |
 | Spacing | `--gc-space-1`, `2`, `3`, `4`, `5`, `6`, `8`, `10`, `12`, `16` | `GcSpacing.x1`, `x2`, `x3`, `x4`, `x5`, `x6`, `x8`, `x10`, `x12`, `x16` | `4`, `8`, `12`, `16`, `20`, `24`, `32`, `40`, `48`, `64 px` |
 | Radii | `--gc-radius-xs`, `sm`, `md`, `lg`, `shell`, `full` | `GcRadii.xs`, `sm`, `md`, `lg`, `shell`, `full` | `4`, `6`, `8`, `12`, `16`, `999 px` |

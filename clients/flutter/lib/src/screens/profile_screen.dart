@@ -645,11 +645,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         focusNode: _titleFocus,
                         child: Semantics(
                           header: true,
-                          child: const Text(
+                          child: Text(
                             'Настройки',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                              fontSize: compact
+                                  ? GcTypography.pageCompact
+                                  : GcTypography.page,
+                              height: compact
+                                  ? GcTypography.pageCompactLine /
+                                        GcTypography.pageCompact
+                                  : GcTypography.pageLine / GcTypography.page,
+                              fontWeight: GcTypography.bold,
                             ),
                           ),
                         ),

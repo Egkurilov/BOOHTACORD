@@ -108,6 +108,7 @@ abstract final class GcTypography {
   static const title = 16.0;
   static const section = 20.0;
   static const page = 24.0;
+  static const pageCompact = 22.0;
 
   static const captionLine = 16.0;
   static const smallLine = 18.0;
@@ -116,6 +117,7 @@ abstract final class GcTypography {
   static const titleLine = 24.0;
   static const sectionLine = 28.0;
   static const pageLine = 32.0;
+  static const pageCompactLine = 28.0;
 
   static const regular = FontWeight.w400;
   static const medium = FontWeight.w500;
