@@ -1,8 +1,23 @@
-import { expect, test } from '@playwright/test'
-import { ux2026ReferenceViewports, ux2026RequiredViewports, ux2026ShellViewports } from '../uiux_2026/viewport_matrix'
+import { expect, test, type Page } from '@playwright/test'
+import { ux2026ShellViewports } from '../uiux_2026/viewport_matrix'
 
 const viewports = ux2026ShellViewports
-const screenshotViewports = new Set([...ux2026RequiredViewports, ...ux2026ReferenceViewports].map(({ width, height }) => `${width}x${height}`))
+const screenshotViewports = new Set(viewports.map(({ width, height }) => `${width}x${height}`))
+
+async function dismissDrawerOutsideNavigation(page: Page) {
+  const scrim = page.locator('.drawer-scrim')
+  const scrimBox = await scrim.boundingBox()
+  const drawerBox = await page.getByTestId('workspace-drawer').boundingBox()
+
+  expect(scrimBox).not.toBeNull()
+  expect(drawerBox).not.toBeNull()
+  await scrim.click({
+    position: {
+      x: drawerBox!.x + drawerBox!.width + 8 - scrimBox!.x,
+      y: Math.min(16, scrimBox!.height - 1),
+    },
+  })
+}
 
 test('production shell CSS stays within the viewport and preserves its workspace while resizing', async ({ page }, testInfo) => {
   await page.setViewportSize(viewports[2])
@@ -52,15 +67,16 @@ test('the mobile navigation drawer opens inside its available width', async ({ p
     if (width <= 720) {
       await page.getByTestId('workspace-drawer').getByRole('button', { name: 'Закрыть навигацию' }).click()
     } else {
-      await page.locator('.drawer-scrim').click({ position: { x: width - 8, y: 400 } })
+      await dismissDrawerOutsideNavigation(page)
     }
     await expect(page.getByTestId('workspace-drawer')).toBeHidden()
   }
 })
 
 test('the channel favorite toggle stays inside its row at responsive widths', async ({ page }) => {
-  for (const width of [320, 390, 600, 840, 1024, 1440]) {
-    await page.setViewportSize({ width, height: 844 })
+  for (const viewport of viewports) {
+    const { width, height } = viewport
+    await page.setViewportSize(viewport)
     await page.goto('/tests/responsive_shell/fixture.html')
     if (width < 1024) await page.getByRole('button', { name: 'Открыть навигацию' }).click()
 
@@ -90,15 +106,16 @@ test('the channel favorite toggle stays inside its row at responsive widths', as
       if (width <= 720) {
         await page.getByTestId('workspace-drawer').getByRole('button', { name: 'Закрыть навигацию' }).click()
       } else {
-        await page.locator('.drawer-scrim').click({ position: { x: width - 8, y: 400 } })
+        await dismissDrawerOutsideNavigation(page)
       }
     }
   }
 })
 
 test('production channel favorites remain reachable when adding a lower channel on narrow drawers', async ({ page }) => {
-  for (const width of [320, 390, 600, 840, 1024, 1440]) {
-    await page.setViewportSize({ width, height: 844 })
+  for (const viewport of viewports) {
+    const { width } = viewport
+    await page.setViewportSize(viewport)
     await page.goto('/')
     await page.evaluate(async () => {
       const load = (path: string) => import(path)
