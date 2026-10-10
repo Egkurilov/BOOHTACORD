@@ -10,6 +10,13 @@ async function reserved() {
   return bytes
 }
 function file(name, size) { return { name, mimeType: 'application/octet-stream', buffer: Buffer.alloc(size) } }
+async function selectFiles(page, selector, files, stage) {
+  const input = page.locator(selector)
+  await expect(input).toBeEnabled()
+  console.log(`stage=upload-input-ready-${stage}`)
+  await input.setInputFiles(files)
+  console.log(`stage=upload-files-selected-${stage}`)
+}
 export async function uploads(page, input, report, fixture) {
   await select(page, 'NextA')
   const picker = page.locator('.attachment-picker'), queue = picker.locator('[data-upload-status]')
@@ -17,7 +24,7 @@ export async function uploads(page, input, report, fixture) {
   page.on('request', request => { if (request.method()==='POST' && /\/attachments$/.test(new URL(request.url()).pathname)) count++ })
   if (input.limited) {
     owned('keeper', 'exec', '$owned', 'dd', 'if=/dev/zero', 'of=/attachments/qa-capacity-fill', 'bs=1000000', 'count=25')
-    await page.locator('#message-attachments').setInputFiles([file('one.bin', 5_000_000), file('two.bin', 5_000_000), file('three.bin', 25_000_000)])
+    await selectFiles(page, '#message-attachments', [file('one.bin', 5_000_000), file('two.bin', 5_000_000), file('three.bin', 25_000_000)], 'capacity-batch')
     await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(2)
     await expect(picker.locator('[data-upload-status="failed"]')).toHaveCount(1)
     await page.locator('#message-body').fill('QA attachment queue')
@@ -39,14 +46,14 @@ export async function uploads(page, input, report, fixture) {
     const session = await page.context().newCDPSession(page)
     await session.send('Network.enable')
     await session.send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: 10_000_000, uploadThroughput: 100_000 })
-    await page.locator('#message-attachments').setInputFiles(file('cancel.bin', 25_000_000))
+    await selectFiles(page, '#message-attachments', file('cancel.bin', 25_000_000), 'cancel')
     await expect.poll(reserved, { timeout: 15000 }).toBe(25_000_000)
     await expect(picker.locator('progress')).toBeVisible()
     await expect.poll(async()=>Number(await picker.locator('progress').getAttribute('value'))).toBeGreaterThan(0)
     await picker.getByRole('button', { name: 'Отменить загрузку cancel.bin', exact: true }).click()
     await expect.poll(reserved, { timeout: 15000 }).toBe(0)
     assert.equal(owned('keeper', 'exec', '$owned', 'sh', '-c', 'find /attachments/staging -type f | wc -l'), '0')
-    await page.locator('#message-attachments').setInputFiles(file('switch-scope.bin',25_000_000))
+    await selectFiles(page, '#message-attachments', file('switch-scope.bin',25_000_000), 'scope-switch')
     await expect.poll(reserved,{timeout:15000}).toBe(25_000_000)
     await select(page,'NextB')
     await expect.poll(reserved,{timeout:15000}).toBe(0)
@@ -59,7 +66,7 @@ export async function uploads(page, input, report, fixture) {
     mkdirSync(input.files_directory)
     const paths = Array.from({length:10},(_,i)=>join(input.files_directory,`batch-${i}.bin`))
     for (const path of paths) writeFileSync(path,Buffer.alloc(1_000_000),{flag:'wx'})
-    await page.locator('#message-attachments').setInputFiles(paths)
+    await selectFiles(page, '#message-attachments', paths, 'ten-file-batch')
     await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(10, { timeout: 60000 })
     await expect(page.getByRole('button', { name: 'Отправить сообщение', exact: true })).toBeEnabled()
     await page.getByRole('button', { name: 'Отправить сообщение', exact: true }).click()
@@ -68,7 +75,7 @@ export async function uploads(page, input, report, fixture) {
     await freshUploadWindow(page)
     await page.getByRole('button', { name: 'Личные', exact: true }).click()
     await page.locator('.direct-message-navigation .channel-button').filter({ hasText: 'qa_next_member' }).click()
-    await page.locator('#dm-attachments').setInputFiles(file('dm-real.bin', 1_000_000))
+    await selectFiles(page, '#dm-attachments', file('dm-real.bin', 1_000_000), 'direct-message')
     await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(1)
     await page.locator('.message-composer').evaluate(form=>{
       const dataTransfer=new DataTransfer()

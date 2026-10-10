@@ -36,7 +36,10 @@ export async function setup(page, password) {
 }
 export async function select(page, name) {
   await page.getByRole('button', { name: 'Каналы', exact: true }).click()
-  await page.locator('.channel-button').filter({ hasText: name }).click()
+  const target = page.locator('.channel-button').filter({ hasText: name })
+  await expect(target).toBeVisible()
+  await target.click()
+  await expect(target).toHaveAttribute('aria-current', 'page')
 }
 export function seed(fixture, kind, count=121) {
   const ids = Array.from({ length: count }, () => randomUUID())
