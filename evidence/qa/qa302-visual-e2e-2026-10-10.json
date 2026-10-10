@@ -427,7 +427,8 @@
     "all_critical_flows_approved_pixel_goldens": "NOT_RUN",
     "current_github_actions_artifact_bundle": "NOT_RUN_SKIP_CI_REQUEST",
     "no_live_production_service_dependency": "PASS_FIXTURE_AND_DISPOSABLE_STACK",
-    "issue_state_at_capture": "OPEN"
+    "issue_state_at_capture": "OPEN",
+    "responsive_shell_cross_browser": "PASS_21_CASES_CHROMIUM_WEBKIT_FIREFOX"
   },
   "limitations": [
     "Only the six admin screens listed above have reviewed source-sized full-stack comparisons; the other catalog slots do not yet have source-backed full-app after captures.",
@@ -515,5 +516,262 @@
       ".out/uiux-visual-diff-302/members-mobile-report.json"
     ]
   },
-  "working_tree_change_note": "The region-scoped review utility and tests in tools/verify/uiux_visual_diff.py and tools/verify/test_uiux_visual_diff.py were tested against this source revision and are included with this evidence in the checkpoint commit. The unrelated .gitignore change remains unstaged."
+  "working_tree_change_note": "The review-only region-delta reporter, responsive-shell focus-restore fix and regression coverage were tested on the working tree and are recorded in cross_browser_revalidation. The unrelated .gitignore change remains unstaged.",
+  "cross_browser_revalidation": {
+    "date": "2026-10-10",
+    "source_revision": "7e5c0ffc plus the tested working tree",
+    "playwright_version": "1.63.0",
+    "viewports": [
+      "320x640",
+      "375x812",
+      "390x844",
+      "393x852",
+      "430x932",
+      "600x900",
+      "768x1024",
+      "840x390",
+      "1024x768",
+      "1280x800",
+      "1440x900",
+      "1920x1080"
+    ],
+    "runs": [
+      {
+        "browser": "Chromium",
+        "version": "Google Chrome 154.0.8037.98",
+        "result": "PASS_AUTOMATED_ONLY",
+        "tests_passed": 7,
+        "viewports_tested": 12,
+        "command": "CHROMIUM_EXECUTABLE_PATH=/Applications/Google Chrome.app/Contents/MacOS/Google Chrome npx playwright test -c tests/responsive_shell/playwright.config.ts --browser chromium --output ../../.out/uiux-cross-browser-2026-10-10/chromium",
+        "capture_directory": ".out/uiux-cross-browser-2026-10-10/chromium",
+        "captures": [
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-1024x768.png",
+            "sha256": "1ac68c5863c503e128c30497bc5fd1e9e703393ead141336949599a601630949",
+            "raster": "1024x768"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-1280x800.png",
+            "sha256": "b79872f52eda363e86362262a6660477d9fb0d534588d2bc6489710516d13430",
+            "raster": "1280x800"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-1440x900.png",
+            "sha256": "54e7a278eaf1b08eb33085b38d217bf99854387f4f1a5137950672f3eee21b4d",
+            "raster": "1440x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-1920x1080.png",
+            "sha256": "3c6f716951bd154f61a323232b1200738f01d9649067f1db3f4a0bbee1a8743b",
+            "raster": "1920x1080"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-320x640.png",
+            "sha256": "f670ea50865b6bd8ca870cf80792e7299932603bf26b316a5a3db50cea82bec9",
+            "raster": "320x640"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-375x812.png",
+            "sha256": "c0ed734290a62a0762e47b761ed5e5fc88cd32bb0d85d18f62b808bb1ca01751",
+            "raster": "375x812"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-390x844.png",
+            "sha256": "19a0bd34a87e0797b7bcfbaf7beb5d4310b9d8c7b7abe598b8649b9dd9cf69a2",
+            "raster": "390x844"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-393x852.png",
+            "sha256": "9a508e46b86bb25edc2ff7c4a1792a2b178bc971b1b40c4f1cf4644fdf240f92",
+            "raster": "393x852"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-430x932.png",
+            "sha256": "229b6a4164b8ea4641ebe2fc1523e8dbc897b63beddad2a3887853f93ab98b58",
+            "raster": "430x932"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-600x900.png",
+            "sha256": "3dd3f40dad130b2889202ffab1a75a5ef71f8d5c4aa5a0f316f882ab7e71e45a",
+            "raster": "600x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-768x1024.png",
+            "sha256": "4b5cf4915f13a7343c685de413614ce4f58e4371169deb2bfa5a43b2a84d53cd",
+            "raster": "768x1024"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-840x390.png",
+            "sha256": "874d505a0e1b09b5717c926ebae6ee67e9e8268ac4846a589bc6b26223b74f08",
+            "raster": "840x390"
+          }
+        ]
+      },
+      {
+        "browser": "WebKit",
+        "version": "Playwright WebKit 26.6 (v2359)",
+        "result": "PASS_AUTOMATED_ONLY",
+        "tests_passed": 7,
+        "viewports_tested": 12,
+        "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/responsive_shell/playwright.config.ts --browser webkit --output ../../.out/uiux-cross-browser-2026-10-10/webkit",
+        "capture_directory": ".out/uiux-cross-browser-2026-10-10/webkit",
+        "captures": [
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-1024x768.png",
+            "sha256": "4f14e5042d2448887eb22b146d16ab47e26e32194198b32db5c1991785692448",
+            "raster": "1024x768"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-1280x800.png",
+            "sha256": "c40eaa1c548a89ebd3f84446aab5cb269279240ef138b8b464e8b71f530f2f39",
+            "raster": "1280x800"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-1440x900.png",
+            "sha256": "8a8e88500f440281b10d0ff4128166f11f603883672b1896ffe94935e23244ef",
+            "raster": "1440x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-1920x1080.png",
+            "sha256": "9a9b2c91628869a377205673003aceca5c863bc1a94ba264ed047d0cdedda58e",
+            "raster": "1920x1080"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-320x640.png",
+            "sha256": "fb6f12d145314841c7808d7c0a845b46568f7dd786f19bad57f69d22fb599140",
+            "raster": "320x640"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-375x812.png",
+            "sha256": "3c39816901ad4fe841f86e5d63497aefb0553fdd779be8d97ad524c08760afe0",
+            "raster": "375x812"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-390x844.png",
+            "sha256": "b023c486fe48850ce0e9171f6f4a541e39c1c550b859599781558ec9d65c115f",
+            "raster": "390x844"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-393x852.png",
+            "sha256": "f700bfe9b490c25a5263b4626468215efc64a3cda412d1dfc331a8465b7729da",
+            "raster": "393x852"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-430x932.png",
+            "sha256": "95b61688225e3cb03437284c8c5555962a6ec2bad890c333f0035f0269640336",
+            "raster": "430x932"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-600x900.png",
+            "sha256": "27ff036cab7ae0b9cc135c3d5c51495724dafe81cde49e9f6f13887f9210d7f7",
+            "raster": "600x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-768x1024.png",
+            "sha256": "c50975cc9426cccd5b97efb855cea5b272c149910091cbcee0a775f2830f3563",
+            "raster": "768x1024"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-840x390.png",
+            "sha256": "7222a7b427686397f8d273cc807bf3254d32faad04b1663be5d8d26f279fa977",
+            "raster": "840x390"
+          }
+        ]
+      },
+      {
+        "browser": "Firefox",
+        "version": "Playwright Firefox 155.0 (v1543)",
+        "result": "PASS_AUTOMATED_ONLY",
+        "tests_passed": 7,
+        "viewports_tested": 12,
+        "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/responsive_shell/playwright.config.ts --browser firefox --output ../../.out/uiux-cross-browser-2026-10-10/firefox",
+        "capture_directory": ".out/uiux-cross-browser-2026-10-10/firefox",
+        "captures": [
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-1024x768.png",
+            "sha256": "6297fadf5116748f2a5795d2b3e00cbd68f2bca3b07e29095f8723113b4ad890",
+            "raster": "1024x768"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-1280x800.png",
+            "sha256": "dad7983e1895272a9aa92b678c3174a53e45e31deb3dca195038bd87f6d01cf3",
+            "raster": "1280x800"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-1440x900.png",
+            "sha256": "2e5bf619cf527ae8d3955c27444bb8a942f9046cb5970243a5550e95afadabb7",
+            "raster": "1440x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-1920x1080.png",
+            "sha256": "01ff038565d9ef54b00945837f4dd6b8a429c5722bd717217ecc6b88db6788f9",
+            "raster": "1920x1080"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-320x640.png",
+            "sha256": "adc9f495d652c0cba5688d1659c4fa9c11ac0f331e3c2f68fca3a22fa96d47e5",
+            "raster": "320x640"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-375x812.png",
+            "sha256": "3642f5013ccb9fead2d5acced012bf58c5a4206d901764334ab91dee1dc7b99f",
+            "raster": "375x812"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-390x844.png",
+            "sha256": "b3decbf59871ce7a2bd5d958baee604bf5cb0ae0f97a1dafb6e0ed1a2a97bab8",
+            "raster": "390x844"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-393x852.png",
+            "sha256": "b0e1c66d88c57b5e14edbeaaaa14d93e621a9d52fd0b4d6e07c258ed777c2130",
+            "raster": "393x852"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-430x932.png",
+            "sha256": "113689e8fb9389faf420230d9aca1a43c47a9523c9e81b9ed0f45e67b377650f",
+            "raster": "430x932"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-600x900.png",
+            "sha256": "e834a1812fc7a19051546cd6d4d616179b8ed680c0b1b5f15605ee333954f1ca",
+            "raster": "600x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-768x1024.png",
+            "sha256": "a0bae3e2723f0b98fa9f600284dc459c6c20ab17424f618eefda0d1758bdfdd4",
+            "raster": "768x1024"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-840x390.png",
+            "sha256": "7d54522760fd2765fe7cb15b9ddc800162b7bd84158b81d706e0896e56fd05e2",
+            "raster": "840x390"
+          }
+        ]
+      }
+    ],
+    "focus_restore_regression": {
+      "before_fix": "WebKit opened the drawer but restored focus to #main-region rather than the navigation trigger after Escape; WebKit does not reliably make a clicked button document.activeElement on this host.",
+      "fix": "When navigation or members drawer closes, prefer its explicit workspace-header opener and call focus({preventScroll:true}); retain prior-focus restoration for the search drawer.",
+      "coverage": "The browser regression now checks focus return after Escape and selection for navigation, and after Escape for the members panel.",
+      "verification": "The regression failed in WebKit before the fix; after the fix it passes in Chromium, WebKit and Firefox."
+    },
+    "supplemental_checks": [
+      {
+        "command": "npm test -- --run src/workspace/workspace_drawer_focus.spec.ts",
+        "result": "PASS",
+        "tests_passed": 3
+      },
+      {
+        "command": "VITE_PUBLIC_ORIGIN=https://voice.example.test npm run build",
+        "result": "PASS",
+        "notes": "vue-tsc and Vite production build succeed; Vite reports existing LiveKit import/chunk-size warnings."
+      }
+    ],
+    "limitations": [
+      "Playwright WebKit is an automated WebKit engine run, not manual Safari app or iOS Safari acceptance.",
+      "Firefox is the Playwright runtime, not a native Firefox user-task or physical device acceptance.",
+      "All browser screenshots are ignored local .out outputs; the requested [skip ci] means no GitHub Actions artifact exists for this checkpoint."
+    ]
+  }
 }

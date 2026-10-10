@@ -267,6 +267,7 @@ test('the production drawer focus manager traps focus and restores it after Esca
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/tests/responsive_shell/focus_fixture.html')
   const trigger = page.getByRole('button', { name: 'Открыть навигацию' })
+  const membersTrigger = page.getByRole('button', { name: 'Открыть участников' })
   const selection = page.getByRole('button', { name: 'Выбрать канал' })
 
   await trigger.click()
@@ -284,4 +285,9 @@ test('the production drawer focus manager traps focus and restores it after Esca
   await expect(trigger).toBeFocused()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByText('Канал: общий')).toBeVisible()
+
+  await membersTrigger.click()
+  await expect(page.getByRole('dialog', { name: 'Панель участников' })).toHaveAttribute('aria-modal', 'true')
+  await page.keyboard.press('Escape')
+  await expect(membersTrigger).toBeFocused()
 })

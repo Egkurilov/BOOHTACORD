@@ -70,7 +70,38 @@
       "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/responsive_shell/playwright.config.ts --browser webkit",
       "result": "NOT_RUN_BROWSER_RUNTIME_MISSING",
       "launch_error": "Expected Playwright runtime /Users/pistol121/Library/Caches/ms-playwright/webkit-2359/pw_run.sh is absent; all seven cases stopped at browser launch.",
-      "acceptance_effect": "No WebKit test assertion ran. This is an unavailable local browser binary, not an observed UI regression. No browser download was attempted."
+      "acceptance_effect": "The first attempt stopped before assertions because the browser runtime was missing. Playwright WebKit and Firefox were subsequently installed from the official CDN and the full WebKit suite passed 7/7."
+    },
+    {
+      "date": "2026-10-10",
+      "target": "Playwright responsive-shell cross-browser viewport matrix",
+      "result": "PASS_AUTOMATED_ONLY",
+      "playwright_version": "1.63.0",
+      "runs": [
+        {
+          "browser": "Chromium",
+          "version": "Google Chrome 154.0.8037.98",
+          "tests_passed": 7,
+          "viewports": 12
+        },
+        {
+          "browser": "WebKit",
+          "version": "26.6 (Playwright v2359)",
+          "tests_passed": 7,
+          "viewports": 12
+        },
+        {
+          "browser": "Firefox",
+          "version": "155.0 (Playwright v1543)",
+          "tests_passed": 7,
+          "viewports": 12
+        }
+      ],
+      "evidence": "evidence/qa/qa302-visual-e2e-2026-10-10.json",
+      "capture_root": ".out/uiux-cross-browser-2026-10-10/",
+      "acceptance_effect": "Automated responsive viewport and interaction coverage is now available for three browser engines. It does not count as native Safari, mobile browser, physical device or screen-reader task acceptance.",
+      "source_revision": "7e5c0ffc plus the tested working tree",
+      "runtime_install": "WebKit 26.6 and Firefox 155 Playwright runtimes were installed from the official Playwright CDN after the initial missing-runtime attempt."
     }
   ],
   "platform_matrix": [
@@ -92,14 +123,15 @@
       "result": "NOT_RUN",
       "browserVersion": "Safari 26.6",
       "manualTaskSmoke": "NOT_RUN",
-      "limitation": "Safari is installed, but no task-based run was executed for this candidate."
+      "limitation": "Safari is installed; only the local fixture was opened in the Safari app. Full-app task smoke remains NOT_RUN. Playwright WebKit 26.6 passes separately as automated engine coverage."
     },
     {
       "target": "Web Firefox desktop/mobile",
-      "available": false,
-      "result": "NOT_RUN",
+      "available": true,
+      "result": "PASS_AUTOMATED_ONLY",
       "manualTaskSmoke": "NOT_RUN",
-      "limitation": "Firefox browser is not installed on this host."
+      "limitation": "Playwright Firefox viewport smoke passes 7/7 on 12 dimensions. Standalone Firefox app manual task smoke and physical-device acceptance were not run.",
+      "browserVersion": "Playwright Firefox 155.0 (v1543)"
     },
     {
       "target": "Web Safari on iOS / physical mobile browser",
@@ -137,6 +169,16 @@
       "result": "NOT_RUN",
       "manualTaskSmoke": "NOT_RUN",
       "limitation": "No device is reported by Flutter; CoreSimulatorService could not enumerate simulators during this inventory."
+    },
+    {
+      "target": "Playwright WebKit desktop/mobile viewport automation",
+      "available": true,
+      "result": "PASS_AUTOMATED_ONLY",
+      "browserVersion": "WebKit 26.6 (Playwright v2359)",
+      "testsPassed": 7,
+      "viewports": 12,
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "Automated WebKit engine coverage is not native Safari app or iOS Safari task acceptance."
     }
   ],
   "physical_task_scripts": [
@@ -174,14 +216,16 @@
       "evidence/qa/qa301-accessibility-2026-10-10.json",
       "evidence/qa/qa300-voice-stream-2026-10-10.json",
       "evidence/qa/qa302-visual-e2e-2026-10-10.json"
-    ]
+    ],
+    "web_cross_browser_responsive_suite": "PASS_21_CASES_CHROMIUM_WEBKIT_FIREFOX"
   },
   "open_release_gates": [
     "Obtain and run a current Android physical device and iOS physical device/simulator.",
     "Run current native Flutter task scripts on macOS and Windows; verify window resizing, keyboard/focus and native capture picker behavior.",
     "Run mobile IME, SafeArea, Back/swipe, dynamic text and TalkBack/VoiceOver acceptance.",
     "Record per-target OS/device, app build, reproducible steps and source-sized screenshots/video; link any user-blocking issues.",
-    "Run a non-skip-ci workflow to publish the configured browser/Flutter CI artifacts."
+    "Run a non-skip-ci workflow to publish the configured browser/Flutter CI artifacts.",
+    "Run actual full-app Safari and physical/mobile browser task scripts; current WebKit/Firefox results are automated viewport smoke only."
   ],
   "acceptance": {
     "platform_results_recorded_as_pass_fail_not_run": "PASS",
@@ -189,8 +233,9 @@
     "physical_p1_task_smoke": "NOT_RUN",
     "screen_reader_acceptance": "NOT_RUN",
     "all_supported_platforms_unblocked": "NOT_RUN",
-    "issue_state_at_capture": "OPEN"
+    "issue_state_at_capture": "OPEN",
+    "cross_browser_responsive_automation": "PASS_21_CASES_3_ENGINES"
   },
-  "artifact_storage": "No physical captures/video exist for this run; artifact paths are not invented. Automated .out evidence remains local/ignored.",
+  "artifact_storage": "No physical captures/video exist. Browser viewport PNGs are local and ignored under .out/uiux-cross-browser-2026-10-10/; no GitHub Actions artifact was produced for the [skip ci] checkpoint.",
   "scope_note": "Platform media QoE is separate from UI acceptance and remains under #173/#174; no media capacity or quality claim is made here."
 }

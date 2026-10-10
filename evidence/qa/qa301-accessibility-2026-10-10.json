@@ -109,15 +109,22 @@
     "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
   },
   "manual_acceptance": {
-    "web_keyboard_browser_automation": "PASS_SCOPED",
+    "web_keyboard_browser_automation": "PASS_SCOPED_CHROMIUM_WEBKIT_FIREFOX",
     "web_voiceover_or_nvda": "NOT_RUN",
     "flutter_talkback": "NOT_RUN",
     "flutter_ios_voiceover": "NOT_RUN",
     "macos_voiceover": "NOT_RUN",
     "windows_narrator_and_keyboard": "NOT_RUN",
     "device_inventory": {
-      "available": ["macOS 26.6.1 arm64", "Chrome 154.0.8037.98"],
-      "unavailable": ["Android physical device/emulator", "iOS device/simulator", "Windows device/VM"]
+      "available": [
+        "macOS 26.6.1 arm64",
+        "Chrome 154.0.8037.98"
+      ],
+      "unavailable": [
+        "Android physical device/emulator",
+        "iOS device/simulator",
+        "Windows device/VM"
+      ]
     },
     "limitation": "Widget and browser automation cannot confirm announcements or traversal through a real screen reader. Keep #301 open until the manual acceptance is performed and recorded; platform runtime scheduling is tracked with #303."
   },
@@ -127,7 +134,36 @@
     "automated_flutter_scoped_semantics": "PASS",
     "sampled_contrast_and_target_sizes": "PASS_SCOPED",
     "physical_screen_reader_acceptance": "NOT_RUN",
-    "issue_state_at_capture": "OPEN"
+    "issue_state_at_capture": "OPEN",
+    "cross_browser_keyboard_focus": "PASS_AUTOMATED_ONLY_3_ENGINES"
   },
-  "artifact_storage": "All PNGs referenced here remain ignored local .out captures; only this manifest and code/docs changes are committed."
+  "artifact_storage": "All PNGs referenced here remain ignored local .out captures; only this manifest and code/docs changes are committed.",
+  "cross_browser_revalidation": {
+    "date": "2026-10-10",
+    "source_revision": "7e5c0ffc plus the tested working tree",
+    "status": "PASS_AUTOMATED_ONLY",
+    "browser_runs": [
+      {
+        "browser": "Chrome 154.0.8037.98",
+        "responsive_shell_tests": "7/7",
+        "viewports": 12
+      },
+      {
+        "browser": "Playwright WebKit 26.6 (v2359)",
+        "responsive_shell_tests": "7/7",
+        "viewports": 12
+      },
+      {
+        "browser": "Playwright Firefox 155.0 (v1543)",
+        "responsive_shell_tests": "7/7",
+        "viewports": 12
+      }
+    ],
+    "focus_finding": "The WebKit run exposed that closing a mobile drawer after click could leave focus on the main region. Navigation and members close now restore focus to their named header opener with preventScroll; search retains prior-focus behavior.",
+    "unit_tests": "3/3 workspace_drawer_focus tests passed",
+    "limitations": [
+      "This adds browser-automated keyboard focus coverage only. No VoiceOver, NVDA, TalkBack or Narrator traversal was run.",
+      "Native Safari task smoke and physical device acceptance remain NOT_RUN under #303."
+    ]
+  }
 }
