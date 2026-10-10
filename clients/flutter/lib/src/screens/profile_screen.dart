@@ -4,6 +4,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../app_state.dart';
+import '../features/admin/confirmation/dialog.dart';
 import '../features/session/own_sessions/panel.dart';
 import '../features/updates/status_card.dart';
 import '../models.dart';
@@ -73,6 +74,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _newPassword.clear();
       setState(() => _status = 'Пароль изменён. Другие сессии завершены.');
     }
+  }
+
+  bool get _hasUnsavedSecurityChanges {
+    final savedName = widget.state.profile?.displayName ?? '';
+    return _displayName.text != savedName ||
+        _currentPassword.text.isNotEmpty ||
+        _newPassword.text.isNotEmpty;
+  }
+
+  Future<bool> _confirmLeavingUnsavedChanges(String accountId) async {
+    final confirmed = await showConfirmationDialog<bool>(
+      context: context,
+      cancelOn: widget.state,
+      shouldCancel: () => widget.state.profile?.accountId != accountId,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Несохранённые изменения'),
+        content: const Text(
+          'Введённое имя или пароль ещё не сохранены. '
+          'Если уйти, эти данные будут потеряны. Продолжить?',
+        ),
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: GcColors.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Выйти без сохранения'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true && widget.state.profile?.accountId == accountId;
+  }
+
+  Future<bool> _confirmLogout(String accountId) async {
+    final confirmed = await showConfirmationDialog<bool>(
+      context: context,
+      cancelOn: widget.state,
+      shouldCancel: () => widget.state.profile?.accountId != accountId,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Подтвердите выход из аккаунта'),
+        content: const Text(
+          'Голосовое подключение завершится, а личные данные исчезнут '
+          'с этого экрана. Выйти из аккаунта?',
+        ),
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: GcColors.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Выйти'),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true && widget.state.profile?.accountId == accountId;
+  }
+
+  Future<void> _requestLogout() async {
+    final accountId = widget.state.profile?.accountId;
+    if (accountId == null) return;
+    if (_hasUnsavedSecurityChanges &&
+        !await _confirmLeavingUnsavedChanges(accountId)) {
+      return;
+    }
+    if (!mounted || widget.state.profile?.accountId != accountId) return;
+    final confirmed = await _confirmLogout(accountId);
+    if (!confirmed ||
+        !mounted ||
+        widget.state.profile?.accountId != accountId) {
+      return;
+    }
+    await widget.state.logout();
   }
 
   Future<void> _selectAvatar() async {
@@ -391,7 +472,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: OutlinedButton(
             onPressed: widget.state.logoutBusy || widget.state.profileSaving
                 ? null
-                : widget.state.logout,
+                : _requestLogout,
             child: Text(
               widget.state.logoutBusy ? 'Выходим…' : 'Выйти из аккаунта',
             ),

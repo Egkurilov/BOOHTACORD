@@ -11,6 +11,17 @@ import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _LogoutTrackingState extends AppState {
+  _LogoutTrackingState() : super(ApiClient());
+
+  int logoutCalls = 0;
+
+  @override
+  Future<void> logout() async {
+    logoutCalls++;
+  }
+}
+
 void main() {
   testWidgets('announces profile loading status', (tester) async {
     final state = AppState(ApiClient())..profileLoading = true;
@@ -359,5 +370,163 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(appVersionLabel), findsOneWidget);
     semantics.dispose();
+  });
+
+  testWidgets('profile logout requires an explicit confirmation', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = _LogoutTrackingState()
+      ..phase = AppPhase.ready
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    final logout = find.widgetWithText(OutlinedButton, 'Выйти из аккаунта');
+    await tester.ensureVisible(logout);
+    await tester.tap(logout);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Подтвердите выход из аккаунта'), findsOneWidget);
+    expect(state.logoutCalls, 0);
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+    expect(find.text('Подтвердите выход из аккаунта'), findsNothing);
+    expect(state.logoutCalls, 0);
+    expect(state.phase, AppPhase.ready);
+  });
+
+  testWidgets('confirmed profile logout starts session shutdown', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = _LogoutTrackingState()
+      ..phase = AppPhase.ready
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    final logout = find.widgetWithText(OutlinedButton, 'Выйти из аккаунта');
+    await tester.ensureVisible(logout);
+    await tester.tap(logout);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Выйти'));
+    await tester.pumpAndSettle();
+
+    expect(state.logoutCalls, 1);
+  });
+
+  testWidgets('account change closes a stale logout confirmation', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = _LogoutTrackingState()
+      ..phase = AppPhase.ready
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    final logout = find.widgetWithText(OutlinedButton, 'Выйти из аккаунта');
+    await tester.ensureVisible(logout);
+    await tester.tap(logout);
+    await tester.pumpAndSettle();
+    expect(find.text('Подтвердите выход из аккаунта'), findsOneWidget);
+
+    state.profile = const OwnProfile(
+      accountId: 'account-2',
+      login: 'another-member',
+      displayName: 'Другой участник',
+      role: 'MEMBER',
+    );
+    state.notifyListeners();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Подтвердите выход из аккаунта'), findsNothing);
+    expect(state.logoutCalls, 0);
+  });
+
+  testWidgets('logout asks before discarding an unsaved profile name', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = _LogoutTrackingState()
+      ..phase = AppPhase.ready
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.enterText(find.byType(TextField).first, 'Новое имя');
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    final logout = find.widgetWithText(OutlinedButton, 'Выйти из аккаунта');
+    await tester.ensureVisible(logout);
+    await tester.tap(logout);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Несохранённые изменения'), findsOneWidget);
+    expect(find.text('Подтвердите выход из аккаунта'), findsNothing);
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+    expect(state.logoutCalls, 0);
+    await tester.tap(find.byKey(const ValueKey('profile-tab-profile')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+      'Новое имя',
+    );
   });
 }

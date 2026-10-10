@@ -16,6 +16,7 @@ class OwnSessionsController extends ChangeNotifier {
   String? error, nextCursor;
   bool busy = false;
   String _account = '';
+  String get accountId => _account;
   int _generation = 0;
   bool _closed = false;
   void setAccount(String value) {

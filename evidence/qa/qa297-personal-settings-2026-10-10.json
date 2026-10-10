@@ -2,7 +2,7 @@
   "id": "QA-297-PERSONAL-SETTINGS",
   "date": "2026-10-10",
   "task": "UIUX-2026 issue #297 — personal settings and save-state",
-  "source_revision": "81206b6f",
+  "source_revision": "ab126911",
   "working_tree_changes": true,
   "checks": [
     {
@@ -77,6 +77,38 @@
         "owned_resources_removed": true
       },
       "observation": "Current full-stack after capture exists at 1440×900. The corresponding source image is an exact duplicate of the Members source and cannot serve as an independent before screenshot."
+    },
+    {
+      "name": "Flutter profile logout and own-session confirmation regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/profile_screen_test.dart test/own_sessions_panel_test.dart",
+      "result": "PASS",
+      "passed": 20,
+      "observation": "Logout does not start before confirmation; Cancel is safe; dirty profile names are preserved when discarding is cancelled; confirmed logout invokes the session action. Revoking one or all other sessions requires confirmation, and an account switch closes a stale prompt without revoking. Account changes also close a stale logout prompt without running the logout action."
+    },
+    {
+      "name": "Changed Flutter settings/session analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/profile_screen.dart lib/src/features/session/own_sessions/controller.dart lib/src/features/session/own_sessions/view.dart test/profile_screen_test.dart test/own_sessions_panel_test.dart test/uiux_2026/personal_settings_visual_capture_test.dart",
+      "result": "PASS",
+      "observation": "No analyzer issues found."
+    },
+    {
+      "name": "Flutter settings confirmation captures",
+      "command": "cd clients/flutter && BOOHTACORD_VISUAL_CAPTURE_DIR=.out/uiux-2026-epic-289/settings/flutter flutter test --no-pub test/uiux_2026/personal_settings_visual_capture_test.dart",
+      "result": "PASS",
+      "passed": 2,
+      "files": [
+        {
+          "path": "clients/flutter/.out/uiux-2026-epic-289/settings/flutter/flutter-profile-logout-confirmation-mobile-393x852@3x.png",
+          "sha256": "ef2d31407d61b5d6f4c2302df2636791aaf6f8be2ab69dbbbcb1c61dbf3fb152",
+          "raster": "1179x2556"
+        },
+        {
+          "path": "clients/flutter/.out/uiux-2026-epic-289/settings/flutter/flutter-settings-revoke-sessions-confirmation-mobile-393x852@3x.png",
+          "sha256": "548d5918c4555025cfc8c11ccbb5a2a40f75463ab4e272fcb898b7ea4389b118",
+          "raster": "1179x2556"
+        }
+      ],
+      "observation": "Production Flutter widgets show the named impact, safe Cancel and explicit destructive action at the source mobile raster size. Synthetic captures are not native-device acceptance."
     }
   ],
   "source_archive": {
@@ -192,7 +224,22 @@
     "Mobile after captures have matching 1179×2556 source rasters. The visual review records runtime-data differences: synthetic account identity, Chrome notification permission/state, browser device inventory, and update-check HTTP 503.",
     "The desktop guild settings baseline is blocked by the duplicated source asset (D11); its after image is retained locally.",
     "No native macOS/Android audio/settings smoke was run. Widget target-platform cases pass; there is no populated native QA session, and no physical Android/iOS device is available. TalkBack/VoiceOver spoken review is NOT_RUN.",
-    "Generated PNGs and extracted source PNGs remain in ignored .out directories and are not staged."
+    "Generated PNGs and extracted source PNGs remain in ignored .out directories and are not staged.",
+    "Flutter settings/session confirmation captures are production-widget after images with synthetic fixtures; they are not authenticated full-app before/after comparisons or native device screenshots."
   ],
-  "status": "PARTIAL — Web/Flutter form, save-state, keyboard, confirmation, audio-state and responsive widget coverage passes; five full-app mobile personal-settings after captures are visually reviewed. Desktop independent guild-settings baseline, native macOS/Android smoke, and screen-reader review remain open."
+  "status": "PARTIAL — settings taxonomy, save/audio states, profile logout and own-session confirmation behavior, focused tests and source-sized Web/Flutter captures are recorded. Independent desktop guild-settings baseline (D11), native macOS/Android settings smoke and screen-reader acceptance remain open.",
+  "flutter_supplementary_captures": [
+    {
+      "flow": "Logout confirmation",
+      "path": "clients/flutter/.out/uiux-2026-epic-289/settings/flutter/flutter-profile-logout-confirmation-mobile-393x852@3x.png",
+      "sha256": "ef2d31407d61b5d6f4c2302df2636791aaf6f8be2ab69dbbbcb1c61dbf3fb152",
+      "raster": "1179x2556"
+    },
+    {
+      "flow": "Revoke other sessions confirmation",
+      "path": "clients/flutter/.out/uiux-2026-epic-289/settings/flutter/flutter-settings-revoke-sessions-confirmation-mobile-393x852@3x.png",
+      "sha256": "548d5918c4555025cfc8c11ccbb5a2a40f75463ab4e272fcb898b7ea4389b118",
+      "raster": "1179x2556"
+    }
+  ]
 }
