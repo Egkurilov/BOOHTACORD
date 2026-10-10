@@ -9,8 +9,8 @@ class Stack(Base):
         local_docker()
         ports_available((4880, 4881, 4882))
         config = self.work/'livekit.yaml'
-        config.write_text('''port: 4880
-bind_addresses: ["127.0.0.1"]
+        config.write_text(f'''port: 4880
+bind_addresses: ["0.0.0.0"]
 rtc:
   tcp_port: 4881
   udp_port: 4882
@@ -22,13 +22,18 @@ keys:
   qa-only: qa-local-only-secret-12345
 webhook:
   api_key: qa-only
-  urls: ["http://127.0.0.1:4820/internal/livekit/roster"]
+  urls: ["http://${self.owner}-api:8080/internal/livekit/roster"]
 ''')
         config.chmod(0o644)
-        self.container('sfu', IMAGE, '-v', str(config)+':/qa.yaml:ro', network=False,
+        self.environment['LIVEKIT_PRIVATE_HTTP_URL'] = f'http://{self.owner}-sfu:4880'
+        super().start()
+        self.container('sfu', IMAGE,
+                       '--publish', '127.0.0.1:4880:4880/tcp',
+                       '--publish', '127.0.0.1:4881:4881/tcp',
+                       '--publish', '127.0.0.1:4882:4882/udp',
+                       '-v', str(config)+':/qa.yaml:ro', network=True,
                        command=('--config', '/qa.yaml', '--node-ip', '127.0.0.1'))
         ready('http://127.0.0.1:4880')
-        super().start()
 
     def restart(self):
         self.environment['LIVEKIT_PUBLIC_WS_URL'] = 'wss://localhost:4810/qa-sfu'
