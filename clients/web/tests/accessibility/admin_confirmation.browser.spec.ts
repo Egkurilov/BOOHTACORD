@@ -62,6 +62,41 @@ test('screen-share setup remains scrollable and keeps the action reachable on a 
   await expect(start).toBeInViewport()
 })
 
+const screenShareSetups = [
+  { name: '390x844 phone', width: 390, height: 844, textScale: 1 },
+  { name: '320x640 compact phone', width: 320, height: 640, textScale: 1 },
+  { name: '844x390 landscape', width: 844, height: 390, textScale: 1 },
+  { name: '390x844 phone at 2x text', width: 390, height: 844, textScale: 2 },
+] as const
+
+for (const viewport of screenShareSetups) {
+  test(`screen-share setup keeps start and cancel reachable at ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height })
+    await page.goto('/')
+    await page.evaluate(async (textScale) => {
+      const { createApp, h } = await import('/node_modules/.vite/deps/vue.js')
+      const { default: ScreenShareSetupDialog } = await import('/src/voice/ScreenShareSetupDialog.vue')
+      document.body.innerHTML = '<button id="trigger">Показать экран</button><div id="mount"></div>'
+      if (textScale !== 1) document.documentElement.style.fontSize = `${16 * textScale}px`
+      createApp({ render: () => h(ScreenShareSetupDialog, {
+        initialProfile: 'P1080_30', onCancel: () => {}, onStart: () => {},
+      }) }).mount('#mount')
+    }, viewport.textScale)
+
+    const dialog = page.getByRole('dialog', { name: 'Демонстрация экрана' })
+    const start = dialog.getByRole('button', { name: 'Начать трансляцию' })
+    const cancel = dialog.getByRole('button', { name: 'Отмена' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toContainText('После продолжения браузер покажет системный запрос на выбор экрана или окна.')
+
+    for (const control of [start, cancel]) {
+      await control.scrollIntoViewIfNeeded()
+      await expect(control).toBeInViewport()
+      await expect(control).toBeEnabled()
+    }
+  })
+}
+
 test('a stale channel confirmation never submits a mutation for a refreshed target', async ({ page }) => {
   let mutationRequests = 0
   await page.route('**/api/v1/**', async route => {
