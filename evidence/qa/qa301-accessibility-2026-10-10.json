@@ -11,7 +11,7 @@
       "name": "Web accessibility and message-action axe suite on installed Chrome",
       "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:accessibility",
       "result": "PASS",
-      "accessibility_browser_cases_passed": 46,
+      "accessibility_browser_cases_passed": 47,
       "message_action_axe_cases_passed": 1,
       "observations": [
         "Coverage includes accessible names/roles in selected rendered states, keyboard focus and modal containment/restoration, profile tab keyboard navigation, responsive 200% text, reduced motion, stream/dialog states, admin states and selected axe checks.",
@@ -140,7 +140,7 @@
   "artifact_storage": "All PNGs referenced here remain ignored local .out captures; only this manifest and code/docs changes are committed.",
   "cross_browser_revalidation": {
     "date": "2026-10-10",
-    "source_revision": "working tree tested before the next [skip ci] checkpoint",
+    "source_revision": "3668b43d",
     "status": "PASS_AUTOMATED_ONLY",
     "browser_runs": [
       {

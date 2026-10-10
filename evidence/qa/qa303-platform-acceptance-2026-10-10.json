@@ -123,7 +123,8 @@
         }
       ],
       "evidence": "evidence/qa/qa301-accessibility-2026-10-10.json",
-      "acceptance_effect": "Automated browser accessibility, keyboard dialog traversal and focus restoration are covered across three engines. This does not satisfy native Safari, mobile browser, physical device or assistive technology task scripts."
+      "acceptance_effect": "Automated browser accessibility, keyboard dialog traversal and focus restoration are covered across three engines. This does not satisfy native Safari, mobile browser, physical device or assistive technology task scripts.",
+      "source_revision": "3668b43d"
     }
   ],
   "platform_matrix": [

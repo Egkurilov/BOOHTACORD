@@ -438,7 +438,7 @@
   ],
   "artifact_storage": "All 37 PNG captures remain ignored local .out files; only the manifest and workflow/test/docs edits will be staged.",
   "latest_revalidation": {
-    "commit": "2cdc9b2c",
+    "commit": "3668b43d",
     "date": "2026-10-10",
     "source_catalog": "PASS_41_ENTRIES",
     "web_responsive_shell": "PASS_7_TESTS_12_VIEWPORTS",
@@ -525,7 +525,7 @@
   "working_tree_change_note": "The review-only region-delta reporter, responsive-shell focus-restore fix and regression coverage were tested on the working tree and are recorded in cross_browser_revalidation. The unrelated .gitignore change remains unstaged.",
   "cross_browser_revalidation": {
     "date": "2026-10-10",
-    "source_revision": "working tree tested before the next [skip ci] checkpoint",
+    "source_revision": "3668b43d",
     "playwright_version": "1.63.0",
     "viewports": [
       "320x640",
