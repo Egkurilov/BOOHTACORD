@@ -4,6 +4,7 @@
   "task": "UIUX-2026 issue #297 — personal settings and save-state",
   "source_revision": "ab126911",
   "working_tree_changes": true,
+  "working_tree_change_note": "The Flutter profile save-state and responsive-layout test reruns are pinned to dfdb7e8c; production Web screenshots in this record remain from ab126911.",
   "checks": [
     {
       "name": "Web settings layout/focus/store unit suite",
@@ -109,6 +110,14 @@
         }
       ],
       "observation": "Production Flutter widgets show the named impact, safe Cancel and explicit destructive action at the source mobile raster size. Synthetic captures are not native-device acceptance."
+    },
+    {
+      "name": "Flutter profile save-state and responsive layout regressions",
+      "command": "cd clients/flutter && flutter test --no-pub test/profile_screen_test.dart",
+      "result": "PASS",
+      "passed": 21,
+      "revision": "dfdb7e8c",
+      "observation": "Save is disabled for an unchanged name and announces dirty, pending, and saved states; regression coverage also includes a 64-character unbroken name at 2× text, a 320 px viewport with the system keyboard open, and a live 1440→320 px resize. Flutter analyze on the changed screen and test also passes with no issues."
     }
   ],
   "source_archive": {
