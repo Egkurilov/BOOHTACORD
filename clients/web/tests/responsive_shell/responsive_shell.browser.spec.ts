@@ -162,7 +162,13 @@ test('the channel favorite toggle stays inside its row at responsive widths', as
 })
 
 test('production channel favorites remain reachable when adding a lower channel on narrow drawers', async ({ page }) => {
-  for (const viewport of viewports) {
+  const shortViewports = [
+    { width: 320, height: 568 },
+    { width: 637, height: 584 },
+    { width: 1024, height: 584 },
+    { width: 1440, height: 584 },
+  ]
+  for (const viewport of [...viewports, ...shortViewports]) {
     const { width } = viewport
     await page.setViewportSize(viewport)
     await page.goto('/')
@@ -172,6 +178,9 @@ test('production channel favorites remain reachable when adding a lower channel 
       const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
       const { default: ChannelNavigation } = await load('/src/channel/ChannelNavigation.vue')
       localStorage.clear()
+      if (window.innerWidth === 320 && window.innerHeight === 568) {
+        document.documentElement.style.fontSize = '32px'
+      }
       document.body.innerHTML = '<div class="app-frame"><div class="gc-shell no-aside"><aside class="sidebar is-open"><div class="nav-drawer"><div class="nav-content" id="mount"></div></div></aside><main class="main"></main></div></div>'
       const channels = Array.from({ length: 18 }, (_, position) => ({
         id: `channel-${position + 1}`,
@@ -197,6 +206,7 @@ test('production channel favorites remain reachable when adding a lower channel 
     await expect(favorite).toBeVisible()
     await favorite.click()
     await expect(favorite).toHaveAttribute('aria-pressed', 'true')
+    await expect(favorite).toBeInViewport({ ratio: 0.99 })
     await expect(page.locator('.channel-favorite-link')).toBeVisible()
     await expect(favorite).toBeVisible()
     expect(await navContent.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
