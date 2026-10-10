@@ -2615,6 +2615,9 @@ void main() {
     state.selectedChannel = _PortraitApi.voiceChannel;
     state.voiceChannel = _PortraitApi.voiceChannel;
     state.voicePhase = VoicePhase.connected;
+    state.audioActivationMode = AudioActivationMode.vad;
+    state.microphoneMuted = false;
+    state.microphoneUnavailable = false;
 
     await tester.pumpWidget(
       MaterialApp(
