@@ -573,6 +573,38 @@ test('voice prejoin announces connecting and blocks duplicate joins', async ({ p
   await expectAxeClear(page, '.voice-prejoin')
 })
 
+test('connected voice room keeps connection status and stream action available', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+    const { default: VoiceRoomConnected } = await load('/src/voice/VoiceRoomConnected.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    createApp({ render: () => h(VoiceRoomConnected, {
+      roomName: 'Основная комната', voiceState: 'CONNECTED', screenState: 'IDLE',
+      screenError: null,
+      screenDiagnostics: { audioTrack: 'UNKNOWN', connectionQuality: 'UNKNOWN', source: 'UNKNOWN', measured: null },
+      screenProfile: null, selectedScreenProfile: 'P1080_30', screenViewerCards: [],
+      voiceVolumeError: null, voiceVolumeParticipants: [], selfName: 'Алексей',
+      selfDeafened: false, selfMicrophoneMuted: false, selfMicrophoneUnavailable: false,
+      selfSpeaking: false, toggleMicrophone: () => {}, toggleDeafen: () => {},
+    }) }).mount('#mount')
+  })
+
+  const intro = page.locator('.room-intro')
+  await expect(page.getByRole('heading', { name: 'Все в сборе' })).toBeVisible()
+  await expect(intro.getByRole('button', { name: 'Показать экран' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Выйти из голосового канала' })).toBeEnabled()
+  await expectAxeClear(page, '#mount')
+  await page.screenshot({ path: testInfo.outputPath('desktop-voice-room-after.png'), fullPage: true })
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await expectAxeClear(page, '#mount')
+  await page.screenshot({ path: testInfo.outputPath('mobile-voice-room-after.png'), fullPage: true })
+})
+
 test('voice prejoin explains a missing microphone and keeps the listener path available', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 640 })
   await mountProductionComponent(page, '/src/voice/VoicePrejoin.vue', {
@@ -656,6 +688,12 @@ test('screen-share setup shows the recommended profile before progressive qualit
   await expect(dialog.getByText('Текущий выбор: 720p · 60 FPS', { exact: true })).toBeVisible()
   await expectAxeClear(page, '.screen-share-setup-dialog')
   await page.screenshot({ path: testInfo.outputPath('screen-share-setup-progressive-options.png') })
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await expect(dialog.getByText('Текущий выбор: 720p · 60 FPS', { exact: true })).toBeVisible()
+  await expectAxeClear(page, '.screen-share-setup-dialog')
+  await page.screenshot({ path: testInfo.outputPath('desktop-stream-launch-settings-after.png'), fullPage: true })
+  await additional.getByText('Дополнительные настройки качества', { exact: true }).click()
+  await page.screenshot({ path: testInfo.outputPath('desktop-stream-launch-actions-after.png'), fullPage: true })
   await dialog.getByRole('button', { name: 'Начать трансляцию' }).click()
   await expect.poll(() => page.evaluate(() => (window as Window & { __startedScreenProfile?: string }).__startedScreenProfile)).toBe('P720_60')
 })

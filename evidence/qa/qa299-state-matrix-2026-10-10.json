@@ -67,11 +67,21 @@
       "mobile-guild-media.png",
       "desktop-voice-room.png"
     ],
-    "issue_source_files_missing_from_workspace": [
-      "mobile-dm-empty-chat.png",
-      "desktop-voice-room.png"
-    ],
+    "source_archive": {
+      "path": "artifacts/ui-ux-screenshots.zip",
+      "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
+    },
     "source_captures": [
+      {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-dm-empty-chat.png",
+        "sha256": "a073ac9916cce4dd250e01a65350373e3d6f1dff4c663e9e926f55a9471d3564",
+        "raster": "1179x2556"
+      },
+      {
+        "path": ".out/uiux-source/ui-ux-screenshots/desktop-voice-room.png",
+        "sha256": "092542a95206b66e22c79bb3852284072416a2d3283270a77023dba156db529b",
+        "raster": "2880x1800"
+      },
       {
         "path": ".out/uiux-source/mobile-guild-readiness.png",
         "sha256": "85cbc35a1012e0d7a1023b73adb36e8a32e48823017cc5b1e7be6a45cd0bf192",
@@ -129,13 +139,13 @@
       },
       {
         "path": ".out/accessibility-browser-results/accessibility.browser-WCAG-b16a9--refresh-and-failure-states/media-stale-503-mobile-after.png",
-        "sha256": "e3d20beee5acf980af96387dcea95e76134b023ae0eaa278b79aa4132bf474fc",
+        "sha256": "ed333e81edf3ed87534d24e9a81fe3b021a4cb08e37b13d148242c48df4b1ae0",
         "raster": "390x844",
         "state": "Stale media measurements after 503"
       },
       {
         "path": ".out/accessibility-browser-results/accessibility.browser-WCAG-b16a9--refresh-and-failure-states/media-recovered-mobile-after.png",
-        "sha256": "918b243528fbe46d8965d1548c230f36039da638646a5880a64dcf76bdd3ab1d",
+        "sha256": "9c0822953d03f0e503e4b4e2cf67620bbc66c7c41b4d3bcaa7fc6166e1326b7f",
         "raster": "390x844",
         "state": "Media measurements after deliberate successful retry"
       },
@@ -184,7 +194,7 @@
     ]
   },
   "capture_limitations": [
-    "The issue names mobile-dm-empty-chat.png and desktop-voice-room.png as source inputs, but neither file is present in this workspace; the browser tests produce current DM and voice-prejoin captures instead.",
+    "The issue source PNGs are extracted from the repository's supplied screenshot archive into ignored .out; the archive's source files are hashed above.",
     "Browser captures are production-component or test-fixture mounts; they do not claim physical-device rendering.",
     "No physical VoiceOver/TalkBack walkthrough or live-SFU fault recovery was run."
   ],
@@ -194,7 +204,7 @@
     "retry_denial_draft_and_stale_data_behavior": "PASS",
     "request_generation_and_scope_race_guards": "PASS",
     "web_live_status_and_flutter_semantics_fixtures": "PASS",
-    "before_after_capture_set": "PASS_WITH_TWO_SOURCE_FILES_UNAVAILABLE_LOCALLY",
+    "before_after_capture_set": "PASS",
     "physical_assistive_technology": "NOT_RUN_SEPARATE_RELEASE_GATE",
     "issue_state_at_capture": "OPEN"
   }
