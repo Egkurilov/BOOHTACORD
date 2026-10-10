@@ -60,6 +60,17 @@ extension WorkspaceWorkspaceSearchPanelStateWorkspaceSearchAction
         workspaceActiveQuery = query;
         workspaceSearched = true;
       });
+      if (before == null && workspaceRestoreScrollOffset > 0) {
+        final offset = workspaceRestoreScrollOffset;
+        workspaceRestoreScrollOffset = 0;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !workspaceScroll.hasClients) return;
+          final position = workspaceScroll.position;
+          workspaceScroll.jumpTo(
+            offset.clamp(0.0, position.maxScrollExtent).toDouble(),
+          );
+        });
+      }
     } catch (cause) {
       if (mounted && sequence == workspaceSequence) {
         workspaceMutateView(() {

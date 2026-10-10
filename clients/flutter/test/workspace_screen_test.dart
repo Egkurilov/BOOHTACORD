@@ -4599,9 +4599,153 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('search query and scope are restored per conversation', (
+    tester,
+  ) async {
+    final api = _PortraitApi(includeDirectMessage: true)
+      ..searchResultPage = SearchMessagePage(
+        messages: List.generate(
+          20,
+          (index) => SearchMessage(
+            id: 'search-result-$index',
+            kind: SearchMessageKind.channel,
+            conversationId: _PortraitApi.channel.id,
+            authorId: 'account-1',
+            body: 'Результат поиска $index',
+            createdAt: DateTime.utc(2026, 9, 25).add(Duration(minutes: index)),
+            revision: 1,
+          ),
+        ),
+      );
+    final state = AppState(api);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> search(String query) async {
+      final searchField = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText == 'Поиск сообщений',
+      );
+      await tester.enterText(searchField, query);
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+    }
+
+    double resultsScrollOffset() {
+      final listView = tester.widget<ListView>(
+        find.descendant(
+          of: find.byKey(const ValueKey('workspace-search-panel')),
+          matching: find.byType(ListView),
+        ),
+      );
+      return listView.controller!.offset;
+    }
+
+    state.openSearchPanel();
+    await tester.pumpAndSettle();
+    await search('поиск в личном диалоге');
+    expect(api.searchRequests.last, ('поиск в личном диалоге', null, 'dm-1'));
+    final resultsList = find.descendant(
+      of: find.byKey(const ValueKey('workspace-search-panel')),
+      matching: find.byType(ListView),
+    );
+    await tester.drag(resultsList, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    final dmResultsOffset = resultsScrollOffset();
+    expect(dmResultsOffset, greaterThan(0));
+
+    state.closeSearchPanel();
+    await tester.pumpAndSettle();
+    expect(
+      state.workspace.searchSessions['dm:dm-1']?.scrollOffset,
+      closeTo(dmResultsOffset, 1),
+    );
+    await state.selectChannel(_PortraitApi.channel);
+    await tester.pumpAndSettle();
+    state.openSearchPanel();
+    await tester.pumpAndSettle();
+    final channelSearchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(
+      tester.widget<TextField>(channelSearchField).controller!.text,
+      isEmpty,
+    );
+    await search('поиск в текстовом канале');
+    expect(api.searchRequests.last, (
+      'поиск в текстовом канале',
+      _PortraitApi.channel.id,
+      null,
+    ));
+
+    state.closeSearchPanel();
+    await tester.pumpAndSettle();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpAndSettle();
+    api.searchGate = Completer<SearchMessagePage>();
+    state.openSearchPanel();
+    await tester.pump();
+    expect(find.text('Ищем сообщения…'), findsOneWidget);
+    expect(find.text('Найдите нужное сообщение'), findsNothing);
+    api.searchGate!.complete(api.searchResultPage!);
+    await tester.pumpAndSettle();
+    api.searchGate = null;
+    final restoredDmSearchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(
+      tester.widget<TextField>(restoredDmSearchField).controller!.text,
+      'поиск в личном диалоге',
+    );
+    expect(api.searchRequests.last, ('поиск в личном диалоге', null, 'dm-1'));
+    expect(resultsScrollOffset(), closeTo(dmResultsOffset, 1));
+
+    state.closeSearchPanel();
+    await tester.pumpAndSettle();
+    await state.selectChannel(_PortraitApi.channel);
+    await tester.pumpAndSettle();
+    state.openSearchPanel();
+    await tester.pumpAndSettle();
+    final restoredChannelSearchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(
+      tester.widget<TextField>(restoredChannelSearchField).controller!.text,
+      'поиск в текстовом канале',
+    );
+    expect(api.searchRequests.last, (
+      'поиск в текстовом канале',
+      _PortraitApi.channel.id,
+      null,
+    ));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('DM search result returns to its conversation and draft', (
     tester,
   ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+
     final api = _PortraitApi(includeDirectMessage: true)
       ..searchResultPage = SearchMessagePage(
         messages: [
@@ -5091,6 +5235,7 @@ class _PortraitApi extends ApiClient {
   final textEditMentionIds = <List<String>>[];
   String? lastSearchQuery;
   String? lastSearchDirectMessageId;
+  final searchRequests = <(String, String?, String?)>[];
   Completer<SearchMessagePage>? searchGate;
   SearchMessagePage? searchResultPage;
   bool emptySearchResults = false;
@@ -5231,6 +5376,7 @@ class _PortraitApi extends ApiClient {
   }) async {
     lastSearchQuery = query;
     lastSearchDirectMessageId = directMessageId;
+    searchRequests.add((query, channelId, directMessageId));
     final gate = searchGate;
     if (gate != null) return gate.future;
     final resultPage = searchResultPage;

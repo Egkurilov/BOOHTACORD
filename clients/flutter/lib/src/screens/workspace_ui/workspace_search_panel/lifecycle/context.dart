@@ -4,8 +4,12 @@ import 'widget.dart';
 
 abstract class WorkspaceWorkspaceSearchPanelStateContext
     extends State<WorkspaceWorkspaceSearchPanel> {
-  final workspaceQuery = TextEditingController();
-  final workspaceScroll = ScrollController();
+  late final TextEditingController workspaceQuery;
+  late final ScrollController workspaceScroll;
+  String? workspaceSearchSessionKey;
+  int workspaceSearchSessionEpoch = 0;
+  double workspaceRestoreScrollOffset = 0;
+  double workspaceLastScrollOffset = 0;
   String workspaceScope = 'all';
   String workspaceActiveQuery = '';
   String? workspaceNextCursor;

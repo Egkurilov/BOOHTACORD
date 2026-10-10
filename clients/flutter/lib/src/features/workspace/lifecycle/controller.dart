@@ -6,6 +6,7 @@ import '../../../models.dart';
 import '../../../services/api_client.dart';
 import 'effects.dart';
 import 'types.dart';
+import '../search/session.dart';
 export 'effects.dart';
 export 'types.dart';
 export '../navigation/controller.dart';
@@ -55,6 +56,8 @@ class WorkspaceController extends ChangeNotifier {
   GuildChannel? searchOriginChannel;
   DirectConversation? searchOriginDirectMessage;
   int searchContextSequence = 0;
+  int searchSessionEpoch = 0;
+  final Map<String, WorkspaceSearchSession> searchSessions = {};
 
   bool accepts(SessionTicket ticket) => !disposed && ticket.isActive;
   void changed() {
@@ -82,6 +85,8 @@ class WorkspaceController extends ChangeNotifier {
     searchContextError = null;
     searchOriginChannel = null;
     searchOriginDirectMessage = null;
+    searchSessionEpoch++;
+    searchSessions.clear();
   }
 
   void cancelOperations() {
