@@ -1,4 +1,5 @@
 import '../../native_bindings.dart';
+import '../../../../features/workspace/search/session.dart';
 
 import 'widget.dart';
 
@@ -29,4 +30,24 @@ abstract class WorkspaceWorkspaceSearchPanelStateContext
   Future<void> workspaceSearch({String? before});
   String workspaceConversationLabel(SearchMessage message);
   void workspaceMutateView(VoidCallback action) => setState(action);
+
+  void workspaceSaveSearchSession() {
+    final sessionKey = workspaceSearchSessionKey;
+    if (sessionKey == null ||
+        workspaceSearchSessionEpoch != state.workspace.searchSessionEpoch) {
+      return;
+    }
+    final query = workspaceQuery.text;
+    final normalizedQuery = query.trim();
+    final shouldSearch =
+        normalizedQuery.isNotEmpty &&
+        (workspaceLoading ||
+            (workspaceSearched && workspaceActiveQuery == normalizedQuery));
+    state.workspace.searchSessions[sessionKey] = WorkspaceSearchSession(
+      query: query,
+      scope: workspaceScope,
+      scrollOffset: shouldSearch ? workspaceLastScrollOffset : 0,
+      shouldSearch: shouldSearch,
+    );
+  }
 }

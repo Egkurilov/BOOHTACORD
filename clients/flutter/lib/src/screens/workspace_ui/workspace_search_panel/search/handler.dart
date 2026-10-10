@@ -39,6 +39,7 @@ extension WorkspaceWorkspaceSearchPanelStateWorkspaceSearchAction
       workspaceLoading = true;
       workspaceError = null;
     });
+    workspaceSaveSearchSession();
     try {
       final page = await state.api.searchMessages(
         query,
@@ -60,6 +61,7 @@ extension WorkspaceWorkspaceSearchPanelStateWorkspaceSearchAction
         workspaceActiveQuery = query;
         workspaceSearched = true;
       });
+      workspaceSaveSearchSession();
       if (before == null && workspaceRestoreScrollOffset > 0) {
         final offset = workspaceRestoreScrollOffset;
         workspaceRestoreScrollOffset = 0;
@@ -82,6 +84,7 @@ extension WorkspaceWorkspaceSearchPanelStateWorkspaceSearchAction
     } finally {
       if (mounted && sequence == workspaceSequence) {
         workspaceMutateView(() => workspaceLoading = false);
+        workspaceSaveSearchSession();
       }
     }
   }

@@ -4739,6 +4739,65 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('active DM search survives desktop and mobile resize', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+
+    final api = _PortraitApi(includeDirectMessage: true);
+    final state = AppState(api);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    state.openSearchPanel();
+    await tester.pumpAndSettle();
+    final searchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    await tester.enterText(searchField, 'поиск после изменения ширины');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(api.searchRequests.last, (
+      'поиск после изменения ширины',
+      null,
+      'dm-1',
+    ));
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expect(state.workspacePanel, WorkspacePanel.search);
+    final mobileSearchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(
+      tester.widget<TextField>(mobileSearchField).controller!.text,
+      'поиск после изменения ширины',
+    );
+    expect(api.searchRequests.last, (
+      'поиск после изменения ширины',
+      null,
+      'dm-1',
+    ));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   testWidgets('DM search result returns to its conversation and draft', (
     tester,
   ) async {

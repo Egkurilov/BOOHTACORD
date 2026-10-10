@@ -29,6 +29,7 @@ extension WorkspaceWorkspaceSearchPanelStateInitStateAction
     workspaceScroll.addListener(() {
       if (workspaceScroll.hasClients) {
         workspaceLastScrollOffset = workspaceScroll.offset;
+        workspaceSaveSearchSession();
       }
     });
     final restoreResults =

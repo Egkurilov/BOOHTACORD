@@ -19,5 +19,8 @@ extension WorkspaceWorkspaceSearchPanelStateWorkspaceResetAction
     workspaceError = null;
     workspaceLoading = false;
     workspaceSearched = false;
+    workspaceRestoreScrollOffset = 0;
+    workspaceLastScrollOffset = 0;
+    workspaceSaveSearchSession();
   }
 }
