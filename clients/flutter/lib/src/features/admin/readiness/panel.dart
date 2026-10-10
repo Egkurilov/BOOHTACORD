@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../services/api_client.dart';
 import '../../../theme.dart';
 import 'model.dart';
+import 'reason_copy.dart';
 
 class AdminReadinessPanel extends StatefulWidget {
   const AdminReadinessPanel({super.key, required this.api});
@@ -196,13 +197,8 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
   );
 
   Widget _probeCard(String title, AdminReadinessProbe probe, bool stale) {
-    final label = stale
-        ? 'устарело'
-        : switch (probe.status) {
-            'ready' => 'готово',
-            'failed' => 'ошибка',
-            _ => 'неизвестно',
-          };
+    final label = readinessProbeStatus(probe.status, stale: stale);
+    final reason = readinessProbeReason(probe.reason);
     return Container(
       constraints: const BoxConstraints(minWidth: 180, maxWidth: 280),
       padding: const EdgeInsets.all(14),
@@ -217,9 +213,9 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
           Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           Text(label),
-          if (probe.reason?.trim().isNotEmpty == true)
+          if (reason != null)
             Text(
-              probe.reason!,
+              reason,
               style: const TextStyle(color: GcColors.textSecondary),
             ),
         ],
@@ -244,10 +240,10 @@ class _AdminReadinessPanelState extends State<AdminReadinessPanel>
       children: [
         _metric('Свободно', storage.availableBytes),
         _metric('Всего', storage.totalBytes),
-        _metric('Зарезервировано', storage.reservedBytes),
+        _metric('Зарезервировано загрузками', storage.reservedBytes),
         _metric('Защищённый запас', storage.protectedBytes),
-        _metric('После резервов', storage.headroomBytes),
-        _countMetric('Ожидают отзыва SFU', pendingRevocations),
+        _metric('Доступно после резервов', storage.headroomBytes),
+        _countMetric('Ожидают отзыва в SFU', pendingRevocations),
       ],
     ),
   );

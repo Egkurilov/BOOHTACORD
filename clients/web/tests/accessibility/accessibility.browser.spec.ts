@@ -649,7 +649,7 @@ test('voice dock explains denied microphone access and exposes a retry at mobile
   await page.screenshot({ path: testInfo.outputPath('voice-dock-mic-denied-2x.png') })
 })
 
-test('screen-share setup shows the recommended profile before progressive quality options', async ({ page }, testInfo) => {
+test('screen-share setup shows the recommended profile before progressive quality options', async ({ page, browser }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 640 })
   await page.goto('/')
   await page.evaluate(async () => {
@@ -691,11 +691,47 @@ test('screen-share setup shows the recommended profile before progressive qualit
   await page.setViewportSize({ width: 1440, height: 900 })
   await expect(dialog.getByText('Текущий выбор: 720p · 60 FPS', { exact: true })).toBeVisible()
   await expectAxeClear(page, '.screen-share-setup-dialog')
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await dialog.evaluate(element => { element.scrollTop = 0 })
+  await dialog.locator('.screen-share-setup__body').evaluate(element => { element.scrollTop = 0 })
+  await header.scrollIntoViewIfNeeded()
+  await expect(header).toBeInViewport({ ratio: 0.99 })
   await page.screenshot({ path: testInfo.outputPath('desktop-stream-launch-settings-after.png'), fullPage: true })
   await additional.getByText('Дополнительные настройки качества', { exact: true }).click()
   await page.screenshot({ path: testInfo.outputPath('desktop-stream-launch-actions-after.png'), fullPage: true })
   await dialog.getByRole('button', { name: 'Начать трансляцию' }).click()
   await expect.poll(() => page.evaluate(() => (window as Window & { __startedScreenProfile?: string }).__startedScreenProfile)).toBe('P720_60')
+
+  const captureContext = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2 })
+  try {
+    const capturePage = await captureContext.newPage()
+    await capturePage.goto('/')
+    await capturePage.evaluate(async () => {
+      const load = (path: string) => import(path)
+      const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+      const { default: CaptureDialog } = await load('/src/voice/ScreenShareSetupDialog.vue')
+      document.body.innerHTML = '<div id="mount"></div>'
+      createApp({ render: () => h(CaptureDialog, { initialProfile: 'P1080_30', onCancel: () => {}, onStart: () => {} }) }).mount('#mount')
+    })
+    const captureDialog = capturePage.getByRole('dialog', { name: 'Демонстрация экрана' })
+    await expect(captureDialog).toBeVisible()
+    await expect(captureDialog.locator('.screen-share-setup__header')).toBeInViewport()
+    await capturePage.screenshot({ path: testInfo.outputPath('mobile-stream-launch-settings-after.png'), scale: 'device' })
+    await capturePage.setViewportSize({ width: 1440, height: 900 })
+    await capturePage.evaluate(() => window.scrollTo(0, 0))
+    await captureDialog.evaluate(element => { element.scrollTop = 0 })
+    await captureDialog.locator('.screen-share-setup__body').evaluate(element => { element.scrollTop = 0 })
+    await captureDialog.locator('.screen-share-setup__header').scrollIntoViewIfNeeded()
+    await expect(captureDialog.locator('.screen-share-setup__header')).toBeInViewport({ ratio: 0.99 })
+    await capturePage.screenshot({ path: testInfo.outputPath('desktop-stream-launch-settings-source-scale-after.png'), fullPage: true, scale: 'device' })
+    await captureDialog.evaluate(element => { element.scrollTop = element.scrollHeight })
+    await captureDialog.locator('.screen-share-setup__body').evaluate(element => { element.scrollTop = element.scrollHeight })
+    await captureDialog.locator('.screen-share-setup__footer').scrollIntoViewIfNeeded()
+    await expect(captureDialog.locator('.screen-share-setup__footer')).toBeInViewport()
+    await capturePage.screenshot({ path: testInfo.outputPath('desktop-stream-launch-actions-source-scale-after.png'), fullPage: true, scale: 'device' })
+  } finally {
+    await captureContext.close()
+  }
 })
 
 test('WCAG smoke covers screen share setup and destructive confirmation dialogs', async ({ page }) => {
@@ -799,7 +835,7 @@ test('WCAG smoke distinguishes readiness loading, refresh, stale failure and ret
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ready) })
     }
   })
-  await page.setViewportSize({ width: 390, height: 844 })
+  await page.setViewportSize({ width: 320, height: 640 })
   await mountProductionComponent(page, '/src/admin/readiness/Panel.vue')
 
   const status = page.getByRole('status')
@@ -807,16 +843,21 @@ test('WCAG smoke distinguishes readiness loading, refresh, stale failure and ret
   releaseInitial?.()
   await expect(status).toHaveText('Сервисы готовы')
   await expectAxeClear(page, '#mount')
+  const dependencyTopWhenReady = await page.locator('.readiness-dependencies').evaluate(element => element.getBoundingClientRect().top + window.scrollY)
 
   const refresh = page.locator('section[aria-labelledby="readiness-title"] > button')
   await refresh.click()
   await expect(refresh).toBeDisabled()
   await expect(refresh).toHaveText('Проверяем…')
   await expect(status).toHaveText('Обновляем проверку; показан предыдущий результат')
+  const dependencyTopWhenRefreshing = await page.locator('.readiness-dependencies').evaluate(element => element.getBoundingClientRect().top + window.scrollY)
+  expect(Math.abs(dependencyTopWhenRefreshing - dependencyTopWhenReady)).toBeLessThanOrEqual(1)
   releaseRefresh?.()
   await expect(page.getByRole('alert')).toHaveText('Сервис временно не отвечает. Попробуйте позже.')
   await expect(status).toHaveText('Нет свежего подтверждения готовности')
-  await expect(page.locator('dl dd').first()).toHaveText('устарело')
+  await expect(page.locator('dl dd').first()).toHaveText('Устарело')
+  const dependencyTopAfterFailure = await page.locator('.readiness-dependencies').evaluate(element => element.getBoundingClientRect().top + window.scrollY)
+  expect(Math.abs(dependencyTopAfterFailure - dependencyTopWhenReady)).toBeLessThanOrEqual(1)
   await expectAxeClear(page, '#mount')
   await page.screenshot({ path: testInfo.outputPath('readiness-stale-503-mobile-after.png'), fullPage: true })
 
@@ -894,6 +935,37 @@ test('readiness access denial is explained and stops automatic retry', async ({ 
   await expect(refresh).toHaveText('Обновление недоступно')
   await page.clock.fastForward(5_000)
   expect(requests).toBe(1)
+})
+
+test('mobile role warning can scroll fully above the persistent save actions', async ({ page }, testInfo) => {
+  const memberPermissions = {
+    'channel.text.create': false, 'channel.text.delete': false,
+    'channel.voice.create': false, 'channel.voice.delete': false,
+    'category.create': false, 'category.delete': false,
+  }
+  const adminPermissions = Object.fromEntries(Object.keys(memberPermissions).map(key => [key, true]))
+  await page.route('**/api/v1/admin/roles**', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ revision: 7, roles: [
+      { role: 'ADMINISTRATOR', display_name: 'Администратор', editable: false, permissions: adminPermissions },
+      { role: 'MEMBER', display_name: 'Пользователь', editable: true, permissions: memberPermissions },
+    ] }),
+  }))
+  await page.setViewportSize({ width: 393, height: 852 })
+  await mountProductionComponent(page, '/src/admin/panel/AdminPanel.vue', { categories: [], revision: 1, section: 'roles' }, 'workspace-main-panel workspace-main-panel--admin')
+
+  const warning = page.locator('.role-permission-notice')
+  const actions = page.locator('.role-policy-actions')
+  await expect(warning).toBeVisible()
+  await warning.scrollIntoViewIfNeeded()
+  const warningBounds = await warning.boundingBox()
+  const actionBounds = await actions.boundingBox()
+  expect(warningBounds).not.toBeNull()
+  expect(actionBounds).not.toBeNull()
+  expect(warningBounds!.y + warningBounds!.height).toBeLessThanOrEqual(actionBounds!.y + 1)
+  await expectAxeClear(page, '.admin-panel')
+  await page.screenshot({ path: testInfo.outputPath('mobile-role-warning-above-save-actions-after.png'), fullPage: true })
 })
 
 test('role mutation keeps its draft across 403/404/429/503 and reports one pending outcome', async ({ page }, testInfo) => {

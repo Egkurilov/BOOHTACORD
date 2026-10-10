@@ -25,6 +25,12 @@ class WorkspaceAudioDeviceDropdown extends StatelessWidget {
         : devices.isEmpty
         ? '__none__'
         : devices.first.deviceId;
+    String deviceLabel(MediaDevice device, int index) {
+      if (device.deviceId == 'default') return 'Системный выбор · $label';
+      if (device.label.trim().isEmpty) return '$label ${index + 1}';
+      return device.label;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -72,14 +78,14 @@ class WorkspaceAudioDeviceDropdown extends StatelessWidget {
                 for (var index = 0; index < devices.length; index++)
                   DropdownMenuItem(
                     value: devices[index].deviceId,
+                  child: Tooltip(
+                    message: deviceLabel(devices[index], index),
                     child: Text(
-                      devices[index].deviceId == 'default'
-                          ? 'Системный выбор · $label'
-                          : devices[index].label.trim().isEmpty
-                          ? '$label ${index + 1}'
-                          : devices[index].label,
+                      deviceLabel(devices[index], index),
                       overflow: TextOverflow.ellipsis,
+                      semanticsLabel: deviceLabel(devices[index], index),
                     ),
+                  ),
                   ),
               ],
               onChanged: devices.isEmpty || switching

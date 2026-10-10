@@ -1,0 +1,105 @@
+{
+  "id": "QA-303-PLATFORM-ACCEPTANCE",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #303 — physical platform and assistive-technology acceptance inventory",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/303",
+  "source_revision": "74bf5a79",
+  "application_manifest_version": "1.0.38+71",
+  "status": "BLOCKED_DEVICE_MATRIX_NOT_RUN",
+  "inventory_commands": [
+    {
+      "command": "cd clients/flutter && flutter devices --machine",
+      "result": "PASS_INVENTORY",
+      "available": ["macOS 26.6.1 25G76 arm64", "Chrome 154.0.8037.98"],
+      "unavailable": ["Android device/emulator", "iOS device/simulator", "Windows device/VM"]
+    },
+    {
+      "command": "adb devices -l",
+      "result": "PASS_INVENTORY_EMPTY",
+      "connected_devices": []
+    },
+    {
+      "command": "Check /Users/pistol121/Library/Android/sdk/emulator/emulator -list-avds",
+      "result": "NOT_AVAILABLE",
+      "observation": "Android emulator binary is not installed at the configured SDK path."
+    }
+  ],
+  "historical_observations": [
+    {
+      "date": "2026-10-10",
+      "observation": "An earlier same-day Flutter inventory briefly reported Android 15/API 35 emulator-5554. It was not available in the current inventory; ADB is empty and the configured emulator binary is absent.",
+      "acceptance_effect": "The earlier observation is not treated as current device availability or as platform acceptance."
+    }
+  ],
+  "platform_matrix": [
+    {
+      "target": "Web Chrome desktop/mobile viewport automation",
+      "available": true,
+      "result": "PASS_AUTOMATED_ONLY",
+      "evidence": ["evidence/qa/qa302-visual-e2e-2026-10-10.json", "evidence/qa/qa301-accessibility-2026-10-10.json"],
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "One browser engine and viewport/device emulation do not establish Firefox/Safari or physical mobile acceptance."
+    },
+    {
+      "target": "Flutter macOS desktop",
+      "available": true,
+      "result": "NOT_RUN",
+      "manifestVersion": "1.0.38+71",
+      "applicationLaunched": false,
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "The macOS host is detected, but no current-candidate native task script or screen-reader run was performed."
+    },
+    {
+      "target": "Flutter Windows desktop",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "No Windows device or VM is connected to this task."
+    },
+    {
+      "target": "Flutter Android portrait/landscape",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "ADB lists no device and no Android emulator binary/AVD is installed. No physical handset is connected."
+    },
+    {
+      "target": "Flutter iOS portrait/landscape",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "No iOS device or simulator is available to Flutter on this host."
+    }
+  ],
+  "physical_task_scripts": [
+    {"scenario": "channel/DM search, message send/edit/react", "result": "NOT_RUN"},
+    {"scenario": "voice join, screen setup, cancel, reconnect and stop", "result": "NOT_RUN"},
+    {"scenario": "admin member/role/channel management", "result": "NOT_RUN"},
+    {"scenario": "settings save and destructive-action cancel", "result": "NOT_RUN"},
+    {"scenario": "system Back/swipe, keyboard overlays, SafeArea and dynamic text", "result": "NOT_RUN"},
+    {"scenario": "TalkBack, VoiceOver, macOS VoiceOver and Windows Narrator", "result": "NOT_RUN"}
+  ],
+  "automated_evidence_is_not_physical_acceptance": {
+    "web_responsive_suite": "PASS_7_TESTS_12_VIEWPORTS",
+    "web_accessibility_suite": "PASS_46_CASES_PLUS_1_AXE_CASE",
+    "flutter_accessibility_suite": "PASS_197_WIDGET_TESTS",
+    "flutter_voice_stream_suite": "PASS_51_WIDGET_TESTS",
+    "details": ["evidence/qa/qa301-accessibility-2026-10-10.json", "evidence/qa/qa300-voice-stream-2026-10-10.json", "evidence/qa/qa302-visual-e2e-2026-10-10.json"]
+  },
+  "open_release_gates": [
+    "Obtain and run a current Android physical device and iOS physical device/simulator.",
+    "Run current native Flutter task scripts on macOS and Windows; verify window resizing, keyboard/focus and native capture picker behavior.",
+    "Run mobile IME, SafeArea, Back/swipe, dynamic text and TalkBack/VoiceOver acceptance.",
+    "Record per-target OS/device, app build, reproducible steps and source-sized screenshots/video; link any user-blocking issues.",
+    "Run a non-skip-ci workflow to publish the configured browser/Flutter CI artifacts."
+  ],
+  "acceptance": {
+    "platform_results_recorded_as_pass_fail_not_run": "PASS",
+    "version_and_inventory_recorded": "PASS",
+    "physical_p1_task_smoke": "NOT_RUN",
+    "screen_reader_acceptance": "NOT_RUN",
+    "all_supported_platforms_unblocked": "NOT_RUN",
+    "issue_state_at_capture": "OPEN"
+  },
+  "artifact_storage": "No physical captures/video exist for this run; artifact paths are not invented. Automated .out evidence remains local/ignored."
+}

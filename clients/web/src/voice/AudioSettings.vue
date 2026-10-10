@@ -51,6 +51,14 @@ const recordingPttKey = ref(false)
 const entry = ref<HTMLElement | null>(null)
 const selectedInput = computed(() => props.inputDeviceId ?? 'default')
 const selectedOutput = ref('default')
+const selectedInputLabel = computed(() => {
+  const selected = props.devices.inputs.find(({ id }) => id === selectedInput.value)
+  return selected?.label.trim() || (selectedInput.value === 'default' ? 'Системный микрофон' : 'Выбранный микрофон недоступен')
+})
+const selectedOutputLabel = computed(() => {
+  const selected = props.devices.outputs.find(({ id }) => id === selectedOutput.value)
+  return selected?.label.trim() || 'Системный динамик'
+})
 const deviceWarning = ref('')
 const lastNoiseMode = ref<NoiseSuppressionMode>(props.processing.noiseSuppressionMode === 'off' ? 'browser' : props.processing.noiseSuppressionMode)
 let focusFrame: number | null = null
@@ -91,9 +99,9 @@ function toggleNoise(): void { emit('setProcessing', { ...props.processing, nois
     <div class="audio-settings-panel">
       <section class="audio-device-section"><header><h2>Устройства</h2><p>Настройки действуют на этом устройстве.</p></header>
         <template v-if="state === 'READY'">
-          <label>Микрофон<select :value="selectedInput" :disabled="inputSwitching" @change="choose('audioinput', $event)"><option v-if="!devices.inputs.some(device => device.id === 'default')" value="default">Системный микрофон</option><option v-if="selectedInput !== 'default' && !devices.inputs.some(device => device.id === selectedInput)" :value="selectedInput" disabled>Выбранный микрофон недоступен</option><option v-for="device in devices.inputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
+          <label>Микрофон<select :value="selectedInput" :title="selectedInputLabel" :disabled="inputSwitching" @change="choose('audioinput', $event)"><option v-if="!devices.inputs.some(device => device.id === 'default')" value="default">Системный микрофон</option><option v-if="selectedInput !== 'default' && !devices.inputs.some(device => device.id === selectedInput)" :value="selectedInput" disabled>Выбранный микрофон недоступен</option><option v-for="device in devices.inputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
           <p v-if="inputSwitching" role="status">Переключаем микрофон…</p><p v-else-if="inputWarning" class="state state-error" role="status">{{ inputWarning }}</p>
-          <label>Наушники или динамики<select :value="selectedOutput" @change="choose('audiooutput', $event)"><option v-for="device in devices.outputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
+          <label>Наушники или динамики<select :value="selectedOutput" :title="selectedOutputLabel" @change="choose('audiooutput', $event)"><option v-for="device in devices.outputs" :key="device.id" :value="device.id">{{ device.label }}</option></select></label>
           <AudioDeviceCheck :input-id="selectedInput" :output-id="selectedOutput" :processing="processing" :connected="connected" :microphone-track="microphoneTrack" />
         </template>
       </section>

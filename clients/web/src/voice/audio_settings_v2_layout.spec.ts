@@ -40,6 +40,14 @@ describe('Design V2 audio settings', () => {
     expect(presentation).toMatch(/\.audio-device-section label \{[^}]*font-weight: 500;/)
   })
 
+  it('keeps full selected hardware labels available when the native select truncates', () => {
+    expect(component).toContain('selectedInputLabel')
+    expect(component).toContain('selectedOutputLabel')
+    expect(component).toContain(':title="selectedInputLabel"')
+    expect(component).toContain(':title="selectedOutputLabel"')
+    expect(component).toContain('>{{ device.label }}</option>')
+  })
+
   it('allows cards to grow for PTT assignment and device feedback', () => {
     expect(presentation).toContain('height: max-content; min-height: 282px;')
     expect(presentation).toContain('height: max-content; min-height: 164px;')

@@ -31,4 +31,24 @@ describe('UI/UX copy glossary across clients', () => {
     expect(webAudit).not.toContain('Создана категория')
     expect(flutterAudit).not.toContain('Создана категория')
   })
+
+  it('maps readiness status and reason copy consistently in both clients', () => {
+    const web = source('clients/web/src/admin/readiness/reason_copy.ts')
+    const flutter = source('clients/flutter/lib/src/features/admin/readiness/reason_copy.dart')
+
+    for (const copy of [
+      'Не удалось проверить PostgreSQL.',
+      'Не удалось проверить LiveKit.',
+      'Не удалось проверить свободное место в хранилище.',
+      'Получены некорректные данные о свободном месте.',
+      'Недостаточно места для новых вложений.',
+      'Проверка уже выполняется.',
+      'Проверка не завершилась вовремя.',
+      'Причина проверки недоступна.',
+      'Не готово',
+    ]) {
+      expect(web).toContain(copy)
+      expect(flutter).toContain(copy)
+    }
+  })
 })

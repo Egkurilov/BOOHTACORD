@@ -10,7 +10,7 @@ AdminReadinessProbe _probe({
   int? pendingRevocations,
 }) => AdminReadinessProbe(
   status: status,
-  reason: status == 'failed' ? 'Проверка недоступна' : null,
+  reason: status == 'failed' ? 'sfu_unavailable' : null,
   sampledAt: DateTime.now().toUtc(),
   pendingRevocations: pendingRevocations,
   availableBytes: availableBytes,
@@ -74,7 +74,7 @@ void main() {
     expect(find.text('PostgreSQL'), findsOneWidget);
     expect(find.text('LiveKit'), findsOneWidget);
     expect(find.text('Хранилище'), findsOneWidget);
-    expect(find.text('Ожидают отзыва SFU · 3'), findsOneWidget);
+    expect(find.text('Ожидают отзыва в SFU · 3'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -94,6 +94,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Есть проблемы готовности'), findsOneWidget);
+    expect(find.text('Не удалось проверить LiveKit.'), findsOneWidget);
+    expect(find.text('sfu_unavailable'), findsNothing);
     await tester.tap(find.widgetWithText(TextButton, 'Обновить'));
     await tester.pumpAndSettle();
     expect(api.loads, 2);
@@ -119,7 +121,7 @@ void main() {
 
     expect(find.text('Нет свежего подтверждения готовности'), findsOneWidget);
     expect(find.text('Сервисы готовы'), findsNothing);
-    expect(find.text('устарело'), findsNWidgets(3));
+    expect(find.text('Устарело'), findsNWidgets(3));
   });
 
   testWidgets('readiness cards and refresh stay within responsive layouts', (
@@ -177,7 +179,7 @@ void main() {
           reason: 'refresh at $width px/${scale}x',
         );
         final storageMetric = tester.getRect(
-          find.textContaining('Ожидают отзыва SFU'),
+          find.textContaining('Ожидают отзыва в SFU'),
         );
         expect(
           storageMetric.left,

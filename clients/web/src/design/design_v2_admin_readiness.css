@@ -23,6 +23,9 @@
 .admin-readiness > p[role="status"] {
   width: fit-content;
   max-width: 100%;
+  min-height: calc(2 * var(--gc-line-body) + 2 * var(--gc-space-2) + 2px);
+  display: flex;
+  align-items: center;
   border: 1px solid var(--gc-border-subtle);
   border-radius: var(--gc-radius-full);
   padding: var(--gc-space-2) var(--gc-space-3);

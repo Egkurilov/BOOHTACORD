@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed,onActivated,onBeforeUnmount,onDeactivated,onMounted,ref } from 'vue'
 import { inspectReadiness,type Readiness } from './client'
+import { readinessProbeReason,readinessProbeStatus } from './reason_copy'
 import { adminRequestFeedback } from '../admin_request_feedback'
 import JourneyPanel from '../../telemetry/journey_intervals/Panel.vue'
 const result=ref<Readiness|null>(null),error=ref(''),busy=ref(false),retryable=ref(true),now=ref(Date.now())
@@ -32,7 +33,7 @@ onBeforeUnmount(()=>{generation++;abort?.abort();stopMonitoring()})
     <p>Публичный health подтверждает только работу API. Здесь проверяются приватные зависимости и запас для следующей загрузки.</p>
     <p role="status">{{ busy ? result ? 'Обновляем проверку; показан предыдущий результат' : 'Проверяем готовность сервисов' : fresh ? result?.status === 'ready' ? 'Сервисы готовы' : 'Есть проблемы готовности' : 'Нет свежего подтверждения готовности' }}</p>
     <p v-if="age !== null">Возраст проверки: {{ age }} с. После 15 с результат считается устаревшим.</p>
-    <dl v-if="result" class="readiness-dependencies"><div v-for="(probe,key) in {database:result.database,sfu:result.sfu,storage:result.storage}" :key="key"><dt>{{ key === 'database' ? 'PostgreSQL' : key === 'sfu' ? 'LiveKit' : 'Хранилище' }}</dt><dd :class="`readiness-probe readiness-probe--${fresh ? probe.status : 'stale'}`">{{ fresh ? probe.status === 'ready' ? 'готов' : probe.status === 'failed' ? 'ошибка' : 'неизвестно' : 'устарело' }}{{ probe.reason ? ` (${probe.reason})` : '' }}</dd></div></dl>
+    <dl v-if="result" class="readiness-dependencies"><div v-for="(probe,key) in {database:result.database,sfu:result.sfu,storage:result.storage}" :key="key"><dt>{{ key === 'database' ? 'PostgreSQL' : key === 'sfu' ? 'LiveKit' : 'Хранилище' }}</dt><dd :class="`readiness-probe readiness-probe--${fresh ? probe.status : 'stale'}`">{{ readinessProbeStatus(probe.status, !fresh) }}<span v-if="readinessProbeReason(probe.reason)"> · {{ readinessProbeReason(probe.reason) }}</span></dd></div></dl>
     <dl v-if="result" class="readiness-capacity"><div><dt>Свободно</dt><dd>{{ bytes(result.storage.available_bytes) }}</dd></div><div><dt>Всего</dt><dd>{{ bytes(result.storage.total_bytes) }}</dd></div><div><dt>Зарезервировано загрузками</dt><dd>{{ bytes(result.storage.reserved_bytes) }}</dd></div><div><dt>Защищённый запас</dt><dd>{{ bytes(result.storage.protected_bytes) }}</dd></div><div><dt>Доступно после резервов</dt><dd>{{ bytes(result.storage.headroom_bytes) }}</dd></div><div><dt>Ожидают отзыва в SFU</dt><dd>{{ result.database.pending_revocations ?? 'Неизвестно' }}</dd></div></dl>
     <button type="button" :disabled="busy||!retryable" @click="refresh">{{ busy ? 'Проверяем…' : retryable ? 'Обновить проверку' : 'Обновление недоступно' }}</button>
     <p v-if="error" role="alert">{{ error }}</p>
