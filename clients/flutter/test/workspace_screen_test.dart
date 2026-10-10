@@ -162,6 +162,17 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
 
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        expect(FocusManager.instance.primaryFocus, same(returnFocus));
+        expect(state.voicePhase, VoicePhase.connected);
+        expect(state.voiceChannel, _PortraitApi.voiceChannel);
+
+        await tester.tap(find.byTooltip('Открыть навигацию'));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+
         await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть навигацию'), findsNothing);
