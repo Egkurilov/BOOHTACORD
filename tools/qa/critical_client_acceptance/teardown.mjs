@@ -10,7 +10,7 @@ async function mediaClosed(page) {
 }
 export async function teardown(a, b, channelId, input, report, observed) {
   await join(a)
-  await a.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
+  await a.locator('.channel-button').filter({ hasText: 'Text' }).click()
   let release, waiting = false
   const routed = []
   const held = new Promise(resolve => { release = resolve })
