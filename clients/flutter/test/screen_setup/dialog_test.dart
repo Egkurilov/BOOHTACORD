@@ -179,9 +179,9 @@ void main() {
   );
 
   testWidgets(
-    'mobile source picker keeps its list scrollable and confirms the selected source',
+    'compact source inventory scrolls and confirms the selected source',
     (tester) async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(320, 640);
@@ -245,11 +245,11 @@ void main() {
       expect(result?.quality, ScreenShareQuality.desktopDefault);
       expect(tester.takeException(), isNull);
     },
-    variant: TargetPlatformVariant({TargetPlatform.android}),
+    variant: TargetPlatformVariant({TargetPlatform.macOS}),
   );
 
   testWidgets(
-    'mobile source picker keeps cancel and start reachable above the keyboard',
+    'mobile setup keeps close and start reachable above the keyboard',
     (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);
@@ -258,8 +258,6 @@ void main() {
       tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
       tester.view.viewInsets = const FakeViewPadding(bottom: 280);
       addTearDown(tester.view.reset);
-      final capturer = FakeDesktopCapturer();
-      addTearDown(capturer.close);
       var closed = false;
 
       await tester.pumpWidget(
@@ -277,8 +275,7 @@ void main() {
                   await ScreenShareSetupDialog.show(
                     context,
                     initialQuality: ScreenShareQuality.desktopDefault,
-                    allowSourceSelection: true,
-                    capturer: capturer,
+                    allowSourceSelection: false,
                   );
                   closed = true;
                 },
@@ -289,14 +286,12 @@ void main() {
         ),
       );
       await tester.tap(find.text('Открыть'));
-      await tester.pump(const Duration(milliseconds: 400));
-      capturer.calls.single.complete([]);
       await tester.pumpAndSettle();
 
-      final cancel = find.text('Отмена');
+      final cancel = find.byTooltip('Закрыть');
       final start = find.byKey(const ValueKey('start-screen-share'));
       expect(cancel, findsOneWidget);
-      expect(tester.widget<FilledButton>(start).onPressed, isNull);
+      expect(tester.widget<FilledButton>(start).onPressed, isNotNull);
       expect(tester.getRect(cancel).bottom, lessThanOrEqualTo(360));
       expect(tester.getRect(start).bottom, lessThanOrEqualTo(360));
       await tester.tap(cancel);
@@ -310,7 +305,7 @@ void main() {
   testWidgets(
     'landscape source picker scrolls to later screens without hiding actions',
     (tester) async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(844, 390);
@@ -364,7 +359,7 @@ void main() {
       expect(result?.quality, ScreenShareQuality.desktopDefault);
       expect(tester.takeException(), isNull);
     },
-    variant: TargetPlatformVariant({TargetPlatform.android}),
+    variant: TargetPlatformVariant({TargetPlatform.macOS}),
   );
 
   const viewports = <({String name, Size size})>[
