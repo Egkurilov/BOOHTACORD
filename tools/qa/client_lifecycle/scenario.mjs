@@ -42,7 +42,8 @@ try {
   const flowAccount = input.critical ? await registration(browser, input, report) : null
   console.log('stage=registration-outcome-accepted')
   await guest.goto(origin)
-  const value = await guild(a, b, guest, input.password, report, input.directory)
+  const expectedMemberCount = 20 + Number(Boolean(flowAccount))
+  const value = await guild(a, b, guest, input.password, report, input.directory, expectedMemberCount)
   await login(guest, 'qa_member', input.password)
   await openNavigation(guest)
   await guest.getByRole('button', { name: 'Личные', exact: true }).click()

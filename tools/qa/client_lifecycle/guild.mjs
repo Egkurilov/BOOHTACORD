@@ -13,7 +13,7 @@ async function captureAtTwoX(page, directory, file, report) {
   report.textScale200.push({ screenshot: file, horizontalOverflow: false })
 }
 
-export async function guild(a, b, guest, password, report, directory) {
+export async function guild(a, b, guest, password, report, directory, expectedMemberCount = 20) {
   const target = await seedAdminReferenceTopology(a)
   await channel(b, 'Text')
   await expect(b.getByRole('heading', { name: 'Text', exact: true })).toBeVisible()
@@ -49,7 +49,7 @@ export async function guild(a, b, guest, password, report, directory) {
   await seedAdminAuditHistory(a)
   const adminNav = a.getByRole('navigation', { name: 'Разделы администрирования' })
   const adminScreens = [
-    { tab: 'Участники', selector: '.admin-directory', file: 'guild-members.png', ready: () => expect(a.locator('.admin-filter-results')).toHaveText('Показано: 20 из 20 загруженных') },
+    { tab: 'Участники', selector: '.admin-directory', file: 'guild-members.png', ready: () => expect(a.locator('.admin-filter-results')).toHaveText(`Показано: ${expectedMemberCount} из ${expectedMemberCount} загруженных`) },
     { tab: 'Роли', selector: '.role-permissions', file: 'guild-roles.png', ready: () => expect(a.getByRole('heading', { name: 'Роли и разрешения', exact: true })).toBeVisible() },
     { tab: 'Каналы', selector: '.admin-topology-controls', file: 'guild-channels.png', ready: async () => {
       await expect(a.locator('.admin-topology-tree__category-button')).toHaveCount(3)
