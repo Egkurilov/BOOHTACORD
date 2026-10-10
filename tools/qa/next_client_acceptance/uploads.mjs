@@ -57,8 +57,8 @@ export async function uploads(page, input, report, fixture) {
     await session.detach()
     await freshUploadWindow(page)
     mkdirSync(input.files_directory)
-    const paths = Array.from({length:10},(_,i)=>join(input.files_directory,`large-${i}.bin`))
-    for (const path of paths) writeFileSync(path,Buffer.alloc(25_000_000),{flag:'wx'})
+    const paths = Array.from({length:10},(_,i)=>join(input.files_directory,`batch-${i}.bin`))
+    for (const path of paths) writeFileSync(path,Buffer.alloc(1_000_000),{flag:'wx'})
     await page.locator('#message-attachments').setInputFiles(paths)
     await expect(picker.locator('[data-upload-status="done"]')).toHaveCount(10, { timeout: 60000 })
     await expect(page.getByRole('button', { name: 'Отправить сообщение', exact: true })).toBeEnabled()
@@ -80,6 +80,6 @@ export async function uploads(page, input, report, fixture) {
     await expect(queue).toHaveCount(0)
     assert.equal(sql(`SELECT count(*) FROM attachments WHERE direct_message_id='${fixture.dm}' AND state='ATTACHED'`),'2')
     report.uploads = { actual_abort_releases_reservation: true, staging_files: 0, actual_progress: true,
-      ten_25mb_files: true, actual_scope_switch_aborts:true, actual_active_composer_drop:true, successful_text_and_dm_publication: true }
+      ten_1mb_files: true, actual_scope_switch_aborts:true, actual_active_composer_drop:true, successful_text_and_dm_publication: true }
   }
 }

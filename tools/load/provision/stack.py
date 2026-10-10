@@ -11,3 +11,6 @@ class Stack(ExistingStack):
         self.environment = {name: value for name, value in self.environment.items()
                             if not name.startswith('OTEL_')}
         self.environment['TRUSTED_PROXY_CIDRS'] = '127.0.0.1/32'
+
+    def seed_admin_members(self):
+        """Keep the database single-admin until load accounts are provisioned."""
