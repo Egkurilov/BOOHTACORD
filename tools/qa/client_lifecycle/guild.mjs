@@ -17,6 +17,17 @@ export async function guild(a, b, guest, password, report, directory) {
   const target = await seedAdminReferenceTopology(a)
   await channel(b, 'Text')
   await expect(b.getByRole('heading', { name: 'Text', exact: true })).toBeVisible()
+  const channelHash = `#workspace/channel/${encodeURIComponent(target.id)}`
+  assert.equal(new URL(b.url()).hash, channelHash, 'Selected channel should be addressable in the URL')
+  await b.reload()
+  await expect(b.getByTestId('app-shell')).toBeVisible()
+  await expect(b.getByRole('heading', { name: 'Text', exact: true })).toBeVisible()
+  assert.equal(new URL(b.url()).hash, channelHash, 'Refresh should restore the selected channel URL')
+  report.navigation_context = {
+    channel_header: 'PASS',
+    channel_url: 'PASS',
+    channel_refresh: 'PASS',
+  }
   for (const body of [
     'Synthetic UIUX channel sample: readable conversation text.',
     'Synthetic UIUX channel sample: labels, timestamps and actions.',

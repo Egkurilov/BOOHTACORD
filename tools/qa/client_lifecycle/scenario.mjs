@@ -53,7 +53,7 @@ try {
   await dmStarter.getByRole('button', { name: 'qa_admin', exact: true }).click()
   await expect(guest.getByRole('heading', { name: 'qa_admin', exact: true })).toBeVisible()
   await guest.screenshot({ path: input.directory+'/direct-message-header.png' })
-  report.navigation_context = { channel_header: 'PASS', direct_message_header: 'PASS' }
+  report.navigation_context = { ...report.navigation_context, direct_message_header: 'PASS' }
   const denied = await api(guest, '/admin/guild-settings', 'PATCH', {
     name: 'MemberOverwrite', expected_revision: value.revision,
   })
