@@ -1,0 +1,141 @@
+{
+  "id": "QA-290-DESIGN-TOKENS",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #290 — Design V2 tokens, typography and visual hierarchy",
+  "source_revision": "077f62a524ced029282e1c895a1bd8ca97b89a50",
+  "working_tree_changes": true,
+  "working_tree_change_note": "The only uncommitted change is an unrelated .gitignore addition; tested Web/QA sources match source_revision.",
+  "source_archive": {
+    "path": "artifacts/ui-ux-screenshots.zip",
+    "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c",
+    "desktop_settings_finding": "desktop-guild-settings.png is byte-identical to desktop-guild-members.png (SHA-256 0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57)."
+  },
+  "environment": {
+    "browser": "Google Chrome 154.0.8037.98",
+    "desktop_viewport": "1440x900, DPR 2",
+    "mobile_viewport": "393x852, DPR 3, touch enabled",
+    "data": "Disposable Go API, PostgreSQL and Tempo with synthetic accounts; no production API or account mutations."
+  },
+  "checks": [
+    {
+      "name": "Current-source production Web lifecycle at desktop viewport",
+      "command": "QA_BROWSER_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' python3 -m tools.qa.client_lifecycle.run --width 1440",
+      "result": "PASS",
+      "report": ".out/client-lifecycle/1440/report.json",
+      "observations": [
+        "Production browser lifecycle passed against the disposable stack.",
+        "Tempo telemetry and persistence after API restart passed.",
+        "All owned temporary resources were removed."
+      ]
+    },
+    {
+      "name": "Current-source production Web lifecycle at mobile touch viewport",
+      "command": "QA_BROWSER_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' python3 -m tools.qa.client_lifecycle.run --width 393",
+      "result": "PASS",
+      "report": ".out/client-lifecycle/393/report.json",
+      "observations": [
+        "Production browser lifecycle passed against the disposable stack.",
+        "Tempo telemetry and persistence after API restart passed.",
+        "All owned temporary resources were removed."
+      ]
+    }
+  ],
+  "visual_comparisons": [
+    {
+      "screen": "Channel conversation — desktop",
+      "source": {
+        "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/desktop-channel-overview.png",
+        "sha256": "1c6780a376993228a18f6012f5c60abf337469428bef44059dba31e298990f63",
+        "raster": "2880x1800"
+      },
+      "after": {
+        "path": ".out/client-lifecycle/1440/channel-text.png",
+        "sha256": "b2ad38320c5619956a97cb7be4d1a2c2a848e654345d644848562e2c2d9b8d7b",
+        "raster": "2880x1800"
+      },
+      "result": "VISUALLY_REVIEWED"
+    },
+    {
+      "screen": "Guild members — desktop",
+      "source": {
+        "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/desktop-guild-members.png",
+        "sha256": "0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57",
+        "raster": "2880x1800"
+      },
+      "after": {
+        "path": ".out/client-lifecycle/1440/guild-members.png",
+        "sha256": "9d553e57a0cd38bff16430887ee94c9bf2ccd62fba0d8db6a9c5a5737ed18ac5",
+        "raster": "2880x1800"
+      },
+      "result": "VISUALLY_REVIEWED"
+    },
+    {
+      "screen": "Guild settings — desktop",
+      "source": {
+        "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/desktop-guild-settings.png",
+        "sha256": "0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57",
+        "raster": "2880x1800"
+      },
+      "after": {
+        "path": ".out/client-lifecycle/1440/guild-settings.png",
+        "sha256": "bdecb38e3d26a3a4de7f3167dfd64eecf7724db8e62ded04391f50189f39046b",
+        "raster": "2880x1800"
+      },
+      "result": "BLOCKED_DUPLICATE_SOURCE"
+    },
+    {
+      "screen": "Channel conversation — mobile",
+      "source": {
+        "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-channel-overview.png",
+        "sha256": "6ab04d76b87dc665bad23a023dfcfadf11aedf932948c69e7cbead5917aa95e5",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/client-lifecycle/393/channel-text.png",
+        "sha256": "bfbe93f68d6faf12fa84b98d7804073956e725a3ee669761bd3616a2ca7a8b0c",
+        "raster": "1179x2556"
+      },
+      "result": "VISUALLY_REVIEWED"
+    },
+    {
+      "screen": "Guild members — mobile",
+      "source": {
+        "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-guild-members.png",
+        "sha256": "c568818c1ee367eb2e3562ccfb32f2db380dc4f53fe3f8250f0bb4683f790f26",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/client-lifecycle/393/guild-members.png",
+        "sha256": "8683074784d8e5a67e3558d3d955bb1b7ce918a46e5a11ad6f0c284052cca141",
+        "raster": "1179x2556"
+      },
+      "result": "VISUALLY_REVIEWED"
+    },
+    {
+      "screen": "Guild settings — mobile",
+      "source": {
+        "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-guild-settings.png",
+        "sha256": "d8ffe033e6784f1214a2a79bed53493a62da3a133cb26fae6928e21fd97fd8aa",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/client-lifecycle/393/guild-settings.png",
+        "sha256": "6bf95c0266e9d020d1af1885479af5c6c53f4ad8ef9448b9854f0bcc14a53093",
+        "raster": "1179x2556"
+      },
+      "result": "VISUALLY_REVIEWED"
+    }
+  ],
+  "observations": [
+    "Matching source rasters were visually reviewed for desktop/mobile channel and members, plus mobile guild settings.",
+    "The current channel list shows favorite stars inside their rows; the reported .channel-favorite-toggle overflow has dedicated responsive-shell regression coverage in QA-302.",
+    "Desktop channel-participants.png is the same capture as channel-text.png because the member rail is already visible in the desktop layout; the separate mobile participant drawer capture is available at .out/client-lifecycle/393/channel-participants.png.",
+    "Source and after data differ; review covers layout, hierarchy and control placement, not pixel identity or content parity."
+  ],
+  "limitations": [
+    "The independent desktop guild-settings before image remains blocked because its source PNG is an exact duplicate of the Members image (D11). The archive is preserved unchanged.",
+    "The full-stack browser scenario is automated acceptance on Chrome, not real-user task measurement, cross-browser acceptance, or physical device acceptance.",
+    "Captured PNGs and extracted archive images remain untracked in ignored .out and /private/tmp paths."
+  ],
+  "status": "PARTIAL — current-source desktop/mobile Web lifecycle and selected screenshot comparisons pass; desktop guild-settings baseline (D11), complete Flutter before/after review and physical/device/system-text acceptance remain open."
+}
