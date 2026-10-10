@@ -2,8 +2,12 @@ import 'package:boohtacord_desktop/src/widgets/screen_share_setup_dialog.dart';
 import 'package:boohtacord_desktop/src/features/screen/setup/open_dialog/footer.dart';
 import 'package:boohtacord_desktop/src/services/screen_share_quality.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
+
+import 'source_support.dart';
 
 void main() {
   for (final platform in [
@@ -169,6 +173,195 @@ void main() {
       expect(tester.takeException(), isNull);
       await tester.tap(start);
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant({TargetPlatform.android}),
+  );
+
+  testWidgets(
+    'mobile source picker keeps its list scrollable and confirms the selected source',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 640);
+      addTearDown(tester.view.reset);
+      final capturer = FakeDesktopCapturer();
+      addTearDown(capturer.close);
+      ScreenShareSetupSelection? result;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: guildTheme(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () async {
+                  result = await ScreenShareSetupDialog.show(
+                    context,
+                    initialQuality: ScreenShareQuality.desktopDefault,
+                    allowSourceSelection: true,
+                    capturer: capturer,
+                  );
+                },
+                child: const Text('Открыть'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Открыть'));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(capturer.calls, hasLength(1));
+      capturer.calls.single.complete([
+        for (var index = 1; index <= 8; index++)
+          FakeSource('Экран $index', rtc.SourceType.Screen),
+      ]);
+      await tester.pumpAndSettle();
+
+      final source = find.text('Экран 8');
+      await tester.ensureVisible(source);
+      expect(tester.getRect(source).top, greaterThanOrEqualTo(0));
+      expect(tester.getRect(source).bottom, lessThanOrEqualTo(640));
+      await tester.tap(source);
+      await tester.pumpAndSettle();
+      expect(find.text('Выбрано: Экран 8'), findsOneWidget);
+
+      final cancel = find.text('Отмена');
+      final start = find.byKey(const ValueKey('start-screen-share'));
+      await tester.ensureVisible(cancel);
+      await tester.ensureVisible(start);
+      expect(tester.getRect(cancel).bottom, lessThanOrEqualTo(640));
+      expect(tester.getRect(start).bottom, lessThanOrEqualTo(640));
+      expect(tester.widget<FilledButton>(start).onPressed, isNotNull);
+      await tester.tap(start);
+      await tester.pumpAndSettle();
+      expect(result?.sourceId, 'Экран 8');
+      expect(result?.quality, ScreenShareQuality.desktopDefault);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant({TargetPlatform.android}),
+  );
+
+  testWidgets(
+    'mobile source picker keeps cancel and start reachable above the keyboard',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+      tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+      addTearDown(tester.view.reset);
+      final capturer = FakeDesktopCapturer();
+      addTearDown(capturer.close);
+      var closed = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: guildTheme(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () async {
+                  await ScreenShareSetupDialog.show(
+                    context,
+                    initialQuality: ScreenShareQuality.desktopDefault,
+                    allowSourceSelection: true,
+                    capturer: capturer,
+                  );
+                  closed = true;
+                },
+                child: const Text('Открыть'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Открыть'));
+      await tester.pump(const Duration(milliseconds: 400));
+      capturer.calls.single.complete([]);
+      await tester.pumpAndSettle();
+
+      final cancel = find.text('Отмена');
+      final start = find.byKey(const ValueKey('start-screen-share'));
+      expect(cancel, findsOneWidget);
+      expect(tester.widget<FilledButton>(start).onPressed, isNull);
+      expect(tester.getRect(cancel).bottom, lessThanOrEqualTo(360));
+      expect(tester.getRect(start).bottom, lessThanOrEqualTo(360));
+      await tester.tap(cancel);
+      await tester.pumpAndSettle();
+      expect(closed, isTrue);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant({TargetPlatform.android}),
+  );
+
+  testWidgets(
+    'landscape source picker scrolls to later screens without hiding actions',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(844, 390);
+      addTearDown(tester.view.reset);
+      final capturer = FakeDesktopCapturer();
+      addTearDown(capturer.close);
+      ScreenShareSetupSelection? result;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: guildTheme(),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () async {
+                  result = await ScreenShareSetupDialog.show(
+                    context,
+                    initialQuality: ScreenShareQuality.desktopDefault,
+                    allowSourceSelection: true,
+                    capturer: capturer,
+                  );
+                },
+                child: const Text('Открыть'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Открыть'));
+      await tester.pump(const Duration(milliseconds: 400));
+      capturer.calls.single.complete([
+        for (var index = 1; index <= 8; index++)
+          FakeSource('Экран $index', rtc.SourceType.Screen),
+      ]);
+      await tester.pumpAndSettle();
+
+      final source = find.text('Экран 8');
+      await tester.ensureVisible(source);
+      expect(tester.getRect(source).bottom, lessThanOrEqualTo(390));
+      await tester.tap(source);
+      await tester.pumpAndSettle();
+      expect(find.text('Выбрано: Экран 8'), findsOneWidget);
+
+      final cancel = find.text('Отмена');
+      final start = find.byKey(const ValueKey('start-screen-share'));
+      expect(tester.getRect(cancel).bottom, lessThanOrEqualTo(390));
+      expect(tester.getRect(start).bottom, lessThanOrEqualTo(390));
+      await tester.tap(start);
+      await tester.pumpAndSettle();
+      expect(result?.sourceId, 'Экран 8');
+      expect(result?.quality, ScreenShareQuality.desktopDefault);
       expect(tester.takeException(), isNull);
     },
     variant: TargetPlatformVariant({TargetPlatform.android}),

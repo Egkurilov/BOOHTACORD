@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' as rtc;
 
 import '../../../../services/screen_share_quality.dart';
 import '../../capabilities/preflight.dart';
@@ -20,9 +21,11 @@ class SetupBody extends StatefulWidget {
     required this.initialQuality,
     required this.allowSourceSelection,
     required this.updating,
+    this.capturer,
   });
   final ScreenShareQuality initialQuality;
   final bool allowSourceSelection, updating;
+  final rtc.DesktopCapturer? capturer;
   @override
   State<SetupBody> createState() => _SetupState();
 }
@@ -34,9 +37,13 @@ class _SetupState extends State<SetupBody> {
   void initState() {
     super.initState();
     quality = widget.initialQuality;
-    inventory = SourceInventory(enabled: widget.allowSourceSelection)
-      ..addListener(_changed)
-      ..start();
+    inventory =
+        SourceInventory(
+            enabled: widget.allowSourceSelection,
+            capturer: widget.capturer,
+          )
+          ..addListener(_changed)
+          ..start();
   }
 
   void _changed() {
@@ -55,6 +62,10 @@ class _SetupState extends State<SetupBody> {
   @override
   Widget build(BuildContext context) {
     final platform = defaultTargetPlatform;
+    final compact =
+        MediaQuery.sizeOf(context).width < 640 ||
+        MediaQuery.sizeOf(context).height < 500 ||
+        MediaQuery.textScalerOf(context).scale(16) > 18;
     final dimensions = ScreenShareQuality.sourceDimensionsFromJpeg(
       inventory.selected?.thumbnail,
     );
@@ -79,10 +90,26 @@ class _SetupState extends State<SetupBody> {
       children: [
         SetupHeader(updating: widget.updating, onClose: close),
         if (widget.allowSourceSelection) ...[
-          ScreenCapabilityNotice(capability: capability),
-          SourceTabs(inventory: inventory),
-          Expanded(child: SourceGrid(inventory: inventory)),
-          picker,
+          if (compact)
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ScreenCapabilityNotice(capability: capability),
+                    SourceTabs(inventory: inventory),
+                    SourceGrid(inventory: inventory, shrinkWrap: true),
+                    picker,
+                  ],
+                ),
+              ),
+            )
+          else ...[
+            ScreenCapabilityNotice(capability: capability),
+            SourceTabs(inventory: inventory),
+            Expanded(child: SourceGrid(inventory: inventory)),
+            picker,
+          ],
         ] else
           Expanded(
             child: SetupQualityContent(

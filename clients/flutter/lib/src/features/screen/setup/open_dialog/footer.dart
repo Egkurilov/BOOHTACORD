@@ -56,11 +56,30 @@ class SetupFooter extends StatelessWidget {
     ];
     if (keyboardCompact) {
       return Container(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: GcColors.border)),
         ),
-        child: SizedBox(width: double.infinity, child: buttons.last),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selecting)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                child: sourceStatus,
+              ),
+            if (selecting)
+              OverflowBar(
+                alignment: MainAxisAlignment.end,
+                spacing: 10,
+                overflowSpacing: 4,
+                children: buttons,
+              )
+            else
+              SizedBox(width: double.infinity, child: buttons.last),
+          ],
+        ),
       );
     }
     return Container(
@@ -74,11 +93,22 @@ class SetupFooter extends StatelessWidget {
         border: Border(top: BorderSide(color: GcColors.border)),
       ),
       child: compact
-          ? OverflowBar(
-              alignment: MainAxisAlignment.end,
-              spacing: 10,
-              overflowSpacing: 4,
-              children: buttons,
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (selecting)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                    child: sourceStatus,
+                  ),
+                OverflowBar(
+                  alignment: MainAxisAlignment.end,
+                  spacing: 10,
+                  overflowSpacing: 4,
+                  children: buttons,
+                ),
+              ],
             )
           : wrapActions
           ? Column(

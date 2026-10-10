@@ -25,6 +25,7 @@ This flow maps the existing Web and Flutter voice/media lifecycle for issue [#30
 - Web progressive setup selection and first-screen mobile layout: `clients/web/src/voice/screen_share_setup_dialog.spec.ts` and the “recommended profile before progressive quality options” browser case in `clients/web/tests/accessibility/accessibility.browser.spec.ts`.
 - Flutter connection, listener retry/PTT and ended-share behavior: `clients/flutter/test/voice_connection_badge_test.dart`, `clients/flutter/test/voice_microphone_unavailable_notice_test.dart`, `clients/flutter/test/screen_setup/cancellation_test.dart`, `clients/flutter/test/screen_setup/capabilities_test.dart`, and `clients/flutter/test/voice_screen_ended_test.dart`.
 - Flutter progressive setup selection and responsive action geometry: `clients/flutter/test/screen_setup/dialog_test.dart` and `clients/flutter/test/screen_share_quality_test.dart`.
+- Compact and landscape Flutter source-selection follow-up: eight-source fixtures verify scrolling, selected-source footer and the accepted source ID/profile at 320×640 / 2× text and 844×390 landscape; a third widget test keeps Cancel/Start reachable with a 280 px keyboard inset. Native OS picker and physical-device behavior remain outside these fixtures.
 
 ## Acceptance boundary
 

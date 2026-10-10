@@ -8,8 +8,13 @@ import 'card.dart';
 import 'inventory.dart';
 
 class SourceGrid extends StatelessWidget {
-  const SourceGrid({super.key, required this.inventory});
+  const SourceGrid({
+    super.key,
+    required this.inventory,
+    this.shrinkWrap = false,
+  });
   final SourceInventory inventory;
+  final bool shrinkWrap;
   @override
   Widget build(BuildContext context) {
     if (inventory.loading && inventory.sources.isEmpty) {
@@ -65,6 +70,8 @@ class SourceGrid extends StatelessWidget {
     }
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 18),
+      shrinkWrap: shrinkWrap,
+      physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 300,
         mainAxisSpacing: 14,
