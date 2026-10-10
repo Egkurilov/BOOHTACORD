@@ -6,6 +6,7 @@ import { screenProfileMode, screenShareBandwidthEstimate } from './screen_profil
 import { containModalTab } from '../accessibility/modal_tab_focus'
 import ScreenCaptureCapabilitySummary from './ScreenCaptureCapabilitySummary.vue'
 import ScreenShareQualityOptions from './ScreenShareQualityOptions.vue'
+import { selectScreenQualityMode, selectScreenQualityResolution } from './screen_share_quality_selection'
 const props = defineProps<{ initialProfile: ScreenProfile; updating?: boolean }>()
 const emit = defineEmits<{ cancel: []; start: [profile: ScreenProfile] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
@@ -17,9 +18,9 @@ function profileValues(profile: ScreenProfile): { resolution: ScreenResolution; 
 }
 const initialValues = profileValues(props.initialProfile)
 const resolution = ref<ScreenResolution>(initialValues?.resolution ?? 1080), frameRate = ref<ScreenFrameRate>(initialValues?.frameRate ?? 30)
-const mode = ref<'motion' | 'text'>(screenProfileMode(props.initialProfile)), allow1440p60 = false
+const mode = ref<'motion' | 'text'>(screenProfileMode(props.initialProfile))
 const selectedProfile = computed(() => `P${resolution.value}_${frameRate.value}` as ScreenProfile)
-const profileAllowed = computed(() => !(mode.value === 'motion' && resolution.value === 1440 && !allow1440p60))
+const profileAllowed = computed(() => mode.value !== 'motion' || resolution.value !== 1440)
 const bandwidthEstimate = computed(() => screenShareBandwidthEstimate(selectedProfile.value))
 const profileSummary = computed(() => `${resolution.value}p · ${frameRate.value} FPS`)
 const recommendedProfile: ScreenProfile = 'P1080_60'
@@ -33,9 +34,17 @@ function useProfile(profile: ScreenProfile): void {
 }
 
 function selectMode(value: 'motion' | 'text'): void {
-  mode.value = value
-  frameRate.value = value === 'motion' ? 60 : 30
-  if (value === 'motion' && resolution.value === 1440 && !allow1440p60) resolution.value = 1080
+  const selection = selectScreenQualityMode({ mode: mode.value, resolution: resolution.value, frameRate: frameRate.value }, value)
+  mode.value = selection.mode
+  resolution.value = selection.resolution
+  frameRate.value = selection.frameRate
+}
+
+function selectResolution(value: ScreenResolution): void {
+  const selection = selectScreenQualityResolution({ mode: mode.value, resolution: resolution.value, frameRate: frameRate.value }, value)
+  mode.value = selection.mode
+  resolution.value = selection.resolution
+  frameRate.value = selection.frameRate
 }
 
 function applyRecommendedProfile(): void {
@@ -120,11 +129,11 @@ function start(): void {
         </div>
 
         <ScreenShareQualityOptions
-          v-model:resolution="resolution"
+          :resolution="resolution"
           v-model:frame-rate="frameRate"
           :mode="mode"
-          :allow-1440p60="allow1440p60"
           :advanced-open="updating"
+          @update:resolution="selectResolution"
           @update:mode="selectMode"
         >
           <p v-if="!updating" class="screen-share-quality__hint">

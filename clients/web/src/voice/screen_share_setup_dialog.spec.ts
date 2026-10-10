@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import ScreenShareSetupDialog from './ScreenShareSetupDialog.vue'
 import ScreenDiagnosticsPanel from './ScreenDiagnosticsPanel.vue'
+import { selectScreenQualityMode, selectScreenQualityResolution } from './screen_share_quality_selection'
 
 describe('screen-share setup dialog', () => {
   it('offers motion/text scenarios and ceiling choices before browser capture', async () => {
@@ -13,8 +14,10 @@ describe('screen-share setup dialog', () => {
     }))
 
     expect(html).toContain('Демонстрация экрана')
-    expect(html).toContain('Плавность — игры и видео')
-    expect(html).toContain('Текст — документы и код')
+    expect(html).toContain('Плавность')
+    expect(html).toContain('Игры и видео · 60 FPS')
+    expect(html).toContain('Чёткость текста')
+    expect(html).toContain('Документы и код · 15–30 FPS')
     expect(html).toContain('Максимальное разрешение')
     expect(html).toContain('Частота кадров для текста')
     expect(html).toContain('Рекомендуемый профиль')
@@ -37,12 +40,22 @@ describe('screen-share setup dialog', () => {
     expect(html).toContain('Начать трансляцию')
   })
 
-  it('keeps motion mode at 60 FPS and gates a new 1440p60 choice', async () => {
+  it('keeps motion at 60 FPS while leaving the 1440p option available', async () => {
     const html = await renderToString(createSSRApp(ScreenShareSetupDialog, { initialProfile: 'P1080_60' }))
     expect(html).toContain('<legend>Частота кадров для плавности</legend>')
-    expect([...html.matchAll(/<span>(15|30|60) FPS<\/span>/g)].map((match) => match[1])).toEqual(['60'])
-    expect(html).toMatch(/<input[^>]*disabled[^>]*value="1440"[^>]*>/)
-    expect(html).toContain('1440p60 пока недоступно без подтверждённой policy')
+    expect(html).toContain('screen-share-quality__single-value')
+    expect(html).toContain('Игры и видео · 60 FPS')
+    expect(html).toContain('Документы и код · 15–30 FPS')
+    expect(html).toMatch(/<input[^>]*name="screen-share-resolution" value="1440"[^>]*>/)
+    expect(html).not.toMatch(/<input[^>]*disabled[^>]*value="1440"[^>]*>/)
+    expect(html).toContain('При выборе 1440p он включится автоматически')
+  })
+
+  it('moves to the compatible text profile when 1440p is selected from motion', () => {
+    const motion = { mode: 'motion' as const, resolution: 1080 as const, frameRate: 60 as const }
+    expect(selectScreenQualityResolution(motion, 1440)).toEqual({ mode: 'text', resolution: 1440, frameRate: 30 })
+    expect(selectScreenQualityMode({ ...motion, resolution: 1440 }, 'motion')).toEqual({ mode: 'motion', resolution: 1080, frameRate: 60 })
+    expect(selectScreenQualityMode(motion, 'text')).toEqual({ mode: 'text', resolution: 1080, frameRate: 30 })
   })
 
   it('opens the dialog from both the room action and persistent voice dock', () => {
@@ -63,7 +76,8 @@ describe('screen-share setup dialog', () => {
     }))
 
     expect(html).toMatch(/<input[^>]*checked[^>]*name="screen-share-resolution" value="1440"[^>]*>/)
-    expect(html).toMatch(/<input[^>]*checked[^>]*name="screen-share-frame-rate" value="60"[^>]*>/)
+    expect(html).toContain('<div class="screen-share-quality__single-value" role="status">60 FPS</div>')
+    expect(html).toMatch(/<button[^>]*class="screen-share-setup__start"[^>]*disabled>/)
   })
 
   it('shows the current stream quality editor only for an updating sender', async () => {
@@ -106,6 +120,9 @@ describe('screen-share setup dialog', () => {
     expect(styles).toContain('var(--gc-sidebar)')
     expect(styles).toContain('@media (max-width: 600px)')
     expect(styles).toContain('grid-template-columns: minmax(0, 1fr)')
+    expect(styles).toContain('.screen-share-quality__scenario-title {')
+    expect(styles).toContain('white-space: normal;')
+    expect(styles).toContain('.screen-share-quality__single-value {')
     const updating = readFileSync(new URL('../design/design_v2_screen_quality.css', import.meta.url), 'utf8')
     expect(updating).toContain('.screen-share-setup-dialog--updating::backdrop { background: var(--gc-overlay); backdrop-filter: none; }')
     expect(updating).toContain('background: var(--gc-surface)')
