@@ -4798,80 +4798,91 @@ void main() {
     state.dispose();
   });
 
-  testWidgets('DM search result returns to its conversation and draft', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    addTearDown(tester.view.reset);
+  for (final profile in [
+    (name: 'mobile', size: Size(390, 844)),
+    (name: 'desktop', size: Size(1440, 900)),
+  ]) {
+    testWidgets(
+      'DM search result returns to its conversation and draft (${profile.name})',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = profile.size;
+        addTearDown(tester.view.reset);
 
-    final api = _PortraitApi(includeDirectMessage: true)
-      ..searchResultPage = SearchMessagePage(
-        messages: [
-          SearchMessage(
-            id: 'dm-message-1',
-            kind: SearchMessageKind.directMessage,
-            conversationId: 'dm-1',
-            authorId: 'account-2',
-            body: 'Найденное личное сообщение',
-            createdAt: DateTime.utc(2026, 9, 25),
-            revision: 1,
+        final api = _PortraitApi(includeDirectMessage: true)
+          ..searchResultPage = SearchMessagePage(
+            messages: [
+              SearchMessage(
+                id: 'dm-message-1',
+                kind: SearchMessageKind.directMessage,
+                conversationId: 'dm-1',
+                authorId: 'account-2',
+                body: 'Найденное личное сообщение',
+                createdAt: DateTime.utc(2026, 9, 25),
+                revision: 1,
+              ),
+            ],
+          );
+        final state = AppState(api);
+        await state.initialize();
+        await state.openDirectConversation(state.directMessages.single);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AnimatedBuilder(
+              animation: state,
+              builder: (_, _) => WorkspaceScreen(state: state),
+            ),
           ),
-        ],
-      );
-    final state = AppState(api);
-    await state.initialize();
-    await state.openDirectConversation(state.directMessages.single);
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AnimatedBuilder(
-          animation: state,
-          builder: (_, _) => WorkspaceScreen(state: state),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.byType(TextField).last,
-      'Черновик личного сообщения',
-    );
-    await tester.pump();
-    state.openSearchPanel();
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is TextField &&
-            widget.decoration?.hintText == 'Поиск сообщений',
-      ),
-      'найденное личное сообщение',
-    );
-    await tester.testTextInput.receiveAction(TextInputAction.search);
-    await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byType(TextField).last,
+          'Черновик личного сообщения',
+        );
+        await tester.pump();
+        state.openSearchPanel();
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is TextField &&
+                widget.decoration?.hintText == 'Поиск сообщений',
+          ),
+          'найденное личное сообщение',
+        );
+        await tester.testTextInput.receiveAction(TextInputAction.search);
+        await tester.pumpAndSettle();
 
-    expect(api.lastSearchQuery, 'найденное личное сообщение');
-    expect(api.lastSearchDirectMessageId, 'dm-1');
-    await tester.tap(find.byKey(const ValueKey('search-result-dm-message-1')));
-    await tester.pumpAndSettle();
-    expect(state.workspacePanel, WorkspacePanel.searchContext);
-    expect(state.selectedDirectMessage?.id, 'dm-1');
-    expect(api.lastDirectMessageAt, 'dm-message-1');
-    expect(find.text('Исходное личное сообщение'), findsOneWidget);
+        expect(api.lastSearchQuery, 'найденное личное сообщение');
+        expect(api.lastSearchDirectMessageId, 'dm-1');
+        await tester.tap(
+          find.byKey(const ValueKey('search-result-dm-message-1')),
+        );
+        await tester.pumpAndSettle();
+        expect(state.workspacePanel, WorkspacePanel.searchContext);
+        expect(state.selectedDirectMessage?.id, 'dm-1');
+        expect(api.lastDirectMessageAt, 'dm-message-1');
+        expect(find.text('Исходное личное сообщение'), findsOneWidget);
 
-    await tester.tap(find.text('Вернуться к беседе'));
-    await tester.pumpAndSettle();
-    expect(state.workspacePanel, WorkspacePanel.none);
-    expect(state.selectedDirectMessage?.id, 'dm-1');
-    expect(find.text('Исходное личное сообщение'), findsOneWidget);
-    expect(
-      tester.widget<TextField>(find.byType(TextField).last).controller!.text,
-      'Черновик личного сообщения',
+        await tester.tap(find.text('Вернуться к беседе'));
+        await tester.pumpAndSettle();
+        expect(state.workspacePanel, WorkspacePanel.none);
+        expect(state.selectedDirectMessage?.id, 'dm-1');
+        expect(find.text('Исходное личное сообщение'), findsOneWidget);
+        expect(
+          tester
+              .widget<TextField>(find.byType(TextField).last)
+              .controller!
+              .text,
+          'Черновик личного сообщения',
+        );
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+      },
     );
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    state.dispose();
-  });
+  }
 
   testWidgets('portrait layout keeps the channel open behind drawers', (
     tester,
