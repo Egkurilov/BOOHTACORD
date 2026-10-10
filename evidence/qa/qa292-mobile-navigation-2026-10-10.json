@@ -58,14 +58,14 @@
     }
   ],
   "related_automated_coverage": {
-    "web_drawer_back_forward_focus_voice": "PASS — 7 browser tests across 12 viewports in QA-302",
+    "web_drawer_back_forward_focus_voice": "PASS — 11 responsive-shell browser tests per engine in Chromium, WebKit and Firefox; route/favorites/focus coverage is recorded in QA-292 and QA-302",
     "flutter_system_back_swipes_voice_focus": "PASS — target-platform widget scenarios recorded in docs/design/UIUX_2026_MOBILE_NAVIGATION.md",
     "physical_navigation_and_livekit": "NOT_RUN — tracked under #303"
   },
   "channel_route_revalidation": {
     "date": "2026-10-10",
     "code_revision": "b69b635c",
-    "environment": "Google Chrome 154.0.8037.98; Playwright fixture mounts the production useWorkspaceNavigation composable and Pinia stores with a synthetic authorized topology.",
+    "environment": "Google Chrome 154.0.8037.98, Playwright WebKit 26.6 and Firefox 155; Playwright fixture mounts the production useWorkspaceNavigation composable and Pinia stores with a synthetic authorized topology.",
     "checks": [
       {
         "name": "Workspace location and drawer-history unit tests",
@@ -74,8 +74,12 @@
       },
       {
         "name": "Responsive shell browser suite",
-        "command": "CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:responsive-shell",
-        "result": "PASS — 11/11, including direct channel load/refresh, inaccessible channel fallback, browser Back/Forward, and drawer selection history."
+        "commands": [
+          "CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:responsive-shell",
+          "npx playwright test -c tests/responsive_shell/playwright.config.ts --browser webkit",
+          "npx playwright test -c tests/responsive_shell/playwright.config.ts --browser firefox"
+        ],
+        "result": "PASS — 11/11 in Chromium, WebKit and Firefox, including direct channel load/refresh, inaccessible channel fallback, browser Back/Forward, and drawer selection history."
       },
       {
         "name": "Web production build",

@@ -522,7 +522,7 @@
       ".out/uiux-visual-diff-302/members-mobile-report.json"
     ]
   },
-  "working_tree_change_note": "The review-only region-delta reporter, responsive-shell focus-restore fix and regression coverage were tested on the working tree and are recorded in cross_browser_revalidation. The unrelated .gitignore change remains unstaged.",
+  "working_tree_change_note": "The review-only region-delta reporter, responsive-shell focus-restore fix, and the channel-route regression extension are recorded in cross_browser_revalidation and channel_route_follow_up. The unrelated .gitignore change remains unstaged.",
   "cross_browser_revalidation": {
     "date": "2026-10-10",
     "source_revision": "a89ef57d",
@@ -784,5 +784,29 @@
       "fix": "Remember the most recent focusable click target as a fallback opener; prevent scroll on restoration; cycle Tab/Shift+Tab explicitly through dialog controls. Tab-stop calculation treats each same-name radio group as one stop at its checked option and includes visible summary controls.",
       "verification": "The complete 47-case accessibility suite passes in Chromium 154, Playwright WebKit 26.6 and Firefox 155. A screen-share regression verifies Tab from the checked radio skips unchecked peers and Shift+Tab returns to it."
     }
+  },
+  "channel_route_follow_up": {
+    "date": "2026-10-10",
+    "code_revision": "b69b635c",
+    "test_files": [
+      "clients/web/tests/responsive_shell/responsive_shell.browser.spec.ts",
+      "clients/web/tests/responsive_shell/workspace_location.browser.spec.ts"
+    ],
+    "result": "PASS_AUTOMATED_ONLY",
+    "responsive_shell_tests_passed_per_engine": 11,
+    "channel_route_tests_passed_per_engine": 4,
+    "engines": {
+      "Chromium": "Google Chrome 154.0.8037.98",
+      "WebKit": "Playwright WebKit 26.6 (v2359)",
+      "Firefox": "Playwright Firefox 155.0 (v1543)"
+    },
+    "coverage": [
+      "Direct channel fragment load and refresh",
+      "Inaccessible channel id falls back without granting access",
+      "Browser Back and Forward restore the selected channel",
+      "Selecting from the mobile navigation drawer leaves no stale drawer history",
+      "Favorite toggle remains within its row across responsive widths"
+    ],
+    "fixture_limit": "The fixture mounts production navigation code with a synthetic authorized topology; this is not authenticated full-app API startup, native Safari, physical device, or screen-reader acceptance."
   }
 }
