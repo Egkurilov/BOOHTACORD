@@ -2,9 +2,9 @@
   "id": "QA-290-DESIGN-TOKENS",
   "date": "2026-10-10",
   "task": "UIUX-2026 issue #290 — Design V2 tokens, typography and visual hierarchy",
-  "source_revision": "077f62a524ced029282e1c895a1bd8ca97b89a50",
-  "working_tree_changes": true,
-  "working_tree_change_note": "The only uncommitted change is an unrelated .gitignore addition; tested Web/QA sources match source_revision.",
+  "source_revision": "d856ecac6c9397ae99468c1e6c9492fec4d35e71",
+  "working_tree_changes": false,
+  "working_tree_change_note": "After screenshots were captured from source d856ecac. Before screenshots use clients/web/src from pre-UIUX base 674fb79c over the same current API and QA harness source.",
   "source_archive": {
     "path": "artifacts/ui-ux-screenshots.zip",
     "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c",
@@ -184,12 +184,607 @@
     "The current channel list shows favorite stars inside their rows; the reported .channel-favorite-toggle overflow has dedicated responsive-shell regression coverage in QA-302.",
     "Desktop channel-participants.png is the same capture as channel-text.png because the member rail is already visible in the desktop layout; the separate mobile participant drawer capture is available at .out/client-lifecycle/393/channel-participants.png.",
     "Source and after data differ; review covers layout, hierarchy and control placement, not pixel identity or content parity.",
-    "The latest desktop/mobile member screenshot review and named-region delta measurements are recorded separately under region_delta_follow_up; both remain review-only without an approved golden."
+    "The latest desktop/mobile member screenshot review and named-region delta measurements are recorded separately under region_delta_follow_up; both remain review-only without an approved golden.",
+    "Source-matched pre-UIUX screenshots for channel, guild members and guild settings were captured at desktop and mobile viewports and visually reviewed against d856 after captures; see baseline_comparison. The pre-UIUX capture is partial because legacy URL and newer lifecycle selectors are unavailable.",
+    "Source-matched Flutter widget before/after captures now cover all seven admin sections plus text channel and DM at mobile, mobile-large-text, and desktop profiles; see baseline_comparison.flutter_widget_comparison."
   ],
   "limitations": [
-    "The independent desktop guild-settings before image remains blocked because its source PNG is an exact duplicate of the Members image (D11). The archive is preserved unchanged.",
     "The full-stack browser scenario is automated acceptance on Chrome, not real-user task measurement, cross-browser acceptance, or physical device acceptance.",
-    "Captured PNGs and extracted archive images remain untracked in ignored .out and /private/tmp paths."
+    "Captured PNGs and extracted archive images remain untracked in ignored .out and /private/tmp paths.",
+    "The pre-UIUX screenshot run is capture-only: channel deep-link/reload and newer admin result markers were skipped, then the full flow stopped at a legacy session-dialog selector. It does not replace complete acceptance evidence.",
+    "The original screenshot archive retains its D11 duplicate, but the desktop guild-settings comparison now has an independent pre-UIUX source-matched Flutter baseline; the archive was not modified.",
+    "Flutter visual captures are widget-test evidence; physical Android/iOS acceptance remains under #303."
   ],
-  "status": "PARTIAL — current-source desktop/mobile Web lifecycle and selected screenshot comparisons pass; desktop guild-settings baseline (D11), complete Flutter before/after review and physical/device/system-text acceptance remain open."
+  "status": "PARTIAL — source-matched Web and Flutter desktop/mobile captures are recorded and the target Flutter screens were visually reviewed; the legacy Web baseline remains capture-only, and physical/device/system-text acceptance remains open.",
+  "baseline_comparison": {
+    "status": "CAPTURE_ONLY_PARTIAL",
+    "frontend_before_revision": "674fb79ca57ce7207bd75ce6e8dcd3d86b5deee6",
+    "frontend_after_revision": "d856ecac6c9397ae99468c1e6c9492fec4d35e71",
+    "capture_harness_and_backend_revision": "d856ecac6c9397ae99468c1e6c9492fec4d35e71",
+    "runtime": "Google Chrome 154.0.8037.98; disposable Go API, PostgreSQL and Tempo; synthetic accounts and seeded UI samples.",
+    "viewports": {
+      "desktop": {
+        "css": "1440x900",
+        "dpr": 2,
+        "raster": "2880x1800"
+      },
+      "mobile": {
+        "css": "393x852",
+        "dpr": 3,
+        "touch": true,
+        "raster": "1179x2556"
+      }
+    },
+    "harness_adjustments": [
+      "The baseline frontend predates channel URL/deep-link restoration, so URL and reload assertions were skipped for this capture.",
+      "Assertions for newer admin result-count markers were skipped; visible section navigation and screenshot capture remained enabled.",
+      "The full lifecycle later stopped at a session-dialog selector mismatch after the target screenshots had been written. This run is capture-only and does not establish lifecycle, telemetry, persistence or release acceptance."
+    ],
+    "comparisons": [
+      {
+        "screen": "Channel conversation",
+        "viewport": "desktop",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/1440/channel-text.png",
+          "sha256": "596eb0f10846ce0d21d2dd6edc9a13dd20aa6d3061596878403d1ebcb7e768cc",
+          "raster": "2880x1800"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/1440/channel-text.png",
+          "sha256": "04e3053e7eba2d7e995f657aae5c7391a071b343f05a7b8a5216dc32e0ffa386",
+          "raster": "2880x1800"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Guild members",
+        "viewport": "desktop",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/1440/guild-members.png",
+          "sha256": "4ff27837fa66fdbcde1d8a78e27d48db849256a4d771f05e5ef22ff24e008250",
+          "raster": "2880x1800"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/1440/guild-members.png",
+          "sha256": "828e1dbed19895ab4b526393e866ffe2cfdf40a136e78dd144a7f4493c14bb4e",
+          "raster": "2880x1800"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Guild settings",
+        "viewport": "desktop",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/1440/guild-settings.png",
+          "sha256": "8eb7a20c57c2c2578fadc572dc39dc3907de25366f6f679706f342426e9260e6",
+          "raster": "2880x1800"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/1440/guild-settings.png",
+          "sha256": "56874fc0803b9009d7147eac531eff49c34314ccd91dd10e137a741c9690123d",
+          "raster": "2880x1800"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Channel conversation",
+        "viewport": "mobile",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/393/channel-text.png",
+          "sha256": "22f6bac4df50fa0fdbbf6b1100cf694b510e8e8d8f7015b1ec4ea0b779c7a09e",
+          "raster": "1179x2556"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/393/channel-text.png",
+          "sha256": "58578830195fccb253cef980118b34df78f999afb9e23931c9a1067b474fa309",
+          "raster": "1179x2556"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Guild members",
+        "viewport": "mobile",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/393/guild-members.png",
+          "sha256": "3cc0e1c404d1abb5d5113ffe691837a3bce427028e99c7350631b3506986dd80",
+          "raster": "1179x2556"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/393/guild-members.png",
+          "sha256": "4633d1611a829fe0ea92281baa3b3e07db40e65526fb8b9b11f2d213e67f4f19",
+          "raster": "1179x2556"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      },
+      {
+        "screen": "Guild settings",
+        "viewport": "mobile",
+        "before": {
+          "path": ".out/qa-visual-290-before/.out/client-lifecycle/393/guild-settings.png",
+          "sha256": "2b62b0ed9096d74216ebe5f042147991ffd7a492f47d89dd1214613fcd9bb68e",
+          "raster": "1179x2556"
+        },
+        "after": {
+          "path": ".out/qa-visual-290-d856/.out/client-lifecycle/393/guild-settings.png",
+          "sha256": "6bf95c0266e9d020d1af1885479af5c6c53f4ad8ef9448b9854f0bcc14a53093",
+          "raster": "1179x2556"
+        },
+        "result": "VISUALLY_REVIEWED_CAPTURE_ONLY"
+      }
+    ],
+    "review_notes": [
+      "All before and after screenshots were visually reviewed at matching CSS viewports and DPR; fixture-backed dynamic data varies between runs.",
+      "The mobile after view includes an explicit horizontal-tabs hint and compact Admin title; the old baseline lacks those layout cues.",
+      "Desktop guild members and channel participants share a view because the desktop member rail is already visible.",
+      "These records support visual review only and do not claim pixel parity or user acceptance."
+    ],
+    "flutter_widget_comparison": {
+      "status": "CAPTURED_REVIEW_ONLY_NO_APPROVED_GOLDEN",
+      "frontend_before_revision": "674fb79ca57ce7207bd75ce6e8dcd3d86b5deee6",
+      "frontend_after_revision": "d856ecac6c9397ae99468c1e6c9492fec4d35e71",
+      "flutter_version": "3.47.5",
+      "capture_method": "Production Flutter widgets rendered in widget tests with fixed synthetic API fixtures; no app-source changes were made to create the baseline harness.",
+      "profiles": {
+        "mobile": {
+          "css": "393x852",
+          "dpr": 3,
+          "raster": "1179x2556",
+          "text_scale": 1
+        },
+        "mobile_large_text": {
+          "css": "393x852",
+          "dpr": 3,
+          "raster": "1179x2556",
+          "text_scale": 2
+        },
+        "desktop": {
+          "css": "1440x900",
+          "dpr": 2,
+          "raster": "2880x1800",
+          "text_scale": 1
+        }
+      },
+      "test_runs": [
+        {
+          "side": "before",
+          "command": "flutter test test/uiux_2026/baseline_admin_capture_test.dart",
+          "result": "PASS",
+          "passed_profiles": 3
+        },
+        {
+          "side": "before",
+          "command": "flutter test test/workspace_screen_test.dart --plain-name 'captures baseline production Flutter text workspace'",
+          "result": "PASS",
+          "passed_profiles": 3
+        },
+        {
+          "side": "after",
+          "command": "flutter test test/uiux_2026/admin_visual_capture_test.dart",
+          "result": "PASS",
+          "passed_profiles": 3
+        },
+        {
+          "side": "after",
+          "command": "flutter test test/workspace_screen_test.dart --plain-name 'captures production Flutter text workspace'",
+          "result": "PASS",
+          "passed_profiles": 3
+        }
+      ],
+      "comparison_count": 27,
+      "comparisons": [
+        {
+          "screen": "Flutter admin audit",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-audit-desktop-1440x900.png",
+            "sha256": "671de84047ce5e8094a2c8667905355d51b0fe541a91cb2dfc4ede4eee583dfa",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-audit-desktop-1440x900.png",
+            "sha256": "0f53e1551c4242781291db6bb60e86305e19c7de82049b38c401cda5c0acd76b",
+            "raster": "2880x1800"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin audit",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-audit-mobile-393x852.png",
+            "sha256": "197f13496ec44c4bcd5c7a5f2baa4b0b5b467f6224bb3c34194553edd9ccc130",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-audit-mobile-393x852.png",
+            "sha256": "6f5909027cf022e72986a69be4f062d83487fbf0524c57ede5cef1e890999f30",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin audit",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-audit-mobile-large-text-393x852.png",
+            "sha256": "76885e31b4d11fcdc62e49ed6c266dcf37e792c81e0de314ebc853528a177525",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-audit-mobile-large-text-393x852.png",
+            "sha256": "ae90f2298a20d9fe26abd1bc04808fbcd5a278c81d9cf5fcab3fd44426176fda",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin channels",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-channels-desktop-1440x900.png",
+            "sha256": "4ae37a4f08e856f2be90c959c4bcfcb5ae3be762f905a7476769f9a20e990df8",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-channels-desktop-1440x900.png",
+            "sha256": "0be408fb2bdcd95b9694ec27d0d0be648efe2b32d04fdbec9b39aafb9e816c3a",
+            "raster": "2880x1800"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin channels",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-channels-mobile-393x852.png",
+            "sha256": "8f7664535ed87c08fb0c93862fca2b2918fcf4446a3c53330f599152ebc65941",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-channels-mobile-393x852.png",
+            "sha256": "b2098ae72367ef8331cfd04f7ed7e33c200a17828e40d100eae09ef5695fe089",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin channels",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-channels-mobile-large-text-393x852.png",
+            "sha256": "af97b18a2c58b5810c1c57661adc54e208187cd093e659a99cc0bfdf6b945e1a",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-channels-mobile-large-text-393x852.png",
+            "sha256": "a917a7f06de2530a286735da1ed74603ba188ae6ef502c03383a26f75cbdd244",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin guild",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-guild-desktop-1440x900.png",
+            "sha256": "9fd63261c69f80e0d6050fe6e546f370919f088661cce376b676dd56f4406347",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-guild-desktop-1440x900.png",
+            "sha256": "66420ae65ba5cae67b0ac79781c339f53c151d5170539813fd2eb4d8c759f1d9",
+            "raster": "2880x1800"
+          },
+          "result": "VISUALLY_REVIEWED"
+        },
+        {
+          "screen": "Flutter admin guild",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-guild-mobile-393x852.png",
+            "sha256": "30b16a4c8c5b8c4c0b89cd7e3f663c14ad0dd7b453c647923aab2cb25a885c5d",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-guild-mobile-393x852.png",
+            "sha256": "3f654c09b66fc10557a88c163cd56daf70a65fabc5529d42cc189476cd33de3f",
+            "raster": "1179x2556"
+          },
+          "result": "VISUALLY_REVIEWED"
+        },
+        {
+          "screen": "Flutter admin guild",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-guild-mobile-large-text-393x852.png",
+            "sha256": "3494c4132db494e8d8dd9e71abd50d5edf5534112bae2d95aa3c066b49fca5a6",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-guild-mobile-large-text-393x852.png",
+            "sha256": "cb7cb576404b05c2155965e9256ab16ee9e31da172643bc2d1cf2856582ff872",
+            "raster": "1179x2556"
+          },
+          "result": "VISUALLY_REVIEWED"
+        },
+        {
+          "screen": "Flutter admin media",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-media-desktop-1440x900.png",
+            "sha256": "f109c7bfe84149d2f28e1091b91c6364876baf54837cebed392bb0de84aa9931",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-media-desktop-1440x900.png",
+            "sha256": "b067a99465243539bf5c57a41f737260a4a6efd955c7d56903677d866a05572b",
+            "raster": "2880x1800"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin media",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-media-mobile-393x852.png",
+            "sha256": "c578cea959bf744c06fd193aabe9b9a45cb95185643dc16d490653981a10105c",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-media-mobile-393x852.png",
+            "sha256": "b0fc8a03cae7a64cb076d32a3b62c5c0e7f3dcd7a0d67fda5d29dc0626b78c46",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin media",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-media-mobile-large-text-393x852.png",
+            "sha256": "748d6e31fbc7a4f30c18566df674dc587bd00f26759dd84dc6e9a4fc6d0480f0",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-media-mobile-large-text-393x852.png",
+            "sha256": "d0e64e2788748ee82999bdce0b5729e471045f39a0d531e1b0667bb5a162ca23",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin members",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-members-desktop-1440x900.png",
+            "sha256": "ca671e8c5b730a7ee231e2a0787a0c2b1b1612b45341b6b3bf8db30631055a0e",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-members-desktop-1440x900.png",
+            "sha256": "8b5bd8833265cc962d2d6356387c36b76ef28fd7fa2d44272331f009f7789103",
+            "raster": "2880x1800"
+          },
+          "result": "VISUALLY_REVIEWED"
+        },
+        {
+          "screen": "Flutter admin members",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-members-mobile-393x852.png",
+            "sha256": "7b9b08882beef986125f7fe15d3e4b0c8aaabe3ad1d91da2c84059099d2a4277",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-members-mobile-393x852.png",
+            "sha256": "0b3ff77313e31ae9de0ceaeb8241ec0b46cee6cac53203427090e063036312cf",
+            "raster": "1179x2556"
+          },
+          "result": "VISUALLY_REVIEWED"
+        },
+        {
+          "screen": "Flutter admin members",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-members-mobile-large-text-393x852.png",
+            "sha256": "e39eacdcfc517b7d06ab300b4714ca26af3da86171f71cf63e0e3a894a34ce30",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-members-mobile-large-text-393x852.png",
+            "sha256": "ebb08c7132e8896b0c8444b03c53035e02b6f1889938ecc395a3ea1e1de6bbd2",
+            "raster": "1179x2556"
+          },
+          "result": "VISUALLY_REVIEWED"
+        },
+        {
+          "screen": "Flutter admin readiness",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-readiness-desktop-1440x900.png",
+            "sha256": "f9f9bcab91adc425a071a0e17c184fa34399243f58876c43e82b76607c0fbe50",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-readiness-desktop-1440x900.png",
+            "sha256": "6332bbed9e4340f4aaacadef83c5393bea8f6be9ab97542ce5fb7ac101a59add",
+            "raster": "2880x1800"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin readiness",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-readiness-mobile-393x852.png",
+            "sha256": "6b23e7d3a1e136126efe2a79941dbda16f95a8077a763ebf7fd12c58618a053a",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-readiness-mobile-393x852.png",
+            "sha256": "2c845528c7b25406abf30cff2f6380d41ad34b91a414cdbbe14bbf3d1b412841",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin readiness",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-readiness-mobile-large-text-393x852.png",
+            "sha256": "66c9dc4fd5cf60d44e8a7f9fadbe283eb7d299ef382ff1e3111e4acab25fd60a",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-readiness-mobile-large-text-393x852.png",
+            "sha256": "2636c11f6fa4d28a6f389359c50b6098f75105355bd46eeeb341dac1e2910db5",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin roles",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-roles-desktop-1440x900.png",
+            "sha256": "34b7d7df1454f56cff86961182163e2613a51d1ed9bcd7edd0cc57e6c038e62b",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-roles-desktop-1440x900.png",
+            "sha256": "5af7498f3091b15db725e314295208939c524e6e87ccbb5478997d73a9ffccdd",
+            "raster": "2880x1800"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin roles",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-roles-mobile-393x852.png",
+            "sha256": "cb3d24f33852cfcc58d1fc34d9988ebfccf331ee4bd5a87cfdcc3b63234d8e70",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-roles-mobile-393x852.png",
+            "sha256": "b8ec25b7206629945460fce183bd038ea0bce34e30230e2ab67dc3b28572726e",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter admin roles",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-admin-roles-mobile-large-text-393x852.png",
+            "sha256": "87c53e023fdb700d2761fd1125fe2362cdaf47c9b76fec7349983072ded1f4c7",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-admin-roles-mobile-large-text-393x852.png",
+            "sha256": "533171e50b953e8c29ed20958ad0a82aaf2ff4e83a397a716e17601fa4bb3d9d",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter DM conversation",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-dm-conversation-desktop-1440x900.png",
+            "sha256": "f254f04dd3859ea7096ec0c0bc7c631e8da37f7638a5a2a50a108ebc31ead913",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-dm-conversation-desktop-1440x900.png",
+            "sha256": "4fcde74bfbc677e94e5e62c7f3f8ca0292af1febff55c3b2efc1668a63efc7b1",
+            "raster": "2880x1800"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter DM conversation",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-dm-conversation-mobile-393x852.png",
+            "sha256": "c729f2da46979924cfff9f7f97f524caa176a56898c64bf7b6c8f84a06761f6e",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-dm-conversation-mobile-393x852.png",
+            "sha256": "c729f2da46979924cfff9f7f97f524caa176a56898c64bf7b6c8f84a06761f6e",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter DM conversation",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-dm-conversation-mobile-large-text-393x852.png",
+            "sha256": "9de1ce6c20443f3ba3ccd49fd70581f02cefe4d7a8f90fb7c9ba8ca9374a4113",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-dm-conversation-mobile-large-text-393x852.png",
+            "sha256": "9de1ce6c20443f3ba3ccd49fd70581f02cefe4d7a8f90fb7c9ba8ca9374a4113",
+            "raster": "1179x2556"
+          },
+          "result": "CAPTURED"
+        },
+        {
+          "screen": "Flutter text channel",
+          "profile": "desktop",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-text-channel-desktop-1440x900.png",
+            "sha256": "41b88274c660b9f568b185bf770add38e6541c6023ed4e00f6444a8be383052f",
+            "raster": "2880x1800"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-text-channel-desktop-1440x900.png",
+            "sha256": "255f29fc7fa8c0731654581e51051bb3138164f4b089e8ae687c78d1e9857d6d",
+            "raster": "2880x1800"
+          },
+          "result": "VISUALLY_REVIEWED"
+        },
+        {
+          "screen": "Flutter text channel",
+          "profile": "mobile",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-text-channel-mobile-393x852.png",
+            "sha256": "8b4fd36565e4ffeec629809095d6b922465672fbe8fc9ea8a14f70c819cb29e6",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-text-channel-mobile-393x852.png",
+            "sha256": "d218322bfd961ec275d8d17f37664e00c9af709b3cc0de525bcf30e37ff1287b",
+            "raster": "1179x2556"
+          },
+          "result": "VISUALLY_REVIEWED"
+        },
+        {
+          "screen": "Flutter text channel",
+          "profile": "mobile-large-text",
+          "before": {
+            "path": ".out/qa-visual-290-flutter-before/flutter-text-channel-mobile-large-text-393x852.png",
+            "sha256": "2f473cd339b0c5634575e1fe7557ebbc76807758f9b806a07000215171b4f4c0",
+            "raster": "1179x2556"
+          },
+          "after": {
+            "path": ".out/qa-visual-290-flutter-after/flutter-text-channel-mobile-large-text-393x852.png",
+            "sha256": "109f65fa432ac632a62c2ceea0efb2ceb02a8fe6b1f2272570705994d26b77e7",
+            "raster": "1179x2556"
+          },
+          "result": "VISUALLY_REVIEWED"
+        }
+      ],
+      "review_notes": [
+        "Matching dimensions and DPR were verified for every before/after pair. Production channel, members and guild settings views were visually reviewed at desktop and mobile; mobile 2x text was reviewed for these areas and the text channel.",
+        "The before and after AccessibleAdminApi topology fixture is unchanged. The workspace API fixture differs only by search instrumentation/result override fields; seeded channel and DM fixture content is the same.",
+        "DM screenshots are byte-identical at mobile and mobile-large-text profiles.",
+        "The old source archive still contains the documented D11 duplicate. The guild settings baseline here was independently rebuilt from the pre-UIUX Flutter source, leaving the archive unchanged.",
+        "Flutter captures are widget-test output, not physical Android/iOS acceptance. No Android/iOS emulator or device was available."
+      ]
+    }
+  }
 }
