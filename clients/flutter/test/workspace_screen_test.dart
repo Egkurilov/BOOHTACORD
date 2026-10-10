@@ -849,6 +849,35 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
+  testWidgets('desktop audio settings provide a labeled close action', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(
+      _PortraitApi(),
+      audioDeviceLoader: () async => const [],
+    );
+    await state.initialize();
+    state.toggleWorkspacePanel(WorkspacePanel.audio);
+
+    await tester.pumpWidget(MaterialApp(home: WorkspaceScreen(state: state)));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Закрыть настройки аудио'), findsOneWidget);
+    expect(find.byTooltip('Назад'), findsNothing);
+    await tester.tap(find.byTooltip('Закрыть настройки аудио'));
+    await tester.pumpAndSettle();
+    expect(state.workspacePanel, WorkspacePanel.none);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('playback volume reset is separate from microphone processing', (
     tester,
   ) async {
