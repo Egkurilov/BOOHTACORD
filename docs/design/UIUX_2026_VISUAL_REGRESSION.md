@@ -4,7 +4,7 @@ This inventory supports epic [#289](https://github.com/Egkurilov/BOOHTACORD/issu
 
 ## Reference archive status
 
-The original archive is checked in at [`artifacts/ui-ux-screenshots.zip`](../../artifacts/ui-ux-screenshots.zip). Its embedded README lists all 41 PNGs (18 desktop, 23 mobile); `D18` and `M23` are `desktop-channel-log.png` and `mobile-channel-log.png`. The catalog records the archive SHA-256, each filename, the CSS viewport, and the PNG raster size. Desktop references are 1440×900 CSS px / 2880×1800 raster px. Mobile references are 393×852 CSS px / 1179×2556 raster px, except the two stream-launch references at 786×1704.
+The original archive used for the local audit is named `artifacts/ui-ux-screenshots.zip`, but ZIPs under `artifacts/` are ignored and the archive is not tracked here. Clean checkouts do not include the source PNGs; provide the archive at that local path to rerun archive-backed checks. The local audit inventory lists all 41 PNGs (18 desktop, 23 mobile); `D18` and `M23` are `desktop-channel-log.png` and `mobile-channel-log.png`. The catalog records the archive SHA-256, each filename, the CSS viewport, and the PNG raster size. Desktop references are 1440×900 CSS px / 2880×1800 raster px. Mobile references are 393×852 CSS px / 1179×2556 raster px, except the two stream-launch references at 786×1704.
 
 The source archive does not include the current branch's “after” screenshots. The 1440×900 and 393×852 targets below match the source capture dimensions; the separate #302 regression sweep also includes 390×844 from #290.
 
@@ -42,7 +42,7 @@ The full-stack lifecycle runner exercises a production Web build at mobile 393×
 
 ### Recapture after a UI-approved change
 
-1. Keep `artifacts/ui-ux-screenshots.zip` immutable as the original audit input. A new approved capture is evidence for a reviewed change; it does not silently replace the source archive.
+1. If the original audit archive is supplied locally at `artifacts/ui-ux-screenshots.zip`, keep it immutable. A new approved capture is evidence for a reviewed change; it does not silently replace the source archive.
 2. Run the Web viewport/capture suite from `clients/web`: `npm run test:responsive-shell`. It writes the six required targets plus the 393×852 source-reference target under `.out/responsive-shell-browser-results/`.
 3. Run the actual-app admin captures from the repository root with installed Chrome and the disposable lifecycle stack: `QA_BROWSER_EXECUTABLE=<Chrome executable> python3 -m tools.qa.client_lifecycle.run --width 393` and repeat with `--width 1440`. This writes source-sized screenshots and a bounded, hash-bound report under `.out/client-lifecycle/{393,1440}/`.
 4. Compare the named, stable layout regions against the matching source screen and inspect the matching DOM/state assertions. Treat timestamps, avatars, member identities, audit payloads and live service values as dynamic data: document their region or fixture rule in the catalog and review the region manually; do not make their raw pixels a flaky pass/fail gate. Report only observed differences, and distinguish them from hypotheses.
