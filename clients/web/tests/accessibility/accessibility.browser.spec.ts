@@ -649,6 +649,54 @@ test('voice dock explains denied microphone access and exposes a retry at mobile
   await page.screenshot({ path: testInfo.outputPath('voice-dock-mic-denied-2x.png') })
 })
 
+test('voice dock makes muted and deafened states visibly red after each toggle', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h, reactive } = await load('/node_modules/.vite/deps/vue.js')
+    const { default: VoiceDock } = await load('/src/voice/VoiceDock.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    const props = reactive({
+      channel: { id: 'voice-1', name: 'Комната', kind: 'VOICE', position: 0, admissionClosed: false },
+      activeSession: true,
+      error: null,
+      activationMode: 'VAD',
+      deafened: false,
+      deafenChanging: false,
+      microphoneMuted: false,
+      microphonePermissionDenied: false,
+      state: 'CONNECTED',
+    })
+    createApp({
+      render: () => h(VoiceDock, {
+        ...props,
+        onToggleMicrophone: () => { props.microphoneMuted = !props.microphoneMuted },
+        onToggleDeafen: () => { props.deafened = !props.deafened },
+      }),
+    }).mount('#mount')
+  })
+
+  const mutedToggle = page.getByRole('button', { name: 'Выключить микрофон' })
+  await mutedToggle.click()
+  const mutedButton = page.getByRole('button', { name: 'Включить микрофон' })
+  await expect(mutedButton).toHaveClass(/voice-icon-button--danger-active/)
+  await expect(mutedButton).toHaveCSS('background-color', 'rgb(185, 28, 28)')
+  await expect(mutedButton).toHaveCSS('border-top-color', 'rgb(239, 68, 68)')
+  await expect(mutedButton).toHaveCSS('color', 'rgb(255, 255, 255)')
+  await mutedButton.click()
+  await expect(page.getByRole('button', { name: 'Выключить микрофон' })).not.toHaveClass(/voice-icon-button--danger-active/)
+
+  await page.getByRole('button', { name: 'Выключить удалённый звук' }).click()
+  const deafenedButton = page.getByRole('button', { name: 'Включить удалённый звук' })
+  await expect(deafenedButton).toHaveClass(/voice-icon-button--danger-active/)
+  await expect(deafenedButton).toHaveCSS('background-color', 'rgb(185, 28, 28)')
+  await expect(deafenedButton).toHaveCSS('border-top-color', 'rgb(239, 68, 68)')
+  await expect(deafenedButton).toHaveCSS('color', 'rgb(255, 255, 255)')
+  await expectAxeClear(page, '.voice-dock')
+  await page.screenshot({ path: testInfo.outputPath('voice-dock-muted-deafened-active.png') })
+})
+
 test('screen-share setup shows the recommended profile before progressive quality options', async ({ page, browser }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 640 })
   await page.goto('/')

@@ -28,6 +28,10 @@ extension VoiceDockConnectedControlsRenderer on WorkspaceVoiceDockContext {
               : 'Выключить микрофон',
           icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
           danger: state.microphoneMuted,
+          dangerActive:
+              state.microphoneMuted &&
+              !state.microphoneUnavailable &&
+              state.audioActivationMode != AudioActivationMode.ptt,
           toggled: !state.microphoneMuted,
           enabled:
               state.audioActivationMode != AudioActivationMode.ptt &&
@@ -41,6 +45,7 @@ extension VoiceDockConnectedControlsRenderer on WorkspaceVoiceDockContext {
             : 'Выключить удалённый звук',
         icon: state.deafened ? Icons.headset_off : Icons.headphones,
         danger: state.deafened,
+        dangerActive: state.deafened,
         toggled: state.deafened,
         enabled:
             !state.deafenChanging && state.voicePhase != VoicePhase.leaving,

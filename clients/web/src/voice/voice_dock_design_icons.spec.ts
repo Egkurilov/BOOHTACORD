@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const dock = readFileSync(new URL('./VoiceDock.vue', import.meta.url), 'utf8')
+const voiceStyles = readFileSync(new URL('../design/voice.css', import.meta.url), 'utf8')
 
 describe('Design V2 voice dock icons', () => {
   it('uses the handoff microphone outline while keeping the existing action', () => {
@@ -19,5 +20,11 @@ describe('Design V2 voice dock icons', () => {
   it('uses the same headphones outline for the header and deafen control', () => {
     expect(dock.match(/M3 14v-3a9 9 0 0 1 18 0v3/g)).toHaveLength(2)
     expect(dock).toContain("@click=\"emit('toggleDeafen')\"")
+  })
+
+  it('marks muted and deafened controls with a high-contrast persistent red state', () => {
+    expect(dock).toContain("'voice-icon-button--danger-active': microphoneMuted")
+    expect(dock).toContain("'voice-icon-button--danger-active': deafened")
+    expect(voiceStyles).toMatch(/\.voice-icon-button--danger-active\s*\{[^}]*border:\s*1px solid var\(--gc-danger\)[^}]*color:\s*var\(--gc-on-danger\)[^}]*background:\s*var\(--gc-danger-solid\)/)
   })
 })
