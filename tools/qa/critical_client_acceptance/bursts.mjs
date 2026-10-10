@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
-import { api, expect, status } from '../client_lifecycle/request.mjs'
+import { api, expect, openNavigation, status } from '../client_lifecycle/request.mjs'
 import { requests } from './requests.mjs'
 export async function bursts(a, b, channelId, report, directory, baseline = false) {
   const category = await api(a, '/admin/categories', 'POST', { name: 'HiddenLab' }); status(category, 201)
   const hidden = await api(a, `/admin/categories/${category.body.id}/channels`, 'POST', { name: 'HiddenLab', kind: 'TEXT' }); status(hidden, 201)
+  await openNavigation(b)
   await expect(b.locator('.channel-button').filter({ hasText: 'HiddenLab' })).toBeVisible()
   await b.locator('.channel-button').filter({ hasText: 'HiddenLab' }).click()
   const counters = [requests(a, channelId), requests(b, channelId)]

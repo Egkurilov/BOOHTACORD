@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { login, setup } from './fixture.mjs'
+import { expect, login, setup } from './fixture.mjs'
 import { nativeBrowser } from './native_browser.mjs'
 import { uploads } from './uploads.mjs'
 import { unread } from './unread.mjs'
@@ -13,6 +13,12 @@ try {
   context.setDefaultTimeout(20000)
   const page = owned.page, report = { status:'PASS', capacity_limited:input.limited }
   await page.setViewportSize({ width:1440, height:900 })
+  await page.goto(process.env.QA_ORIGIN)
+  await expect.poll(async () => page.evaluate(async () => {
+    try { return (await fetch('/api/v1/health', { cache:'no-store' })).status }
+    catch { return 0 }
+  }), { timeout:15000 }).toBe(200)
+  console.log('stage=browser-api-ready')
   await login(page,'qa_admin',input.password)
   const fixture = await setup(page,input.password)
   await page.reload()
