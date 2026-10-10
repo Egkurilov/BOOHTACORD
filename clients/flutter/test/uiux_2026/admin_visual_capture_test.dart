@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,7 +38,7 @@ void main() {
     ),
   ]) {
     testWidgets(
-      'captures production Flutter admin members/settings at ${profile.name}',
+      'captures every production Flutter admin section at ${profile.name}',
       (tester) async {
         tester.view.devicePixelRatio = profile.pixelRatio;
         tester.view.physicalSize = Size(
@@ -128,11 +130,21 @@ void main() {
           );
         }
 
-        for (final section in [AdminSection.members, AdminSection.guild]) {
+        for (final section in AdminSection.values) {
           final tab = find.byKey(ValueKey('admin-section-tab-${section.name}'));
           await tester.ensureVisible(tab);
           await tester.tap(tab);
-          await tester.pumpAndSettle();
+          await tester.pump(const Duration(milliseconds: 400));
+          expect(
+            tester
+                    .getSemantics(tab)
+                    .getSemanticsData()
+                    .flagsCollection
+                    .isSelected ==
+                Tristate.isTrue,
+            isTrue,
+            reason: '${section.name} is the active admin tab',
+          );
           expect(tester.takeException(), isNull, reason: section.name);
           if (section == AdminSection.members && profile.compact) {
             expect(find.text('Роль'), findsOneWidget);
@@ -155,6 +167,19 @@ void main() {
               tester.widget<Text>(welcomeLabel).semanticsLabel,
               'Приветствия новых участников',
               reason: 'the concise large-text label retains its full accessible name',
+            );
+          }
+          if (section == AdminSection.roles &&
+              profile.compact &&
+              profile.textScale > 1) {
+            final heading = find.text('Роли и разрешения');
+            final refresh = find.widgetWithText(TextButton, 'Обновить');
+            expect(heading, findsOneWidget);
+            expect(refresh, findsOneWidget);
+            expect(
+              tester.getRect(refresh).top,
+              greaterThanOrEqualTo(tester.getRect(heading).bottom - 1),
+              reason: 'the role refresh action must not overlap its heading',
             );
           }
           await captureUiuxBoundary(
