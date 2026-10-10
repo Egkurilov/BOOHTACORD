@@ -1,0 +1,69 @@
+{
+  "id": "QA-294-DM-MOBILE",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #294 — DM, search and composer mobile flows",
+  "source_revision": "62065b0e8b3140113b20c210ddcfe66f43fc962c",
+  "working_tree_changes": true,
+  "working_tree_change_note": "Only an unrelated .gitignore addition is uncommitted; no code was changed for this revalidation.",
+  "checks": [
+    {
+      "name": "Web conversation, composer, attachment, DM, mention and search unit suites",
+      "command": "cd clients/web && npm test -- --run src/conversation/attachment_keyboard_trigger.spec.ts src/conversation/attachment_limits.spec.ts src/conversation/clipboard_images.spec.ts src/conversation/composer_enter.spec.ts src/conversation/composer_scope.spec.ts src/conversation/draft_memory.spec.ts src/conversation/emoji_picker.spec.ts src/conversation/mention_autocomplete_presentation.spec.ts src/conversation/mention_keyboard.spec.ts src/conversation/mention_picker.spec.ts src/direct_message/direct_message_attachments.spec.ts src/direct_message/direct_message_attachment_presentation.spec.ts src/direct_message/direct_message_history_race.spec.ts src/direct_message/direct_message_read_gate.spec.ts src/direct_message/direct_message_search_client.spec.ts src/direct_message/direct_message_retry.spec.ts src/search/quick_jump.spec.ts src/search/quick_jump_people/open.spec.ts src/search/mention_target.spec.ts",
+      "result": "PASS",
+      "test_files": 19,
+      "passed": 64,
+      "coverage": [
+        "Composer conversation scoping and isolated text/reply/mention/attachment drafts.",
+        "Clipboard image paste, attachment limits, keyboard trigger, upload queue and attachment URL presentation.",
+        "Emoji and mention picker/query behavior.",
+        "DM attachment display, history race/read gates, retries and message search clients.",
+        "Quick-jump and mention targets reject unavailable or wrong-conversation destinations."
+      ]
+    },
+    {
+      "name": "Web DM empty state, read gate, quick-jump and search context unit suites",
+      "command": "cd clients/web && npm test -- --run src/conversation/empty_workspace_navigation.spec.ts src/direct_message/direct_message_client.spec.ts src/direct_message/direct_message_store.spec.ts src/direct_message/direct_message_read_gate.spec.ts src/search/mention_inbox_controller.spec.ts src/search/quick_jump_people/entries.spec.ts src/search/quick_jump_people/state.spec.ts src/search/search_context_controller.spec.ts src/search/search_target_store.spec.ts",
+      "result": "PASS",
+      "test_files": 9,
+      "passed": 28,
+      "coverage": [
+        "Empty-workspace navigation keeps an actionable next step.",
+        "DM client/store/read-gate state and mention inbox controller.",
+        "Quick-jump people entries/state, search context controller and search target store."
+      ]
+    },
+    {
+      "name": "Flutter composer, clipboard/attachments, quick-jump and workspace scenarios",
+      "command": "cd clients/flutter && flutter test --no-pub test/composer_draft_memory_test.dart test/message_attachment_composer_test.dart test/message_attachment_list_test.dart test/features/workspace/quick_jump test/conversation_scope/history_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 133,
+      "coverage": [
+        "Account/conversation-scoped drafts retain replies, mentions and attachments.",
+        "Clipboard image paste and attachment preview/deleted state.",
+        "Quick-jump authorization and navigation.",
+        "DM search result/context return, per-conversation query scope, draft retention and resize.",
+        "Compact workspace layout and keyboard-inset widget scenarios."
+      ]
+    },
+    {
+      "name": "Server DM send and private-attachment ACL integration packages",
+      "command": "cd backend && VOICE_PLATFORM_TEST_DATABASE_URL=<disposable loopback PostgreSQL> go test ./internal/storage/download_direct_message_attachment/postgres ./internal/storage/authorize_direct_message_attachment/postgres ./internal/chat/send_direct_message/postgres",
+      "result": "PASS",
+      "passed_packages": 3,
+      "environment": "Temporary postgres:17.6-alpine container with a tmpfs database and a loopback-only published port; container removal was verified after the run.",
+      "coverage": [
+        "Both DM participants can read linked attachments and previews.",
+        "Outsiders (including an administrator), wrong-pair references, blocked participants and deleted-message attachments are uniformly unavailable.",
+        "Send repository enforces active participant pairs and attachment ownership/linkage."
+      ]
+    }
+  ],
+  "limitations": [
+    "IME and compact keyboard layouts are widget/browser-fixture coverage, not native Android/iOS keyboard acceptance.",
+    "Physical clipboard/image picker, safe-area and background/foreground interaction remain NOT_RUN on mobile devices under #303.",
+    "Permission-denied/not-found destination checks pass at client target/read-gate unit level; a full authenticated mobile browser task with those live responses was not run.",
+    "No Web/Flutter full-app before/after DM screenshot comparison or real-user navigation-time measurement was produced in this pass.",
+    "No API/ACL behavior was changed in this revalidation; server authorization tests ran against disposable data only."
+  ],
+  "status": "PARTIAL — focused Web 92/92, Flutter 133/133 and DM attachment ACL integration packages pass. Physical mobile input/background acceptance, live permission-flow E2E and the remaining issue-level user task gates stay open."
+}
