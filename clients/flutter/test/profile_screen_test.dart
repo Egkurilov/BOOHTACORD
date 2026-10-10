@@ -422,13 +422,14 @@ void main() {
           .getSemantics(
             find.descendant(
               of: find.byKey(const ValueKey('profile-screen-title-focus')),
-              matching: find.text('Профиль'),
+              matching: find.text('Настройки'),
             ),
           )
           .flagsCollection
           .isHeader,
       isTrue,
     );
+    expect(find.text('Ваш профиль и параметры приложения.'), findsOneWidget);
   });
 
   testWidgets('profile mutation errors are announced as live regions', (
