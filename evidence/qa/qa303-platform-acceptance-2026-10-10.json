@@ -248,7 +248,6 @@
     "Run current native Flutter task scripts on macOS and Windows; verify window resizing, keyboard/focus and native capture picker behavior.",
     "Run mobile IME, SafeArea, Back/swipe, dynamic text and TalkBack/VoiceOver acceptance.",
     "Record per-target OS/device, app build, reproducible steps and source-sized screenshots/video; link any user-blocking issues.",
-    "Run a non-skip-ci workflow to publish the configured browser/Flutter CI artifacts.",
     "Run actual full-app Safari and physical/mobile browser task scripts; current WebKit/Firefox results are automated viewport smoke only."
   ],
   "acceptance": {
@@ -258,8 +257,51 @@
     "screen_reader_acceptance": "NOT_RUN",
     "all_supported_platforms_unblocked": "NOT_RUN",
     "issue_state_at_capture": "OPEN",
-    "cross_browser_responsive_automation": "PASS_21_CASES_3_ENGINES"
+    "cross_browser_responsive_automation": "PASS_21_CASES_3_ENGINES",
+    "ci_artifact_run": "PASS_RUN_38068041885"
   },
-  "artifact_storage": "No physical captures/video exist. Browser viewport PNGs are local and ignored under .out/uiux-cross-browser-2026-10-10/; no GitHub Actions artifact was produced for the [skip ci] checkpoint.",
-  "scope_note": "Platform media QoE is separate from UI acceptance and remains under #173/#174; no media capacity or quality claim is made here."
+  "artifact_storage": "GitHub Actions run 38068041885 completed successfully on code commit 8b46e4e033b8c78d08590023ba2070ec7ff4f8e5. Responsive-shell, Flutter visual-review, Android debug APK and Windows x64 artifacts are available through 2026-11-09; see ci_artifact_runs. Later [skip ci] evidence commits do not have per-revision Actions artifacts. No physical captures/video exist.",
+  "scope_note": "Platform media QoE is separate from UI acceptance and remains under #173/#174; no media capacity or quality claim is made here.",
+  "ci_artifact_runs": [
+    {
+      "workflow": "CI",
+      "run_id": 38068041885,
+      "run_number": 916,
+      "status": "completed",
+      "conclusion": "success",
+      "code_commit": "8b46e4e033b8c78d08590023ba2070ec7ff4f8e5",
+      "branch": "codex/uiux-289-ci-followup",
+      "artifacts": [
+        {
+          "id": 11675652573,
+          "name": "ux-responsive-shell",
+          "size_bytes": 207479,
+          "expires": "2026-11-09T16:40:42Z",
+          "url": "https://github.com/Egkurilov/BOOHTACORD/actions/artifacts/11675652573"
+        },
+        {
+          "id": 11675692462,
+          "name": "uiux-flutter-visual-review",
+          "size_bytes": 3996967,
+          "expires": "2026-11-09T16:39:07Z",
+          "url": "https://github.com/Egkurilov/BOOHTACORD/actions/artifacts/11675692462"
+        },
+        {
+          "id": 11675762315,
+          "name": "boohtacord-android-debug-apk",
+          "size_bytes": 121239486,
+          "expires": "2026-11-09T16:49:02Z",
+          "url": "https://github.com/Egkurilov/BOOHTACORD/actions/artifacts/11675762315"
+        },
+        {
+          "id": 11675583644,
+          "name": "BOOHTACORD-windows-x64",
+          "size_bytes": 26565927,
+          "expires": "2026-11-09T16:48:01Z",
+          "url": "https://github.com/Egkurilov/BOOHTACORD/actions/artifacts/11675583644"
+        }
+      ],
+      "acceptance_effect": "PASS for configured CI artifact publication on this tested code commit. These artifacts are not physical device/task acceptance and do not cover later [skip ci] evidence-only commits."
+    }
+  ]
 }
