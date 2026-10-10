@@ -364,6 +364,70 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
+  testWidgets('TEXT composer and connected voice controls stay above the IME', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+    tester.view.viewInsets = const FakeViewPadding();
+    addTearDown(tester.view.reset);
+
+    final state = AppState(_PortraitApi(withHistory: true));
+    await state.initialize();
+    state
+      ..selectedChannel = _PortraitApi.channel
+      ..voiceChannel = _PortraitApi.voiceChannel
+      ..voicePhase = VoicePhase.connected;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.android),
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final composer = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Написать сообщение…',
+    );
+    await tester.enterText(composer, 'Черновик перед открытием клавиатуры');
+    await tester.pump();
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    await tester.pumpAndSettle();
+
+    const keyboardTop = 844.0 - 280;
+    final composerRect = tester.getRect(
+      find.byKey(const ValueKey('text-composer-wrap')),
+    );
+    final voiceDockRect = tester.getRect(
+      find.byKey(const ValueKey('mobile-voice-dock')),
+    );
+    expect(composerRect.bottom, lessThanOrEqualTo(keyboardTop));
+    expect(voiceDockRect.bottom, lessThanOrEqualTo(keyboardTop));
+    expect(find.byTooltip('Выключить микрофон'), findsOneWidget);
+    expect(find.byTooltip('Выйти из голосового канала'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(composer).controller!.text,
+      'Черновик перед открытием клавиатуры',
+    );
+    expect(state.selectedChannel?.id, _PortraitApi.channel.id);
+    expect(state.voiceChannel, _PortraitApi.voiceChannel);
+    expect(state.voicePhase, VoicePhase.connected);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('restores a text-channel draft after switching channels', (
     tester,
   ) async {
