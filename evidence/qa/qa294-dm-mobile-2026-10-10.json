@@ -2,22 +2,22 @@
   "id": "QA-294-DM-MOBILE",
   "date": "2026-10-10",
   "task": "UIUX-2026 issue #294 — DM, search and composer mobile flows",
-  "source_revision": "62065b0e8b3140113b20c210ddcfe66f43fc962c",
+  "source_revision": "0561dade2591d123ed5a89b881b459902390025e",
   "working_tree_changes": true,
-  "working_tree_change_note": "Only an unrelated .gitignore addition is uncommitted; no code was changed for this revalidation.",
+  "working_tree_change_note": "The following focused #294 code, unit-test, browser-test and Playwright-config changes were tested on this revision and are included with this evidence in the checkpoint commit: clients/web/src/search/quick_jump_people/open.ts, open.spec.ts, tests/quick_jump_people/people.browser.spec.ts and playwright.config.ts. The unrelated .gitignore addition remains unstaged.",
   "checks": [
     {
       "name": "Web conversation, composer, attachment, DM, mention and search unit suites",
       "command": "cd clients/web && npm test -- --run src/conversation/attachment_keyboard_trigger.spec.ts src/conversation/attachment_limits.spec.ts src/conversation/clipboard_images.spec.ts src/conversation/composer_enter.spec.ts src/conversation/composer_scope.spec.ts src/conversation/draft_memory.spec.ts src/conversation/emoji_picker.spec.ts src/conversation/mention_autocomplete_presentation.spec.ts src/conversation/mention_keyboard.spec.ts src/conversation/mention_picker.spec.ts src/direct_message/direct_message_attachments.spec.ts src/direct_message/direct_message_attachment_presentation.spec.ts src/direct_message/direct_message_history_race.spec.ts src/direct_message/direct_message_read_gate.spec.ts src/direct_message/direct_message_search_client.spec.ts src/direct_message/direct_message_retry.spec.ts src/search/quick_jump.spec.ts src/search/quick_jump_people/open.spec.ts src/search/mention_target.spec.ts",
       "result": "PASS",
       "test_files": 19,
-      "passed": 64,
+      "passed": 66,
       "coverage": [
         "Composer conversation scoping and isolated text/reply/mention/attachment drafts.",
         "Clipboard image paste, attachment limits, keyboard trigger, upload queue and attachment URL presentation.",
         "Emoji and mention picker/query behavior.",
         "DM attachment display, history race/read gates, retries and message search clients.",
-        "Quick-jump and mention targets reject unavailable or wrong-conversation destinations."
+        "Quick-jump and mention targets reject unavailable or wrong-conversation destinations; explicit DM candidate 403/404 responses use a non-enumerating unavailable message."
       ]
     },
     {
@@ -56,14 +56,37 @@
         "Outsiders (including an administrator), wrong-pair references, blocked participants and deleted-message attachments are uniformly unavailable.",
         "Send repository enforces active participant pairs and attachment ownership/linkage."
       ]
+    },
+    {
+      "name": "Quick-jump and mention-inbox browser regressions at 390 px and 1440 px",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npx playwright test --config tests/quick_jump_people/playwright.config.ts && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npx playwright test --config tests/mentions_inbox/playwright.config.ts",
+      "result": "PASS",
+      "passed": 10,
+      "coverage": [
+        "An eligible guild member opens an authoritative DM without joining voice.",
+        "403 and 404 responses keep navigation closed and show a safe unavailable message at both browser widths.",
+        "A stale DM mention target remains closed after authoritative refresh reports no conversation.",
+        "Mention inbox metadata, pagination/message jump and empty state remain intact."
+      ]
+    },
+    {
+      "name": "Web production build",
+      "command": "cd clients/web && VITE_PUBLIC_ORIGIN=https://voice.example.test npm run build",
+      "result": "PASS",
+      "coverage": [
+        "vue-tsc type check and production Vite build succeed with the required HTTPS social-preview origin."
+      ],
+      "notes": [
+        "Vite reports the existing LiveKit dynamic-import and >500 kB chunk-size warnings; build completes successfully."
+      ]
     }
   ],
   "limitations": [
     "IME and compact keyboard layouts are widget/browser-fixture coverage, not native Android/iOS keyboard acceptance.",
     "Physical clipboard/image picker, safe-area and background/foreground interaction remain NOT_RUN on mobile devices under #303.",
-    "Permission-denied/not-found destination checks pass at client target/read-gate unit level; a full authenticated mobile browser task with those live responses was not run.",
+    "Browser fixture tests now exercise quick-jump HTTP 403/404 and a stale DM mention target at 390/1440 px using mocked API responses; a full authenticated live-backend/mobile task with those responses was not run.",
     "No Web/Flutter full-app before/after DM screenshot comparison or real-user navigation-time measurement was produced in this pass.",
     "No API/ACL behavior was changed in this revalidation; server authorization tests ran against disposable data only."
   ],
-  "status": "PARTIAL — focused Web 92/92, Flutter 133/133 and DM attachment ACL integration packages pass. Physical mobile input/background acceptance, live permission-flow E2E and the remaining issue-level user task gates stay open."
+  "status": "PARTIAL — focused Web unit suites pass 94 executions across the two recorded groups (66 + 28); quick-jump/mention browser regressions pass 10/10; Web production build, Flutter 133/133 and DM attachment ACL integration packages pass. Physical mobile input/background acceptance, authenticated live permission-flow E2E and remaining issue-level user task gates stay open."
 }
