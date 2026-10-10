@@ -80,6 +80,11 @@ test('R02 keeps only the touched message action disclosure open', async ({ page 
 })
 
 test('R02 preserves touch actions and passes WCAG axe scan for grouped, system, deleted and failed messages', async ({ page }) => {
+  await page.route(/message-reactions/, route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ reactions: [], can_pin: true }),
+  }))
   await page.goto('/')
   await page.evaluate(async () => {
     const load = (path: string) => import(path)
@@ -88,6 +93,7 @@ test('R02 preserves touch actions and passes WCAG axe scan for grouped, system, 
     const { default: MessageItem } = await load('/src/conversation/MessageItem.vue')
     document.body.innerHTML = '<div id="mount"></div>'
     const base = {
+      channelId: '11111111-1111-4111-8111-111111111111',
       authorId: 'user-1',
       clientMessageId: 'client-1',
       body: 'Сообщение для проверки',
@@ -96,10 +102,10 @@ test('R02 preserves touch actions and passes WCAG axe scan for grouped, system, 
       deleted: false,
     }
     const messages = [
-      { ...base, id: 'grouped', channelId: 'channel-1' },
-      { ...base, id: 'system', kind: 'SYSTEM_WELCOME' },
-      { ...base, id: 'deleted', channelId: 'channel-1', deleted: true },
-      { ...base, id: 'failed', channelId: 'channel-1', sendStatus: 'failed', retryBlocked: false },
+      { ...base, id: '22222222-2222-4222-8222-222222222221' },
+      { ...base, id: '22222222-2222-4222-8222-222222222222', kind: 'SYSTEM_WELCOME' },
+      { ...base, id: '22222222-2222-4222-8222-222222222223', deleted: true },
+      { ...base, id: '22222222-2222-4222-8222-222222222224', sendStatus: 'failed', retryBlocked: false },
     ]
     const app = createApp({ render: () => h('div', { class: 'message-list' }, messages.map((message, index) =>
       h(MessageItem, { message, grouped: index === 0, canEdit: false, canDelete: index === 1,
@@ -116,6 +122,26 @@ test('R02 preserves touch actions and passes WCAG axe scan for grouped, system, 
   await expect(groupedButton).toBeVisible()
   expect((await groupedButton.boundingBox())?.height).toBeGreaterThanOrEqual(44)
 
+  const reactionGroup = grouped.getByRole('group', { name: 'Реакции на сообщение' })
+  const reactions = reactionGroup.getByRole('button', { name: /^Реакция / })
+  await expect(reactions).toHaveCount(6)
+  for (const button of await reactions.all()) {
+    const bounds = await button.boundingBox()
+    expect(bounds?.width).toBeGreaterThanOrEqual(44)
+    expect(bounds?.height).toBeGreaterThanOrEqual(44)
+  }
+  const pin = reactionGroup.getByRole('button', { name: 'Закрепить сообщение' })
+  await expect(pin).toBeVisible()
+  const pinBounds = await pin.boundingBox()
+  expect(pinBounds?.width).toBeGreaterThanOrEqual(44)
+  expect(pinBounds?.height).toBeGreaterThanOrEqual(44)
+
+  const captureDir = process.env.BOOHTACORD_VISUAL_CAPTURE_DIR
+  if (captureDir) {
+    await mkdir(captureDir, { recursive: true })
+    await grouped.screenshot({ path: join(captureDir, 'message-social-touch-targets.png') })
+  }
+
   const systemDelete = page.getByRole('button', { name: 'Удалить системное приветствие' })
   await expect(systemDelete).toBeVisible()
   expect((await systemDelete.boundingBox())?.height).toBeGreaterThanOrEqual(44)
@@ -130,4 +156,52 @@ test('R02 preserves touch actions and passes WCAG axe scan for grouped, system, 
   expect((await retry.boundingBox())?.height).toBeGreaterThanOrEqual(44)
 
   await expectAxeClear(page, '.message-list')
+})
+
+test('R02 requires explicit confirmation before a message can be deleted', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+    const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
+    const { default: MessageItem } = await load('/src/conversation/MessageItem.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    document.body.dataset.removeCount = '0'
+    const message = {
+      id: 'delete-confirmation-message',
+      channelId: 'channel-1',
+      authorId: 'user-1',
+      clientMessageId: 'client-1',
+      body: 'Сообщение перед удалением',
+      createdAt: '2026-10-04T12:00:00Z',
+      revision: 1,
+      deleted: false,
+    }
+    const app = createApp({ render: () => h(MessageItem, {
+      message,
+      canEdit: true,
+      canDelete: true,
+      onRemove: () => { document.body.dataset.removeCount = String(Number(document.body.dataset.removeCount ?? '0') + 1) },
+    }) })
+    app.use(createPinia())
+    app.mount('#mount')
+  })
+
+  const row = page.locator('.message-row')
+  await row.locator('.message-actions-toggle').tap()
+  await expect(row.locator('.message-actions')).toHaveClass(/is-open/)
+  const captureDir = process.env.BOOHTACORD_VISUAL_CAPTURE_DIR
+  if (captureDir) {
+    await mkdir(captureDir, { recursive: true })
+    await row.screenshot({ path: join(captureDir, 'message-actions-all-open-actual.png') })
+  }
+  let confirmationMessage = ''
+  page.once('dialog', async (dialog) => {
+    confirmationMessage = dialog.message()
+    await dialog.dismiss()
+  })
+  await row.getByRole('button', { name: 'Удалить' }).tap()
+  expect(confirmationMessage).toBe('Удалить это сообщение?')
+  await expect(page.locator('body')).toHaveAttribute('data-remove-count', '0')
+  await expect(row.locator('.message-actions-toggle')).toBeVisible()
 })

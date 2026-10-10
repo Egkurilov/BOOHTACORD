@@ -1,0 +1,91 @@
+{
+  "id": "QA-293",
+  "date": "2026-10-10",
+  "task": "FV2-008 — Flutter reply target/composer state geometry; UIUX-2026 issue #293 message actions",
+  "source_revision": "7497bf2c",
+  "working_tree_changes": true,
+  "summary": "Consolidated Flutter TEXT/DM action popup behavior behind a shared focus-managed control. Selecting an action now restores keyboard focus to the message action trigger; touch targets, action order, ownership visibility and explicit delete confirmation are covered. Web mobile reactions and channel pinning now meet the 44×44 px touch target, with browser regressions, removal-cancel coverage and source-sized mobile captures.",
+  "checks": [
+    {
+      "name": "Web mobile touch action browser suite",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npx playwright test -c tests/conversation_action_disclosure/playwright.config.ts",
+      "result": "PASS",
+      "passed": 3,
+      "observation": "Production MessageItem coverage verifies visible touch disclosure, six 44×44 px reaction targets, 44×44 px pin target, stationary long-press, movement cancellation, focus restoration after Reply, grouped/system/deleted/failed rows, axe scan, and that cancelling Delete confirmation does not invoke removal."
+    },
+    {
+      "name": "Web action toolbar unit tests",
+      "command": "cd clients/web && npm test -- --run src/conversation/message_toolbar.spec.ts",
+      "result": "PASS",
+      "passed": 4,
+      "observation": "Accessible expanded/controls semantics, caller-provided edit/delete availability, 44 px disclosure size, touch-only long-press and scroll cancellation are covered."
+    },
+    {
+      "name": "Flutter workspace/message action suites",
+      "command": "cd clients/flutter && flutter test --no-pub test/message_action_menu_test.dart test/workspace_screen_test.dart test/message_presentation_test.dart test/system_welcome_message_test.dart test/message_attachment_list_test.dart test/delivery_status_widget_test.dart",
+      "result": "PASS",
+      "passed": 107,
+      "observation": "Includes TEXT/DM 48 dp semantics and action ordering on iOS/Android target themes, ownership-based DM edit/delete visibility, focus restoration after Reply, Delete cancel/confirm, message swipe reply and history refresh on both mobile target platforms, attachments, grouped/system/deleted/failed/retry states, and existing workspace regressions."
+    },
+    {
+      "name": "Changed Flutter source/test analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/screens/workspace_ui/message_action_menu/popup_button.dart lib/src/screens/workspace_ui/message_action_menu/component.dart lib/src/screens/workspace_ui/direct_message_action_menu/component.dart test/message_action_menu_test.dart test/workspace_screen_test.dart",
+      "result": "PASS",
+      "observation": "No analyzer issues found."
+    },
+    {
+      "name": "Web mobile MessageItem screenshots",
+      "result": "PASS",
+      "files": [
+        {
+          "path": ".out/uiux-2026-message-actions/message-actions-open-actual.png",
+          "sha256": "6b15003deec967cf191816fb091f4f95340ddcb2af9d06b988d6f00633a9f0b0"
+        },
+        {
+          "path": ".out/uiux-2026-message-actions/message-actions-closed-actual.png",
+          "sha256": "6ff76678c086812c8c5c77c0738cbd1848c509ed64c9f24b0d0343fe1d66e453"
+        },
+        {
+          "path": ".out/uiux-2026-message-actions/message-actions-all-open-actual.png",
+          "sha256": "2e007f1213f29edd515f8bbf048fc6f7c68ec38695fa90039ca1db0c1ef76060"
+        },
+        {
+          "path": ".out/uiux-2026-message-actions/message-social-touch-targets.png",
+          "sha256": "1c01042888569613926809711e025001058be65f9677ec37a8fe240ea1bd08dc"
+        }
+      ],
+      "observation": "Chrome mobile fixture screenshots of the actual MessageItem component, including the full reaction/pin row. They remain local ignored QA outputs and were not staged as generated media."
+    },
+    {
+      "name": "Physical Android/iOS touch and LiveKit call acceptance",
+      "result": "NOT_RUN",
+      "observation": "No physical Android/iOS device is available in this host session. Flutter platform theme/widget tests and Chrome touch emulation are not physical acceptance; see #303."
+    },
+    {
+      "name": "VoiceOver/TalkBack spoken review",
+      "result": "NOT_RUN",
+      "observation": "Semantics and axe automation pass, but live screen-reader traversal has not been accepted; see #301."
+    }
+  ],
+  "implementation": {
+    "files_changed": [
+      "clients/flutter/lib/src/screens/workspace_ui/message_action_menu/popup_button.dart",
+      "clients/flutter/lib/src/screens/workspace_ui/message_action_menu/component.dart",
+      "clients/flutter/lib/src/screens/workspace_ui/direct_message_action_menu/component.dart",
+      "clients/flutter/test/message_action_menu_test.dart",
+      "clients/web/tests/conversation_action_disclosure/message_action.browser.spec.ts",
+      "clients/web/src/conversation/reactions/ReactionBar.vue",
+      "clients/web/src/conversation/pins/PinMessageButton.vue",
+      "docs/design/UIUX_2026_MESSAGE_ACTIONS.md",
+      "evidence/qa/qa293-message-actions-2026-10-10-001.json"
+    ],
+    "api_acl_media_contracts_changed": false,
+    "web_or_api_changed": true,
+    "generated_screenshots_staged": false
+  },
+  "limitations": [
+    "Real-device touch, iOS system navigation, Android device behavior, and live-call interaction are not verified.",
+    "VoiceOver and TalkBack spoken output remain NOT_RUN; automated Semantics/axe checks do not replace that acceptance."
+  ],
+  "status": "PARTIAL — automated Web/Flutter action behavior, focus, permissions, target sizes, delete confirmation and attachment/retry regressions pass; physical-device and screen-reader acceptance remain open under #303/#301."
+}

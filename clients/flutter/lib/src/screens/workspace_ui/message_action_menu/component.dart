@@ -1,6 +1,7 @@
 import '../confirm_delete/component.dart';
 import '../edit_message_dialog/component.dart';
 import '../native_bindings.dart';
+import 'popup_button.dart';
 
 class WorkspaceMessageActionMenu extends StatelessWidget {
   const WorkspaceMessageActionMenu({
@@ -32,9 +33,15 @@ class WorkspaceMessageActionMenu extends StatelessWidget {
     final mobile =
         MediaQuery.sizeOf(context).width < 1024 &&
         (platform == TargetPlatform.iOS || platform == TargetPlatform.android);
-    final targetSize = mobile ? 48.0 : 40.0;
-    return PopupMenuButton<String>(
-      tooltip: 'Действия с сообщением',
+    return WorkspaceMessageActionPopupButton(
+      mobile: mobile,
+      items: [
+        const PopupMenuItem(value: 'reply', child: Text('Ответить')),
+        if (canEdit)
+          const PopupMenuItem(value: 'edit', child: Text('Изменить')),
+        if (canDelete)
+          const PopupMenuItem(value: 'delete', child: Text('Удалить')),
+      ],
       onSelected: (action) async {
         if (action == 'reply') {
           onReply?.call(message);
@@ -54,26 +61,6 @@ class WorkspaceMessageActionMenu extends StatelessWidget {
           await onDelete();
         }
       },
-      itemBuilder: (_) => [
-        const PopupMenuItem(value: 'reply', child: Text('Ответить')),
-        if (canEdit)
-          const PopupMenuItem(value: 'edit', child: Text('Изменить')),
-        if (canDelete)
-          const PopupMenuItem(value: 'delete', child: Text('Удалить')),
-      ],
-      style: ButtonStyle(
-        tapTargetSize: mobile
-            ? MaterialTapTargetSize.padded
-            : MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: Semantics(
-        label: 'Действия с сообщением',
-        button: true,
-        child: SizedBox.square(
-          dimension: targetSize,
-          child: const Icon(Icons.more_horiz, size: 18),
-        ),
-      ),
     );
   }
 }
