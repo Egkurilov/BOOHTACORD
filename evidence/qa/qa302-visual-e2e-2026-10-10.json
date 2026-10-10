@@ -445,5 +445,75 @@
     "current_shared_accessibility_suite": "PASS_47_BROWSER_PLUS_1_AXE",
     "ci_artifact_run": "NOT_RUN_SKIP_CI_REQUEST"
   },
+  "region_delta_follow_up": {
+    "date": "2026-10-10",
+    "source_revision": "2e8b4e4343805ce8a0d9295af4c85eb6b2bba3d8",
+    "result": "PASS_REVIEW_ONLY",
+    "status_policy": "No approved pixel-golden thresholds; report measurements only.",
+    "pairs": [
+      {
+        "screen": "Guild members — desktop",
+        "reference": {
+          "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/desktop-guild-members.png",
+          "sha256": "0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57",
+          "raster": "2880x1800"
+        },
+        "actual": {
+          "path": ".out/client-lifecycle/1440/guild-members.png",
+          "sha256": "72f88f196ca31743b7921b0430d192bb03e1fcba2b813bf297446fb393530b4d",
+          "raster": "2880x1800"
+        },
+        "regions": [
+          {
+            "name": "admin-heading-and-tabs",
+            "selectedPixels": 974400,
+            "meanAbsoluteRgbChange": 4.558,
+            "pixelsChangedOverThresholdPercent": 3.122
+          },
+          {
+            "name": "member-filter-and-table-header",
+            "selectedPixels": 440000,
+            "meanAbsoluteRgbChange": 9.64,
+            "pixelsChangedOverThresholdPercent": 5.376
+          }
+        ]
+      },
+      {
+        "screen": "Guild members — mobile",
+        "reference": {
+          "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-guild-members.png",
+          "sha256": "c568818c1ee367eb2e3562ccfb32f2db380dc4f53fe3f8250f0bb4683f790f26",
+          "raster": "1179x2556"
+        },
+        "actual": {
+          "path": ".out/client-lifecycle/393/guild-members.png",
+          "sha256": "289abd8168f81c69643f3c6a62c0ab9581ff8bc5680c426ad142dc0f34075cab",
+          "raster": "1179x2556"
+        },
+        "regions": [
+          {
+            "name": "admin-heading-and-tabs",
+            "selectedPixels": 660240,
+            "meanAbsoluteRgbChange": 15.751,
+            "pixelsChangedOverThresholdPercent": 10.968
+          },
+          {
+            "name": "member-controls-and-first-cards",
+            "selectedPixels": 825300,
+            "meanAbsoluteRgbChange": 16.296,
+            "pixelsChangedOverThresholdPercent": 15.907
+          }
+        ]
+      }
+    ],
+    "review_notes": [
+      "Desktop and mobile matching-raster pairs were visually reviewed. Visible structure changes include removal of the desktop hero heading, the compact mobile 'Админ' title and horizontal-tabs helper, and current refresh/result-count controls.",
+      "Synthetic account data differs from the audit references. These named-region values are not pixel parity, a regression verdict or golden approval."
+    ],
+    "report_outputs": [
+      ".out/uiux-visual-diff-302/members-desktop-report.json",
+      ".out/uiux-visual-diff-302/members-mobile-report.json"
+    ]
+  },
   "working_tree_change_note": "The region-scoped review utility and tests in tools/verify/uiux_visual_diff.py and tools/verify/test_uiux_visual_diff.py were tested against this source revision and are included with this evidence in the checkpoint commit. The unrelated .gitignore change remains unstaged."
 }
