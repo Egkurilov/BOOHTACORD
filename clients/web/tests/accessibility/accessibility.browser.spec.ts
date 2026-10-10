@@ -128,6 +128,11 @@ test('browser text scaling to 200 percent reflows channel, admin, and settings c
     loading: false,
     loadError: null,
   }, 'workspace-main-panel workspace-main-panel--profile')
+  const settingsHeading = page.locator('#profile-settings-title')
+  await expect(settingsHeading).toHaveCSS('font-size', '22px')
+  await page.setViewportSize({ width: 1440, height: 844 })
+  await expect(settingsHeading).toHaveCSS('font-size', '24px')
+  await page.setViewportSize({ width: 390, height: 844 })
   await expectRootScaledText('#profile-settings-title')
   for (const width of [320, 390, 1440]) {
     await page.setViewportSize({ width, height: 844 })
