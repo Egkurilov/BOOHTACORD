@@ -197,6 +197,46 @@ void main() {
     },
   );
 
+  for (final width in [320.0, 390.0, 1440.0]) {
+    testWidgets(
+      'profile settings keep save reachable at $width px with 2x text',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = Size(width, 844);
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final state = AppState(ApiClient())
+          ..profile = const OwnProfile(
+            accountId: 'account-1',
+            login: 'long-member-login',
+            displayName: 'Длинное отображаемое имя участника',
+            role: 'ADMINISTRATOR',
+          );
+        addTearDown(state.dispose);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(2)),
+              child: child!,
+            ),
+            home: Scaffold(body: ProfileScreen(state: state)),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final save = find.widgetWithText(FilledButton, 'Сохранить профиль');
+        expect(save, findsOneWidget);
+        await tester.ensureVisible(save);
+        final saveRect = tester.getRect(save);
+        expect(saveRect.left, greaterThanOrEqualTo(0));
+        expect(saveRect.right, lessThanOrEqualTo(width));
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('moves keyboard focus to the profile heading like web', (
     tester,
   ) async {
