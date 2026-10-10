@@ -73,6 +73,7 @@ class _SetupState extends State<SetupBody> {
     final picker = QualityPicker(
       quality: quality,
       onChanged: (value) => setState(() => quality = value),
+      advancedInitiallyExpanded: widget.updating,
     );
     return SetupSurface(
       children: [

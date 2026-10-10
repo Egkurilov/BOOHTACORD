@@ -613,6 +613,49 @@ test('voice dock explains denied microphone access and exposes a retry at mobile
   await page.screenshot({ path: testInfo.outputPath('voice-dock-mic-denied-2x.png') })
 })
 
+test('screen-share setup shows the recommended profile before progressive quality options', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+    const { default: ScreenShareSetupDialog } = await load('/src/voice/ScreenShareSetupDialog.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    Object.assign(window, { __startedScreenProfile: null })
+    createApp({ render: () => h(ScreenShareSetupDialog, {
+      initialProfile: 'P1080_30',
+      onCancel: () => {},
+      onStart: (profile: string) => { Object.assign(window, { __startedScreenProfile: profile }) },
+    }) }).mount('#mount')
+  })
+
+  const dialog = page.getByRole('dialog', { name: 'Демонстрация экрана' })
+  const header = dialog.locator('.screen-share-setup__header')
+  const additional = dialog.locator('.screen-share-quality__advanced')
+  const capabilityDetails = dialog.locator('.screen-share-capabilities__details')
+  await expect(dialog.locator('.screen-share-capabilities__availability')).toContainText('Поддержка видео до выбора источника')
+  await expect(capabilityDetails).not.toHaveAttribute('open', '')
+  await expect(dialog.getByText('Рекомендуемый профиль', { exact: true })).toBeVisible()
+  await expect(dialog.getByText('1080p · 60 FPS', { exact: true })).toBeVisible()
+  await expect(dialog.getByText('Текущий выбор: 1080p · 30 FPS', { exact: true })).toBeVisible()
+  await expect(header).toBeInViewport({ ratio: 0.99 })
+  await expect(dialog.getByText('Рекомендуемый профиль', { exact: true })).toBeInViewport()
+  await expect(dialog.getByRole('button', { name: 'Применить рекомендованный профиль' })).toBeInViewport()
+  await expect(additional).not.toHaveAttribute('open', '')
+  await expect(dialog.getByRole('radio', { name: '720p' })).toBeHidden()
+  await page.screenshot({ path: testInfo.outputPath('screen-share-setup-recommended-profile.png') })
+
+  await dialog.getByRole('button', { name: 'Применить рекомендованный профиль' }).click()
+  await expect(dialog.getByText('Текущий выбор: 1080p · 60 FPS', { exact: true })).toBeVisible()
+  await additional.getByText('Дополнительные настройки качества', { exact: true }).click()
+  await dialog.getByRole('radio', { name: '720p' }).check()
+  await expect(dialog.getByText('Текущий выбор: 720p · 60 FPS', { exact: true })).toBeVisible()
+  await expectAxeClear(page, '.screen-share-setup-dialog')
+  await page.screenshot({ path: testInfo.outputPath('screen-share-setup-progressive-options.png') })
+  await dialog.getByRole('button', { name: 'Начать трансляцию' }).click()
+  await expect.poll(() => page.evaluate(() => (window as Window & { __startedScreenProfile?: string }).__startedScreenProfile)).toBe('P720_60')
+})
+
 test('WCAG smoke covers screen share setup and destructive confirmation dialogs', async ({ page }) => {
   await mountProductionComponent(page, '/src/voice/ScreenShareSetupDialog.vue', { initialProfile: 'P1080_30' })
   await expect(page.getByRole('dialog', { name: 'Демонстрация экрана' })).toBeVisible()

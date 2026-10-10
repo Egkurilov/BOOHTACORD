@@ -21,6 +21,8 @@ const mode = ref<'motion' | 'text'>(screenProfileMode(props.initialProfile)), al
 const selectedProfile = computed(() => `P${resolution.value}_${frameRate.value}` as ScreenProfile)
 const profileAllowed = computed(() => !(mode.value === 'motion' && resolution.value === 1440 && !allow1440p60))
 const bandwidthEstimate = computed(() => screenShareBandwidthEstimate(selectedProfile.value))
+const profileSummary = computed(() => `${resolution.value}p · ${frameRate.value} FPS`)
+const recommendedProfile: ScreenProfile = 'P1080_60'
 
 function useProfile(profile: ScreenProfile): void {
   const values = profileValues(profile)
@@ -34,6 +36,10 @@ function selectMode(value: 'motion' | 'text'): void {
   mode.value = value
   frameRate.value = value === 'motion' ? 60 : 30
   if (value === 'motion' && resolution.value === 1440 && !allow1440p60) resolution.value = 1080
+}
+
+function applyRecommendedProfile(): void {
+  useProfile(recommendedProfile)
 }
 
 watch(() => props.initialProfile, useProfile)
@@ -101,13 +107,33 @@ function start(): void {
           Качество трансляции
         </h3>
 
-        <ScreenShareQualityOptions v-model:resolution="resolution" v-model:frame-rate="frameRate" :mode="mode" :allow-1440p60="allow1440p60" @update:mode="selectMode" />
+        <div v-if="!updating" class="screen-share-quality__overview">
+          <div class="screen-share-quality__recommended">
+            <div>
+              <p>Рекомендуемый профиль</p>
+              <strong>1080p · 60 FPS</strong>
+            </div>
+            <button type="button" :disabled="selectedProfile === recommendedProfile" @click="applyRecommendedProfile">Применить рекомендованный профиль</button>
+          </div>
+          <p class="screen-share-quality__current" role="status" aria-live="polite">Текущий выбор: {{ profileSummary }}</p>
+          <p class="screen-share-quality__disclaimer">Профиль задаёт цель; фактическое качество зависит от выбранного источника, устройства и сети.</p>
+        </div>
 
-        <p v-if="!updating" class="screen-share-quality__hint">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0m-11 4a5 5 0 0 1 8 0m-4 4h.01" /></svg>
-          <span>Суммарный лимит двух слоёв — {{ bandwidthEstimate }}; это не гарантированный сетевой расход.</span>
-        </p>
-        <p v-else class="screen-share-quality__warning"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg><span>При ухудшении сети качество может временно снижаться. Приоритет — голос.</span></p>
+        <ScreenShareQualityOptions
+          v-model:resolution="resolution"
+          v-model:frame-rate="frameRate"
+          :mode="mode"
+          :allow-1440p60="allow1440p60"
+          :advanced-open="updating"
+          @update:mode="selectMode"
+        >
+          <p v-if="!updating" class="screen-share-quality__hint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0m-11 4a5 5 0 0 1 8 0m-4 4h.01" /></svg>
+            <span>Суммарный лимит двух слоёв — {{ bandwidthEstimate }}; это не гарантированный сетевой расход.</span>
+          </p>
+        </ScreenShareQualityOptions>
+
+        <p v-if="updating" class="screen-share-quality__warning"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg><span>При ухудшении сети качество может временно снижаться. Приоритет — голос.</span></p>
       </section>
     </div>
 

@@ -69,6 +69,9 @@ void main() {
         ),
       ),
     );
+    await tester.ensureVisible(find.text('Дополнительные настройки качества'));
+    await tester.tap(find.text('Дополнительные настройки качества'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('1080p'));
     await tester.tap(find.text('1080p'));
     await tester.pump();
@@ -81,6 +84,49 @@ void main() {
     expect(button.selected, {1080});
     expect(tester.takeException(), isNull);
   }, variant: TargetPlatformVariant({TargetPlatform.android}));
+
+  testWidgets(
+    'setup recommends a starting profile and progressively reveals quality options',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: guildTheme(),
+          home: Scaffold(
+            body: ScreenShareSetupDialog(
+              initialQuality: ScreenShareQuality.balanced,
+              allowSourceSelection: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Рекомендуемый профиль'), findsOneWidget);
+      expect(find.text('1080p · 60 FPS'), findsOneWidget);
+      expect(find.text('Текущий выбор: 720p · 15 FPS'), findsOneWidget);
+      expect(find.text('Разрешение'), findsNothing);
+
+      await tester.ensureVisible(
+        find.text('Применить рекомендованный профиль'),
+      );
+      await tester.tap(find.text('Применить рекомендованный профиль'));
+      await tester.pumpAndSettle();
+      expect(find.text('Текущий выбор: 1080p · 60 FPS'), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.text('Дополнительные настройки качества'),
+      );
+      await tester.tap(find.text('Дополнительные настройки качества'));
+      await tester.pumpAndSettle();
+      expect(find.text('Разрешение'), findsOneWidget);
+      expect(find.text('Частота кадров'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant({TargetPlatform.android}),
+  );
 
   testWidgets(
     'setup keeps its actions reachable with the mobile keyboard and 2x text',
