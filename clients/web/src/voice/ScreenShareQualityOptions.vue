@@ -8,7 +8,7 @@ const frameRates = computed<readonly ScreenFrameRate[]>(() => props.mode === 'mo
 </script>
 <template>
   <fieldset class="screen-share-quality__row screen-share-quality__mode"><legend>Сценарий</legend>
-    <div class="screen-share-quality__segments" role="radiogroup" aria-label="Сценарий демонстрации">
+    <div class="screen-share-quality__segments screen-share-quality__segments--2" role="radiogroup" aria-label="Сценарий демонстрации">
       <label class="screen-share-quality__option"><input :checked="mode === 'motion'" type="radio" name="screen-share-mode" value="motion" @change="emit('update:mode', 'motion')"><span>Плавность — игры и видео</span></label>
       <label class="screen-share-quality__option"><input :checked="mode === 'text'" type="radio" name="screen-share-mode" value="text" @change="emit('update:mode', 'text')"><span>Текст — документы и код</span></label>
     </div>
@@ -17,16 +17,16 @@ const frameRates = computed<readonly ScreenFrameRate[]>(() => props.mode === 'mo
     <summary>Дополнительные настройки качества</summary>
     <div class="screen-share-quality__advanced-options">
       <fieldset class="screen-share-quality__row"><legend>Максимальное разрешение</legend>
-        <div class="screen-share-quality__segments" role="radiogroup" aria-label="Верхний предел разрешения трансляции">
-          <label v-for="value in resolutions" :key="value" class="screen-share-quality__option" :title="mode === 'motion' && value === 1440 && !allow1440p60 ? '1440p60 пока недоступно без подтверждённой policy' : undefined"><input :checked="resolution === value" :disabled="mode === 'motion' && value === 1440 && !allow1440p60" type="radio" name="screen-share-resolution" :value="value" @change="emit('update:resolution', value)"><span>{{ value }}p</span></label>
+        <div class="screen-share-quality__segments screen-share-quality__segments--3" role="radiogroup" aria-label="Верхний предел разрешения трансляции">
+          <label v-for="value in resolutions" :key="value" class="screen-share-quality__option" :title="mode === 'motion' && value === 1440 && !allow1440p60 ? '1440p60 пока недоступно без подтверждённой policy' : undefined"><input :checked="resolution === value" :disabled="mode === 'motion' && value === 1440 && !allow1440p60" :aria-describedby="mode === 'motion' && value === 1440 && !allow1440p60 ? 'screen-share-1440p-policy-hint' : undefined" type="radio" name="screen-share-resolution" :value="value" @change="emit('update:resolution', value)"><span>{{ value }}p</span></label>
         </div>
       </fieldset>
       <fieldset class="screen-share-quality__row"><legend>Частота кадров для {{ mode === 'motion' ? 'плавности' : 'текста' }}</legend>
-        <div class="screen-share-quality__segments" role="radiogroup" :aria-label="`Частота кадров для ${mode === 'motion' ? 'плавности' : 'текста'}`">
+        <div class="screen-share-quality__segments" :class="`screen-share-quality__segments--${frameRates.length}`" role="radiogroup" :aria-label="`Частота кадров для ${mode === 'motion' ? 'плавности' : 'текста'}`">
           <label v-for="value in frameRates" :key="value" class="screen-share-quality__option"><input :checked="frameRate === value" type="radio" name="screen-share-frame-rate" :value="value" @change="emit('update:frameRate', value)"><span>{{ value }} FPS</span></label>
         </div>
       </fieldset>
-      <p v-if="mode === 'motion' && resolution === 1440 && !allow1440p60" class="screen-share-quality__hint" role="status">1440p60 пока недоступно без подтверждённой policy.</p>
+      <p v-if="mode === 'motion' && !allow1440p60" id="screen-share-1440p-policy-hint" class="screen-share-quality__hint" role="status">1440p60 пока недоступно без подтверждённой policy. Для выбора 1440p переключитесь на «Текст» (15 или 30 FPS).</p>
       <slot />
     </div>
   </details>
