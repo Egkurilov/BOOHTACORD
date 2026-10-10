@@ -22,7 +22,7 @@ keys:
   qa-only: qa-local-only-secret-12345
 webhook:
   api_key: qa-only
-  urls: ["http://${self.owner}-api:8080/internal/livekit/roster"]
+  urls: ["http://{self.owner}-api:8080/internal/livekit/roster"]
 ''')
         config.chmod(0o644)
         self.environment['LIVEKIT_PRIVATE_HTTP_URL'] = f'http://{self.owner}-sfu:4880'
