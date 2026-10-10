@@ -23,7 +23,11 @@ extension VoiceDockConnectedControlsRenderer on WorkspaceVoiceDockContext {
               : state.microphoneMuted
               ? 'Включить микрофон'
               : 'Выключить микрофон',
-          semanticsLabel: state.microphoneMuted
+          semanticsLabel: state.microphoneUnavailable
+              ? 'Повторить включение микрофона — микрофон недоступен'
+              : state.audioActivationMode == AudioActivationMode.ptt
+              ? 'Микрофон управляется push-to-talk'
+              : state.microphoneMuted
               ? 'Включить микрофон'
               : 'Выключить микрофон',
           icon: state.microphoneMuted ? Icons.mic_off : Icons.mic,
