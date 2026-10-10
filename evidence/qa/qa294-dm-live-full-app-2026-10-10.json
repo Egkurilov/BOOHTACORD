@@ -1,0 +1,105 @@
+{
+  "id": "QA-294-DM-LIVE-FULL-APP",
+  "date": "2026-10-10",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/294",
+  "source_revision": "9ca586e36dfe383c808af35b3b6f76d39516a5f2",
+  "working_tree_changes": true,
+  "working_tree_change_note": "tools/qa/client_lifecycle/scenario.mjs was extended with these live full-app DM captures and assertions before the run. No product, API, ACL, or database contract was changed.",
+  "environment": {
+    "client": "Production Vite build served by the disposable client-lifecycle harness",
+    "api": "Go API and PostgreSQL in an owned disposable Docker stack",
+    "browser": "Google Chrome 154",
+    "viewports": [
+      { "name": "mobile-393x852", "css_viewport": [393, 852], "device_scale_factor": 3, "touch": true },
+      { "name": "desktop-1440x900", "css_viewport": [1440, 900], "device_scale_factor": 2, "touch": false }
+    ],
+    "api_mocks": false,
+    "accounts": "Synthetic qa_admin and qa_member only",
+    "synthetic_message_content_recorded": false,
+    "owned_resources_removed": true
+  },
+  "checks": [
+    {
+      "name": "Authenticated full-app DM list, empty state, send, search, and context return",
+      "commands": [
+        "QA_BROWSER_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' python3 -m tools.qa.client_lifecycle.run --width 393",
+        "QA_BROWSER_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' python3 -m tools.qa.client_lifecycle.run --width 1440"
+      ],
+      "result": "PASS",
+      "runs": [
+        {
+          "viewport": "mobile-393x852",
+          "elapsed_seconds": 38.75,
+          "api_image_id": "sha256:675efff99e34bbc213c4eaaf0ddab8ffffc3591936f48f3a911d4101bb966d82",
+          "telemetry": "PASS",
+          "database_persistence_after_api_restart": true,
+          "owned_resources_removed": true
+        },
+        {
+          "viewport": "desktop-1440x900",
+          "elapsed_seconds": 38.73,
+          "api_image_id": "sha256:cd849ae31a68f61a7cd7a2fb3387cb33873b326a069bf606a40fa107b7b99ea4",
+          "telemetry": "PASS",
+          "database_persistence_after_api_restart": true,
+          "owned_resources_removed": true
+        }
+      ],
+      "assertions": {
+        "empty_conversation": true,
+        "direct_message_list": true,
+        "send_message_to_disposable_api": true,
+        "search_live_message": true,
+        "open_search_result_context": true,
+        "return_preserves_search_query_and_results": true
+      }
+    },
+    {
+      "name": "Client-lifecycle viewport profile tests",
+      "command": "python3 -m unittest tools.qa.client_lifecycle.test_run",
+      "result": "PASS",
+      "passed": 4
+    },
+    {
+      "name": "Browser scenario JavaScript syntax",
+      "command": "node --check tools/qa/client_lifecycle/scenario.mjs",
+      "result": "PASS"
+    }
+  ],
+  "source_matched_capture_pairs": [
+    {
+      "source": { "file": "mobile-dm-list.png", "sha256": "8e3034e56a49793985ea90be7fa16afd051b9c13b41fd1f98d38cd1859cdcee7", "px": [1179, 2556] },
+      "after": { "file": ".out/client-lifecycle/393/dm-list.png", "sha256": "d9c793154f2e546ebafb3ee5bde1e44455fc476484b578a2f771dac064162db5", "px": [1179, 2556] }
+    },
+    {
+      "source": { "file": "mobile-dm-empty-chat.png", "sha256": "a073ac9916cce4dd250e01a65350373e3d6f1dff4c663e9e926f55a9471d3564", "px": [1179, 2556] },
+      "after": { "file": ".out/client-lifecycle/393/dm-empty-conversation.png", "sha256": "4f2f03322104ed44659287cc8a571107db4efcaa17cde43178d272e68bd961d9", "px": [1179, 2556] }
+    },
+    {
+      "source": { "file": "mobile-dm-conversation.png", "sha256": "20081e82ac0f4da0d064c65c985b37cfea31903f0dc48cfa2c81ca61ffe7beb4", "px": [1179, 2556] },
+      "after": { "file": ".out/client-lifecycle/393/dm-conversation.png", "sha256": "7754b7b9c0e41333c61db01c868a825f96d09a4777c2259ffedc3151889f6500", "px": [1179, 2556] }
+    },
+    {
+      "source": { "file": "mobile-message-search.png", "sha256": "c1ca3930347bc82d24cb4fca84d4896db452b7bde9c64e651acc18a27d251809", "px": [1179, 2556] },
+      "after": { "file": ".out/client-lifecycle/393/dm-search.png", "sha256": "c287c8cb5a5dd43912bebfbbae5de2effed4d9e7d3d06829efc21b35a7950e3e", "px": [1179, 2556] }
+    },
+    {
+      "source": { "file": "desktop-dm-list.png", "sha256": "c4bf57482ab0eb6720f98ed215c83e19fa04a7ab1758f329f1fd6b445a56b19e", "px": [2880, 1800] },
+      "after": { "file": ".out/client-lifecycle/1440/dm-list.png", "sha256": "453c1b3f760443901a74544a73a33ee1c8eb9875cc2b7347a5e6e64e20dd1ead", "px": [2880, 1800] }
+    },
+    {
+      "source": { "file": "desktop-dm-conversation.png", "sha256": "148ef1287fd79142eb39402ffe291e99ab11d08e91f4f3224c09c3843f332f75", "px": [2880, 1800] },
+      "after": { "file": ".out/client-lifecycle/1440/dm-conversation.png", "sha256": "bdae26d188788b1f4e5e27035291a2a51c7bfc993e910a1ecf3207f92044cceb", "px": [2880, 1800] }
+    }
+  ],
+  "additional_after_captures": [
+    { "file": ".out/client-lifecycle/1440/dm-empty-conversation.png", "sha256": "453c1b3f760443901a74544a73a33ee1c8eb9875cc2b7347a5e6e64e20dd1ead", "px": [2880, 1800] },
+    { "file": ".out/client-lifecycle/1440/dm-search.png", "sha256": "6f2d248b82d444e98fb99a402b2b81aaf44ea111c16f7413ab6b381484b9636d", "px": [2880, 1800] }
+  ],
+  "limitations": [
+    "The production-browser run covers Web only; no Flutter full-app before/after screenshots were captured.",
+    "Physical Android/iOS IME, clipboard/image picker, safe-area and background/foreground acceptance remains NOT_RUN under #303.",
+    "No real-user navigation-time measurements or release-gate tester sample were collected; #305 remains NOT_RUN.",
+    "These disposable-stack captures use a synthetic single-DM dataset and are source-sized review captures, not approved visual goldens."
+  ],
+  "status": "PASS for authenticated Web full-app DM flow and six source-matched screenshot pairs; issue #294 and epic #289 remain open for physical/mobile and user-measurement gates."
+}
