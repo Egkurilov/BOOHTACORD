@@ -38,6 +38,7 @@ extension WorkspaceMainSurfaceBuildAction on WorkspaceMainSurfaceContext {
             WorkspaceProfilePanelToolbar(
               onToggleNavigation: onToggleNavigation,
               onBack: compact ? leaveWorkspacePanel : null,
+              onClose: leaveWorkspacePanel,
             ),
             Expanded(child: ProfileScreen(state: state)),
           ],

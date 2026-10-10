@@ -1605,7 +1605,12 @@ void main() {
     expect(find.byTooltip('Открыть навигацию'), findsNothing);
     expect(find.byTooltip('Открыть участников'), findsNothing);
     expect(find.byTooltip('Назад'), findsNothing);
+    expect(find.byTooltip('Закрыть настройки'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byTooltip('Закрыть настройки'));
+    await tester.pumpAndSettle();
+    expect(state.workspacePanel, WorkspacePanel.none);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
