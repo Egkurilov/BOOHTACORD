@@ -1,0 +1,64 @@
+{
+  "id": "QA-320-SCREEN-SHARE-QUALITY",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 #289 follow-up — screen-share scenario and quality selection",
+  "related_issues": [
+    "https://github.com/Egkurilov/BOOHTACORD/issues/298",
+    "https://github.com/Egkurilov/BOOHTACORD/issues/301",
+    "https://github.com/Egkurilov/BOOHTACORD/issues/302"
+  ],
+  "pull_request": "https://github.com/Egkurilov/BOOHTACORD/pull/320",
+  "source_revision": "543c2089110cd654b0aab72aeb98d25401e9545f",
+  "status": "PASS_LOCAL_AUTOMATED_ONLY",
+  "checks": [
+    {
+      "name": "Screen-share profile selection unit suite",
+      "command": "cd clients/web && npm test -- src/voice/screen_share_setup_dialog.spec.ts src/voice/screen_profile src/voice/screen_profile_metadata src/voice/screen_publisher",
+      "result": "PASS",
+      "test_files_passed": 17,
+      "tests_passed": 72
+    },
+    {
+      "name": "Initial screen-share dialog browser and accessibility regression",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npx playwright test -c tests/screen_profile/playwright.config.ts tests/screen_profile/quality_dialog.browser.spec.ts",
+      "result": "PASS_AUTOMATED_ONLY",
+      "tests_passed": 1,
+      "browser": "Google Chrome 154.0.8037.98",
+      "viewport_css": "637x584",
+      "assertions": [
+        "Scenario labels and helper text wrap without clipping.",
+        "The single 60 FPS mode fills the quality row instead of leaving empty segments.",
+        "Keyboard ArrowRight selects 1440p from the 1080p option and switches to the text scenario at 30 FPS.",
+        "Applying the selection emits P1440_30.",
+        "axe-core reports zero violations for wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa in this dialog state."
+      ],
+      "after_capture": {
+        "path": ".out/screen-profile-browser-results/quality_dialog.browser-sce-5e277--the-supported-text-profile/screen-share-quality-637x584.png",
+        "sha256": "73dc86ff81b647f81685c446a0e0d0a2cad3cd034881b6214bf1d64d0db5c3a0",
+        "raster": "637x584",
+        "review_status": "LOCAL_REVIEW_CAPTURE_NOT_APPROVED_GOLDEN"
+      }
+    },
+    {
+      "name": "Web production build",
+      "command": "cd clients/web && VITE_PUBLIC_ORIGIN=https://v.bootybay.ru npm run build",
+      "result": "PASS",
+      "observations": [
+        "vue-tsc and Vite production build succeeded.",
+        "Existing warnings remain for LiveKit dynamic import chunking and the main bundle size."
+      ]
+    }
+  ],
+  "behavior": {
+    "resolution_1440p": "Selectable; selecting it from motion switches to the text scenario and 30 FPS.",
+    "1440p60": "Not offered as a new default choice pending validated policy; this evidence does not assert physical capture capability.",
+    "existing_behavior": "Source selection, modal actions and screen publication lifecycle remain unchanged."
+  },
+  "limitations": [
+    "The browser test mounts the production Vue component in an isolated fixture; it does not exercise an authenticated full-app session or the native system capture picker.",
+    "The screenshot is a local review capture, not an approved visual golden or a retained CI artifact.",
+    "Commits use [skip ci], so this checkpoint has no new GitHub Actions artifact.",
+    "This automated keyboard and axe result does not replace VoiceOver, TalkBack, NVDA or Narrator traversal, nor physical platform acceptance under #301 and #303."
+  ],
+  "issue_state": "PR_OPEN; #289 REMAINS OPEN"
+}
