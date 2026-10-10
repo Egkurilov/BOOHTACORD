@@ -549,6 +549,32 @@ test('WCAG smoke covers voice prejoin actions', async ({ page }) => {
   await expectAxeClear(page, '.voice-prejoin')
 })
 
+test('voice dock explains denied microphone access and exposes a retry at mobile 2x text', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  await mountProductionComponent(page, '/src/voice/VoiceDock.vue', {
+    channel: { id: 'voice-1', name: 'Комната', kind: 'VOICE', position: 0, admissionClosed: false },
+    activeSession: true, error: null, activationMode: 'VAD', deafened: false,
+    deafenChanging: false, microphoneMuted: false, microphonePermissionDenied: true,
+    state: 'LISTENER', participantCount: 2,
+  })
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%' })
+
+  const dock = page.getByTestId('voice-dock')
+  const notice = dock.getByRole('status').filter({ hasText: 'Вы подключены как слушатель' })
+  const retry = dock.getByRole('button', { name: 'Повторить доступ к микрофону' })
+  await expect(notice).toContainText('браузер запретил доступ к микрофону')
+  await expect(notice).toContainText('нажмите «Повторить доступ к микрофону»')
+  await expect(retry).toBeEnabled()
+  await expect(retry).toHaveAttribute('aria-pressed', 'false')
+  const bounds = await retry.boundingBox()
+  expect(bounds).not.toBeNull()
+  expect(bounds!.x).toBeGreaterThanOrEqual(0)
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320)
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(640)
+  await expectAxeClear(page, '.voice-dock')
+  await page.screenshot({ path: testInfo.outputPath('voice-dock-mic-denied-2x.png') })
+})
+
 test('WCAG smoke covers screen share setup and destructive confirmation dialogs', async ({ page }) => {
   await mountProductionComponent(page, '/src/voice/ScreenShareSetupDialog.vue', { initialProfile: 'P1080_30' })
   await expect(page.getByRole('dialog', { name: 'Демонстрация экрана' })).toBeVisible()
