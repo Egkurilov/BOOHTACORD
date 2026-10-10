@@ -541,11 +541,34 @@ test('profile settings tabs support Arrow, Home and End keyboard navigation', as
 })
 
 test('WCAG smoke covers voice prejoin actions', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 })
   await mountProductionComponent(page, '/src/voice/VoicePrejoin.vue', {
     channelId: 'voice-1', voiceError: null, voiceState: 'DISCONNECTED', voiceTransferRequired: false,
     roster: { channelId: 'voice-1', participants: [], revision: 1 },
   })
-  await expect(page.getByRole('button', { name: 'Подключиться к голосу' })).toBeVisible()
+  const joinWithMicrophone = page.getByRole('button', { name: 'Подключиться к голосу' })
+  const joinAsListener = page.getByRole('button', { name: 'Подключиться без микрофона' })
+  await expect(joinWithMicrophone).toBeVisible()
+  await expect(joinAsListener).toBeVisible()
+  await expect(joinWithMicrophone).toHaveClass(/gc-button--primary/)
+  await expect(joinAsListener).toHaveClass(/gc-button--secondary/)
+  expect(await page.locator('.voice-prejoin-actions button').evaluateAll((buttons) => buttons.map(button => button.textContent?.trim()))).toEqual([
+    'Подключиться к голосу', 'Подключиться без микрофона',
+  ])
+  await expectAxeClear(page, '.voice-prejoin')
+})
+
+test('voice prejoin announces connecting and blocks duplicate joins', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  await mountProductionComponent(page, '/src/voice/VoicePrejoin.vue', {
+    channelId: 'voice-1', voiceError: null, voiceState: 'JOINING', voiceTransferRequired: false,
+    roster: { channelId: 'voice-1', participants: [], revision: 1 },
+  })
+
+  await expect(page.getByRole('heading', { name: 'Подключаемся к голосовой комнате' })).toBeVisible()
+  await expect(page.getByText('Соединение устанавливается.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Подключаемся…' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Подключиться без микрофона' })).toBeDisabled()
   await expectAxeClear(page, '.voice-prejoin')
 })
 
