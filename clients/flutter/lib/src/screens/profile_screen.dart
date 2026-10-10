@@ -28,14 +28,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _currentPassword = TextEditingController();
   final _newPassword = TextEditingController();
   String? _status;
+  String? _profileSaveStatus;
   _ProfileSection _selectedSection = _ProfileSection.profile;
 
   @override
   void initState() {
     super.initState();
     _displayName.text = widget.state.profile?.displayName ?? '';
+    _displayName.addListener(_onDisplayNameChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _titleFocus.requestFocus();
+    });
+  }
+
+  void _onDisplayNameChanged() {
+    if (!mounted) return;
+    setState(() {
+      _profileSaveStatus = null;
+      if (_status == 'Имя профиля сохранено.') _status = null;
     });
   }
 
@@ -51,6 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _titleFocus.dispose();
+    _displayName.removeListener(_onDisplayNameChanged);
     _displayName.dispose();
     _currentPassword.dispose();
     _newPassword.dispose();
@@ -58,11 +69,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _saveName() async {
-    setState(() => _status = null);
+    setState(() {
+      _status = null;
+      _profileSaveStatus = 'Сохраняем имя профиля…';
+    });
     if (await widget.state.saveDisplayName(_displayName.text)) {
-      setState(() => _status = 'Имя профиля сохранено.');
+      setState(() => _profileSaveStatus = 'Имя профиля сохранено.');
+    } else {
+      setState(() => _profileSaveStatus = null);
     }
   }
+
+  bool get _displayNameChanged =>
+      _displayName.text != (widget.state.profile?.displayName ?? '');
+
+  String get _displayNameSaveMessage => widget.state.profileSaving
+      ? 'Сохраняем имя профиля…'
+      : _displayNameChanged
+      ? 'Есть несохранённые изменения'
+      : _profileSaveStatus ?? 'Изменения не внесены';
 
   Future<void> _savePassword() async {
     setState(() => _status = null);
@@ -410,12 +435,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton(
-                  onPressed: widget.state.profileSaving ? null : _saveName,
-                  child: const Text('Сохранить профиль'),
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton(
+                      onPressed:
+                          widget.state.profileSaving || !_displayNameChanged
+                          ? null
+                          : _saveName,
+                      child: Text(
+                        widget.state.profileSaving
+                            ? 'Сохраняем…'
+                            : 'Сохранить профиль',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      _displayNameSaveMessage,
+                      key: const ValueKey('profile-save-status'),
+                      style: const TextStyle(color: GcColors.textSecondary),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
