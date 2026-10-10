@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { api, chromium, expect, login, origin, status } from './request.mjs'
+import { api, chromium, expect, login, openNavigation, origin, status } from './request.mjs'
 import { guild } from './guild.mjs'
 import { sessions } from './sessions.mjs'
 import { registration, rateLimit } from '../critical_client_acceptance/auth.mjs'
@@ -44,6 +44,16 @@ try {
   await guest.goto(origin)
   const value = await guild(a, b, guest, input.password, report, input.directory)
   await login(guest, 'qa_member', input.password)
+  await openNavigation(guest)
+  await guest.getByRole('button', { name: 'Личные', exact: true }).click()
+  const dmNavigation = guest.getByRole('navigation', { name: 'Личные сообщения' })
+  await expect(dmNavigation).toBeVisible()
+  await dmNavigation.getByRole('button', { name: 'Начать диалог', exact: true }).click()
+  const dmStarter = guest.getByRole('dialog', { name: 'Новый личный диалог' })
+  await dmStarter.getByRole('button', { name: 'qa_admin', exact: true }).click()
+  await expect(guest.getByRole('heading', { name: 'qa_admin', exact: true })).toBeVisible()
+  await guest.screenshot({ path: input.directory+'/direct-message-header.png' })
+  report.navigation_context = { channel_header: 'PASS', direct_message_header: 'PASS' }
   const denied = await api(guest, '/admin/guild-settings', 'PATCH', {
     name: 'MemberOverwrite', expected_revision: value.revision,
   })

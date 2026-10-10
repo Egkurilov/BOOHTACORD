@@ -16,6 +16,7 @@ async function captureAtTwoX(page, directory, file, report) {
 export async function guild(a, b, guest, password, report, directory) {
   const target = await seedAdminReferenceTopology(a)
   await channel(b, 'Text')
+  await expect(b.getByRole('heading', { name: 'Text', exact: true })).toBeVisible()
   for (const body of [
     'Synthetic UIUX channel sample: readable conversation text.',
     'Synthetic UIUX channel sample: labels, timestamps and actions.',
@@ -71,6 +72,8 @@ export async function guild(a, b, guest, password, report, directory) {
   const closeAdmin = a.getByRole('button', { name: 'Закрыть администрирование', exact: true })
   if (await closeAdmin.isVisible()) await closeAdmin.click()
   await channel(a, 'Text'); await channel(b, 'Text')
+  await expect(a.getByRole('heading', { name: 'Text', exact: true })).toBeVisible()
+  await expect(b.getByRole('heading', { name: 'Text', exact: true })).toBeVisible()
   const registered = await api(guest, '/auth/register', 'POST', { login: 'qa_member', password })
   status(registered, 201)
   for (const page of [a, b]) {

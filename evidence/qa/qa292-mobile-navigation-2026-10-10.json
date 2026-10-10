@@ -1,0 +1,72 @@
+{
+  "id": "QA-292-MOBILE-NAVIGATION",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #292 — selected workspace context and Back/navigation behavior",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/292",
+  "source_revision": "cd200093fbfc96834b3243feb4c82f8d1a7d8b9d",
+  "working_tree_changes": true,
+  "working_tree_change_note": "The production lifecycle assertions and mobile navigation contract evidence in tools/qa/client_lifecycle/guild.mjs, tools/qa/client_lifecycle/scenario.mjs and docs/design/UIUX_2026_MOBILE_NAVIGATION.md were validated on this revision and are included with the QA manifest in the checkpoint. The unrelated .gitignore change remains unstaged.",
+  "environment": {
+    "browser": "Google Chrome 154.0.8037.98",
+    "backend": "Disposable local API, PostgreSQL and Tempo; synthetic QA accounts; owned resources removed after every run.",
+    "platform": "macOS 26.6.1",
+    "mocks": false,
+    "live_sfu": false
+  },
+  "checks": [
+    {
+      "name": "Production Web workspace and DM header at desktop size",
+      "command": "QA_BROWSER_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' python3 -m tools.qa.client_lifecycle.run --width 1440",
+      "result": "PASS",
+      "viewport": "1440x900 CSS px, DPR 2",
+      "assertions": [
+        "Selected channel heading remains visible as Text.",
+        "After creating and selecting a DM from the navigation UI, its heading names qa_admin.",
+        "Guild header reflects the renamed isolated QA guild.",
+        "The full lifecycle also verifies persistence after API restart, telemetry privacy and owned-resource cleanup."
+      ],
+      "report": {
+        "path": ".out/client-lifecycle/1440/report.json",
+        "sha256": "78560d9a59a642d73013bc5f9e8dfb8a78aec4d27ff7de0d131c02baf24865d1"
+      },
+      "directMessageHeaderCapture": {
+        "path": ".out/client-lifecycle/1440/direct-message-header.png",
+        "raster": "2880x1800",
+        "sha256": "453c1b3f760443901a74544a73a33ee1c8eb9875cc2b7347a5e6e64e20dd1ead"
+      }
+    },
+    {
+      "name": "Production Web workspace and DM header at mobile touch size",
+      "command": "QA_BROWSER_EXECUTABLE='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' python3 -m tools.qa.client_lifecycle.run --width 393",
+      "result": "PASS",
+      "viewport": "393x852 CSS px, DPR 3, touch enabled",
+      "assertions": [
+        "Navigation drawer opens before switching from Channels to Personal messages.",
+        "Selected channel heading remains visible as Text.",
+        "After creating and selecting a DM from the navigation UI, its heading names qa_admin.",
+        "The full lifecycle also verifies persistence after API restart, telemetry privacy and owned-resource cleanup."
+      ],
+      "report": {
+        "path": ".out/client-lifecycle/393/report.json",
+        "sha256": "4ae6d8c02cd1d7615deb0d59a43c3906cc48db20d8383e081927724683db8257"
+      },
+      "directMessageHeaderCapture": {
+        "path": ".out/client-lifecycle/393/direct-message-header.png",
+        "raster": "1179x2556",
+        "sha256": "4f2f03322104ed44659287cc8a571107db4efcaa17cde43178d272e68bd961d9"
+      }
+    }
+  ],
+  "related_automated_coverage": {
+    "web_drawer_back_forward_focus_voice": "PASS — 7 browser tests across 12 viewports in QA-302",
+    "flutter_system_back_swipes_voice_focus": "PASS — target-platform widget scenarios recorded in docs/design/UIUX_2026_MOBILE_NAVIGATION.md",
+    "physical_navigation_and_livekit": "NOT_RUN — tracked under #303"
+  },
+  "limitations": [
+    "This is production Web in Chrome, not physical iOS Safari, Android system Back, or a native Flutter device run.",
+    "The disposable stack has no SFU; no LiveKit-call preservation is claimed by this lifecycle.",
+    "The Web app has no direct channel-route mapping, so channel URL refresh behavior remains unsupported and is not marked PASS.",
+    "VoiceOver/TalkBack acceptance remains NOT_RUN under #301/#303."
+  ],
+  "status": "PASS_SCOPED_DESKTOP_AND_MOBILE_WEB_CONTEXT_HEADERS; physical/device, direct-route and screen-reader criteria remain open"
+}
