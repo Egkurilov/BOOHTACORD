@@ -46,6 +46,8 @@ def remove_owned(name, owner, kind='container'):
         template = '{{index .Config.Labels "'+LABEL+'"}}'
     elif kind == 'network':
         template = '{{index .Labels "'+LABEL+'"}}'
+    elif kind == 'volume':
+        template = '{{index .Labels "'+LABEL+'"}}'
     else:
         raise ValueError('Refusing to remove an unsupported resource kind')
     target = ('image' if kind == 'image' else kind)

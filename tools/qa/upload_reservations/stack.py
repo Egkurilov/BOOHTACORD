@@ -28,9 +28,10 @@ class UploadStack(Stack):
                  'LIVEKIT_API_KEY', 'LIVEKIT_API_SECRET', 'LIVEKIT_PUBLIC_WS_URL',
                  'LIVEKIT_PRIVATE_HTTP_URL', 'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT')
         arguments = [argument for name in names for argument in ('-e', name+'='+self.environment[name])]
-        self.container('api', 'postgres:17.6-alpine', '-v', self.volume+':/attachments',
-                       '-v', str(self.binary)+':/qa-api:ro', '--entrypoint', '/qa-api',
-                       *arguments, network=False)
+        self.container('api', 'postgres:17.6-alpine', '--publish', '127.0.0.1:4820:8080',
+                       '--add-host', 'host.docker.internal:host-gateway',
+                       '-v', self.volume+':/attachments', '-v', str(self.binary)+':/qa-api:ro',
+                       '--entrypoint', '/qa-api', *arguments, network=True)
         self.api_name = self.owner+'-api'
         ready('http://127.0.0.1:4820/api/v1/health')
 

@@ -46,10 +46,18 @@ class SafetyTests(unittest.TestCase):
             remove_owned('qa-api', 'owner', 'image')
             self.assertEqual(run.call_args.args, ('docker', 'image', 'rm', 'qa-api'))
 
-    def test_cleanup_rejects_an_unsupported_resource_kind(self):
-        with patch('tools.qa.client_lifecycle.services.output') as output, \
+    def test_cleanup_removes_only_a_labelled_owned_volume(self):
+        with patch('tools.qa.client_lifecycle.services.output', return_value='owner') as output, \
+                patch('tools.qa.client_lifecycle.services.run') as run:
+            remove_owned('qa-data', 'owner', 'volume')
+            self.assertEqual(output.call_args.args, (
+                'docker', 'volume', 'inspect', 'qa-data',
+                '--format', '{{index .Labels "boohtacord.qa.owner"}}'))
+            self.assertEqual(run.call_args.args, ('docker', 'volume', 'rm', 'qa-data'))
+
+    def test_cleanup_rejects_a_foreign_volume(self):
+        with patch('tools.qa.client_lifecycle.services.output', return_value='foreign'), \
                 patch('tools.qa.client_lifecycle.services.run') as run:
             with self.assertRaises(ValueError):
                 remove_owned('qa-data', 'owner', 'volume')
-            output.assert_not_called()
             run.assert_not_called()
