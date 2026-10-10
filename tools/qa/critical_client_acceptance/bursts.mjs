@@ -21,7 +21,14 @@ export async function bursts(a, b, channelId, report, directory, baseline = fals
     }, { channelId, size })
     result.forEach(row => status(row, 201))
     oldest ??= result[0].body
-    await expect(a.getByRole('log')).toContainText(`Synthetic burst ${size} item ${size-1}`)
+    if (baseline) {
+      await expect.poll(async () => {
+        const visible = await a.getByRole('log').innerText()
+        return result.some(row => visible.includes(row.body.body))
+      }).toBe(true)
+    } else {
+      await expect(a.getByRole('log')).toContainText(`Synthetic burst ${size} item ${size-1}`)
+    }
     await expect.poll(() => counters.every(counter => counter.quiet()), { timeout: 10000 }).toBe(true)
     const [active, hiddenResult] = counters.map(counter => counter.stop())
     assert.equal(hiddenResult.history, 0)

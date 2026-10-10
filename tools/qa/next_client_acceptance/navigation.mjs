@@ -20,7 +20,9 @@ export async function navigation(page, fixture, input, report) {
   const ids=sql(`SELECT id FROM messages WHERE channel_id='${fixture.a}' ORDER BY created_at,id LIMIT 1`).split('\n')
   const tail=Array.from({length:50},(_,i)=>`('${randomUUID()}','${fixture.a}','${fixture.member}','${randomUUID()}','QA unseen tail',TIMESTAMPTZ '2026-01-01' + INTERVAL '${200+i} seconds')`)
   sql(`INSERT INTO messages(id,channel_id,author_id,client_message_id,body,created_at) VALUES ${tail.join(',')}`)
-  sql(`UPDATE messages SET reply_to_id='${ids[0]}' WHERE channel_id='${fixture.a}' AND id=(SELECT id FROM messages WHERE channel_id='${fixture.a}' ORDER BY created_at DESC,id DESC LIMIT 1)`)
+  const reply=await api(page,`/channels/${fixture.a}/messages`,'POST',{
+    client_message_id:randomUUID(),reply_to_id:ids[0],body:'QA navigation reply',
+  });status(reply,201)
   await select(page,'NextUnread')
   await page.locator('.message-history-wrap .message-list').evaluate(list=>list.scrollTop=Math.max(0,list.scrollHeight-list.clientHeight-200))
   await page.locator('.reply-preview').scrollIntoViewIfNeeded()
