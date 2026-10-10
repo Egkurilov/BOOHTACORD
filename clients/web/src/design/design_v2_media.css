@@ -32,6 +32,7 @@
 .screen-share-quality__option { min-height: 44px; }
 .screen-share-setup__footer { min-height: 64px; padding: 8px 20px 12px; }
 @media (min-width: 601px) { .screen-share-setup-dialog { height: 469px; transform: translateY(.5px); } }
+@media (min-width: 601px) and (max-height: 640px) { .screen-share-setup-dialog { height: calc(100dvh - 32px); } }
 @media (max-width: 720px) {
   .screen-viewer.stream-wrap { grid-template-rows: minmax(0, 1fr) 56px 84px; gap: var(--gc-space-3); padding: 12px; }
   .screen-stage { min-height: 160px; border-radius: var(--gc-radius-md); }

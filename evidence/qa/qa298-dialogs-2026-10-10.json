@@ -51,6 +51,34 @@
       "limitations": [
         "No physical touch, VoiceOver, TalkBack, NVDA or Narrator acceptance was run."
       ]
+    },
+    {
+      "name": "Short desktop screen-share regression and retained review capture",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npx playwright test -c tests/accessibility/playwright.config.ts tests/accessibility/screen_share_short_desktop.browser.spec.ts",
+      "result": "PASS_AUTOMATED_ONLY",
+      "tests_passed": 1,
+      "source_revision": "f9ac927d716121cd8678c7d8fa79c904cff69507",
+      "browser": "Google Chrome 154.0.8037.98",
+      "viewport_css": "637x584",
+      "baseline": {
+        "revision": "d856ecac6c9397ae99468c1e6c9492fec4d35e71",
+        "result": "EXPECTED_FAIL",
+        "observed_dialog_height_css_px": 469
+      },
+      "after_capture": {
+        "path": ".out/accessibility-browser-results/screen_share_short_desktop-8c255--a-637x584-desktop-viewport/screen-share-short-desktop.png",
+        "sha256": "f39c5003d4b5a7a0069227b968a97d1c613b83b7ff33d5ff61d8857424a04fac",
+        "raster": "637x584",
+        "review_status": "REVIEW_CAPTURE_NOT_APPROVED_GOLDEN"
+      },
+      "observations": [
+        "The short desktop height rule keeps the dialog within the viewport and the body independently scrollable.",
+        "Both Cancel and Start screen share actions remain 99% visible without scrolling the page.",
+        "No CI workflow ran for the [skip ci] checkpoint."
+      ],
+      "limitations": [
+        "The capture is from a local Playwright Chrome run; it is not an approved pixel golden or a physical macOS system-picker acceptance."
+      ]
     }
   ],
   "source_archive": {
