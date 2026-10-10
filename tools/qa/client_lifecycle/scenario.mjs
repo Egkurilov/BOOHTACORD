@@ -58,6 +58,39 @@ try {
   const dmStarter = guest.getByRole('dialog', { name: 'Новый личный диалог' })
   await dmStarter.getByRole('button', { name: 'qa_admin', exact: true }).click()
   await expect(guest.getByRole('heading', { name: 'qa_admin', exact: true })).toBeVisible()
+  await expect(guest.getByText('Сообщений пока нет.', { exact: true })).toBeVisible()
+  await guest.screenshot({ path: input.directory+'/dm-empty-conversation.png' })
+
+  if (input.viewport.is_mobile && !(await guest.locator('.sidebar').evaluate(element => element.classList.contains('is-open')))) {
+    await guest.getByRole('button', { name: 'Открыть навигацию', exact: true }).click()
+  }
+  const dmList = guest.getByRole('navigation', { name: 'Личные сообщения' })
+  await expect(dmList.locator('.channel-button').filter({ hasText: 'qa_admin' })).toBeVisible()
+  await guest.screenshot({ path: input.directory+'/dm-list.png' })
+  if (input.viewport.is_mobile) await guest.getByRole('button', { name: 'Закрыть навигацию', exact: true }).click()
+
+  const syntheticMessage = 'Синтетическое сообщение для QA'
+  await guest.getByRole('textbox', { name: 'Сообщение' }).fill(syntheticMessage)
+  await guest.getByRole('button', { name: 'Отправить сообщение', exact: true }).click()
+  await expect(guest.getByText(syntheticMessage, { exact: true })).toBeVisible()
+  await guest.screenshot({ path: input.directory+'/dm-conversation.png' })
+
+  await guest.getByRole('button', { name: 'Найти сообщение', exact: true }).click()
+  const dmSearch = guest.locator('.direct-message-search')
+  await expect(dmSearch).toBeVisible()
+  await dmSearch.getByRole('searchbox', { name: 'Запрос' }).fill(syntheticMessage)
+  await dmSearch.getByRole('button', { name: 'Найти', exact: true }).click()
+  await expect(dmSearch.getByText('Найдено в этой странице: 1.', { exact: true })).toBeVisible()
+  await expect(dmSearch.getByText(syntheticMessage, { exact: true })).toBeVisible()
+  await guest.screenshot({ path: input.directory+'/dm-search.png' })
+  await dmSearch.getByRole('button', { name: 'Открыть сообщение', exact: true }).click()
+  const context = guest.getByTestId('search-message-context')
+  await expect(context.getByText(syntheticMessage, { exact: true })).toBeVisible()
+  await context.getByRole('button', { name: 'Вернуться к исходной позиции', exact: true }).click()
+  await expect(dmSearch.getByRole('searchbox', { name: 'Запрос' })).toHaveValue(syntheticMessage)
+  await expect(dmSearch.getByText(syntheticMessage, { exact: true })).toBeVisible()
+  report.dm_full_app = { empty_conversation: true, list: true, sent_message: true, search: true, context_return_preserves_search: true }
+
   await guest.screenshot({ path: input.directory+'/direct-message-header.png' })
   report.navigation_context = { ...report.navigation_context, direct_message_header: 'PASS' }
   const denied = await api(guest, '/admin/guild-settings', 'PATCH', {
