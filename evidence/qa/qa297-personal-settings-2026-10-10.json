@@ -1,0 +1,198 @@
+{
+  "id": "QA-297-PERSONAL-SETTINGS",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #297 — personal settings and save-state",
+  "source_revision": "81206b6f",
+  "working_tree_changes": true,
+  "checks": [
+    {
+      "name": "Web settings layout/focus/store unit suite",
+      "command": "cd clients/web && npm test -- --run src/identity/profile_settings_v2_layout.spec.ts src/workspace/settings_panel_focus.spec.ts src/voice/audio_settings_store.spec.ts",
+      "result": "PASS",
+      "passed": 9
+    },
+    {
+      "name": "Web profile form/accessibility browser suite",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' ./node_modules/.bin/playwright test -c tests/accessibility/playwright.config.ts --grep 'WCAG smoke covers profile settings|profile settings preserve a dirty name|profile logout waits for an explicit confirmation|profile settings tabs support Arrow'",
+      "result": "PASS",
+      "passed": 4,
+      "observation": "Axe, tab keyboard navigation, dirty-draft retention, pending → 503 → retry → saved state, explicit unsaved-draft/logout confirmation."
+    },
+    {
+      "name": "Flutter profile/workspace/audio-device suites",
+      "command": "cd clients/flutter && flutter test --no-pub test/profile_screen_test.dart test/workspace_screen_test.dart test/audio_devices",
+      "result": "PASS",
+      "passed": 161,
+      "observation": "Includes profile state/focus/2× text, audio device initializing/permission denied/hotplug/default fallback/retry/selection, compact controls, short windows and landscape; iOS/Android/macOS target-platform widget cases are simulated, not native device smoke."
+    },
+    {
+      "name": "Production Web mobile personal-settings screenshots",
+      "result": "PASS",
+      "passed": 5,
+      "files": [
+        {
+          "path": ".out/uiux-2026-epic-289/settings/393/mobile-profile-settings-after.png",
+          "sha256": "d5d41793a1e4359eb854189f33849654aa8474f14f328b51c535fac3049613e6",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/uiux-2026-epic-289/settings/393/mobile-security-settings-after.png",
+          "sha256": "60a0c30741e3c14f46c7af7c460f2cd90a8619fbabc80c6496087726d35e27e3",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/uiux-2026-epic-289/settings/393/mobile-audio-settings-after.png",
+          "sha256": "71fe011e00d75bd647b1d1e3b02724ec63cf5e51ac10d8e42c4b01b62412b36d",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/uiux-2026-epic-289/settings/393/mobile-notification-settings-after.png",
+          "sha256": "67e3ac2cb06a5ea237347ae035a423ba3da9e7f2dbf0b2993e4758219bbfc877",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/uiux-2026-epic-289/settings/393/mobile-about-settings-after.png",
+          "sha256": "733dc94349044ac372981ad7e5061a03cfa58b59698322d7a8b409f436298cbc",
+          "raster": "1179x2556"
+        }
+      ],
+      "observation": "Actual authenticated production Vue app against an isolated disposable API/PostgreSQL/Tempo stack in Chrome 154 at 393×852, DPR 3, touch enabled; synthetic QA admin account, no API contract changes."
+    },
+    {
+      "name": "Production Web desktop guild-settings screenshot",
+      "result": "PASS_WITH_SOURCE_BLOCKER",
+      "files": [
+        {
+          "path": ".out/client-lifecycle/1440/guild-settings.png",
+          "sha256": "56874fc0803b9009d7147eac531eff49c34314ccd91dd10e137a741c9690123d",
+          "raster": "2880x1800"
+        }
+      ],
+      "report": {
+        "path": ".out/client-lifecycle/1440/report.json",
+        "sha256": "5f5dba2e3312e729d04d73d555749e8c0e346c9a4f9394228f16d96264b76d2e",
+        "source_revision": "26246f5e5456b42d741ae2148a338c6310467c60",
+        "telemetry_verified": true,
+        "api_restart_persistence": true,
+        "owned_resources_removed": true
+      },
+      "observation": "Current full-stack after capture exists at 1440×900. The corresponding source image is an exact duplicate of the Members source and cannot serve as an independent before screenshot."
+    }
+  ],
+  "source_archive": {
+    "path": "artifacts/ui-ux-screenshots.zip",
+    "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
+  },
+  "comparisons": [
+    {
+      "section": "profile",
+      "profile": "mobile-393x852 @3x",
+      "source_archive_entry": "ui-ux-screenshots/mobile-profile-settings.png",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-profile-settings.png",
+        "sha256": "8eda006417230ea814dd925cac41db285a7591cc7cae980f15f0ec39cc0f68de",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/settings/393/mobile-profile-settings-after.png",
+        "sha256": "d5d41793a1e4359eb854189f33849654aa8474f14f328b51c535fac3049613e6",
+        "raster": "1179x2556"
+      },
+      "dimensions_match": true,
+      "observation": "The profile name/avatar form and save state are visible. The QA identity is synthetic."
+    },
+    {
+      "section": "security",
+      "profile": "mobile-393x852 @3x",
+      "source_archive_entry": "ui-ux-screenshots/mobile-security-settings.png",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-security-settings.png",
+        "sha256": "3ff0e850254806cbff841f80f8fa17fc3d966b7470b43704a2e9b1776a5ef56b",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/settings/393/mobile-security-settings-after.png",
+        "sha256": "60a0c30741e3c14f46c7af7c460f2cd90a8619fbabc80c6496087726d35e27e3",
+        "raster": "1179x2556"
+      },
+      "dimensions_match": true,
+      "observation": "Password and logout sections require explicit actions; own sessions continue below the viewport in the independently scrollable panel."
+    },
+    {
+      "section": "audio",
+      "profile": "mobile-393x852 @3x",
+      "source_archive_entry": "ui-ux-screenshots/mobile-audio-settings.png",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-audio-settings.png",
+        "sha256": "e481a5536679278d7a23087acd6894c28e0d8e70cf6dff3170430ecbf0073ea0",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/settings/393/mobile-audio-settings-after.png",
+        "sha256": "71fe011e00d75bd647b1d1e3b02724ec63cf5e51ac10d8e42c4b01b62412b36d",
+        "raster": "1179x2556"
+      },
+      "dimensions_match": true,
+      "observation": "The real Chrome audio settings component enumerates the host browser’s current default devices; this is browser emulation, not device acceptance."
+    },
+    {
+      "section": "notifications",
+      "profile": "mobile-393x852 @3x",
+      "source_archive_entry": "ui-ux-screenshots/mobile-notification-settings.png",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-notification-settings.png",
+        "sha256": "afc1d854af9396682530c9b99f728ad7c8a123b0dd373416981ec5001f810a69",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/settings/393/mobile-notification-settings-after.png",
+        "sha256": "67e3ac2cb06a5ea237347ae035a423ba3da9e7f2dbf0b2993e4758219bbfc877",
+        "raster": "1179x2556"
+      },
+      "dimensions_match": true,
+      "observation": "The local browser reports notifications disabled while the source shows them enabled; this runtime permission/state difference is not a pixel/layout failure."
+    },
+    {
+      "section": "about",
+      "profile": "mobile-393x852 @3x",
+      "source_archive_entry": "ui-ux-screenshots/mobile-about-settings.png",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-about-settings.png",
+        "sha256": "6e7f865bc51ce26920b27c87f18a9b6ed1e291aa1f4cbcc6df262488ebe3bd71",
+        "raster": "1179x2556"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/settings/393/mobile-about-settings-after.png",
+        "sha256": "733dc94349044ac372981ad7e5061a03cfa58b59698322d7a8b409f436298cbc",
+        "raster": "1179x2556"
+      },
+      "dimensions_match": true,
+      "observation": "The local update endpoint returns 503 while the source shows an installed-current state; this environment response difference remains visible in the after capture."
+    },
+    {
+      "section": "guild-settings",
+      "profile": "desktop-1440x900 @2x",
+      "source_archive_entry": "ui-ux-screenshots/desktop-guild-settings.png",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/desktop-guild-settings.png",
+        "sha256": "0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57",
+        "raster": "2880x1800"
+      },
+      "after": {
+        "path": ".out/client-lifecycle/1440/guild-settings.png",
+        "sha256": "56874fc0803b9009d7147eac531eff49c34314ccd91dd10e137a741c9690123d",
+        "raster": "2880x1800"
+      },
+      "dimensions_match": true,
+      "comparison_result": "BLOCKED_DUPLICATE_BASELINE",
+      "observation": "The source desktop-guild-settings.png is byte-identical to desktop-guild-members.png (D11). The current production guild settings after capture exists, but this archive does not provide an independent before baseline."
+    }
+  ],
+  "limitations": [
+    "Mobile after captures have matching 1179×2556 source rasters. The visual review records runtime-data differences: synthetic account identity, Chrome notification permission/state, browser device inventory, and update-check HTTP 503.",
+    "The desktop guild settings baseline is blocked by the duplicated source asset (D11); its after image is retained locally.",
+    "No native macOS/Android audio/settings smoke was run. Widget target-platform cases pass; there is no populated native QA session, and no physical Android/iOS device is available. TalkBack/VoiceOver spoken review is NOT_RUN.",
+    "Generated PNGs and extracted source PNGs remain in ignored .out directories and are not staged."
+  ],
+  "status": "PARTIAL — Web/Flutter form, save-state, keyboard, confirmation, audio-state and responsive widget coverage passes; five full-app mobile personal-settings after captures are visually reviewed. Desktop independent guild-settings baseline, native macOS/Android smoke, and screen-reader review remain open."
+}
