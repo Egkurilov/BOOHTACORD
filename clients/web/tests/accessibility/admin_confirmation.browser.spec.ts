@@ -71,6 +71,27 @@ test('screen-share setup remains scrollable and keeps the action reachable on a 
   await expect(start).toBeInViewport()
 })
 
+test('screen-share setup keeps its actions visible in a short desktop viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 637, height: 584 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const { createApp, h } = await import('/node_modules/.vite/deps/vue.js')
+    const { default: ScreenShareSetupDialog } = await import('/src/voice/ScreenShareSetupDialog.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    createApp({ render: () => h(ScreenShareSetupDialog, { initialProfile: 'P1080_30', onCancel: () => {}, onStart: () => {} }) }).mount('#mount')
+  })
+
+  const dialog = page.getByRole('dialog', { name: 'Демонстрация экрана' })
+  const body = dialog.locator('.screen-share-setup__body')
+  const footer = dialog.locator('.screen-share-setup__footer')
+  const start = dialog.getByRole('button', { name: 'Начать трансляцию' })
+  await expect(dialog).toBeVisible()
+  await expect(body).toHaveCSS('overflow-y', 'auto')
+  await expect(footer).toBeInViewport({ ratio: 0.99 })
+  await expect(start).toBeInViewport({ ratio: 0.99 })
+  expect(await body.evaluate(element => element.scrollHeight)).toBeGreaterThan(await body.evaluate(element => element.clientHeight))
+})
+
 const screenShareSetups = [
   { name: '393x852 phone', width: 393, height: 852, textScale: 1 },
   { name: '320x640 compact phone', width: 320, height: 640, textScale: 1 },

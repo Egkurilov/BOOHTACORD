@@ -23,6 +23,8 @@
 .admin-confirm-dialog .admin-confirm-actions { margin-top: auto; }
 dialog:not([open]) { display: none; }
 .screen-share-setup-dialog { display: flex; flex-direction: column; overflow: hidden; background: var(--gc-surface); box-shadow: 0 24px 64px #0000007A; }
+.screen-share-setup-dialog > .screen-share-setup__header, .screen-share-setup-dialog > .screen-share-setup__footer { flex: 0 0 auto; }
+.screen-share-setup-dialog > .screen-share-setup__body { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
 .authentication-page { display: flex; align-items: center; }
 .authentication-card { background: var(--gc-sidebar); box-shadow: 0 24px 80px #00000038; }
 .member-popover { display: block; gap: 0; overflow: hidden; box-shadow: 0 24px 64px #0000007A; }
