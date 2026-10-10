@@ -3,9 +3,9 @@
   "date": "2026-10-10",
   "task": "UIUX-2026 issue #302 — visual matrix, responsive smoke and retained review captures",
   "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/302",
-  "source_revision": "2cdc9b2c",
-  "working_tree_changes": false,
-  "status": "AUTOMATED_SCOPED_PASS_GOLDEN_AND_CI_ARTIFACT_RUN_PENDING",
+  "source_revision": "f2f2dc94519290ee120603fce2b1e9b46a44fa00",
+  "working_tree_changes": true,
+  "status": "AUTOMATED_SCOPED_PASS_REVIEW_ONLY_REGION_DELTAS_RECORDED_GOLDEN_AND_CI_ARTIFACT_RUN_PENDING",
   "checks": [
     {
       "name": "Pinned source screenshot/catalog verifier",
@@ -68,6 +68,128 @@
       "source_revision": "55f18d2b179ab87f93a9cb1d08ed9b3fffff338c",
       "coverage": "Six admin reference screenshots (D05-D10 and M08-M13) visually reviewed at source-sized desktop/mobile rasters; synthetic fixture differences are documented in the epic QA report.",
       "limitation": "Review captures are not approved pixel goldens; D11 desktop settings reference duplicates desktop members."
+    },
+    {
+      "name": "Review-only region-scoped screenshot delta measurements",
+      "command": "python3 -m unittest tools.verify.test_uiux_visual_diff -v\npython3 -m tools.verify.uiux_visual_diff --config .out/uiux-visual-diff-302/channel-desktop.json --report .out/uiux-visual-diff-302/channel-desktop-report.json\npython3 -m tools.verify.uiux_visual_diff --config .out/uiux-visual-diff-302/channel-mobile.json --report .out/uiux-visual-diff-302/channel-mobile-report.json\npython3 -m tools.verify.uiux_visual_diff --config .out/uiux-visual-diff-302/settings-mobile.json --report .out/uiux-visual-diff-302/settings-mobile-report.json",
+      "result": "PASS_REVIEW_ONLY",
+      "unit_tests_passed": 4,
+      "status_policy": "Reports measurements only; it does not pass/fail visual changes because the archive references are not approved pixel goldens.",
+      "mask_policy": "Named review regions select stable UI areas; optional ignored rectangles exclude dynamic avatars, timestamps or backend-provided data.",
+      "pairs": [
+        {
+          "screen": "Channel conversation — desktop",
+          "reference": {
+            "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/desktop-channel-overview.png",
+            "sha256": "1c6780a376993228a18f6012f5c60abf337469428bef44059dba31e298990f63",
+            "raster": "2880x1800"
+          },
+          "actual": {
+            "path": ".out/client-lifecycle/1440/channel-text.png",
+            "sha256": "b2ad38320c5619956a97cb7be4d1a2c2a848e654345d644848562e2c2d9b8d7b",
+            "raster": "2880x1800"
+          },
+          "regions": [
+            {
+              "name": "conversation-toolbar",
+              "rect": [
+                560,
+                0,
+                2320,
+                130
+              ],
+              "meanAbsoluteRgbChange": 1.345,
+              "pixelsChangedOverThresholdPercent": 0.672
+            },
+            {
+              "name": "composer-controls",
+              "rect": [
+                600,
+                1600,
+                1750,
+                200
+              ],
+              "meanAbsoluteRgbChange": 1.06,
+              "pixelsChangedOverThresholdPercent": 0.715
+            }
+          ]
+        },
+        {
+          "screen": "Channel conversation — mobile",
+          "reference": {
+            "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-channel-overview.png",
+            "sha256": "6ab04d76b87dc665bad23a023dfcfadf11aedf932948c69e7cbead5917aa95e5",
+            "raster": "1179x2556"
+          },
+          "actual": {
+            "path": ".out/client-lifecycle/393/channel-text.png",
+            "sha256": "bfbe93f68d6faf12fa84b98d7804073956e725a3ee669761bd3616a2ca7a8b0c",
+            "raster": "1179x2556"
+          },
+          "regions": [
+            {
+              "name": "mobile-conversation-header",
+              "rect": [
+                0,
+                0,
+                1179,
+                250
+              ],
+              "meanAbsoluteRgbChange": 1.507,
+              "pixelsChangedOverThresholdPercent": 1.666
+            },
+            {
+              "name": "mobile-composer",
+              "rect": [
+                0,
+                2260,
+                1179,
+                290
+              ],
+              "meanAbsoluteRgbChange": 0.379,
+              "pixelsChangedOverThresholdPercent": 0
+            }
+          ]
+        },
+        {
+          "screen": "Guild settings — mobile",
+          "reference": {
+            "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-guild-settings.png",
+            "sha256": "d8ffe033e6784f1214a2a79bed53493a62da3a133cb26fae6928e21fd97fd8aa",
+            "raster": "1179x2556"
+          },
+          "actual": {
+            "path": ".out/client-lifecycle/393/guild-settings.png",
+            "sha256": "6bf95c0266e9d020d1af1885479af5c6c53f4ad8ef9448b9854f0bcc14a53093",
+            "raster": "1179x2556"
+          },
+          "regions": [
+            {
+              "name": "admin-header-and-tabs",
+              "rect": [
+                0,
+                0,
+                1179,
+                430
+              ],
+              "meanAbsoluteRgbChange": 10.748,
+              "pixelsChangedOverThresholdPercent": 8.894
+            }
+          ],
+          "review_note": "The larger delta is visible in the shortened “Админ” header title and the horizontal-tabs helper line; it is recorded as review data, not an automatic regression."
+        }
+      ],
+      "report_outputs": [
+        ".out/uiux-visual-diff-302/channel-desktop-report.json",
+        ".out/uiux-visual-diff-302/channel-mobile-report.json",
+        ".out/uiux-visual-diff-302/settings-mobile-report.json"
+      ],
+      "ciWiring": {
+        "workflow": ".github/workflows/ci-frontend.yaml",
+        "step": "Test review-only UI/UX screenshot region deltas",
+        "command": "python3 -m unittest tools.verify.test_uiux_visual_diff",
+        "workflowRun": "NOT_RUN_THIS_CHECKPOINT_SKIP_CI"
+      }
     }
   ],
   "source_archive": {
@@ -322,5 +444,6 @@
     "flutter_visual_capture": "PASS_5_TESTS_25_CAPTURES",
     "current_shared_accessibility_suite": "PASS_47_BROWSER_PLUS_1_AXE",
     "ci_artifact_run": "NOT_RUN_SKIP_CI_REQUEST"
-  }
+  },
+  "working_tree_change_note": "The region-scoped review utility and tests in tools/verify/uiux_visual_diff.py and tools/verify/test_uiux_visual_diff.py were tested against this source revision and are included with this evidence in the checkpoint commit. The unrelated .gitignore change remains unstaged."
 }
