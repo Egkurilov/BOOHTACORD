@@ -4,7 +4,7 @@
   "task": "UIUX-2026 issue #297 — personal settings and save-state",
   "source_revision": "ab126911",
   "working_tree_changes": true,
-  "working_tree_change_note": "The Flutter profile save-state and responsive-layout test reruns are pinned to dfdb7e8c; production Web screenshots in this record remain from ab126911.",
+  "working_tree_change_note": "Flutter profile save-state and responsive-layout tests are pinned to dfdb7e8c; the profile-panel close regression suite is pinned to 40f5a9ca. Production Web screenshots in this record remain from ab126911.",
   "checks": [
     {
       "name": "Web settings layout/focus/store unit suite",
@@ -118,6 +118,14 @@
       "passed": 21,
       "revision": "dfdb7e8c",
       "observation": "Save is disabled for an unchanged name and announces dirty, pending, and saved states; regression coverage also includes a 64-character unbroken name at 2× text, a 320 px viewport with the system keyboard open, and a live 1440→320 px resize. Flutter analyze on the changed screen and test also passes with no issues."
+    },
+    {
+      "name": "Flutter workspace settings return actions",
+      "command": "cd clients/flutter && flutter test --no-pub test/workspace_screen_test.dart",
+      "result": "PASS",
+      "passed": 90,
+      "revision": "40f5a9ca",
+      "observation": "The desktop profile panel exposes a named close action and returns to the workspace; compact Android retains Back. The suite also verifies focus restoration after closing. Flutter analyze on the changed toolbar and workspace test passes with no issues."
     }
   ],
   "source_archive": {
