@@ -40,6 +40,16 @@ The images are emitted under `.out/responsive-shell-browser-results/` and retain
 
 The full-stack lifecycle runner exercises a production Web build at mobile 393×852, tablet 1024×768, and desktop 1440×900 using two independent Chrome sessions, real session cookies and ACLs, a disposable Linux API container, PostgreSQL and Tempo. It checks data persistence after an API restart and verifies that its labeled resources are removed. Use its initial/saved screenshots to review the actual application flow; use the report hashes to bind them to their source files. The run is recorded in the issue evidence file. It does not replace per-screen visual comparison, physical device acceptance or GitHub artifact retention.
 
+### Recapture after a UI-approved change
+
+1. Keep `artifacts/ui-ux-screenshots.zip` immutable as the original audit input. A new approved capture is evidence for a reviewed change; it does not silently replace the source archive.
+2. Run the Web viewport/capture suite from `clients/web`: `npm run test:responsive-shell`. It writes the six required targets plus the 393×852 source-reference target under `.out/responsive-shell-browser-results/`.
+3. Run the actual-app admin captures from the repository root with installed Chrome and the disposable lifecycle stack: `QA_BROWSER_EXECUTABLE=<Chrome executable> python3 -m tools.qa.client_lifecycle.run --width 393` and repeat with `--width 1440`. This writes source-sized screenshots and a bounded, hash-bound report under `.out/client-lifecycle/{393,1440}/`.
+4. Compare the named, stable layout regions against the matching source screen and inspect the matching DOM/state assertions. Treat timestamps, avatars, member identities, audit payloads and live service values as dynamic data: document their region or fixture rule in the catalog and review the region manually; do not make their raw pixels a flaky pass/fail gate. Report only observed differences, and distinguish them from hypotheses.
+5. For a GitHub Actions artifact, run the `CI` workflow on the reviewed branch and verify `ux-responsive-shell-<commit>` is attached to that exact run. A `[skip ci]` push has no such artifact. Record the commit, report hashes, artifact URL and reviewer-approved status in the evidence record before changing a catalog row to an approved golden.
+
+The current #296 review records source-sized captures for the six admin views other than Guild Settings. Their runtime capture status deliberately remains `REVIEWED_CAPTURE_NOT_APPROVED_GOLDEN` until the owner approves a retained after image; the duplicated D11 source also needs correction before it can supply an independent baseline.
+
 This lifecycle run does not include the critical real-SFU outage/restart flow. That separate flow remains `NOT_RUN`: macOS Chrome could not establish ICE through the local Colima host-network boundary, while a Linux browser reached voice join and chat-WebSocket-only recovery but could not control the owned SFU for the later stop/restart stage. Do not count either partial run as voice fault-recovery acceptance.
 
 ## Remaining work for #302
