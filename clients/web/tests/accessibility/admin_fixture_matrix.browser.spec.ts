@@ -22,13 +22,14 @@ test('admin tabs retain useful state across staged 200/403/409/503 responses', a
     { role: 'ADMINISTRATOR', display_name: 'Администратор', editable: false, permissions },
     { role: 'MEMBER', display_name: 'Пользователь', editable: true, permissions },
   ] }
+  const sampledAt = new Date().toISOString()
   const readiness = {
-    status: 'degraded', checked_at: '2026-10-10T12:00:00Z',
-    database: { status: 'ready', sampled_at: '2026-10-10T12:00:00Z', pending_revocations: 0,
+    status: 'degraded', checked_at: sampledAt,
+    database: { status: 'ready', sampled_at: sampledAt, pending_revocations: 0,
       available_bytes: null, total_bytes: null, reserved_bytes: null, protected_bytes: null, headroom_bytes: null },
-    sfu: { status: 'unknown', reason: 'not_configured', sampled_at: null, pending_revocations: null,
+    sfu: { status: 'unknown', reason: 'not_configured', sampled_at: sampledAt, pending_revocations: null,
       available_bytes: null, total_bytes: null, reserved_bytes: null, protected_bytes: null, headroom_bytes: null },
-    storage: { status: 'unknown', reason: 'not_configured', sampled_at: null, pending_revocations: null,
+    storage: { status: 'unknown', reason: 'not_configured', sampled_at: sampledAt, pending_revocations: null,
       available_bytes: null, total_bytes: null, reserved_bytes: null, protected_bytes: null, headroom_bytes: null },
   }
 

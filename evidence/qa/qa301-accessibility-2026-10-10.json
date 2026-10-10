@@ -109,7 +109,7 @@
     "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
   },
   "manual_acceptance": {
-    "web_keyboard_browser_automation": "PASS_SCOPED_CHROMIUM_WEBKIT_FIREFOX",
+    "web_keyboard_browser_automation": "PASS_SCOPED_CHROMIUM_WEBKIT_FIREFOX_47_EACH",
     "web_voiceover_or_nvda": "NOT_RUN",
     "flutter_talkback": "NOT_RUN",
     "flutter_ios_voiceover": "NOT_RUN",
@@ -140,7 +140,7 @@
   "artifact_storage": "All PNGs referenced here remain ignored local .out captures; only this manifest and code/docs changes are committed.",
   "cross_browser_revalidation": {
     "date": "2026-10-10",
-    "source_revision": "7e5c0ffc plus the tested working tree",
+    "source_revision": "working tree tested before the next [skip ci] checkpoint",
     "status": "PASS_AUTOMATED_ONLY",
     "browser_runs": [
       {
@@ -159,11 +159,42 @@
         "viewports": 12
       }
     ],
-    "focus_finding": "The WebKit run exposed that closing a mobile drawer after click could leave focus on the main region. Navigation and members close now restore focus to their named header opener with preventScroll; search retains prior-focus behavior.",
+    "focus_finding": "The WebKit run exposed that closing a mobile drawer after click could leave focus on the main region. Navigation and members close now restore focus to their named header opener with preventScroll; search retains prior-focus behavior. A second regression covers destructive dialogs: clicked trigger restoration in WebKit and explicit cyclic Tab focus across dialog controls.",
     "unit_tests": "3/3 workspace_drawer_focus tests passed",
     "limitations": [
       "This adds browser-automated keyboard focus coverage only. No VoiceOver, NVDA, TalkBack or Narrator traversal was run.",
       "Native Safari task smoke and physical device acceptance remain NOT_RUN under #303."
-    ]
+    ],
+    "accessibility_browser_suite": {
+      "status": "PASS_AUTOMATED_ONLY",
+      "tests_passed_per_engine": 47,
+      "runs": [
+        {
+          "browser": "Google Chrome 154.0.8037.98 (Playwright Chromium)",
+          "result": "47/47",
+          "command": "CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npx playwright test -c tests/accessibility/playwright.config.ts --browser chromium"
+        },
+        {
+          "browser": "Playwright WebKit 26.6 (v2359)",
+          "result": "47/47",
+          "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/accessibility/playwright.config.ts --browser webkit"
+        },
+        {
+          "browser": "Playwright Firefox 155.0 (v1543)",
+          "result": "47/47",
+          "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/accessibility/playwright.config.ts --browser firefox"
+        }
+      ],
+      "additional_check": "conversation_action_disclosure axe scan: 1/1 PASS in Chrome 154",
+      "findings_fixed": [
+        "Confirmation focus restoration now uses the clicked opener when WebKit leaves focus on body and prevents scroll jumps.",
+        "Modal Tab handling cycles through all controls rather than relying on each engine’s native focus policy.",
+        "The readiness fixture now uses a current timestamp; the 200% inline-title test allows the 1px difference caused by integer scrollWidth rounding."
+      ],
+      "limitations": [
+        "WebKit admin navigation checks focusability of each button directly because the Playwright WebKit host follows Safari’s default policy of excluding buttons from Tab traversal when Full Keyboard Access is off.",
+        "This is not native Safari app, physical device or screen-reader acceptance."
+      ]
+    }
   }
 }

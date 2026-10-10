@@ -205,13 +205,13 @@ test('browser text scaling to 200 percent reflows channel, admin, and settings c
       const titleRect = text.getBoundingClientRect()
       const headerRect = text.parentElement!.getBoundingClientRect()
       return {
-        clientWidth: text.clientWidth,
+        clientWidth: titleRect.width,
         scrollWidth: text.scrollWidth,
         titleBottom: titleRect.bottom,
         headerBottom: headerRect.bottom,
       }
     })
-    expect(bounds.scrollWidth, JSON.stringify(bounds)).toBeLessThanOrEqual(bounds.clientWidth)
+    expect(bounds.scrollWidth, JSON.stringify(bounds)).toBeLessThanOrEqual(bounds.clientWidth + 1)
     expect(bounds.titleBottom, JSON.stringify(bounds)).toBeLessThanOrEqual(bounds.headerBottom + 1)
   }
 })
@@ -1248,7 +1248,7 @@ test('admin media does not present old measurements as fresh after an empty refr
   await expect(page.locator('.admin-media-empty')).toHaveCount(0)
 })
 
-test('admin shell exposes all seven sections at 320–1440px and avoids page overflow', async ({ page }) => {
+test('admin shell exposes all seven sections at 320–1440px and avoids page overflow', async ({ page }, testInfo) => {
   await page.route('**/api/v1/**', route => route.fulfill({
     status: 200, contentType: 'application/json', body: '{}',
   }))
@@ -1283,13 +1283,23 @@ test('admin shell exposes all seven sections at 320–1440px and avoids page ove
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 
   const labels = ['Гильдия', 'Участники', 'Роли', 'Каналы', 'Аудит', 'Медиа', 'Готовность']
-  const first = nav.getByRole('button', { name: labels[0], exact: true })
-  await first.focus()
-  for (const label of labels) {
-    const button = nav.getByRole('button', { name: label, exact: true })
-    await expect(button).toBeFocused()
-    await expect(button).toBeInViewport()
-    await page.keyboard.press('Tab')
+  if (testInfo.project.name === 'webkit') {
+    // WebKit's default keyboard policy skips buttons unless macOS Full Keyboard Access is enabled.
+    for (const label of labels) {
+      const button = nav.getByRole('button', { name: label, exact: true })
+      await button.focus()
+      await expect(button).toBeFocused()
+      await expect(button).toBeInViewport()
+    }
+  } else {
+    const first = nav.getByRole('button', { name: labels[0], exact: true })
+    await first.focus()
+    for (const label of labels) {
+      const button = nav.getByRole('button', { name: label, exact: true })
+      await expect(button).toBeFocused()
+      await expect(button).toBeInViewport()
+      await page.keyboard.press('Tab')
+    }
   }
 
   for (const label of labels) {

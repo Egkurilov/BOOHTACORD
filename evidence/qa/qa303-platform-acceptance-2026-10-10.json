@@ -102,6 +102,28 @@
       "acceptance_effect": "Automated responsive viewport and interaction coverage is now available for three browser engines. It does not count as native Safari, mobile browser, physical device or screen-reader task acceptance.",
       "source_revision": "7e5c0ffc plus the tested working tree",
       "runtime_install": "WebKit 26.6 and Firefox 155 Playwright runtimes were installed from the official Playwright CDN after the initial missing-runtime attempt."
+    },
+    {
+      "date": "2026-10-10",
+      "target": "Playwright accessibility suite across Chromium, WebKit and Firefox",
+      "result": "PASS_AUTOMATED_ONLY",
+      "playwright_version": "1.63.0",
+      "runs": [
+        {
+          "browser": "Google Chrome 154.0.8037.98 (Playwright Chromium)",
+          "tests_passed": 47
+        },
+        {
+          "browser": "Playwright WebKit 26.6 (v2359)",
+          "tests_passed": 47
+        },
+        {
+          "browser": "Playwright Firefox 155.0 (v1543)",
+          "tests_passed": 47
+        }
+      ],
+      "evidence": "evidence/qa/qa301-accessibility-2026-10-10.json",
+      "acceptance_effect": "Automated browser accessibility, keyboard dialog traversal and focus restoration are covered across three engines. This does not satisfy native Safari, mobile browser, physical device or assistive technology task scripts."
     }
   ],
   "platform_matrix": [

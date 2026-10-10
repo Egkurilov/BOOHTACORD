@@ -36,6 +36,20 @@
       "command": "cd clients/flutter && flutter analyze --no-pub test/confirmation_dialog_test.dart test/uiux_2026/dialog_visual_capture_test.dart",
       "result": "PASS",
       "observation": "No issues found."
+    },
+    {
+      "name": "Cross-browser destructive-confirm dialog focus and keyboard traversal",
+      "command": "Playwright accessibility suite with Chromium 154, WebKit 26.6 and Firefox 155",
+      "result": "PASS_AUTOMATED_ONLY",
+      "passed_per_engine": 47,
+      "observations": [
+        "WebKit exposed that pointer activation may leave document.activeElement on body; confirmation now remembers the recently clicked opener and restores it with preventScroll.",
+        "Modal Tab handling now advances through every focusable control itself, so browser-level button tab-order preferences cannot skip the destructive action.",
+        "The safe Cancel action receives initial focus, Escape cancels and both Enter-cancel and Escape return focus to the initiating control."
+      ],
+      "limitations": [
+        "No physical touch, VoiceOver, TalkBack, NVDA or Narrator acceptance was run."
+      ]
     }
   ],
   "source_archive": {

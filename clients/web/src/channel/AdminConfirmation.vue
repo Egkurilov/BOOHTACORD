@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { containModalTab } from '../accessibility/modal_tab_focus'
 
 const props = defineProps<{ id: string; title: string; confirmLabel: string }>()
@@ -7,10 +7,26 @@ const dialog = ref<HTMLDialogElement | null>(null)
 const message = ref('')
 let answer: ((confirmed: boolean) => void) | null = null
 let opener: HTMLElement | null = null
+let lastClickedOpener: HTMLElement | null = null
+let lastClickAt = 0
+
+function rememberClickedOpener(event: MouseEvent): void {
+  const target = event.target
+  const candidate = target instanceof Element
+    ? target.closest<HTMLElement>('button, input[type="button"], input[type="submit"], a[href], [role="button"], [tabindex]:not([tabindex="-1"])')
+    : null
+  if (candidate) {
+    lastClickedOpener = candidate
+    lastClickAt = performance.now()
+  }
+}
 
 async function ask(text: string): Promise<boolean> {
   if (answer) return false
-  opener = document.activeElement as HTMLElement | null
+  const active = document.activeElement instanceof HTMLElement && document.activeElement !== document.body
+    ? document.activeElement
+    : null
+  opener = active ?? (performance.now() - lastClickAt <= 1000 ? lastClickedOpener : null)
   message.value = text
   await nextTick()
   return new Promise<boolean>((resolve) => {
@@ -26,10 +42,12 @@ function settle(confirmed: boolean): void {
   answer = null
   if (dialog.value?.open) dialog.value.close()
   resolve(confirmed)
-  if (!confirmed) void nextTick(() => { if (opener?.isConnected) opener.focus() })
+  if (!confirmed) void nextTick(() => { if (opener?.isConnected) opener.focus({ preventScroll: true }) })
 }
 
+onMounted(() => document.addEventListener('click', rememberClickedOpener, true))
 onBeforeUnmount(() => settle(false))
+onBeforeUnmount(() => document.removeEventListener('click', rememberClickedOpener, true))
 function cancel(): boolean {
   if (!answer) return false
   settle(false)

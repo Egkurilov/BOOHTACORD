@@ -25,11 +25,10 @@ export function containModalTab(event: KeyboardEvent, root: HTMLElement | null):
   }
 
   const activeIndex = focusable.indexOf(document.activeElement as HTMLElement)
-  if (event.shiftKey && activeIndex <= 0) {
-    event.preventDefault()
-    focusable[focusable.length - 1].focus()
-  } else if (!event.shiftKey && (activeIndex < 0 || activeIndex === focusable.length - 1)) {
-    event.preventDefault()
-    focusable[0].focus()
-  }
+  const offset = event.shiftKey ? -1 : 1
+  const nextIndex = activeIndex < 0
+    ? event.shiftKey ? focusable.length - 1 : 0
+    : (activeIndex + offset + focusable.length) % focusable.length
+  event.preventDefault()
+  focusable[nextIndex].focus({ preventScroll: true })
 }
