@@ -3,7 +3,7 @@
   "date": "2026-10-10",
   "task": "UIUX-2026 issue #302 — visual matrix, responsive smoke and retained review captures",
   "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/302",
-  "source_revision": "f2f2dc94519290ee120603fce2b1e9b46a44fa00",
+  "source_revision": "a89ef57d",
   "working_tree_changes": true,
   "status": "AUTOMATED_SCOPED_PASS_REVIEW_ONLY_REGION_DELTAS_RECORDED_GOLDEN_AND_CI_ARTIFACT_RUN_PENDING",
   "checks": [
@@ -438,7 +438,7 @@
   ],
   "artifact_storage": "All 37 PNG captures remain ignored local .out files; only the manifest and workflow/test/docs edits will be staged.",
   "latest_revalidation": {
-    "commit": "3668b43d",
+    "commit": "a89ef57d",
     "date": "2026-10-10",
     "source_catalog": "PASS_41_ENTRIES",
     "web_responsive_shell": "PASS_7_TESTS_12_VIEWPORTS",
@@ -525,7 +525,7 @@
   "working_tree_change_note": "The review-only region-delta reporter, responsive-shell focus-restore fix and regression coverage were tested on the working tree and are recorded in cross_browser_revalidation. The unrelated .gitignore change remains unstaged.",
   "cross_browser_revalidation": {
     "date": "2026-10-10",
-    "source_revision": "working tree based on cecb221b",
+    "source_revision": "a89ef57d",
     "playwright_version": "1.63.0",
     "viewports": [
       "320x640",
