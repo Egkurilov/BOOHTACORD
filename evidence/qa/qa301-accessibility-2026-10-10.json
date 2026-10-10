@@ -140,7 +140,7 @@
   "artifact_storage": "All PNGs referenced here remain ignored local .out captures; only this manifest and code/docs changes are committed.",
   "cross_browser_revalidation": {
     "date": "2026-10-10",
-    "source_revision": "3668b43d",
+    "source_revision": "working tree based on cecb221b",
     "status": "PASS_AUTOMATED_ONLY",
     "browser_runs": [
       {
@@ -159,7 +159,7 @@
         "viewports": 12
       }
     ],
-    "focus_finding": "The WebKit run exposed that closing a mobile drawer after click could leave focus on the main region. Navigation and members close now restore focus to their named header opener with preventScroll; search retains prior-focus behavior. A second regression covers destructive dialogs: clicked trigger restoration in WebKit and explicit cyclic Tab focus across dialog controls.",
+    "focus_finding": "The WebKit run exposed that closing a mobile drawer after click could leave focus on the main region. Navigation and members close now restore focus to their named header opener with preventScroll; search retains prior-focus behavior. A second regression covers destructive dialogs: clicked trigger restoration in WebKit and explicit cyclic Tab focus across dialog controls. The cyclic tab trap also preserves checked-radio grouping and summary disclosure controls.",
     "unit_tests": "3/3 workspace_drawer_focus tests passed",
     "limitations": [
       "This adds browser-automated keyboard focus coverage only. No VoiceOver, NVDA, TalkBack or Narrator traversal was run.",
@@ -189,7 +189,8 @@
       "findings_fixed": [
         "Confirmation focus restoration now uses the clicked opener when WebKit leaves focus on body and prevents scroll jumps.",
         "Modal Tab handling cycles through all controls rather than relying on each engine’s native focus policy.",
-        "The readiness fixture now uses a current timestamp; the 200% inline-title test allows the 1px difference caused by integer scrollWidth rounding."
+        "The readiness fixture now uses a current timestamp; the 200% inline-title test allows the 1px difference caused by integer scrollWidth rounding.",
+        "Modal tab-stop discovery now treats a same-name radio group as one stop at its checked option and includes visible details summaries; the screen-share keyboard regression covers forward/reverse traversal."
       ],
       "limitations": [
         "WebKit admin navigation checks focusability of each button directly because the Playwright WebKit host follows Safari’s default policy of excluding buttons from Tab traversal when Full Keyboard Access is off.",

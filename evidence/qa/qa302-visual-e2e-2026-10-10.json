@@ -525,7 +525,7 @@
   "working_tree_change_note": "The review-only region-delta reporter, responsive-shell focus-restore fix and regression coverage were tested on the working tree and are recorded in cross_browser_revalidation. The unrelated .gitignore change remains unstaged.",
   "cross_browser_revalidation": {
     "date": "2026-10-10",
-    "source_revision": "3668b43d",
+    "source_revision": "working tree based on cecb221b",
     "playwright_version": "1.63.0",
     "viewports": [
       "320x640",
@@ -781,8 +781,8 @@
     ],
     "dialog_focus_regression": {
       "before_fix": "WebKit left focus on body after pointer activation, and the native Tab order skipped the second dialog button.",
-      "fix": "Remember the most recent focusable click target as a fallback opener; prevent scroll on restoration; cycle Tab/Shift+Tab explicitly through dialog controls.",
-      "verification": "The complete 47-case accessibility suite passes in Chromium 154, Playwright WebKit 26.6 and Firefox 155."
+      "fix": "Remember the most recent focusable click target as a fallback opener; prevent scroll on restoration; cycle Tab/Shift+Tab explicitly through dialog controls. Tab-stop calculation treats each same-name radio group as one stop at its checked option and includes visible summary controls.",
+      "verification": "The complete 47-case accessibility suite passes in Chromium 154, Playwright WebKit 26.6 and Firefox 155. A screen-share regression verifies Tab from the checked radio skips unchecked peers and Shift+Tab returns to it."
     }
   }
 }

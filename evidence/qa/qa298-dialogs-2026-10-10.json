@@ -45,7 +45,8 @@
       "observations": [
         "WebKit exposed that pointer activation may leave document.activeElement on body; confirmation now remembers the recently clicked opener and restores it with preventScroll.",
         "Modal Tab handling now advances through every focusable control itself, so browser-level button tab-order preferences cannot skip the destructive action.",
-        "The safe Cancel action receives initial focus, Escape cancels and both Enter-cancel and Escape return focus to the initiating control."
+        "The safe Cancel action receives initial focus, Escape cancels and both Enter-cancel and Escape return focus to the initiating control.",
+        "The explicit Tab cycle preserves native radio-group semantics: Tab leaves the selected radio for the next control, while Shift+Tab returns to the selected option; visible summary controls are included."
       ],
       "limitations": [
         "No physical touch, VoiceOver, TalkBack, NVDA or Narrator acceptance was run."
