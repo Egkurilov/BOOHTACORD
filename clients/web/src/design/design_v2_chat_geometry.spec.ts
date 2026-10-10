@@ -61,12 +61,12 @@ describe('Design V2 chat reference geometry', () => {
     expect(overlays).toContain('.text-conversation .message-composer, .direct-message-conversation .message-composer { gap: 0; }')
     expect(overlays).toContain('.message-composer .attachment-trigger { margin: 0 4px 0 0; }')
     expect(overlays).toContain('.message-composer .composer-send { margin: 0 0 0 4px; }')
-    expect(overlays).toContain('.message-composer textarea { font-size: 16px; line-height: 24px; padding: 10px 0; }')
+    expect(overlays).toContain('.message-composer textarea { font-size: 1rem; line-height: 1.5rem; padding: 10px 0; }')
   })
 
   it('matches the R01 and R03 desktop composer control sizes', () => {
     expect(overlays).toContain('@media (min-width: 1024px) {')
-    expect(overlays).toContain('.text-conversation .message-composer textarea { min-height: 34px; height: 34px; padding: 7px 0; font-size: 15px; resize: none; }')
+    expect(overlays).toContain('.text-conversation .message-composer textarea { min-height: 34px; height: 34px; padding: 7px 0; font-size: 0.9375rem; resize: none; }')
     expect(overlays).toContain('.text-conversation .message-composer .attachment-trigger,')
     expect(overlays).toContain('.text-conversation .message-composer .composer-send { width: 32px; height: 34px; min-height: 34px; flex: 0 0 32px; }')
   })

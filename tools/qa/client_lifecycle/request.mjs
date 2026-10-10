@@ -21,6 +21,16 @@ export async function login(page, loginName, password) {
   await expect(page.getByTestId('app-shell')).toBeVisible()
 }
 export async function openNavigation(page) {
+  const scrim = page.locator('.drawer-scrim')
+  if (await scrim.isVisible()) {
+    const viewport = page.viewportSize() ?? { width: 320, height: 600 }
+    const navigationOpen = await page.locator('.sidebar').evaluate(element => element.classList.contains('is-open'))
+    await scrim.click({ position: {
+      x: navigationOpen ? viewport.width - 8 : 8,
+      y: Math.max(8, Math.min(viewport.height / 2, viewport.height - 8)),
+    } })
+    await expect(scrim).toBeHidden()
+  }
   const guildHeader = page.locator('.guild-header')
   if (!(await guildHeader.isVisible())) {
     await page.getByRole('button', { name: 'Открыть навигацию', exact: true }).click()

@@ -1,22 +1,22 @@
 .screen-share-setup-dialog--updating { width: min(480px, calc(100vw - 32px)); height: max-content; max-height: calc(100dvh - 48px); color: var(--gc-text-primary); background: var(--gc-surface); }
 .screen-share-setup-dialog--updating::backdrop { background: var(--gc-overlay); backdrop-filter: none; }
 .screen-share-setup-dialog--updating .screen-share-setup__header { position: relative; min-height: 120px; flex: none; align-items: flex-start; padding: 28px 24px 24px; }
-.screen-share-setup-dialog--updating .screen-share-setup__title h2 { width: calc(100% - 48px); font-size: 20px; font-weight: 600; letter-spacing: -.2px; line-height: 28px; }
-.screen-share-setup-dialog--updating .screen-share-setup__title p { margin-top: 20px; font-size: 14px; line-height: 20px; }
+.screen-share-setup-dialog--updating .screen-share-setup__title h2 { width: calc(100% - 48px); font-size: 1.25rem; font-weight: 600; letter-spacing: -.2px; line-height: 1.75rem; }
+.screen-share-setup-dialog--updating .screen-share-setup__title p { margin-top: 20px; font-size: 0.875rem; line-height: 1.25rem; }
 .screen-share-setup-dialog--updating .screen-share-setup__close { position: absolute; top: 24px; right: 24px; width: 36px; height: 36px; }
 .screen-share-setup-dialog--updating .screen-share-setup__close svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .screen-share-setup-dialog--updating .screen-share-setup__body { display: block; min-height: 0; overflow: auto; padding: 0 24px 24px; }
 .screen-share-setup-dialog--updating .screen-share-quality { gap: 20px; }
 .screen-share-setup-dialog--updating .screen-share-quality__row { display: block; }
-.screen-share-setup-dialog--updating .screen-share-quality__row legend { float: none; width: auto; margin-bottom: 8px; color: var(--gc-text-primary); font-size: 14px; font-weight: 500; }
+.screen-share-setup-dialog--updating .screen-share-quality__row legend { float: none; width: auto; margin-bottom: 8px; color: var(--gc-text-primary); font-size: 0.875rem; font-weight: 500; }
 .screen-share-setup-dialog--updating .screen-share-quality__segments { width: 100%; gap: 4px; padding: 4px; border-color: var(--gc-border-subtle); border-radius: 8px; background: var(--gc-sidebar); }
 .screen-share-setup-dialog--updating .screen-share-quality__option { min-height: 36px; border: 0; color: var(--gc-text-secondary); }
 .screen-share-setup-dialog--updating .screen-share-quality__option:has(input:checked) { color: #fff; background: var(--gc-accent); border-radius: 6px; }
 .screen-share-setup-dialog--updating .screen-share-quality__option:has(input:checked)::before { display: none; }
-.screen-share-setup-dialog--updating .screen-share-quality__warning { display: flex; gap: 10px; margin: 0; border: 1px solid #67582F; border-radius: 8px; padding: 12px 16px; color: #EED59F; background: #292517; font-size: 13px; line-height: 20px; }
+.screen-share-setup-dialog--updating .screen-share-quality__warning { display: flex; gap: 10px; margin: 0; border: 1px solid #67582F; border-radius: 8px; padding: 12px 16px; color: #EED59F; background: #292517; font-size: 0.8125rem; line-height: 1.25rem; }
 .screen-share-setup-dialog--updating .screen-share-quality__warning svg { width: 18px; height: 18px; flex: none; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .screen-share-setup-dialog--updating .screen-share-setup__footer { position: static; flex: none; min-height: 69px; padding: 12px 24px; background: var(--gc-sidebar); }
-.screen-share-setup-dialog--updating .screen-share-setup__footer button { min-height: 36px; padding: 0 14px; font-size: 14px; font-weight: 500; }
+.screen-share-setup-dialog--updating .screen-share-setup__footer button { min-height: 36px; padding: 0 14px; font-size: 0.875rem; font-weight: 500; }
 .screen-share-setup-dialog--updating .screen-share-setup__cancel { border: 1px solid transparent; color: var(--gc-text-secondary); }
 .screen-share-setup-dialog--updating .screen-share-setup__start { min-height: 36px; padding-inline: 14px; background: var(--gc-accent); }
 @media (max-width: 1023px) {
@@ -28,7 +28,7 @@
   .screen-share-setup-dialog--updating .screen-share-setup__title p { margin-top: 22px; }
   .screen-share-setup-dialog--updating .screen-share-setup__body { padding-inline: 20px; }
   .screen-share-setup-dialog--updating .screen-share-quality { gap: 20px; }
-  .screen-share-setup-dialog--updating .screen-share-quality__warning { margin-top: 0; padding: 12px; font-size: 12px; line-height: 18px; }
+  .screen-share-setup-dialog--updating .screen-share-quality__warning { margin-top: 0; padding: 12px; font-size: 0.75rem; line-height: 1.125rem; }
   .screen-share-setup-dialog--updating .screen-share-setup__footer { min-height: 77px; justify-content: space-between; gap: 12px; padding: 12px 20px; }
   .screen-share-setup-dialog--updating .screen-share-setup__footer button { min-height: 44px; flex: 1; }
   .screen-share-setup-dialog--updating .screen-share-quality__option { min-height: 40px; }

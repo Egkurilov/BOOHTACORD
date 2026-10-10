@@ -5,7 +5,7 @@ const css = readFileSync(new URL('./design_v2_admin_permissions.css', import.met
 
 describe('Design V2 mobile permission table', () => {
   it('uses the handoff label and column header text sizes', () => {
-    expect(css).toContain('.workspace-main-panel--admin .role-permission-label { font-size: 13px; }')
-    expect(css).toContain('.workspace-main-panel--admin .role-permission-table thead th { font-size: 11px; padding: 0 2px; }')
+    expect(css).toContain('.workspace-main-panel--admin .role-permission-label { font-size: 0.8125rem; }')
+    expect(css).toContain('.workspace-main-panel--admin .role-permission-table thead th { font-size: 0.6875rem; padding: 0 2px; }')
   })
 })

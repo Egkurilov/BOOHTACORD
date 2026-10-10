@@ -3,9 +3,9 @@
 .voice-room .screen-stage { position: relative; overflow: hidden; border-radius: 12px; }
 .voice-room .screen-player { width: 100%; height: 100%; max-height: 100%; object-fit: contain; background: #050608; }
 .voice-room .screen-stage-top { inset: 16px auto auto 16px; }
-.voice-room .screen-stage-label { display: flex; height: 40px; align-items: center; gap: 10px; border-radius: 8px; padding: 6px 10px; color: var(--gc-text-primary); background: rgba(8, 10, 15, .85); font-size: 12px; font-weight: 700; }
-.screen-stage-avatar { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; font-size: 11px; font-weight: 600; }
-.screen-stage-label b, .stream-option-copy b { flex: none; border-radius: 6px; padding: 2px 6px; color: #FF9AD5; background: #3D1831; font-size: 12px; line-height: 16px; font-weight: 600; }
+.voice-room .screen-stage-label { display: flex; height: 40px; align-items: center; gap: 10px; border-radius: 8px; padding: 6px 10px; color: var(--gc-text-primary); background: rgba(8, 10, 15, .85); font-size: 0.75rem; font-weight: 700; }
+.screen-stage-avatar { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; font-size: 0.6875rem; font-weight: 600; }
+.screen-stage-label b, .stream-option-copy b { flex: none; border-radius: 6px; padding: 2px 6px; color: #FF9AD5; background: #3D1831; font-size: 0.75rem; line-height: 1rem; font-weight: 600; }
 .voice-room .stream-quality-row { display: flex; width: 100%; height: 48px; min-height: 48px; align-items: center; gap: 8px; border: 1px solid var(--gc-border-subtle); border-radius: 10px; padding: 4px 8px; background: var(--gc-sidebar); }
 .stream-quality-row .screen-audio-toggle, .stream-tool-button { display: grid; width: 36px; height: 36px; min-height: 36px; flex: none; place-items: center; border: 0; border-radius: 8px; padding: 0; color: var(--gc-text-secondary); background: transparent; cursor: pointer; }
 .stream-tool-button:hover, .stream-tool-button:focus-visible { color: var(--gc-text-primary); background: var(--gc-surface-hover); }
@@ -14,11 +14,11 @@
 .voice-room .stream-quality-row .volume-control input { appearance: none; width: 100px; min-width: 100px; height: 4px; margin: 0; border: 0; border-radius: 99px; padding: 0; background: linear-gradient(to right, var(--gc-text-secondary) var(--screen-audio-level), #404654 var(--screen-audio-level)); }
 .stream-quality-row .volume-control input::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--gc-text-primary); }
 .stream-quality-row .volume-control input::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--gc-text-primary); }
-.voice-room .stream-quality-row .volume-control output { color: var(--gc-text-muted); font-size: 12px; }
+.voice-room .stream-quality-row .volume-control output { color: var(--gc-text-muted); font-size: 0.75rem; }
 .stream-toolbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .voice-room .screen-fullscreen-button { position: static; inset: auto; width: 36px; height: 36px; border: 0; color: var(--gc-text-secondary); background: transparent; }
 .stream-more-actions { position: relative; }
-.stream-more-actions > summary { list-style: none; font-size: 22px; line-height: 1; }
+.stream-more-actions > summary { list-style: none; font-size: 1.375rem; line-height: 1; }
 .stream-more-actions > summary::-webkit-details-marker { display: none; }
 .stream-more-actions .stream-voice-return { position: absolute; z-index: 20; top: 40px; right: 0; left: auto; display: grid; width: 208px; min-height: 0; gap: 0; border: 1px solid var(--gc-border-subtle); border-radius: 10px; padding: 6px; background: var(--gc-surface-raised); box-shadow: var(--gc-shadow-popup); }
 .stream-more-actions .stream-voice-return button { min-height: 36px; border: 0; border-radius: 6px; padding: 0 10px; color: var(--gc-text-secondary); background: transparent; text-align: left; }
@@ -29,9 +29,9 @@
 .voice-room .screen-cards .stream-option.selected { border: 2px solid var(--gc-accent); background: var(--gc-sidebar); }
 .stream-card-preview { display: block; position: relative; box-sizing: border-box; width: 100%; height: 64px; min-height: 64px; overflow: hidden; background: #222835; }
 .stream-card-preview .stream-thumbnail { display: block; width: 100%; height: 100%; object-fit: cover; }
-.stream-card-preview .stream-avatar { display: grid; position: absolute; top: 14px; left: 8px; width: 36px; height: 36px; place-items: center; border-radius: 50%; font-size: 13px; font-weight: 600; }
+.stream-card-preview .stream-avatar { display: grid; position: absolute; top: 14px; left: 8px; width: 36px; height: 36px; place-items: center; border-radius: 50%; font-size: 0.8125rem; font-weight: 600; }
 .stream-rail-participants .stream-card-preview .stream-avatar { color: #A5F2F0; background: var(--gc-avatar-blue); }
-.voice-room .screen-cards .stream-option-copy { display: flex; width: 100%; min-width: 0; height: 28px; min-height: 28px; align-items: center; gap: 6px; padding: 4px 8px; color: var(--gc-text-primary); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.voice-room .screen-cards .stream-option-copy { display: flex; width: 100%; min-width: 0; height: 28px; min-height: 28px; align-items: center; gap: 6px; padding: 4px 8px; color: var(--gc-text-primary); font-size: 0.75rem; font-weight: 400; white-space: nowrap; }
 .stream-option-copy > span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .stream-option-copy b { margin-left: auto; }
 @media (max-width: 720px) {
@@ -40,7 +40,7 @@
   .voice-room .screen-viewer.stream-wrap { grid-template-rows: minmax(0, 1fr) 56px 84px; gap: 12px; padding: 12px; }
   .voice-room .screen-stage-top { inset: 8px auto auto 8px; }
   .voice-room .screen-stage { border-radius: 10px; }
-  .voice-room .screen-stage-label { height: 28px; gap: 6px; padding: 4px 8px; font-size: 11px; }
+  .voice-room .screen-stage-label { height: 28px; gap: 6px; padding: 4px 8px; font-size: 0.6875rem; }
   .voice-room .screen-stage-avatar { display: none; }
   .voice-room .stream-quality-row { height: 56px; min-height: 56px; gap: 2px; padding: 4px; }
   .voice-room .stream-quality-row .volume-control { display: none; }

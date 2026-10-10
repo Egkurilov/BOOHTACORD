@@ -72,6 +72,8 @@ The CSS variable and Flutter constant in each opaque-color row have the same RGB
 
 `--gc-space-0` has no named Flutter counterpart; use Flutter's zero value rather than adding a redundant constant. Material defaults connect the shared scale to `TextTheme` (caption, small label, body, message, title, section, page); a component may choose a different role when its documented hierarchy calls for it.
 
+Web typography tokens and component font sizes/line heights use `rem` so browser text-size preferences scale text and reflow the interface. At the default 16 px root size, they preserve the pixel values shown above and Flutter logical-pixel constants. Spacing, shape, and control geometry remain in pixels.
+
 ## Controls, layout, and interaction
 
 | Contract | Web token | Flutter constant | Current value |

@@ -96,6 +96,56 @@ test('the channel favorite toggle stays inside its row at responsive widths', as
   }
 })
 
+test('production channel favorites remain reachable when adding a lower channel on narrow drawers', async ({ page }) => {
+  for (const width of [320, 390, 600, 840, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/')
+    await page.evaluate(async () => {
+      const load = (path: string) => import(path)
+      const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+      const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
+      const { default: ChannelNavigation } = await load('/src/channel/ChannelNavigation.vue')
+      localStorage.clear()
+      document.body.innerHTML = '<div class="app-frame"><div class="gc-shell no-aside"><aside class="sidebar is-open"><div class="nav-drawer"><div class="nav-content" id="mount"></div></div></aside><main class="main"></main></div></div>'
+      const channels = Array.from({ length: 18 }, (_, position) => ({
+        id: `channel-${position + 1}`,
+        name: `Канал ${position + 1}`,
+        kind: 'TEXT',
+        position,
+        admissionClosed: false,
+      }))
+      const app = createApp({ render: () => h(ChannelNavigation, {
+        accountId: 'favorite-regression-account',
+        selectedChannelId: 'channel-18',
+        topology: { revision: 1, categories: [{ id: 'category-1', name: 'Общение', position: 0, channels }] },
+        voicePresence: null,
+      }) })
+      app.use(createPinia())
+      app.mount('#mount')
+    })
+
+    const navContent = page.locator('.nav-content')
+    const targetRow = page.locator('.channel-row').filter({ hasText: 'Канал 18' })
+    await targetRow.scrollIntoViewIfNeeded()
+    const favorite = targetRow.locator('.channel-favorite-toggle')
+    await expect(favorite).toBeVisible()
+    await favorite.click()
+    await expect(favorite).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('.channel-favorite-link')).toBeVisible()
+    await expect(favorite).toBeVisible()
+    expect(await navContent.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    const navBox = await navContent.boundingBox()
+    const favoriteBox = await favorite.boundingBox()
+    expect(navBox).not.toBeNull()
+    expect(favoriteBox).not.toBeNull()
+    expect(favoriteBox!.x).toBeGreaterThanOrEqual(navBox!.x)
+    expect(favoriteBox!.x + favoriteBox!.width).toBeLessThanOrEqual(navBox!.x + navBox!.width + 1)
+    expect(favoriteBox!.y).toBeGreaterThanOrEqual(navBox!.y)
+    expect(favoriteBox!.y + favoriteBox!.height).toBeLessThanOrEqual(navBox!.y + navBox!.height + 1)
+  }
+})
+
 test('browser Back and Forward close and restore overlays without losing workspace or voice state', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/tests/responsive_shell/fixture.html')

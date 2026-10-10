@@ -53,7 +53,7 @@ describe('Design V2 audio settings', () => {
   })
 
   it('keeps checkbox row labels at the same body size as button row labels', () => {
-    expect(presentation).toMatch(/\.workspace-main-panel--audio \.audio-processing-row \{[^}]*color: var\(--gc-text-primary\);[^}]*font-size: 14px;/)
+    expect(presentation).toMatch(/\.workspace-main-panel--audio \.audio-processing-row \{[^}]*color: var\(--gc-text-primary\);[^}]*font-size: 0.875rem;/)
   })
 
   it('keeps content gutters on tablet and uses the handoff mobile breakpoint', () => {

@@ -33,4 +33,4 @@ onBeforeUnmount(()=>{alive=false;sequence++;stop()})
     <span v-if="loading" role="status">Загрузка реакций…</span><span v-if="error" role="alert">{{error}} <button type="button" :disabled="loading||busy" @click="load()">Обновить реакции</button></span>
   </div>
 </template>
-<style scoped>.reaction-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;font-size:12px}.reaction-tools>button{min-height:28px;border:1px solid var(--gc-border);border-radius:14px;background:transparent;color:inherit;padding:3px 8px}.reaction-tools>button[aria-pressed="true"]{border-color:var(--gc-accent);background:var(--gc-panel)}.reaction-tools span{margin-left:4px}</style>
+<style scoped>.reaction-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;font-size:0.75rem}.reaction-tools>button{min-height:28px;border:1px solid var(--gc-border);border-radius:14px;background:transparent;color:inherit;padding:3px 8px}.reaction-tools>button[aria-pressed="true"]{border-color:var(--gc-accent);background:var(--gc-panel)}.reaction-tools span{margin-left:4px}</style>

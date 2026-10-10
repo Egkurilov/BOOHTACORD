@@ -1,7 +1,7 @@
 /* R21–R22: real directory with server mutations in per-account actions. */
 .admin-panel--members .admin-eyebrow { display: none; }
 .admin-panel--members .admin-panel-heading h1 { font-size: var(--gc-text-page); line-height: var(--gc-line-page); font-weight: var(--gc-weight-semibold); }
-.admin-panel--members .admin-panel-description { margin: 8px 0 0; color: var(--gc-text-secondary); font-size: 14px; line-height: 20px; }
+.admin-panel--members .admin-panel-description { margin: 8px 0 0; color: var(--gc-text-secondary); font-size: 0.875rem; line-height: 1.25rem; }
 .workspace-main-panel--admin .admin-panel--members { gap: 24px; }
 .workspace-main-panel--admin .admin-panel--members .admin-directory { gap: 20px; }
 .admin-panel--members .admin-section-heading h2 { font-size: var(--gc-text-section); line-height: var(--gc-line-section); font-weight: var(--gc-weight-semibold); }
@@ -14,7 +14,7 @@
 .admin-panel--members .admin-filter-results button { min-height: 36px; border: 1px solid var(--gc-border-control); border-radius: var(--gc-radius-sm); padding: 0 12px; color: var(--gc-text-primary); background: var(--gc-surface); }
 .admin-panel--members .admin-empty-filter-state { margin: 0; }
 .admin-member-filters label:first-child { min-width: 0; flex: 1; }
-.admin-member-filters input, .admin-member-filters select { height: 44px; border: 1px solid var(--gc-border-control); border-radius: 8px; color: var(--gc-text-primary); background: var(--gc-sidebar); font-size: 14px; }
+.admin-member-filters input, .admin-member-filters select { height: 44px; border: 1px solid var(--gc-border-control); border-radius: 8px; color: var(--gc-text-primary); background: var(--gc-sidebar); font-size: 0.875rem; }
 .admin-member-filters input { width: 100%; padding: 0 12px; }
 .admin-member-filters input::placeholder { color: var(--gc-text-primary); opacity: 1; }
 .admin-member-filters select { width: 121px; padding: 0 12px; background: var(--gc-surface-raised); }
@@ -30,14 +30,14 @@
 .admin-panel--members .admin-table td { min-width: 0; padding: 8px 0; }
 .admin-account-user { display: flex !important; align-items: center; gap: 12px; }
 .admin-account-user > span:last-child { min-width: 0; }
-.admin-account-user strong { display: block; font-size: 16px; line-height: 20px; }
-.admin-account-user small { display: block; margin: 2px 0 0 !important; font-size: 12px; line-height: 16px; }
-.admin-account-avatar { display: grid !important; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 50%; color: #ded8fb; font-size: 12px; }
-.admin-account-status { border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 600; line-height: 16px; }
+.admin-account-user strong { display: block; font-size: 1rem; line-height: 1.25rem; }
+.admin-account-user small { display: block; margin: 2px 0 0 !important; font-size: 0.75rem; line-height: 1rem; }
+.admin-account-avatar { display: grid !important; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border-radius: 50%; color: #ded8fb; font-size: 0.75rem; }
+.admin-account-status { border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-weight: 600; line-height: 1rem; }
 .admin-account-status.is-active { color: #78e6a0; background: #123320; }
 .admin-account-status.is-blocked { color: #fbb5bd; background: #4a1c25; }
 .admin-account-actions { position: relative; text-align: right; }
-.admin-panel--members .admin-account-actions > button { width: 32px; min-height: 32px; border: 0; padding: 0; color: var(--gc-text-muted); background: transparent; font-size: 20px; }
+.admin-panel--members .admin-account-actions > button { width: 32px; min-height: 32px; border: 0; padding: 0; color: var(--gc-text-muted); background: transparent; font-size: 1.25rem; }
 .admin-account-actions-menu { position: absolute; top: 52px; right: 0; z-index: 6; display: grid; width: 244px; gap: 12px; border: 1px solid #303542; border-radius: 12px; padding: 16px; background: var(--gc-surface-raised); box-shadow: 0 20px 60px #0008; text-align: left; }
 .admin-account-actions-menu > label:not(.admin-block-toggle) { display: grid; gap: 6px; }
 .admin-account-actions-menu select { min-height: 36px; }
@@ -46,7 +46,7 @@
 @media (max-width: 720px) {
   .workspace-main-panel--admin .admin-panel--members { gap: 20px; padding-top: 24px; }
   .workspace-main-panel--admin .admin-panel--members .admin-directory { margin-top: 1px; }
-  .admin-panel--members .admin-panel-heading h1 { font-size: 22px; line-height: 28px; }
+  .admin-panel--members .admin-panel-heading h1 { font-size: 1.375rem; line-height: 1.75rem; }
   .admin-panel--members .admin-panel-description { margin-top: 8px; }
   .admin-panel--members .admin-section-heading { flex-wrap: wrap; }
   .admin-panel--members .admin-section-heading > button { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
@@ -61,9 +61,9 @@
   .admin-panel--members .admin-mobile-card summary { position: relative; gap: 16px; }
   .admin-panel--members .admin-mobile-menu-mark { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; color: var(--gc-text-muted); stroke-width: 1.8; pointer-events: none; }
   .admin-panel--members .admin-mobile-user { gap: 12px; }
-  .admin-panel--members .admin-mobile-avatar { width: 36px; height: 36px; font-size: 12px; }
-  .admin-panel--members .admin-mobile-user strong { font-size: 16px; line-height: 20px; font-weight: 600; }
-  .admin-panel--members .admin-mobile-user small { font-size: 12px; line-height: 16px; }
-  .admin-panel--members .admin-mobile-meta { align-items: center; padding-left: 0; font-size: 14px; }
-  .admin-panel--members .admin-mobile-meta .is-active { border-radius: 4px; padding: 2px 6px; color: #78e6a0; background: #123320; font-size: 12px; font-weight: 600; line-height: 16px; }
+  .admin-panel--members .admin-mobile-avatar { width: 36px; height: 36px; font-size: 0.75rem; }
+  .admin-panel--members .admin-mobile-user strong { font-size: 1rem; line-height: 1.25rem; font-weight: 600; }
+  .admin-panel--members .admin-mobile-user small { font-size: 0.75rem; line-height: 1rem; }
+  .admin-panel--members .admin-mobile-meta { align-items: center; padding-left: 0; font-size: 0.875rem; }
+  .admin-panel--members .admin-mobile-meta .is-active { border-radius: 4px; padding: 2px 6px; color: #78e6a0; background: #123320; font-size: 0.75rem; font-weight: 600; line-height: 1rem; }
 }

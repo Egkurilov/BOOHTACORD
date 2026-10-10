@@ -1,9 +1,30 @@
 import assert from 'node:assert/strict'
+import { randomUUID } from 'node:crypto'
 import { api, channel, expect, guildPanel, status } from './request.mjs'
 import { seedAdminAuditHistory, seedAdminReferenceTopology } from './admin_reference_fixture.mjs'
+
+async function captureAtTwoX(page, directory, file, report) {
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%' })
+  const viewportFits = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+  assert.equal(viewportFits, true, `${file} has horizontal overflow at 200% browser text scale`)
+  await page.screenshot({ path: directory+'/'+file })
+  await page.evaluate(() => { document.documentElement.style.fontSize = '100%' })
+  report.textScale200 ??= []
+  report.textScale200.push({ screenshot: file, horizontalOverflow: false })
+}
+
 export async function guild(a, b, guest, password, report, directory) {
   const target = await seedAdminReferenceTopology(a)
   await channel(b, 'Text')
+  for (const body of [
+    'Synthetic UIUX channel sample: readable conversation text.',
+    'Synthetic UIUX channel sample: labels, timestamps and actions.',
+    'Synthetic UIUX channel sample: wrapping at narrow viewports.',
+  ]) {
+    status(await api(b, `/channels/${target.id}/messages`, 'POST', { client_message_id: randomUUID(), body }), 201)
+  }
+  await expect(b.getByRole('log', { name: 'История сообщений' })).toContainText('Synthetic UIUX channel sample: wrapping at narrow viewports.')
+  await b.screenshot({ path: directory+'/channel-text.png' })
   await guildPanel(a)
   const settings = (await api(a, '/admin/guild-settings')).body
   await a.screenshot({ path: directory+'/guild-settings-initial.png' })
@@ -46,6 +67,9 @@ export async function guild(a, b, guest, password, report, directory) {
   assert.equal(denied.status(), 403)
   report.guild = { live_rename: true, private_profile: true, revision_conflict: true, origin_denied: true }
   await a.screenshot({ path: directory+'/guild-settings.png' })
+  await captureAtTwoX(a, directory, 'guild-settings-200.png', report)
+  const closeAdmin = a.getByRole('button', { name: 'Закрыть администрирование', exact: true })
+  if (await closeAdmin.isVisible()) await closeAdmin.click()
   await channel(a, 'Text'); await channel(b, 'Text')
   const registered = await api(guest, '/auth/register', 'POST', { login: 'qa_member', password })
   status(registered, 201)
@@ -58,6 +82,15 @@ export async function guild(a, b, guest, password, report, directory) {
   assert.equal(rows.length, 1)
   await b.reload(); await channel(b, 'Text')
   await expect(b.getByLabel('Системное приветствие', { exact: true })).toHaveCount(1)
+  await expect(b.getByRole('log', { name: 'История сообщений' })).toContainText('Synthetic UIUX channel sample: labels, timestamps and actions.')
+  await b.screenshot({ path: directory+'/channel-text.png' })
+  await captureAtTwoX(b, directory, 'channel-text-200.png', report)
+  const memberPanel = b.locator('.members-panel')
+  if (!(await memberPanel.isVisible())) await b.getByRole('button', { name: 'Открыть участников', exact: true }).click()
+  await expect(memberPanel).toBeVisible()
+  await expect(memberPanel).toContainText('qa_member')
+  await b.screenshot({ path: directory+'/channel-participants.png' })
+  await captureAtTwoX(b, directory, 'channel-participants-200.png', report)
   const retry = await api(guest, '/auth/register', 'POST', { login: 'qa_member', password })
   status(retry, 409)
   await a.screenshot({ path: directory+'/welcome-a.png' })

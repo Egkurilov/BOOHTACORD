@@ -108,7 +108,7 @@ describe('screen-share setup dialog', () => {
     expect(updating).toContain('font-weight: 600; letter-spacing: -.2px')
     expect(updating).toContain('font-weight: 500;')
     expect(updating).toContain('.screen-share-setup-dialog--updating .screen-share-setup__footer button { min-height: 44px; flex: 1; }')
-    expect(updating).toContain('.screen-share-setup-dialog--updating .screen-share-setup__footer button { min-height: 36px; padding: 0 14px; font-size: 14px; font-weight: 500; }')
+    expect(updating).toContain('.screen-share-setup-dialog--updating .screen-share-setup__footer button { min-height: 36px; padding: 0 14px; font-size: 0.875rem; font-weight: 500; }')
     expect(updating).toContain('.screen-share-setup-dialog--updating .screen-share-setup__close svg { width: 20px; height: 20px; stroke-width: 1.8; }')
     expect(updating).toContain('.screen-share-setup-dialog--updating .screen-share-setup__header { position: relative;')
     expect(updating).toContain('.screen-share-setup-dialog--updating .screen-share-setup__close { position: absolute; top: 24px; right: 24px; width: 36px; height: 36px; }')

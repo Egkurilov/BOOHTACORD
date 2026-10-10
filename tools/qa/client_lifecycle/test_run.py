@@ -14,6 +14,16 @@ class ViewportProfileTests(unittest.TestCase):
             'has_touch': True,
         })
 
+    def test_mobile_profile_matches_issue_290_reference_viewport(self):
+        self.assertEqual(viewport_profile(390), {
+            'name': 'mobile-390x844',
+            'width': 390,
+            'height': 844,
+            'is_mobile': True,
+            'device_scale_factor': 3,
+            'has_touch': True,
+        })
+
     def test_tablet_and_desktop_profiles_keep_explicit_target_heights(self):
         self.assertEqual(viewport_profile(1024), {
             'name': 'tablet-1024x768',
@@ -34,7 +44,7 @@ class ViewportProfileTests(unittest.TestCase):
 
     def test_unsupported_width_is_rejected(self):
         with self.assertRaises(ValueError):
-            viewport_profile(390)
+            viewport_profile(391)
 
 
 if __name__ == '__main__':

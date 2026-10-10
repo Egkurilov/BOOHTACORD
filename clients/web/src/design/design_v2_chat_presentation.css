@@ -1,10 +1,10 @@
 /* Chat rhythm and fallback identity from R01–R03. */
 .guild-mark { object-fit: contain; border-radius: 0; background: transparent; }
-.guild-header-copy { display: grid; min-width: 0; gap: 0; line-height: 18px; }
-.guild-member-count { color: var(--gc-text-muted); font-size: 12px; font-weight: 400; line-height: 16px; }
-.guild-chevron { margin-left: auto; color: var(--gc-text-muted); font-size: 18px; }
+.guild-header-copy { display: grid; min-width: 0; gap: 0; line-height: 1.125rem; }
+.guild-member-count { color: var(--gc-text-muted); font-size: 0.75rem; font-weight: 400; line-height: 1rem; }
+.guild-chevron { margin-left: auto; color: var(--gc-text-muted); font-size: 1.125rem; }
 .voice-dock-copy { min-width: 0; flex: 1; }
-.voice-dock-subtitle { margin: 0; color: var(--gc-text-muted); font-size: 12px; line-height: 16px; }
+.voice-dock-subtitle { margin: 0; color: var(--gc-text-muted); font-size: 0.75rem; line-height: 1rem; }
 .voice-dock.connected .voice-status { color: var(--gc-success); }
 @media (min-width: 1024px) {
   .sidebar .mobile-voice-dock .voice-actions { justify-content: flex-start; gap: 6px; }
@@ -17,7 +17,7 @@
 .text-conversation .message-list > li:has(.attachment-card) + li[data-message-id] { margin-top: 34px; }
 .text-conversation .message-avatar,
 .text-conversation .message-avatar-spacer { width: 36px; flex-basis: 36px; }
-.text-conversation .message-avatar { height: 36px; font-size: 14px; }
+.text-conversation .message-avatar { height: 36px; font-size: 0.875rem; }
 .channel-navigation-actions { padding-top: 1px; padding-left: 8px; }
 .channel-navigation-actions > span { font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }
 .channel-navigation .channel-member-count { display: none; }
@@ -71,7 +71,7 @@
   .text-conversation .message-row { gap: 8px; }
   .text-conversation .message-avatar,
   .text-conversation .message-avatar-spacer { width: 32px; flex-basis: 32px; }
-  .text-conversation .message-avatar { height: 32px; font-size: 12px; }
+  .text-conversation .message-avatar { height: 32px; font-size: 0.75rem; }
 }
 @media (max-width: 720px) {
   .text-conversation .main-title small { display: none; }

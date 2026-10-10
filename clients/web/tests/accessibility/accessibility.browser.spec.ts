@@ -98,6 +98,81 @@ test('WCAG smoke covers profile settings', async ({ page }) => {
   await expectAxeClear(page, '.profile-settings')
 })
 
+test('browser text scaling to 200 percent reflows channel, admin, and settings controls', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+
+  const expectRootScaledText = async (selector: string) => {
+    const target = page.locator(selector).first()
+    await page.evaluate(() => { document.documentElement.style.fontSize = '100%' })
+    const baseline = Number.parseFloat(await target.evaluate(element => getComputedStyle(element).fontSize))
+    await page.evaluate(() => { document.documentElement.style.fontSize = '200%' })
+    const scaled = Number.parseFloat(await target.evaluate(element => getComputedStyle(element).fontSize))
+    expect(scaled, `${selector} follows 200% browser text sizing`).toBeCloseTo(baseline * 2, 1)
+  }
+  const expectNoDocumentOverflow = async () => {
+    const dimensions = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+      overflowing: [...document.querySelectorAll<HTMLElement>('*')]
+        .filter(element => element.getBoundingClientRect().right > window.innerWidth + 1)
+        .map(element => {
+          const rect = element.getBoundingClientRect()
+          return `${element.tagName.toLowerCase()}.${element.className.toString()}(${rect.left}-${rect.right}; parent=${element.parentElement?.getBoundingClientRect().left}-${element.parentElement?.getBoundingClientRect().right})`
+        }),
+    }))
+    expect(dimensions.scrollWidth, JSON.stringify(dimensions)).toBeLessThanOrEqual(dimensions.viewportWidth)
+  }
+
+  await mountProductionComponent(page, '/src/identity/ProfileSettings.vue', {
+    profile: { account_id: '11111111-1111-4111-8111-111111111111', login: 'member', display_name: 'Участник', role: 'MEMBER' },
+    loading: false,
+    loadError: null,
+  }, 'workspace-main-panel workspace-main-panel--profile')
+  await expectRootScaledText('#profile-settings-title')
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 844 })
+    await expectNoDocumentOverflow()
+    await expect(page.getByRole('button', { name: 'Сохранить профиль' })).toBeVisible()
+  }
+
+  await page.route('**/api/v1/admin/accounts?*', route => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ accounts: [{ account_id: '11111111-1111-4111-8111-111111111111', login: 'member', display_name: 'Участник', role: 'MEMBER', blocked: false, created_at: '2026-10-01T12:00:00Z', updated_at: '2026-10-01T12:00:00Z' }] }),
+  }))
+  await mountProductionComponent(page, '/src/admin/panel/AdminPanel.vue', { categories: [], revision: 1 }, 'workspace-main-panel workspace-main-panel--admin')
+  await expectRootScaledText('#admin-panel-title')
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 844 })
+    await expectNoDocumentOverflow()
+    await expect(page.getByRole('navigation', { name: 'Разделы администрирования' }).getByRole('button', { name: 'Участники' })).toBeVisible()
+  }
+
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const load = (path: string) => import(path)
+    const { createApp, h } = await load('/node_modules/.vite/deps/vue.js')
+    const { createPinia } = await load('/node_modules/.vite/deps/pinia.js')
+    const { default: MessageItem } = await load('/src/conversation/MessageItem.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    const message = { id: 'scale-message', channelId: 'channel-1', authorId: 'user-1', clientMessageId: 'scale-client', body: 'Длинная строка сообщения проверяет перенос текста и доступность действий при увеличении системного размера шрифта.', createdAt: '2026-10-04T12:00:00Z', revision: 1, deleted: false }
+    const app = createApp({ render: () => h('div', { class: 'message-list' }, [h(MessageItem, { message, canEdit: false, canDelete: false })]) })
+    app.use(createPinia())
+    app.mount('#mount')
+  })
+  await expectRootScaledText('.message-item p')
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 844 })
+    await expectNoDocumentOverflow()
+    if (width <= 600) {
+      await expect(page.getByRole('button', { name: 'Действия с сообщением' })).toBeVisible()
+    } else {
+      await page.locator('.message-item').hover()
+      await expect(page.getByRole('button', { name: 'Ответить' })).toBeVisible()
+    }
+  }
+})
+
 test('reduced-motion preference suppresses UI transitions and smooth scrolling', async ({ page }) => {
   await page.goto('/')
   await page.emulateMedia({ reducedMotion: 'reduce' })

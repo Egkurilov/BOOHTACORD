@@ -13,6 +13,10 @@ from .telemetry import verify
 
 
 VIEWPORT_PROFILES = {
+    390: {
+        'name': 'mobile-390x844', 'width': 390, 'height': 844,
+        'is_mobile': True, 'device_scale_factor': 3, 'has_touch': True,
+    },
     393: {
         'name': 'mobile-393x852', 'width': 393, 'height': 852,
         'is_mobile': True, 'device_scale_factor': 3, 'has_touch': True,
@@ -94,9 +98,11 @@ def main():
             sources = list((root/'tools/qa/client_lifecycle').glob('*.py'))
             sources += list((root/'tools/qa/client_lifecycle').glob('*.mjs'))
             sources += list((root/'tools/qa/critical_client_acceptance').glob('*.*'))
+            sources += list((root/'clients/web/src').rglob('*.css'))
+            sources += list((root/'clients/web/src').rglob('*.vue'))
             sources += [root/'clients/web/src/identity/AuthenticationLanding.vue', root/'clients/web/package-lock.json']
             report['source_files'] = {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
-                                      for path in sources}
+                                      for path in sorted(set(sources))}
             report['api_image_id'] = output('docker', 'image', 'inspect', stack.image,
                                             '--format', '{{.Id}}')
             report['screenshots'] = {path.name: hashlib.sha256(path.read_bytes()).hexdigest()

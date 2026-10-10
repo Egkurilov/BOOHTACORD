@@ -19,7 +19,7 @@ function remove(): void { if (window.confirm('Удалить это систем
 </template>
 <style scoped>
 .system-welcome-message { display: flex; align-items: baseline; gap: 12px; padding: 10px 16px; color: var(--gc-text-muted); overflow-wrap: anywhere; }
-p { flex: 1; min-width: 0; margin: 0; } time { font-size: 12px; white-space: nowrap; }
+p { flex: 1; min-width: 0; margin: 0; } time { font-size: 0.75rem; white-space: nowrap; }
 .message-mention { color: var(--gc-accent-text); }
 .system-welcome-message > button { min-height: var(--gc-size-control-sm); border: 1px solid var(--gc-danger); border-radius: var(--gc-radius-sm); padding: 0 var(--gc-space-2); color: var(--gc-danger); background: var(--gc-danger-bg); font: inherit; }
 @media (hover: none), (pointer: coarse), (max-width: 600px) {

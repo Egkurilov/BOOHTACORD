@@ -31,7 +31,7 @@
   background: var(--gc-surface);
 }
 .role-permission-table-heading { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gc-space-3); }
-.role-permission-table-heading h3 { margin: 0; font-size: var(--gc-text-title); line-height: 24px; }
+.role-permission-table-heading h3 { margin: 0; font-size: var(--gc-text-title); line-height: 1.5rem; }
 .role-permission-table-heading span { color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
 .role-permission-table { width: 100%; margin-top: 4px; border-collapse: collapse; }
 .role-permission-table th, .role-permission-table td { border-bottom: 1px solid var(--gc-border-subtle); }
@@ -39,12 +39,12 @@
 .role-permission-table thead th:first-child { text-align: left; }
 .role-permission-table tbody th { width: 60%; height: 76px; color: var(--gc-text-primary); font-weight: var(--gc-weight-medium); text-align: left; }
 .role-permission-label { display: grid; gap: var(--gc-space-1); }
-.role-permission-label small { color: var(--gc-text-muted); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-regular); line-height: 16px; }
+.role-permission-label small { color: var(--gc-text-muted); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-regular); line-height: 1rem; }
 .role-permission-table tbody td { height: 76px; text-align: center; }
 .role-permission-table tbody tr:last-child > * { border-bottom: 0; }
 .role-permission-icon { display: inline-grid; width: 28px; height: 28px; margin-right: var(--gc-space-2); place-items: center; border-radius: var(--gc-radius-sm); color: var(--gc-accent-text); background: var(--gc-surface-raised); }
 .role-permission-table input { width: 20px; height: 20px; accent-color: var(--gc-accent); }
-.role-permission-notice { display: flex; min-height: 46px; align-items: center; gap: 10px; margin-top: var(--gc-space-4); border: 1px solid #4B4024; border-radius: var(--gc-radius-md); padding: 12px 16px; color: #EED59F; background: #292517; font-size: var(--gc-text-caption); line-height: 16px; }
+.role-permission-notice { display: flex; min-height: 46px; align-items: center; gap: 10px; margin-top: var(--gc-space-4); border: 1px solid #4B4024; border-radius: var(--gc-radius-md); padding: 12px 16px; color: #EED59F; background: #292517; font-size: var(--gc-text-caption); line-height: 1rem; }
 .role-permission-notice svg { width: 16px; height: 16px; flex: none; }
 .role-policy-actions { position: sticky; bottom: -16px; z-index: 2; margin-top: 13px; padding: 0; background: var(--gc-content); }
 .role-policy-status { margin-right: auto; color: var(--gc-text-muted); font-size: var(--gc-text-caption); }
@@ -97,7 +97,7 @@
   .admin-mobile-user small { color: var(--gc-text-muted); }
   .admin-mobile-avatar { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: 50%; color: var(--gc-accent-text); background: var(--gc-surface-raised); font-size: var(--gc-text-caption); font-weight: var(--gc-weight-semibold); }
   .admin-mobile-user { height: 40px; }
-  .admin-mobile-meta { display: flex; justify-content: space-between; gap: var(--gc-space-3); padding-left: 8px; color: var(--gc-text-secondary); font-size: var(--gc-text-caption); line-height: 20px; }
+  .admin-mobile-meta { display: flex; justify-content: space-between; gap: var(--gc-space-3); padding-left: 8px; color: var(--gc-text-secondary); font-size: var(--gc-text-caption); line-height: 1.25rem; }
   .admin-mobile-meta .is-active { color: var(--gc-success); }
   .admin-mobile-meta .is-blocked { color: var(--gc-danger); }
   .admin-mobile-edit { display: grid; gap: var(--gc-space-3); margin-top: var(--gc-space-4); border-top: 1px solid var(--gc-border-subtle); padding-top: var(--gc-space-4); }

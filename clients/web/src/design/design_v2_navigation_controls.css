@@ -1,15 +1,15 @@
 /* R01/R14 navigation controls; the existing stores own all actions. */
 .sidebar > .guild-header { border-bottom: 1px solid var(--gc-border-subtle); }
-.guild-header-copy { display: block; flex: 1; line-height: 20px; }
-#app-title { font-size: 15px; font-weight: 700; }
+.guild-header-copy { display: block; flex: 1; line-height: 1.25rem; }
+#app-title { font-size: 0.9375rem; font-weight: 700; }
 .guild-member-count { display: block; }
 .guild-chevron { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; margin: 0; color: var(--gc-text-secondary); }
 .guild-chevron svg { width: 20px; height: 20px; stroke-width: 1.8; }
 .guild-search-button { border: 0; border-radius: 8px; padding-inline: 10px; color: var(--gc-text-muted); background: var(--gc-canvas); }
 .guild-search-button > span { flex: 1; }
-.guild-search-button kbd { border: 1px solid var(--gc-border-subtle); border-radius: 4px; padding: 0 4px; background: var(--gc-surface); font-family: inherit; font-size: 11px; line-height: 16px; }
+.guild-search-button kbd { border: 1px solid var(--gc-border-subtle); border-radius: 4px; padding: 0 4px; background: var(--gc-surface); font-family: inherit; font-size: 0.6875rem; line-height: 1rem; }
 .sidebar .sidebar-tabs { width: calc(100% - 24px); height: 40px; flex: 0 0 40px; margin: 0 12px 9px; border: 0; border-radius: 8px; padding: 4px; background: var(--gc-canvas); }
-.sidebar-tabs button { height: 32px; min-height: 32px; padding: 1px 6px; font-size: 14px; }
+.sidebar-tabs button { height: 32px; min-height: 32px; padding: 1px 6px; font-size: 0.875rem; }
 .sidebar-tabs button.is-selected { background: var(--gc-surface-raised); }
 @media (max-width: 720px) {
   .sidebar.is-open > .guild-header { padding-right: 70px; }

@@ -26,7 +26,7 @@ describe('V2 mobile navigation drawer', () => {
     expect(mobileNavigation).toContain('.sidebar.is-open .channel-button.voice-connected::before { display: none; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-list { margin-top: 5px; padding-left: 36px; gap: 0; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-row { min-height: 36px; }')
-    expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 9px; }')
+    expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 0.5625rem; }')
   })
 
   it('shows the connected headset only in the open drawer dock', () => {
@@ -49,7 +49,7 @@ describe('V2 mobile navigation drawer', () => {
     expect(mobileNavigation).toContain('gap: 10px; border-top: 1px solid #292d39; border-right: 0;')
     expect(mobileNavigation).toContain('.sidebar.is-open .user-footer-profile { gap: 10px; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .user-footer .username { gap: 0; }')
-    expect(mobileNavigation).toContain('.sidebar.is-open .user-footer small { line-height: 16px; }')
+    expect(mobileNavigation).toContain('.sidebar.is-open .user-footer small { line-height: 1rem; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .user-footer-settings { width: 44px; height: 44px; }')
   })
 

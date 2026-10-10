@@ -41,5 +41,5 @@ onBeforeUnmount(state.dispose)
 </template>
 <style scoped>
 .voice-timeout-control section { max-width: 360px; display: grid; gap: 8px; }
-form { display: grid; gap: 8px; } p { font-size: 13px; overflow-wrap: anywhere; }
+form { display: grid; gap: 8px; } p { font-size: 0.8125rem; overflow-wrap: anywhere; }
 </style>
