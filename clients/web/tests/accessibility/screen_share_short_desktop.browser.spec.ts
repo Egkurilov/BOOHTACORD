@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('screen-share setup uses short desktop height and keeps actions visible', async ({ page }) => {
+test('screen-share setup uses short desktop height and keeps actions visible', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 637, height: 584 })
   await page.goto('/')
   await page.evaluate(async () => {
@@ -25,4 +25,8 @@ test('screen-share setup uses short desktop height and keeps actions visible', a
   for (const label of ['Отмена', 'Начать трансляцию']) {
     await expect(dialog.getByRole('button', { name: label })).toBeInViewport({ ratio: 0.99 })
   }
+  await page.screenshot({
+    path: testInfo.outputPath('screen-share-short-desktop.png'),
+    fullPage: true,
+  })
 })
