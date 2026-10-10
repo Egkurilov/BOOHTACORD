@@ -1,6 +1,5 @@
 """Create a fresh owned deployment, execute a profile, remove every resource."""
 import argparse
-import hashlib
 import json
 import os
 import platform
@@ -15,6 +14,7 @@ from tools.load.provision.stack import Stack
 from .report import render
 from .cleanup import cleanup
 from .outcome import outcome
+from .artifact_identity import api_binary_sha256
 
 
 def main():
@@ -57,7 +57,7 @@ def main():
             report['driver'], report['outcome'] = outcome(completed.stdout, completed.returncode)
             report['inventory'] = dict(os=platform.platform(), cpus=os.cpu_count(),
                 ram_bytes=os.sysconf('SC_PHYS_PAGES')*os.sysconf('SC_PAGE_SIZE'),
-                source_revision=manifest['Commit'], api_sha256=hashlib.sha256(stack.binary.read_bytes()).hexdigest(),
+                source_revision=manifest['Commit'], api_sha256=api_binary_sha256(stack, Path(directory)),
                 postgres='17.6', sfu='1.13.7', network='loopback TCP API; media NOT_RUN',
                 synthetic_accounts=args.accounts, voice_rooms=len(dataset['Voice']), upload_bytes=args.upload_bytes)
             report['exit_code'] = completed.returncode

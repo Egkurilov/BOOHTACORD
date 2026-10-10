@@ -6,6 +6,7 @@ import { deliverWithRecovery, uncertainFailure } from './flow'
 import { lookupTextDelivery } from './lookup'
 import { journeyRecorder,markAccepted } from '../../telemetry/journey_intervals/runtime'
 import { createSendObservation } from '../../telemetry/observe_render/messages'
+import { requestFailureMessage } from '../../request_feedback'
 interface State { channelId: Ref<string | null>; sending: Ref<boolean>; error: Ref<string | null>; messages: Ref<TextMessage[]>; pending: Map<string, PendingSend>; retries: Map<string, string> }
 export function createTextDelivery(state: State) {
   let closed = false
@@ -40,7 +41,7 @@ export function createTextDelivery(state: State) {
       if (closed) return false
       draft.sendStatus = 'failed'; draft.retryBlocked = !uncertainFailure(cause)
       if (state.channelId.value === draft.channelId && state.pending.has(id)) {
-        state.error.value = cause instanceof Error ? cause.message : 'Не удалось отправить сообщение.'
+        state.error.value = requestFailureMessage(cause, 'Не удалось отправить сообщение.')
         state.messages.value = state.messages.value.map(row => row.clientMessageId === id ? { ...row, sendStatus: 'failed', retryBlocked: draft.retryBlocked } : row)
       }
       return false

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { api, expect, origin, security, status } from './request.mjs'
+import { api, expect, openNavigation, origin, security, status } from './request.mjs'
 export async function sessions(a, b, member, report, directory, redactions, media) {
   const own = (await api(a, '/me/sessions')).body
   assert.equal(own.sessions.length, 2)
@@ -14,6 +14,7 @@ export async function sessions(a, b, member, report, directory, redactions, medi
     if (socket.url().includes('/api/v1/realtime')) socket.on('close', () => { closed = true })
   })
   await b.reload()
+  await openNavigation(b)
   await expect(b.getByRole('img', { name: 'В сети', exact: true })).toBeVisible()
   await media?.prepare()
   closed = false
@@ -25,6 +26,8 @@ export async function sessions(a, b, member, report, directory, redactions, medi
   await expect(a.getByTestId('session-revoke')).toHaveCount(2)
   assert.equal(await a.getByTestId('session-revoke').filter({ visible: true }).count(), 2)
   await a.locator('[data-testid="session-revoke"]:not([disabled])').click()
+  await a.getByRole('dialog', { name: 'Завершить сеанс?' })
+    .getByRole('button', { name: 'Завершить сеанс', exact: true }).click()
   await expect.poll(() => closed).toBe(true)
   await media?.check()
   const expired = await b.context().request.get(origin+'/api/v1/me/sessions', {

@@ -14,5 +14,6 @@ extension AdminScreenStateAdminVisibleAdminAccountsBindingAction
     adminAccounts,
     search: adminAccountSearch.text,
     role: adminAccountRoleFilter,
+    status: adminAccountStatusFilter,
   );
 }

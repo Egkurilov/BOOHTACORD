@@ -5,10 +5,12 @@ class WorkspaceProfilePanelToolbar extends StatelessWidget {
     super.key,
     this.onToggleNavigation,
     this.onBack,
+    this.onClose,
   });
 
   final VoidCallback? onToggleNavigation;
   final VoidCallback? onBack;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +42,14 @@ class WorkspaceProfilePanelToolbar extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 onPressed: onToggleNavigation,
                 icon: const Icon(Icons.menu),
+              ),
+            if (!compact && onClose != null)
+              IconButton(
+                tooltip: 'Закрыть настройки',
+                constraints: buttonConstraints,
+                padding: EdgeInsets.zero,
+                onPressed: onClose,
+                icon: const Icon(Icons.close),
               ),
           ],
         ),

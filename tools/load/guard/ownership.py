@@ -12,7 +12,7 @@ def validate_identity(owner, database, origin):
 def owned(stack, role):
     validate_identity(stack.owner, 'qa', stack.environment['PUBLIC_ORIGIN'])
     name = stack.owner+'-'+role
-    if role not in ('db', 'sfu', 'tempo', 'proxy'):
+    if role not in ('api', 'db', 'sfu', 'tempo', 'proxy'):
         raise ValueError('Unknown disposable service')
     label = output('docker', 'inspect', name, '--format', '{{index .Config.Labels "'+LABEL+'"}}')
     if label != stack.owner or ('container', name) not in stack.resources:

@@ -3,16 +3,18 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import { createCategory, deleteEmptyCategory } from './admin_topology_client'
+import { requestFailureMessage } from '../request_feedback'
 import AdminConfirmation from './AdminConfirmation.vue'
 import { createCategoryEditor } from './category_editor'
+import { confirmedTargetIsCurrent } from './member_topology/confirmed_target'
 import type { TopologyCategory } from './topology_client'
 
-const props = defineProps<{ categories: TopologyCategory[]; revision: number; selectedCategoryId: string; embedded?: boolean }>()
+const props = defineProps<{ accountId?: string; categories: TopologyCategory[]; revision: number; selectedCategoryId: string; embedded?: boolean }>()
 const emit = defineEmits<{ changed: []; 'update:selectedCategoryId': [id: string] }>()
 const selected = computed(() => props.categories.find(({ id }) => id === props.selectedCategoryId))
 const editor = createCategoryEditor(() => ({ categories: props.categories, revision: props.revision, selectedCategoryId: props.selectedCategoryId }), () => emit('changed'))
 const newName = ref('')
-const confirmation = ref<{ ask: (message: string) => Promise<boolean> } | null>(null)
+const confirmation = ref<{ ask: (message: string) => Promise<boolean>; cancel: () => boolean } | null>(null)
 const mutating = ref(false)
 const localError = ref<string | null>(null)
 const localStatus = ref<string | null>(null)
@@ -23,6 +25,7 @@ const statusText = computed(() => editor.status.value ?? localStatus.value)
 const busy = computed(() => mutating.value || editor.pending.value || editor.needsRefresh.value)
 
 watch(() => [props.categories, props.revision, props.selectedCategoryId], editor.sync, { immediate: true })
+watch(() => props.accountId, (accountId, previous) => { if (accountId !== previous) confirmation.value?.cancel() })
 watch(errorText, async (message) => { if (message) { await nextTick(); errorNode.value?.focus() } })
 watch(statusText, async (message) => { if (message) { await nextTick(); statusNode.value?.focus() } })
 
@@ -33,6 +36,7 @@ function rename(): void { resetFeedback(); void editor.rename() }
 function move(direction: -1 | 1): void { resetFeedback(); void editor.move(direction) }
 
 async function create(): Promise<void> {
+  if (busy.value) return
   resetFeedback()
   if (!newName.value.trim() || !validCodePointLength(newName.value, 1, 80)) { localError.value = 'Введите название раздела до 80 символов.'; return }
   mutating.value = true
@@ -40,22 +44,42 @@ async function create(): Promise<void> {
     const category = await createCategory({ name: newName.value })
     newName.value = ''
     emit('update:selectedCategoryId', category.id)
-    localStatus.value = 'Категория создана. Обновляем список.'
+    localStatus.value = 'Раздел создан. Обновляем список.'
     emit('changed')
-  } catch (cause) { localError.value = cause instanceof Error ? cause.message : 'Не удалось создать категорию.' }
+  } catch (cause) { localError.value = requestFailureMessage(cause, 'Не удалось создать раздел.') }
   finally { mutating.value = false }
 }
 
 async function remove(): Promise<void> {
-  if (!selected.value || selected.value.channels.length || !await confirmation.value?.ask(`Удалить пустой раздел «${selected.value.name}»?`)) return
+  const category = selected.value
+  if (busy.value || !category || category.channels.length) return
+  const confirmedAccountId = props.accountId
+  const confirmedCategories = props.categories
+  const confirmedRevision = props.revision
+  const confirmedCategory = { ...category, channels: [...category.channels] }
+  const stopWatchingTarget = watch(() => [props.categories, props.revision], () => {
+    if (props.accountId !== confirmedAccountId || props.categories !== confirmedCategories ||
+        !confirmedTargetIsCurrent({ revision: props.revision, categories: props.categories }, confirmedCategory, confirmedRevision)) confirmation.value?.cancel()
+  }, { deep: true })
+  let confirmed = false
+  try { confirmed = !!(await confirmation.value?.ask(`Удалить пустой раздел «${confirmedCategory.name}»? Каналов в нём нет; раздел исчезнет из списка.`)) }
+  finally { stopWatchingTarget() }
+  if (props.accountId !== confirmedAccountId) return
+  if (props.categories !== confirmedCategories || !confirmedTargetIsCurrent({ revision: props.revision, categories: props.categories }, confirmedCategory, confirmedRevision)) {
+    resetFeedback()
+    localError.value = 'Структура изменилась. Раздел не удалён; обновите список и подтвердите действие ещё раз.'
+    emit('changed')
+    return
+  }
+  if (!confirmed) return
   resetFeedback()
   mutating.value = true
   try {
-    await deleteEmptyCategory(selected.value.id, props.revision)
-    localStatus.value = 'Пустая категория удалена. Обновляем список.'
+    await deleteEmptyCategory(confirmedCategory.id, confirmedRevision)
+    localStatus.value = 'Пустой раздел удалён. Обновляем список.'
     emit('changed')
   } catch (cause) {
-    localError.value = cause instanceof Error ? cause.message : 'Не удалось удалить категорию.'
+    localError.value = requestFailureMessage(cause, 'Не удалось удалить раздел.')
     emit('changed')
   } finally { mutating.value = false }
 }
@@ -66,7 +90,7 @@ async function remove(): Promise<void> {
     <AdminConfirmation ref="confirmation" id="admin-category-delete-confirm" title="Удалить раздел" confirm-label="Удалить раздел" />
     <form class="admin-topology-form" @submit.prevent="create">
       <label>Новый раздел<input v-model="newName" :disabled="busy" name="category-name" required :aria-describedby="editor.error.value || localError ? 'category-error' : undefined"></label>
-      <button type="submit" :disabled="busy">Создать категорию</button>
+      <button type="submit" :disabled="busy">Создать раздел</button>
     </form>
     <form class="admin-topology-form admin-topology-form--rename" @submit.prevent="rename">
       <label v-if="!embedded">Раздел
@@ -77,9 +101,9 @@ async function remove(): Promise<void> {
       <label>Новое название раздела
         <input :value="editor.renameDraft.value" :disabled="busy || !selected" name="rename-category" required :aria-describedby="editor.error.value || localError ? 'category-error' : undefined" @input="changeRename">
       </label>
-      <button type="submit" :disabled="busy || !selected">Переименовать категорию</button>
+      <button type="submit" :disabled="busy || !selected">Переименовать раздел</button>
     </form>
-    <div class="admin-category-order" role="group" aria-label="Порядок категорий">
+    <div class="admin-category-order" role="group" aria-label="Порядок разделов">
       <button type="button" :disabled="busy || !editor.canMove(-1)" :aria-label="`Переместить раздел «${selected?.name ?? ''}» выше`" @click="move(-1)">Выше</button>
       <button type="button" :disabled="busy || !editor.canMove(1)" :aria-label="`Переместить раздел «${selected?.name ?? ''}» ниже`" @click="move(1)">Ниже</button>
     </div>

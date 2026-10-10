@@ -11,7 +11,7 @@ import AdminTextArchive from './AdminTextArchive.vue'
 import AdminVoiceClose from './AdminVoiceClose.vue'
 import type { TopologyCategory } from './topology_client'
 
-const props = defineProps<{ categories: TopologyCategory[]; revision: number }>()
+const props = defineProps<{ accountId?: string; categories: TopologyCategory[]; revision: number }>()
 const emit = defineEmits<{ changed: [] }>()
 const selectedId = ref('')
 const inspector = ref<HTMLElement | null>(null)
@@ -43,7 +43,7 @@ async function select(id: string): Promise<void> {
         <template v-if="selectedCategory || !categories.length">
           <header><span class="admin-topology-inspector__eyebrow">РАЗДЕЛ</span><h3>{{ selectedCategory?.name ?? 'Новый раздел' }}</h3>
             <p>Каналов: {{ selectedCategory?.channels.length ?? 0 }} · Порядок: {{ (selectedCategory?.position ?? 0) + 1 }}</p></header>
-          <AdminCategoryControls embedded :categories="categories" :revision="revision" :selected-category-id="selectedId"
+          <AdminCategoryControls embedded :account-id="accountId" :categories="categories" :revision="revision" :selected-category-id="selectedId"
             @update:selected-category-id="selectedId = $event" @changed="emit('changed')" />
           <AdminChannelCreate v-if="selectedCategory" :categories="categories" :category-id="selectedId" @changed="emit('changed')" />
         </template>
@@ -56,8 +56,8 @@ async function select(id: string): Promise<void> {
           <AdminChannelOrder :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
           <section class="admin-topology-danger" aria-label="Опасные действия">
             <h4>Опасные действия</h4>
-            <AdminTextArchive v-if="selectedChannel.kind === 'TEXT'" :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
-            <AdminVoiceClose v-else :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
+            <AdminTextArchive v-if="selectedChannel.kind === 'TEXT'" :account-id="accountId" :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
+            <AdminVoiceClose v-else :account-id="accountId" :categories="categories" :revision="revision" :channel-id="selectedId" @changed="emit('changed')" />
           </section>
         </template>
       </div>

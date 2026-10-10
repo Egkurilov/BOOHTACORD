@@ -23,10 +23,16 @@ extension AdminScreenStateAdminLoadMediaMetricsBindingAction
             if (current == null || value.isAfter(current)) return value;
             return current;
           });
+      final previousLastSeen = adminMediaLastSeenAt;
+      final lastSeen =
+          latest == null ||
+              (previousLastSeen != null && previousLastSeen.isAfter(latest))
+          ? previousLastSeen
+          : latest;
       adminMutateView(() {
         adminMediaSamples = samples;
         adminMediaLastSuccessfulAt = DateTime.now().toUtc();
-        adminMediaLastSeenAt = latest;
+        adminMediaLastSeenAt = lastSeen;
       });
     } catch (_) {
       if (!mounted) return;

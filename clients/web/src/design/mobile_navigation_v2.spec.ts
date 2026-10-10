@@ -26,7 +26,7 @@ describe('V2 mobile navigation drawer', () => {
     expect(mobileNavigation).toContain('.sidebar.is-open .channel-button.voice-connected::before { display: none; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-list { margin-top: 5px; padding-left: 36px; gap: 0; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-row { min-height: 36px; }')
-    expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 9px; }')
+    expect(mobileNavigation).toContain('.sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 0.5625rem; }')
   })
 
   it('shows the connected headset only in the open drawer dock', () => {
@@ -40,8 +40,8 @@ describe('V2 mobile navigation drawer', () => {
     expect(navigation).toContain('.guild-search-button > svg { width: 16px; height: 16px;')
     expect(mobileNavigation).toMatch(/\.sidebar\.is-open > \.guild-header \{[^}]*padding-left: 12px;/)
     expect(mobileNavigation).toContain('.sidebar.is-open .guild-search-button { padding: 0 10px;')
-    expect(mobileNavigation).toContain('padding: 12px 14px; background: #0b0d12;')
-    expect(mobileNavigation).toContain('background: #0b0d12; font-weight: 400;')
+    expect(mobileNavigation).toContain('padding: 12px 14px; background: var(--gc-canvas);')
+    expect(mobileNavigation).toContain('background: var(--gc-canvas); font-weight: 400;')
   })
 
   it('aligns the open drawer account row and keeps settings touchable', () => {
@@ -49,16 +49,16 @@ describe('V2 mobile navigation drawer', () => {
     expect(mobileNavigation).toContain('gap: 10px; border-top: 1px solid #292d39; border-right: 0;')
     expect(mobileNavigation).toContain('.sidebar.is-open .user-footer-profile { gap: 10px; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .user-footer .username { gap: 0; }')
-    expect(mobileNavigation).toContain('.sidebar.is-open .user-footer small { line-height: 16px; }')
+    expect(mobileNavigation).toContain('.sidebar.is-open .user-footer small { line-height: 1rem; }')
     expect(mobileNavigation).toContain('.sidebar.is-open .user-footer-settings { width: 44px; height: 44px; }')
   })
 
   it('matches the handoff search and segmented tabs in the open drawer', () => {
     expect(mobileNavigation).toContain('.sidebar.is-open > .nav-drawer { box-sizing: border-box; border-right: 0;')
-    expect(mobileNavigation).toContain('.sidebar.is-open .guild-search-button { padding: 0 10px; border: 0; color: #a0a9be;')
+    expect(mobileNavigation).toContain('.sidebar.is-open .guild-search-button { padding: 0 10px; border: 0; color: var(--gc-text-muted);')
     expect(mobileNavigation).toContain('.sidebar.is-open .sidebar-tabs { box-sizing: border-box; width: calc(100% - 24px); height: 40px;')
     expect(mobileNavigation).toContain('.sidebar.is-open .sidebar-tabs button { height: 32px; min-height: 32px;')
-    expect(mobileNavigation).toContain('.sidebar.is-open .sidebar-tabs button.is-selected { background: #222631; }')
+    expect(mobileNavigation).toContain('.sidebar.is-open .sidebar-tabs button.is-selected { background: var(--gc-surface-raised); }')
   })
 
   it('uses the handoff close and account settings outlines with live handlers', () => {

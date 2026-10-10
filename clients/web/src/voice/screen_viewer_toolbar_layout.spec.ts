@@ -60,7 +60,7 @@ describe('selected-stream toolbar layout', () => {
   it('uses the shared live badge and identity palette for the selected participant', () => {
     const css = source('../design/design_v2_screen_viewer.css')
     const viewer = source('./ScreenViewer.vue')
-    expect(css).toContain('padding: 2px 6px; color: #FF9AD5; background: #3D1831; font-size: 12px; line-height: 16px;')
+    expect(css).toContain('padding: 2px 6px; color: #FF9AD5; background: #3D1831; font-size: 0.75rem; line-height: 1rem;')
     expect(viewer).toContain('avatarBackground(selectedStream.accountId ?? selectedStream.participantId)')
     expect(viewer).toContain('avatarForeground(selectedStream.accountId ?? selectedStream.participantId)')
   })

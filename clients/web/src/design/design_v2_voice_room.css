@@ -1,4 +1,4 @@
-.voice-room:has(.room-wrap) { background: #0B0D12; }
+.voice-room:has(.room-wrap) { background: var(--gc-canvas); }
 .voice-room .room-wrap { display: flex; flex-direction: column; align-items: center; overflow: auto; padding: 0 16px; }
 .voice-room .room-intro { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .voice-room .room-wrap > .state { position: absolute; top: 76px; left: 304px; }
@@ -6,12 +6,12 @@
 .voice-room .voice-participant-volumes .participant { box-sizing: border-box; width: 180px; height: 216px; min-height: 216px; gap: 0; border: 1px solid var(--gc-border-subtle); border-radius: 16px; padding: 32px 12px 0; background: var(--gc-surface); }
 .voice-room .voice-participant-volumes .participant.talking { border: 2px solid var(--gc-success); padding-top: 31px; }
 .voice-room .voice-participant-volumes .participant.talking .avatar.lg { border: 0; box-shadow: none; }
-.voice-room .voice-participant-volumes .avatar.lg { width: 88px; height: 88px; flex: 0 0 88px; background: #3B315B; font-size: 34px; font-weight: 400; }
+.voice-room .voice-participant-volumes .avatar.lg { width: 88px; height: 88px; flex: 0 0 88px; background: #3B315B; font-size: 2.125rem; font-weight: 400; }
 .voice-room .voice-participant-volumes .participant:nth-of-type(2) .avatar.lg { color: #A3DBDB; background: #19494C; }
 .voice-room .voice-participant-volumes .participant:nth-of-type(3) .avatar.lg { color: #F5C394; background: #633E29; }
 .voice-room .voice-participant-volumes .participant-self .avatar.lg { color: #DFD2F2; background: #493B64 !important; }
-.voice-room .voice-participant-volumes .participant-name { margin-top: 18px; font-size: 16px; line-height: 22px; }
-.voice-room .voice-participant-volumes .participant-status { margin-top: 4px; color: var(--gc-text-muted); font-size: 12px; line-height: 18px; }
+.voice-room .voice-participant-volumes .participant-name { margin-top: 18px; font-size: 1rem; line-height: 1.375rem; }
+.voice-room .voice-participant-volumes .participant-status { margin-top: 4px; color: var(--gc-text-muted); font-size: 0.75rem; line-height: 1.125rem; }
 .voice-room .voice-participant-volumes .participant-status.is-speaking { color: var(--gc-text-muted); }
 .voice-room .voice-participant-volumes .participant-status svg, .voice-room .voice-participant-volumes .participant-share-badge { display: none; }
 .voice-room .voice-participant-volumes .participant-volume { opacity: 0; }
@@ -24,7 +24,7 @@
 .voice-room-controls button:disabled { opacity: .5; }
 .voice-room-controls button.voice-room-controls__leave { color: white; background: var(--gc-danger-solid); }
 .voice-room-controls svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
-.voice-room-hint { margin: 32px 0 0; color: var(--gc-text-muted); font-size: 12px; text-align: center; }
+.voice-room-hint { margin: 32px 0 0; color: var(--gc-text-muted); font-size: 0.75rem; text-align: center; }
 .voice-room:has(.room-wrap) > .voice-room-footer { display: none; }
 @media (max-width: 1023px) {
   .voice-room .room-wrap { padding: 16px; }

@@ -9,6 +9,7 @@ import { deliverWithRecovery, uncertainFailure } from './flow'
 import { lookupDirectDelivery } from './lookup'
 import { journeyRecorder,markAccepted } from '../../telemetry/journey_intervals/runtime'
 import { createSendObservation } from '../../telemetry/observe_render/messages'
+import { requestFailureMessage } from '../../request_feedback'
 export function createDirectDelivery(state: DirectMessageActionState) {
   let closed = false
   const observation = createSendObservation()
@@ -41,7 +42,7 @@ export function createDirectDelivery(state: DirectMessageActionState) {
       if (closed) return false
       draft.sendStatus = 'failed'; draft.retryBlocked = !uncertainFailure(cause)
       if (state.directMessageId.value === draft.directMessageId && state.pending.has(id)) {
-        state.error.value = cause instanceof Error ? cause.message : 'Не удалось отправить личное сообщение.'
+        state.error.value = requestFailureMessage(cause, 'Не удалось отправить личное сообщение.')
         state.messages.value = state.messages.value.map(row => row.clientMessageId === id ? { ...row, sendStatus: 'failed', retryBlocked: draft.retryBlocked } : row)
       }
       return false

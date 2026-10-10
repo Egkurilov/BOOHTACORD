@@ -11,6 +11,7 @@ import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/workspace_screen.dart';
 import 'package:boohtacord_desktop/src/services/api_client.dart';
 import 'package:boohtacord_desktop/src/services/composer_draft_memory.dart';
+import 'package:boohtacord_desktop/src/services/conversation_scroll_memory.dart';
 import 'package:boohtacord_desktop/src/theme.dart';
 import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:boohtacord_desktop/src/widgets/audio_device_check.dart';
@@ -26,10 +27,15 @@ import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
+import 'uiux_2026/capture_support.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
-  setUp(ComposerDraftMemory.clear);
+  setUp(() {
+    ComposerDraftMemory.clear();
+    ConversationScrollMemory.clear();
+  });
 
   testWidgets('volume menu aligns with the avatar on macOS and Android', (
     tester,
@@ -134,6 +140,9 @@ void main() {
         addTearDown(tester.view.reset);
         final state = AppState(_PortraitApi());
         await state.initialize();
+        state.selectedChannel = _PortraitApi.channel;
+        state.voiceChannel = _PortraitApi.voiceChannel;
+        state.voicePhase = VoicePhase.connected;
         await tester.pumpWidget(
           MaterialApp(
             home: AnimatedBuilder(
@@ -144,6 +153,35 @@ void main() {
         );
         await tester.pumpAndSettle();
 
+        final composer = find.byType(TextField).first;
+        await tester.tap(composer);
+        await tester.pump();
+        final returnFocus = FocusManager.instance.primaryFocus;
+        expect(returnFocus, isNotNull);
+        await tester.tap(find.byTooltip('Открыть навигацию'));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        expect(FocusManager.instance.primaryFocus, same(returnFocus));
+        expect(state.voicePhase, VoicePhase.connected);
+        expect(state.voiceChannel, _PortraitApi.voiceChannel);
+
+        await tester.tap(find.byTooltip('Открыть навигацию'));
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        expect(FocusManager.instance.primaryFocus, same(returnFocus));
+        expect(state.voicePhase, VoicePhase.connected);
+        expect(state.voiceChannel, _PortraitApi.voiceChannel);
+        returnFocus?.unfocus();
+        await tester.pumpAndSettle();
+
         await tester.dragFrom(const Offset(0, 220), const Offset(140, 0));
         await tester.pumpAndSettle();
         expect(find.byTooltip('Закрыть навигацию'), findsOneWidget);
@@ -151,6 +189,19 @@ void main() {
         await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
         expect(find.byType(WorkspaceScreen), findsOneWidget);
+        expect(find.byTooltip('Закрыть навигацию'), findsNothing);
+        expect(state.voicePhase, VoicePhase.connected);
+        expect(state.voiceChannel, _PortraitApi.voiceChannel);
+
+        await tester.dragFrom(const Offset(0, 220), const Offset(140, 0));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey('workspace-channel-row:channel-1')),
+        );
+        await tester.pumpAndSettle();
+        expect(state.selectedChannel, _PortraitApi.channel);
+        expect(state.voiceChannel, _PortraitApi.voiceChannel);
+        expect(state.voicePhase, VoicePhase.connected);
         expect(find.byTooltip('Закрыть навигацию'), findsNothing);
 
         await tester.dragFrom(const Offset(180, 220), const Offset(-120, 0));
@@ -238,6 +289,67 @@ void main() {
     );
   }
 
+  for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+    testWidgets(
+      'TEXT and DM message action menus expose touch-sized semantics (${platform.name})',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = platform;
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(390, 844);
+        addTearDown(tester.view.reset);
+        final semantics = tester.ensureSemantics();
+        final state = AppState(
+          _PortraitApi(
+            withHistory: true,
+            historyCount: 2,
+            includeDirectMessage: true,
+          ),
+        );
+        await state.initialize();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AnimatedBuilder(
+              animation: state,
+              builder: (_, _) => WorkspaceScreen(state: state),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        Future<void> expectTouchAction(Finder control) async {
+          final rect = tester.getRect(control);
+          expect(rect.width, greaterThanOrEqualTo(48));
+          expect(rect.height, greaterThanOrEqualTo(48));
+          expect(find.bySemanticsLabel('Действия с сообщением'), findsWidgets);
+          await tester.tap(control);
+          await tester.pumpAndSettle();
+          final replyItem = find.ancestor(
+            of: find.text('Ответить').last,
+            matching: find.byType(PopupMenuItem<String>),
+          );
+          expect(replyItem, findsOneWidget);
+          expect(
+            tester.widget<PopupMenuItem<String>>(replyItem).height,
+            greaterThanOrEqualTo(48),
+          );
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+        }
+
+        await expectTouchAction(find.byTooltip('Действия с сообщением').first);
+        await state.openDirectConversation(state.directMessages.single);
+        await tester.pumpAndSettle();
+        await expectTouchAction(find.byTooltip('Действия с сообщением').last);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+        semantics.dispose();
+        debugDefaultTargetPlatformOverride = null;
+      },
+    );
+  }
+
   testWidgets('mobile PTT dock transmits only while mic is held', (
     tester,
   ) async {
@@ -287,6 +399,70 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
+  testWidgets('TEXT composer and connected voice controls stay above the IME', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 24);
+    tester.view.viewInsets = const FakeViewPadding();
+    addTearDown(tester.view.reset);
+
+    final state = AppState(_PortraitApi(withHistory: true));
+    await state.initialize();
+    state
+      ..selectedChannel = _PortraitApi.channel
+      ..voiceChannel = _PortraitApi.voiceChannel
+      ..voicePhase = VoicePhase.connected;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.android),
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final composer = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Написать сообщение…',
+    );
+    await tester.enterText(composer, 'Черновик перед открытием клавиатуры');
+    await tester.pump();
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+    await tester.pumpAndSettle();
+
+    const keyboardTop = 844.0 - 280;
+    final composerRect = tester.getRect(
+      find.byKey(const ValueKey('text-composer-wrap')),
+    );
+    final voiceDockRect = tester.getRect(
+      find.byKey(const ValueKey('mobile-voice-dock')),
+    );
+    expect(composerRect.bottom, lessThanOrEqualTo(keyboardTop));
+    expect(voiceDockRect.bottom, lessThanOrEqualTo(keyboardTop));
+    expect(find.byTooltip('Выключить микрофон'), findsOneWidget);
+    expect(find.byTooltip('Выйти из голосового канала'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(composer).controller!.text,
+      'Черновик перед открытием клавиатуры',
+    );
+    expect(state.selectedChannel?.id, _PortraitApi.channel.id);
+    expect(state.voiceChannel, _PortraitApi.voiceChannel);
+    expect(state.voicePhase, VoicePhase.connected);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets('restores a text-channel draft after switching channels', (
     tester,
   ) async {
@@ -329,6 +505,78 @@ void main() {
       tester.widget<TextField>(composer).controller!.text,
       'неотправленный текст',
     );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('workspace resize preserves the channel scroll and voice state', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+    final state = AppState(_PortraitApi(withHistory: true, historyCount: 30));
+    await state.initialize();
+    state
+      ..selectedChannel = _PortraitApi.channel
+      ..voiceChannel = _PortraitApi.voiceChannel
+      ..voicePhase = VoicePhase.connected;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final messageList = find.byKey(const ValueKey('text-channel-messages'));
+    double messageScrollOffset() => tester
+        .state<ScrollableState>(
+          find
+              .descendant(of: messageList, matching: find.byType(Scrollable))
+              .first,
+        )
+        .position
+        .pixels;
+
+    await tester.drag(messageList, const Offset(0, 420));
+    await tester.pumpAndSettle();
+    final desktopOffset = messageScrollOffset();
+    expect(desktopOffset, greaterThan(0));
+    expect(
+      tester
+          .state<ScrollableState>(
+            find
+                .descendant(of: messageList, matching: find.byType(Scrollable))
+                .first,
+          )
+          .position
+          .extentAfter,
+      greaterThan(48),
+    );
+    final composer = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Написать сообщение…',
+    );
+    await tester.enterText(composer, 'Черновик после resize');
+    await tester.pump();
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expect(state.selectedChannel?.id, _PortraitApi.channel.id);
+    expect(state.voiceChannel, _PortraitApi.voiceChannel);
+    expect(state.voicePhase, VoicePhase.connected);
+    expect(messageScrollOffset(), closeTo(desktopOffset, 24));
+    expect(
+      tester.widget<TextField>(composer).controller!.text,
+      'Черновик после resize',
+    );
+    expect(find.byTooltip('Выйти из голосового канала'), findsOneWidget);
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
@@ -1357,7 +1605,12 @@ void main() {
     expect(find.byTooltip('Открыть навигацию'), findsNothing);
     expect(find.byTooltip('Открыть участников'), findsNothing);
     expect(find.byTooltip('Назад'), findsNothing);
+    expect(find.byTooltip('Закрыть настройки'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byTooltip('Закрыть настройки'));
+    await tester.pumpAndSettle();
+    expect(state.workspacePanel, WorkspacePanel.none);
 
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
@@ -1658,9 +1911,7 @@ void main() {
       ..voiceRosterError = 'Нет связи со списком голосовых каналов.'
       ..notifyListeners();
     await tester.pump();
-    final errorStatus = find.text(
-      'Не удалось обновить состав комнаты.',
-    );
+    final errorStatus = find.text('Не удалось обновить состав комнаты.');
     expect(errorStatus, findsOneWidget);
     expect(find.text('Голосовой канал · состав недоступен'), findsOneWidget);
     expect(
@@ -1972,10 +2223,15 @@ void main() {
     for (final viewport in [
       (size: const Size(320, 640), mainLeft: 0.0, mainWidth: 320.0),
       (size: const Size(360, 800), mainLeft: 0.0, mainWidth: 360.0),
+      (size: const Size(375, 812), mainLeft: 0.0, mainWidth: 375.0),
       (size: const Size(390, 844), mainLeft: 0.0, mainWidth: 390.0),
+      (size: const Size(430, 932), mainLeft: 0.0, mainWidth: 430.0),
+      (size: const Size(600, 900), mainLeft: 0.0, mainWidth: 600.0),
+      (size: const Size(840, 390), mainLeft: 0.0, mainWidth: 840.0),
       (size: const Size(1024, 768), mainLeft: 280.0, mainWidth: 744.0),
       (size: const Size(1280, 800), mainLeft: 280.0, mainWidth: 752.0),
       (size: const Size(1440, 900), mainLeft: 280.0, mainWidth: 912.0),
+      (size: const Size(1920, 1080), mainLeft: 280.0, mainWidth: 1392.0),
     ]) {
       tester.view.physicalSize = viewport.size;
       await tester.pumpAndSettle();
@@ -1990,6 +2246,10 @@ void main() {
       );
       expect(main.left, viewport.mainLeft);
       expect(main.width, viewport.mainWidth);
+      expect(state.selectedChannel?.id, _PortraitApi.channel.id);
+      expect(state.messages, hasLength(2));
+      expect(main.left, greaterThanOrEqualTo(0));
+      expect(main.right, lessThanOrEqualTo(viewport.size.width));
       if (!compact) {
         expect(
           tester
@@ -2076,7 +2336,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Открыть навигацию'));
     await tester.pumpAndSettle();
-    for (final width in [320.0, 360.0, 390.0]) {
+    for (final width in [320.0, 360.0, 375.0, 390.0, 430.0, 600.0, 840.0]) {
       tester.view.physicalSize = Size(width, 844);
       await tester.pumpAndSettle();
       expect(
@@ -2101,6 +2361,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(state.selectedDirectMessage, isNotNull);
     expect(state.directMessageHistory, isNotEmpty);
+    final selectedDirectMessageId = state.selectedDirectMessage!.id;
     expect(
       tester
           .widget<ListView>(
@@ -2149,6 +2410,31 @@ void main() {
       98,
     );
     expect(find.text('До 25 МБ на файл'), findsOneWidget);
+
+    for (final viewport in [
+      const Size(320, 640),
+      const Size(375, 812),
+      const Size(390, 844),
+      const Size(430, 932),
+      const Size(600, 900),
+      const Size(840, 390),
+      const Size(1024, 768),
+      const Size(1280, 800),
+      const Size(1440, 900),
+      const Size(1920, 1080),
+    ]) {
+      tester.view.physicalSize = viewport;
+      await tester.pumpAndSettle();
+      expect(state.selectedDirectMessage?.id, selectedDirectMessageId);
+      expect(state.directMessageHistory, isNotEmpty);
+      final composerRect = tester.getRect(
+        find.byKey(const ValueKey('direct-message-composer-wrap')),
+      );
+      expect(composerRect.left, greaterThanOrEqualTo(0));
+      expect(composerRect.right, lessThanOrEqualTo(viewport.width));
+      expect(composerRect.bottom, lessThanOrEqualTo(viewport.height));
+      expect(tester.takeException(), isNull);
+    }
 
     const longDisplayName =
         'ОченьДлинноеИмяПользователяБезПробеловДляПроверкиЭллипсиса';
@@ -2670,9 +2956,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('admin-screen-title')), findsOneWidget);
-    expect(find.text('Создать категорию'), findsOneWidget);
+    expect(find.text('Создать раздел'), findsOneWidget);
     expect(find.text('Создать канал'), findsOneWidget);
-    expect(find.text('Категорию выше'), findsOneWidget);
+    expect(find.text('Раздел выше'), findsOneWidget);
     expect(find.text('Канал выше'), findsOneWidget);
     expect(find.text('Перенести канал'), findsNWidgets(2));
     expect(find.text('Текстовый канал для архивации'), findsOneWidget);
@@ -2727,7 +3013,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: WorkspaceScreen(state: memberState)),
     );
-    expect(find.text('Создать категорию'), findsNothing);
+    expect(find.text('Создать раздел'), findsNothing);
     expect(find.text('Создать канал'), findsNothing);
     expect(find.text('Добро пожаловать в #общий'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -4405,6 +4691,291 @@ void main() {
     state.dispose();
   });
 
+  testWidgets('search query and scope are restored per conversation', (
+    tester,
+  ) async {
+    final api = _PortraitApi(includeDirectMessage: true)
+      ..searchResultPage = SearchMessagePage(
+        messages: List.generate(
+          20,
+          (index) => SearchMessage(
+            id: 'search-result-$index',
+            kind: SearchMessageKind.channel,
+            conversationId: _PortraitApi.channel.id,
+            authorId: 'account-1',
+            body: 'Результат поиска $index',
+            createdAt: DateTime.utc(2026, 9, 25).add(Duration(minutes: index)),
+            revision: 1,
+          ),
+        ),
+      );
+    final state = AppState(api);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> search(String query) async {
+      final searchField = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            widget.decoration?.hintText == 'Поиск сообщений',
+      );
+      await tester.enterText(searchField, query);
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+    }
+
+    double resultsScrollOffset() {
+      final listView = tester.widget<ListView>(
+        find.descendant(
+          of: find.byKey(const ValueKey('workspace-search-panel')),
+          matching: find.byType(ListView),
+        ),
+      );
+      return listView.controller!.offset;
+    }
+
+    state.openSearchPanel();
+    await tester.pumpAndSettle();
+    await search('поиск в личном диалоге');
+    expect(api.searchRequests.last, ('поиск в личном диалоге', null, 'dm-1'));
+    final resultsList = find.descendant(
+      of: find.byKey(const ValueKey('workspace-search-panel')),
+      matching: find.byType(ListView),
+    );
+    await tester.drag(resultsList, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    final dmResultsOffset = resultsScrollOffset();
+    expect(dmResultsOffset, greaterThan(0));
+
+    state.closeSearchPanel();
+    await tester.pumpAndSettle();
+    expect(
+      state.workspace.searchSessions['dm:dm-1']?.scrollOffset,
+      closeTo(dmResultsOffset, 1),
+    );
+    await state.selectChannel(_PortraitApi.channel);
+    await tester.pumpAndSettle();
+    state.openSearchPanel();
+    await tester.pumpAndSettle();
+    final channelSearchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(
+      tester.widget<TextField>(channelSearchField).controller!.text,
+      isEmpty,
+    );
+    await search('поиск в текстовом канале');
+    expect(api.searchRequests.last, (
+      'поиск в текстовом канале',
+      _PortraitApi.channel.id,
+      null,
+    ));
+
+    state.closeSearchPanel();
+    await tester.pumpAndSettle();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpAndSettle();
+    api.searchGate = Completer<SearchMessagePage>();
+    state.openSearchPanel();
+    await tester.pump();
+    expect(find.text('Ищем сообщения…'), findsOneWidget);
+    expect(find.text('Найдите нужное сообщение'), findsNothing);
+    api.searchGate!.complete(api.searchResultPage!);
+    await tester.pumpAndSettle();
+    api.searchGate = null;
+    final restoredDmSearchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(
+      tester.widget<TextField>(restoredDmSearchField).controller!.text,
+      'поиск в личном диалоге',
+    );
+    expect(api.searchRequests.last, ('поиск в личном диалоге', null, 'dm-1'));
+    expect(resultsScrollOffset(), closeTo(dmResultsOffset, 1));
+
+    state.closeSearchPanel();
+    await tester.pumpAndSettle();
+    await state.selectChannel(_PortraitApi.channel);
+    await tester.pumpAndSettle();
+    state.openSearchPanel();
+    await tester.pumpAndSettle();
+    final restoredChannelSearchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(
+      tester.widget<TextField>(restoredChannelSearchField).controller!.text,
+      'поиск в текстовом канале',
+    );
+    expect(api.searchRequests.last, (
+      'поиск в текстовом канале',
+      _PortraitApi.channel.id,
+      null,
+    ));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  testWidgets('active DM search survives desktop and mobile resize', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.reset);
+
+    final api = _PortraitApi(includeDirectMessage: true);
+    final state = AppState(api);
+    await state.initialize();
+    await state.openDirectConversation(state.directMessages.single);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: state,
+          builder: (_, _) => WorkspaceScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    state.openSearchPanel();
+    await tester.pumpAndSettle();
+    final searchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    await tester.enterText(searchField, 'поиск после изменения ширины');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(api.searchRequests.last, (
+      'поиск после изменения ширины',
+      null,
+      'dm-1',
+    ));
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pumpAndSettle();
+    expect(state.workspacePanel, WorkspacePanel.search);
+    final mobileSearchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Поиск сообщений',
+    );
+    expect(
+      tester.widget<TextField>(mobileSearchField).controller!.text,
+      'поиск после изменения ширины',
+    );
+    expect(api.searchRequests.last, (
+      'поиск после изменения ширины',
+      null,
+      'dm-1',
+    ));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
+  for (final profile in [
+    (name: 'mobile', size: Size(390, 844)),
+    (name: 'desktop', size: Size(1440, 900)),
+  ]) {
+    testWidgets(
+      'DM search result returns to its conversation and draft (${profile.name})',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = profile.size;
+        addTearDown(tester.view.reset);
+
+        final api = _PortraitApi(includeDirectMessage: true)
+          ..searchResultPage = SearchMessagePage(
+            messages: [
+              SearchMessage(
+                id: 'dm-message-1',
+                kind: SearchMessageKind.directMessage,
+                conversationId: 'dm-1',
+                authorId: 'account-2',
+                body: 'Найденное личное сообщение',
+                createdAt: DateTime.utc(2026, 9, 25),
+                revision: 1,
+              ),
+            ],
+          );
+        final state = AppState(api);
+        await state.initialize();
+        await state.openDirectConversation(state.directMessages.single);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: AnimatedBuilder(
+              animation: state,
+              builder: (_, _) => WorkspaceScreen(state: state),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byType(TextField).last,
+          'Черновик личного сообщения',
+        );
+        await tester.pump();
+        state.openSearchPanel();
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is TextField &&
+                widget.decoration?.hintText == 'Поиск сообщений',
+          ),
+          'найденное личное сообщение',
+        );
+        await tester.testTextInput.receiveAction(TextInputAction.search);
+        await tester.pumpAndSettle();
+
+        expect(api.lastSearchQuery, 'найденное личное сообщение');
+        expect(api.lastSearchDirectMessageId, 'dm-1');
+        await tester.tap(
+          find.byKey(const ValueKey('search-result-dm-message-1')),
+        );
+        await tester.pumpAndSettle();
+        expect(state.workspacePanel, WorkspacePanel.searchContext);
+        expect(state.selectedDirectMessage?.id, 'dm-1');
+        expect(api.lastDirectMessageAt, 'dm-message-1');
+        expect(find.text('Исходное личное сообщение'), findsOneWidget);
+
+        await tester.tap(find.text('Вернуться к беседе'));
+        await tester.pumpAndSettle();
+        expect(state.workspacePanel, WorkspacePanel.none);
+        expect(state.selectedDirectMessage?.id, 'dm-1');
+        expect(find.text('Исходное личное сообщение'), findsOneWidget);
+        expect(
+          tester
+              .widget<TextField>(find.byType(TextField).last)
+              .controller!
+              .text,
+          'Черновик личного сообщения',
+        );
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        state.dispose();
+      },
+    );
+  }
+
   testWidgets('portrait layout keeps the channel open behind drawers', (
     tester,
   ) async {
@@ -4638,6 +5209,95 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
+
+  for (final profile in [
+    (
+      name: 'mobile',
+      size: const Size(393, 852),
+      pixelRatio: 3.0,
+      textScale: 1.0,
+    ),
+    (
+      name: 'mobile-large-text',
+      size: const Size(393, 852),
+      pixelRatio: 3.0,
+      textScale: 2.0,
+    ),
+    (
+      name: 'desktop',
+      size: const Size(1440, 900),
+      pixelRatio: 2.0,
+      textScale: 1.0,
+    ),
+  ]) {
+    testWidgets('captures production Flutter text workspace at ${profile.name}', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = profile.pixelRatio;
+      tester.view.physicalSize = Size(
+        profile.size.width * profile.pixelRatio,
+        profile.size.height * profile.pixelRatio,
+      );
+      addTearDown(tester.view.reset);
+      await loadUiuxVisualCaptureFonts();
+
+      final state = AppState(
+        _PortraitApi(
+          withHistory: true,
+          historyCount: 3,
+          includeDirectMessage: true,
+        ),
+      );
+      await state.initialize();
+      state.selectedChannel = _PortraitApi.channel;
+      final captureKey = ValueKey('uiux-workspace-capture-${profile.name}');
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: guildTheme(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(profile.textScale)),
+            child: child!,
+          ),
+          home: RepaintBoundary(
+            key: captureKey,
+            child: AnimatedBuilder(
+              animation: state,
+              builder: (_, _) => WorkspaceScreen(state: state),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Последнее сообщение'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await captureUiuxBoundary(
+        tester,
+        find.byKey(captureKey),
+        fileName:
+            'flutter-text-channel-${profile.name}-${profile.size.width.toInt()}x${profile.size.height.toInt()}.png',
+        pixelRatio: profile.pixelRatio,
+      );
+
+      await state.openDirectConversation(state.directMessages.single);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('direct-message-composer-wrap')),
+        findsOneWidget,
+      );
+      expect(find.text('Исходное личное сообщение'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await captureUiuxBoundary(
+        tester,
+        find.byKey(captureKey),
+        fileName:
+            'flutter-dm-conversation-${profile.name}-${profile.size.width.toInt()}x${profile.size.height.toInt()}.png',
+        pixelRatio: profile.pixelRatio,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    });
+  }
 }
 
 class _PublishedScreenRoom extends Room {
@@ -4736,7 +5396,10 @@ class _PortraitApi extends ApiClient {
   final textEditRevisions = <int>[];
   final textEditMentionIds = <List<String>>[];
   String? lastSearchQuery;
+  String? lastSearchDirectMessageId;
+  final searchRequests = <(String, String?, String?)>[];
   Completer<SearchMessagePage>? searchGate;
+  SearchMessagePage? searchResultPage;
   bool emptySearchResults = false;
   bool failAdminUpdate = false;
   bool failResetLink = false;
@@ -4874,8 +5537,12 @@ class _PortraitApi extends ApiClient {
     int limit = 20,
   }) async {
     lastSearchQuery = query;
+    lastSearchDirectMessageId = directMessageId;
+    searchRequests.add((query, channelId, directMessageId));
     final gate = searchGate;
     if (gate != null) return gate.future;
+    final resultPage = searchResultPage;
+    if (resultPage != null) return resultPage;
     return SearchMessagePage(
       messages: emptySearchResults
           ? const []

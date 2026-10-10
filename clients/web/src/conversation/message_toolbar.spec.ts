@@ -59,14 +59,17 @@ describe('C-22 message action toolbar', () => {
     expect(disclosure).toMatch(/function closeActions\(event: KeyboardEvent\)[\s\S]*?if \(!actionsOpen\.value\) return[\s\S]*?event\.stopPropagation\(\)/)
   })
 
-  it('keeps the idle mobile disclosure out of the reference frame while allowing a touch reveal', () => {
+  it('keeps the mobile action button visible and opens only from its button or a stationary long press', () => {
     const css = readFileSync(new URL('../design/conversation.css', import.meta.url), 'utf8')
     const source = readFileSync(new URL('./MessageItem.vue', import.meta.url), 'utf8')
     const disclosure = readFileSync(new URL('./message_actions/disclosure.ts', import.meta.url), 'utf8')
-    expect(css).toMatch(/\.message-row \.message-actions-toggle \{[^}]*opacity: 0;[^}]*pointer-events: none;/)
-    expect(css).toContain('.message-row .message-actions.is-open .message-actions-toggle')
+    expect(css).toMatch(/\.message-row \.message-actions-toggle \{[^}]*width: 44px;[^}]*height: 44px;[^}]*opacity: 1;[^}]*pointer-events: auto;/)
+    expect(css).toContain('.message-row .message-actions.is-open .message-action-buttons')
     expect(source).toContain('@pointerdown="onRowPointerDown"')
+    expect(source).toContain('@pointermove="onRowPointerMove"')
+    expect(source).toContain('@pointerup="onRowPointerEnd"')
     expect(source).toContain('@focusout="onRowFocusOut"')
-    expect(disclosure).toMatch(/function onRowPointerDown\(event: PointerEvent\)[\s\S]*?event\.pointerType !== 'touch'[\s\S]*?closest\('[^']*button[^']*a[^']*'\)[\s\S]*?actionsOpen\.value = true/)
+    expect(disclosure).toMatch(/function onRowPointerDown\(event: PointerEvent\)[\s\S]*?event\.pointerType !== 'touch'[\s\S]*?closest\('[^']*button[^']*a[^']*'\)[\s\S]*?window\.setTimeout\([\s\S]*?actionsOpen\.value = true[\s\S]*?\}, 500\)/)
+    expect(disclosure).toContain('Math.hypot(event.clientX - press.x, event.clientY - press.y) > 10')
   })
 })

@@ -14,3 +14,9 @@ it('cannot accept a conflict before refreshing, and discards only explicitly',()
   state.sync([{...account,role:'ADMINISTRATOR',updated_at:'v2'}]);expect(state.accept('a',true)).toBe(true)
   expect(state.drafts.a).toEqual({role:'ADMINISTRATOR',blocked:false})
 })
+it('replaces a confirmed saved draft with the refreshed server record atomically',()=>{
+  const state=createMemberConflictState();state.sync([account]);state.drafts.a.role='ADMINISTRATOR'
+  const refreshed={...account,role:'ADMINISTRATOR' as const,updated_at:'v2'}
+  state.saved('a',refreshed)
+  expect(state.baseline.a).toEqual(refreshed);expect(state.drafts.a).toEqual({role:'ADMINISTRATOR',blocked:false})
+})

@@ -20,7 +20,7 @@ extension RoleActionsAction on RolePermissionsContext {
             child: const Text('Отмена'),
           ),
           FilledButton(
-            onPressed: !dirty || saving ? null : savePermissions,
+            onPressed: !dirty || saving || denied ? null : savePermissions,
             child: Semantics(
               liveRegion: saving,
               child: Text(saving ? 'Сохраняем…' : 'Сохранить'),

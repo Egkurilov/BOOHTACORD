@@ -4,11 +4,11 @@ import type { AdminTopologyRequest } from './admin_topology_client'
 import type { TopologyCategory } from './topology_client'
 import { closeVoiceAdmission, VoiceCloseError } from './voice_close_client'
 
-export interface VoiceCloseSnapshot { categories: TopologyCategory[]; revision: number; selectedChannelId: string }
+export interface VoiceCloseSnapshot { accountId?: string; categories: TopologyCategory[]; revision: number; selectedChannelId: string }
 export type VoiceClosePhase = 'idle' | 'pending' | 'finalized'
 
 export function createVoiceCloseEditor(snapshot: () => VoiceCloseSnapshot, changed: () => void,
-  confirm: (message: string) => boolean | Promise<boolean>, request?: AdminTopologyRequest) {
+  confirm: (message: string, stillCurrent: () => boolean) => boolean | Promise<boolean>, request?: AdminTopologyRequest) {
   const pending = ref(false)
   const needsRefresh = ref(false)
   const error = ref<string | null>(null)
@@ -46,7 +46,15 @@ export function createVoiceCloseEditor(snapshot: () => VoiceCloseSnapshot, chang
     const current = snapshot()
     const channel = selectedVoice()
     if (!channel || channel.admissionClosed || pending.value || needsRefresh.value || current.revision < 1) return false
-    if (!await confirm(`Закрыть вход в голосовой канал «${channel.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.`)) return false
+    const stillCurrent = () => {
+      const latest = snapshot()
+      const latestChannel = latest.categories.flatMap(({ channels }) => channels)
+        .find(({ id }) => id === channel.id)
+      return latest.accountId === current.accountId && latest.categories === current.categories &&
+        latest.revision === current.revision && latestChannel?.kind === 'VOICE' &&
+        latestChannel.name === channel.name && !latestChannel.admissionClosed
+    }
+    if (!await confirm(`Закрыть вход в голосовой канал «${channel.name}»? Участникам будет отправлена причина; отзыв media-доступа в SFU может занять время.`, stillCurrent) || !stillCurrent()) return false
     error.value = null
     status.value = null
     pending.value = true

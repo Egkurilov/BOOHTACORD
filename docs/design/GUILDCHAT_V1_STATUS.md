@@ -22,9 +22,7 @@
 
 ### Палитра и типографика
 
-Темная тема остаётся единственной темой MVP. Ключевые tokens: canvas `#0E1117`, sidebar/aside `#141922`, content `#151A23`, surface `#1D2430`, raised surface `#242D3B`, selected surface `#293345`, основной текст `#F1F4F9`, вторичный текст `#B7C0D0`, muted text `#929EB2`, accent `#5C5FE8`, focus `#ADB8FF`, success `#58D5A2`, warning `#F4BD62`, danger `#FF9199`.
-
-Используется стек `Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`, с системным fallback. Базовая сетка отступов: 4/8/12/16/20/24/32/40/48/64px. Основной control — 40px; compact — 32px; large — 48px. Radius: 4/6/10/14/20px и 999px. Все актуальные CSS custom properties находятся в [`clients/web/src/design/tokens.css`](../../clients/web/src/design/tokens.css).
+Темная тема остаётся единственной темой MVP. Указанные в исходном GuildChat v1.0 snapshot палитра и размеры предшествуют текущему Design V2 runtime contract. Текущие значения и Web/Flutter сопоставление зафиксированы в [Design V2 token crosswalk](DESIGN_V2_TOKEN_CROSSWALK.md); актуальные исходники — [`tokens.css`](../../clients/web/src/design/tokens.css) и [`theme.dart`](../../clients/flutter/lib/src/theme.dart). Не переносить старые значения в новый runtime код без проверки применимого ADR.
 
 ### Desktop grid
 
@@ -54,7 +52,7 @@
 
 | Область | Реализация |
 | --- | --- |
-| Tokens, motion и global foundations | [`tokens.css`](../../clients/web/src/design/tokens.css), [`foundation.css`](../../clients/web/src/design/foundation.css) |
+| Tokens, motion и global foundations | [Design V2 token crosswalk](DESIGN_V2_TOKEN_CROSSWALK.md), [`tokens.css`](../../clients/web/src/design/tokens.css), [`foundation.css`](../../clients/web/src/design/foundation.css) |
 | Shell, responsive grid и navigation | [`shell.css`](../../clients/web/src/design/shell.css), [`navigation.css`](../../clients/web/src/design/navigation.css) |
 | Chat/DM и composer | [`conversation.css`](../../clients/web/src/design/conversation.css) |
 | Voice, participant cards и stream viewer | [`voice.css`](../../clients/web/src/design/voice.css) |

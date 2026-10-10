@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/features/admin/topology/mutation_controller.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ Future<AppState> _openChannels(WidgetTester tester, TopologyTestApi api) async {
   expect(
     tester
         .widget<OutlinedButton>(
-          find.widgetWithText(OutlinedButton, 'Категорию выше'),
+          find.widgetWithText(OutlinedButton, 'Раздел выше'),
         )
         .onPressed,
     isNull,
@@ -97,7 +98,44 @@ class _DescriptionTopologyApi extends TopologyTestApi {
   }
 }
 
+class _TopologyDeleteApi extends TopologyTestApi {
+  bool deleteCalled = false;
+
+  @override
+  Future<void> deleteEmptyCategory({
+    required String categoryId,
+    required int expectedRevision,
+  }) async {
+    deleteCalled = true;
+  }
+}
+
 void main() {
+  test(
+    'admin confirmation revalidates a target changed while the prompt is open',
+    () async {
+      const empty = ChannelCategory(id: 'empty', name: 'Пустой', channels: []);
+      final api = _TopologyDeleteApi()
+        ..current = const ChannelTopology(revision: 7, categories: [empty]);
+      final controller = AdminTopologyMutationController(
+        api: api,
+        topologyProvider: () => api.current,
+        refreshTopology: () async {},
+        confirm: (confirmation) async {
+          expect(confirmation.stillCurrent?.call(), isTrue);
+          api.current = const ChannelTopology(revision: 8, categories: [empty]);
+          expect(confirmation.stillCurrent?.call(), isFalse);
+          return true;
+        },
+      );
+      addTearDown(controller.dispose);
+
+      await controller.deleteCategory(empty, 7);
+
+      expect(api.deleteCalled, isFalse);
+    },
+  );
+
   testWidgets('compact member directory matches web typography and targets', (
     tester,
   ) async {
@@ -310,13 +348,13 @@ void main() {
       state.dispose();
     });
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Категорию выше'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Раздел выше'));
     await tester.pump();
     expect(api.revisions, [1]);
     expect(
       tester
           .widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Категорию выше'),
+            find.widgetWithText(OutlinedButton, 'Раздел выше'),
           )
           .onPressed,
       isNull,
@@ -338,7 +376,7 @@ void main() {
     expect(state.topology!.categories.first.id, 'second');
     expect(api.revisions, [1]);
     expect(
-      find.text('Порядок категорий сохранён. Топология обновлена.'),
+      find.text('Порядок разделов сохранён. Структура обновлена.'),
       findsOneWidget,
     );
     expect(
@@ -410,7 +448,7 @@ void main() {
       state.dispose();
     });
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Категорию выше'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Раздел выше'));
     await tester.pumpAndSettle();
     expect(api.revisions, [1]);
     expect(state.topology!.revision, 2);
@@ -421,13 +459,13 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Категорию выше'));
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Раздел выше'));
     await tester.pumpAndSettle();
     expect(api.revisions, [1, 2]);
     expect(state.topology!.revision, 3);
     expect(state.topology!.categories.first.id, 'second');
     expect(
-      find.text('Порядок категорий сохранён. Топология обновлена.'),
+      find.text('Порядок разделов сохранён. Структура обновлена.'),
       findsOneWidget,
     );
   });

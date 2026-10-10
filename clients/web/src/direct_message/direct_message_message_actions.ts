@@ -5,6 +5,7 @@ import type { DirectMessageRequest } from './direct_message_client'
 import { deleteDirectMessage, editDirectMessage, DirectMessageMutationError } from './direct_message_mutation_client'
 import type { EditResult } from '../conversation/message_edit_controller'
 import { type DirectMessageDisplayItem, type PendingDirectMessageSend } from './direct_message_pending'
+import { requestFailureMessage } from '../request_feedback'
 
 export interface DirectMessageActionState {
   directMessageId: Ref<string | null>
@@ -32,7 +33,7 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
     } catch (cause) {
       const message = cause instanceof DirectMessageMutationError && cause.status === 409
         ? 'Сообщение изменилось. Обновите версию, чтобы сохранить свой текст.'
-        : cause instanceof Error ? cause.message : 'Не удалось изменить личное сообщение.'
+        : requestFailureMessage(cause, 'Не удалось изменить личное сообщение.')
       if (state.directMessageId.value === targetDirectMessageId) state.error.value = message
       return { kind: cause instanceof DirectMessageMutationError && cause.status === 409 ? 'conflict' : 'error', message }
     }
@@ -53,7 +54,7 @@ export function createDirectMessageMessageActions(state: DirectMessageActionStat
       state.messages.value = state.messages.value.map((message) => message.id === messageId ? { ...message, body: '', deleted: true, attachments: [], revision: message.revision + 1 } : message)
       return true
     } catch (cause) {
-      if (state.directMessageId.value === targetDirectMessageId) state.error.value = cause instanceof Error ? cause.message : 'Не удалось удалить личное сообщение.'
+      if (state.directMessageId.value === targetDirectMessageId) state.error.value = requestFailureMessage(cause, 'Не удалось удалить личное сообщение.')
       return false
     }
   }

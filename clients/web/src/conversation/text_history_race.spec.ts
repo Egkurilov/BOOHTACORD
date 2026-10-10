@@ -26,9 +26,29 @@ describe('TEXT history across multiple pages and realtime refresh', () => {
     await store.open('text-1', request)
     expect(store.historyLoaded).toBe(false)
     expect(store.error).toBe('Сеть недоступна')
+    expect(store.retryableError).toBe(true)
     await store.refresh(request)
     expect(store.historyLoaded).toBe(true)
+    expect(store.retryableError).toBe(false)
     expect(store.messages.map(({ id }) => id)).toEqual(['message-2', 'message-1'])
+  })
+
+  it('keeps a forbidden history failure distinct and does not offer a retry', async () => {
+    const store = useMessageStore()
+    await store.open('text-1', async () => new Response(JSON.stringify({ error: { code: 'FORBIDDEN' } }), { status: 403 }))
+    expect(store.error).toBe('Нет доступа к этому действию.')
+    expect(store.retryableError).toBe(false)
+    expect(store.historyLoaded).toBe(false)
+  })
+
+  it('retains loaded messages as stale and exposes a deliberate retry after a 503', async () => {
+    const store = useMessageStore()
+    await store.open('text-1', async () => page(1, 1))
+    await store.refresh(async () => new Response('{}', { status: 503 }))
+    expect(store.messages.map(({ id }) => id)).toEqual(['message-1'])
+    expect(store.historyLoaded).toBe(true)
+    expect(store.error).toBe('Сервис временно не отвечает. Попробуйте позже.')
+    expect(store.retryableError).toBe(true)
   })
 
   it('loads more than 100 messages through three pages without duplicates', async () => {

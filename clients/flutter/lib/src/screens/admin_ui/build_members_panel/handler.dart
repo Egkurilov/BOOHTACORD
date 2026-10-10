@@ -18,9 +18,12 @@ extension AdminScreenStateAdminBuildMembersPanelBindingAction
     filters: AdminMemberFilters(
       search: adminAccountSearch,
       role: adminAccountRoleFilter,
+      status: adminAccountStatusFilter,
       onSearchChanged: () => adminMutateView(() {}),
       onRoleChanged: (value) =>
           adminMutateView(() => adminAccountRoleFilter = value),
+      onStatusChanged: (value) =>
+          adminMutateView(() => adminAccountStatusFilter = value),
     ),
     resetCard: adminResetLink == null ? null : adminBuildResetLinkCard(),
     conflictCards: [
@@ -33,6 +36,17 @@ extension AdminScreenStateAdminBuildMembersPanelBindingAction
     ],
     search: adminAccountSearch.text,
     roleFilter: adminAccountRoleFilter,
+    statusFilter: adminAccountStatusFilter,
+    resultsCount: adminVisibleAdminAccounts.length,
+    filtersActive:
+        adminAccountSearch.text.trim().isNotEmpty ||
+        adminAccountRoleFilter != 'ALL' ||
+        adminAccountStatusFilter != 'ALL',
+    onResetFilters: () => adminMutateView(() {
+      adminAccountSearch.clear();
+      adminAccountRoleFilter = 'ALL';
+      adminAccountStatusFilter = 'ALL';
+    }),
     cursor: adminAccountCursor,
     status: adminAccountsStatus,
     loadingState: adminLoadingState(

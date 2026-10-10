@@ -10,7 +10,7 @@ extension RenderAdminCategoryEditorAction on AdminScreenStateContext {
       controller: adminCategoryRename,
       enabled: !adminBusy,
       maxLength: 80,
-      decoration: const InputDecoration(labelText: 'Новое имя категории'),
+      decoration: const InputDecoration(labelText: 'Новое название раздела'),
     ),
     Wrap(
       spacing: 8,
@@ -19,13 +19,13 @@ extension RenderAdminCategoryEditorAction on AdminScreenStateContext {
           onPressed: adminBusy
               ? null
               : () => adminRenameCategory(selectedCategory),
-          child: const Text('Переименовать категорию'),
+          child: const Text('Переименовать раздел'),
         ),
         OutlinedButton(
           onPressed: adminBusy || selectedCategory.channels.isNotEmpty
               ? null
               : () => adminDeleteCategory(selectedCategory),
-          child: const Text('Удалить пустую категорию'),
+          child: const Text('Удалить пустой раздел'),
         ),
       ],
     ),
@@ -36,7 +36,7 @@ extension RenderAdminCategoryEditorAction on AdminScreenStateContext {
           onPressed: adminBusy || categories.indexOf(selectedCategory) == 0
               ? null
               : () => adminReorderCategory(-1),
-          child: const Text('Категорию выше'),
+          child: const Text('Раздел выше'),
         ),
         OutlinedButton(
           onPressed:
@@ -44,7 +44,7 @@ extension RenderAdminCategoryEditorAction on AdminScreenStateContext {
                   categories.indexOf(selectedCategory) == categories.length - 1
               ? null
               : () => adminReorderCategory(1),
-          child: const Text('Категорию ниже'),
+          child: const Text('Раздел ниже'),
         ),
       ],
     ),

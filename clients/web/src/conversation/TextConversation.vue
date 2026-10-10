@@ -90,7 +90,7 @@ function closeSearch(): void { searchOpen.value = false; void nextTick(() => sea
     </header>
     <div v-if="searchOpen" v-show="!contextOpen()" class="conversation-tools"><TextMessageSearch :channel-id="props.channelId" @open="searchTarget.open({ kind: 'CHANNEL', conversationId: props.channelId, messageId: $event })" @close="closeSearch" /></div>
     <p v-if="store.loading" class="state" aria-live="polite">Загружаем историю…</p>
-    <p v-if="store.error" id="text-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refresh()">Повторить загрузку</button></p>
+    <p v-if="store.error" id="text-conversation-error" class="state state-error" role="alert">{{ store.error }} <span v-if="store.historyLoaded">Показанная история может быть устаревшей.</span> <button v-if="store.retryableError" type="button" @click="store.refresh()">Повторить загрузку</button></p>
     <div v-if="!filesOpen && unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
       <span>Есть непрочитанные сообщения.</span>
       <button type="button" @click="showUnread">К первому непрочитанному</button>

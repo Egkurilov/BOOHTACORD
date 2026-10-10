@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { api, chromium, expect, login, origin, status } from './request.mjs'
+import { api, chromium, expect, login, openNavigation, origin, status } from './request.mjs'
 import { guild } from './guild.mjs'
 import { sessions } from './sessions.mjs'
 import { registration, rateLimit } from '../critical_client_acceptance/auth.mjs'
@@ -11,13 +11,29 @@ import { prepareSessionRevoke, checkSessionRevoke } from '../critical_client_acc
 const input = JSON.parse(readFileSync(process.env.QA_INPUT, 'utf8'))
 assert.equal(origin, 'https://localhost:4810')
 // The owned SFU advertises only loopback ICE candidates; permit that interface in this local fixture.
-const browser = await chromium.launch({ headless: true, args: ['--allow-loopback-in-peer-connection'] })
-const report = { schema_version: 1, width: input.width, mocks: false, synthetic_accounts: true }
+const browserOptions = { headless: true, args: ['--allow-loopback-in-peer-connection'] }
+if (process.env.QA_BROWSER_EXECUTABLE) browserOptions.executablePath = process.env.QA_BROWSER_EXECUTABLE
+const browser = await chromium.launch(browserOptions)
+const report = {
+  schema_version: 1,
+  width: input.viewport.width,
+  height: input.viewport.height,
+  is_mobile: input.viewport.is_mobile,
+  device_scale_factor: input.viewport.device_scale_factor,
+  has_touch: input.viewport.has_touch,
+  mocks: false,
+  synthetic_accounts: true,
+}
 const redactions = [input.password]
 try {
-  const contexts = await Promise.all([0, 1, 2].map(() => browser.newContext({
-    ignoreHTTPSErrors: true, viewport: { width: input.width, height: 900 },
-  })))
+  const contextOptions = {
+    ignoreHTTPSErrors: true,
+    viewport: { width: input.viewport.width, height: input.viewport.height },
+    isMobile: input.viewport.is_mobile,
+    deviceScaleFactor: input.viewport.device_scale_factor,
+    hasTouch: input.viewport.has_touch,
+  }
+  const contexts = await Promise.all([0, 1, 2].map(() => browser.newContext(contextOptions)))
   contexts.forEach(context => { context.setDefaultTimeout(15000); context.setDefaultNavigationTimeout(15000) })
   const [a, b, guest] = await Promise.all(contexts.map(context => context.newPage()))
   await login(a, 'qa_admin', input.password)
@@ -25,9 +41,25 @@ try {
   console.log('stage=two-admin-clients-authenticated')
   const flowAccount = input.critical ? await registration(browser, input, report) : null
   console.log('stage=registration-outcome-accepted')
+  await expect.poll(async () => {
+    try { return (await api(a, '/health')).status }
+    catch { return 0 }
+  }, { timeout: 15000 }).toBe(200)
+  console.log('stage=browser-api-ready-after-registration')
   await guest.goto(origin)
-  const value = await guild(a, b, guest, input.password, report, input.directory)
+  const expectedMemberCount = 20 + Number(Boolean(flowAccount))
+  const value = await guild(a, b, guest, input.password, report, input.directory, expectedMemberCount)
   await login(guest, 'qa_member', input.password)
+  await openNavigation(guest)
+  await guest.getByRole('button', { name: 'Личные', exact: true }).click()
+  const dmNavigation = guest.getByRole('navigation', { name: 'Личные сообщения' })
+  await expect(dmNavigation).toBeVisible()
+  await dmNavigation.getByRole('button', { name: 'Начать диалог', exact: true }).click()
+  const dmStarter = guest.getByRole('dialog', { name: 'Новый личный диалог' })
+  await dmStarter.getByRole('button', { name: 'qa_admin', exact: true }).click()
+  await expect(guest.getByRole('heading', { name: 'qa_admin', exact: true })).toBeVisible()
+  await guest.screenshot({ path: input.directory+'/direct-message-header.png' })
+  report.navigation_context = { ...report.navigation_context, direct_message_header: 'PASS' }
   const denied = await api(guest, '/admin/guild-settings', 'PATCH', {
     name: 'MemberOverwrite', expected_revision: value.revision,
   })
@@ -46,8 +78,7 @@ try {
   } : undefined)
   const refreshed = (await api(a, '/guild-profile')).body
   assert.equal(refreshed.name, 'Автономная гильдия')
-  const anonymous = await browser.newContext({ ignoreHTTPSErrors: true,
-    viewport: { width: input.width, height: 900 } })
+  const anonymous = await browser.newContext(contextOptions)
   const auth = await anonymous.newPage()
   await auth.goto(origin)
   await expect(auth.locator('.authentication-brand .guild-profile-name')).toHaveText(refreshed.name)

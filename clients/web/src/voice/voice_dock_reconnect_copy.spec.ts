@@ -37,4 +37,38 @@ describe('VOICE dock helper copy', () => {
     expect(html).not.toContain('Голос подключён · канал не отображается')
     expect(html).not.toContain('Канал сейчас не отображается.')
   })
+
+  it('explains permission denial and labels the dock action as a retry', async () => {
+    const html = await renderToString(createSSRApp(VoiceDock, {
+      channel: {
+        id: 'voice', name: 'Voice', kind: 'VOICE', position: 0,
+        admissionClosed: false,
+      },
+      activeSession: true, error: null, activationMode: 'VAD', deafened: false,
+      deafenChanging: false, microphoneMuted: false,
+      microphonePermissionDenied: true, state: 'LISTENER', participantCount: 2,
+    }))
+
+    expect(html).toContain('Вы подключены как слушатель')
+    expect(html).toContain('браузер запретил доступ к микрофону')
+    expect(html).toContain('aria-label="Повторить доступ к микрофону"')
+    expect(html).toContain('aria-pressed="false"')
+  })
+
+  it('keeps push-to-talk disabled and explains how a listener can retry', async () => {
+    const html = await renderToString(createSSRApp(VoiceDock, {
+      channel: {
+        id: 'voice', name: 'Voice', kind: 'VOICE', position: 0,
+        admissionClosed: false,
+      },
+      activeSession: true, error: null, activationMode: 'PTT', deafened: false,
+      deafenChanging: false, microphoneMuted: false,
+      microphonePermissionDenied: true, state: 'LISTENER', participantCount: 2,
+    }))
+
+    expect(html).toContain('aria-label="Микрофон управляется push-to-talk"')
+    expect(html).toContain('disabled')
+    expect(html).toContain('удерживайте клавишу push-to-talk')
+    expect(html).not.toContain('aria-label="Повторить доступ к микрофону"')
+  })
 })

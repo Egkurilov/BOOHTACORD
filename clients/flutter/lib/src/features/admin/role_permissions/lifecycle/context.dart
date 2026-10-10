@@ -6,8 +6,8 @@ abstract class RolePermissionsContext extends State<RolePermissionsPanel> {
     GuildPermission.textDelete: 'Удалять текстовые каналы',
     GuildPermission.voiceCreate: 'Создавать голосовые каналы',
     GuildPermission.voiceDelete: 'Закрывать голосовые каналы',
-    GuildPermission.categoryCreate: 'Создавать категории',
-    GuildPermission.categoryDelete: 'Удалять пустые категории',
+    GuildPermission.categoryCreate: 'Создавать разделы',
+    GuildPermission.categoryDelete: 'Удалять пустые разделы',
   };
   final deleteKeys = const {
     GuildPermission.textDelete,
@@ -16,8 +16,10 @@ abstract class RolePermissionsContext extends State<RolePermissionsPanel> {
   };
   GuildRole role = GuildRole.member;
   int revision = 0;
+  int loadGeneration = 0;
   bool loading = true;
   bool saving = false;
+  bool denied = false;
   String? error;
   String? status;
   bool conflict = false;
@@ -31,7 +33,7 @@ abstract class RolePermissionsContext extends State<RolePermissionsPanel> {
   RolePolicy? get selected =>
       roles.where((item) => item.role == role).firstOrNull;
   void mutate(VoidCallback callback) => setState(callback);
-  Future<void> loadRoles({required bool reset});
+  Future<bool> loadRoles({required bool reset});
   void loadDefaults();
   Future<void> savePermissions();
   Future<bool> confirmDeletes();

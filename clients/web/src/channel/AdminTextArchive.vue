@@ -6,17 +6,24 @@ import AdminConfirmation from './AdminConfirmation.vue'
 import { createTextArchiveEditor } from './text_archive_editor'
 import type { TopologyCategory } from './topology_client'
 
-const props = defineProps<{ categories: TopologyCategory[]; revision: number; channelId?: string }>()
+const props = defineProps<{ accountId?: string; categories: TopologyCategory[]; revision: number; channelId?: string }>()
 const emit = defineEmits<{ changed: [] }>()
 const navigation = useVoiceNavigationStore()
 const localChannelId = ref('')
 const selectedChannelId = computed({ get: () => props.channelId ?? localChannelId.value, set: (id: string) => { localChannelId.value = id } })
-const confirmation = ref<{ ask: (message: string) => Promise<boolean> } | null>(null)
+const confirmation = ref<{ ask: (message: string) => Promise<boolean>; cancel: () => boolean } | null>(null)
 const statusNode = ref<HTMLElement | null>(null)
 const errorNode = ref<HTMLElement | null>(null)
 const textChannels = computed(() => props.categories.flatMap(({ channels }) => channels).filter(({ kind }) => kind === 'TEXT'))
-const editor = createTextArchiveEditor(() => ({ categories: props.categories, revision: props.revision, selectedChannelId: selectedChannelId.value }),
-  () => emit('changed'), (id) => navigation.clearSelectedText(id), (message) => confirmation.value?.ask(message) ?? false)
+async function confirmCurrentTarget(message: string, stillCurrent: () => boolean): Promise<boolean> {
+  const stopWatching = watch(() => [props.accountId, props.categories, props.revision], () => {
+    if (!stillCurrent()) confirmation.value?.cancel()
+  }, { deep: true })
+  try { return await confirmation.value?.ask(message) ?? false }
+  finally { stopWatching() }
+}
+const editor = createTextArchiveEditor(() => ({ accountId: props.accountId, categories: props.categories, revision: props.revision, selectedChannelId: selectedChannelId.value }),
+  () => emit('changed'), (id) => navigation.clearSelectedText(id), confirmCurrentTarget)
 
 watch(textChannels, (channels) => {
   if (props.channelId !== undefined) return

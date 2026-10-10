@@ -1,6 +1,7 @@
 import '../confirm_delete/component.dart';
 import '../edit_message_dialog/component.dart';
 import '../native_bindings.dart';
+import '../message_action_menu/popup_button.dart';
 
 class WorkspaceDirectMessageActionMenu extends StatelessWidget {
   const WorkspaceDirectMessageActionMenu({
@@ -25,31 +26,39 @@ class WorkspaceDirectMessageActionMenu extends StatelessWidget {
   final Future<void> Function() onDelete;
 
   @override
-  Widget build(BuildContext context) => PopupMenuButton<String>(
-    tooltip: 'Действия с сообщением',
-    onSelected: (action) async {
-      if (action == 'reply') {
-        onReply(message);
-      } else if (action == 'edit') {
-        await workspaceEditMessageDialog(
-          context,
-          message.body,
-          message.revision,
-          message.mentionUserIds,
-          mentionOptions,
-          selfId,
-          onEdit,
-          onRefresh,
-        );
-      } else if (action == 'delete' && await workspaceConfirmDelete(context)) {
-        await onDelete();
-      }
-    },
-    itemBuilder: (_) => [
-      const PopupMenuItem(value: 'reply', child: Text('Ответить')),
-      if (canEdit) const PopupMenuItem(value: 'edit', child: Text('Изменить')),
-      if (canEdit) const PopupMenuItem(value: 'delete', child: Text('Удалить')),
-    ],
-    icon: const Icon(Icons.more_horiz, size: 18),
-  );
+  Widget build(BuildContext context) {
+    final platform = Theme.of(context).platform;
+    final mobile =
+        MediaQuery.sizeOf(context).width < 1024 &&
+        (platform == TargetPlatform.iOS || platform == TargetPlatform.android);
+    return WorkspaceMessageActionPopupButton(
+      mobile: mobile,
+      items: [
+        const PopupMenuItem(value: 'reply', child: Text('Ответить')),
+        if (canEdit)
+          const PopupMenuItem(value: 'edit', child: Text('Изменить')),
+        if (canEdit)
+          const PopupMenuItem(value: 'delete', child: Text('Удалить')),
+      ],
+      onSelected: (action) async {
+        if (action == 'reply') {
+          onReply(message);
+        } else if (action == 'edit') {
+          await workspaceEditMessageDialog(
+            context,
+            message.body,
+            message.revision,
+            message.mentionUserIds,
+            mentionOptions,
+            selfId,
+            onEdit,
+            onRefresh,
+          );
+        } else if (action == 'delete' &&
+            await workspaceConfirmDelete(context)) {
+          await onDelete();
+        }
+      },
+    );
+  }
 }

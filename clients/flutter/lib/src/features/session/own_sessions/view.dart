@@ -1,14 +1,92 @@
 import 'package:flutter/material.dart';
 
+import '../../admin/confirmation/dialog.dart';
 import 'controller.dart';
 import 'model.dart';
 
 class OwnSessionsView extends StatelessWidget {
   const OwnSessionsView({super.key, required this.state});
   final OwnSessionsController state;
+
   String date(BuildContext context, DateTime value) {
     final local = value.toLocal(), locale = MaterialLocalizations.of(context);
     return '${locale.formatShortDate(local)} ${locale.formatTimeOfDay(TimeOfDay.fromDateTime(local))}';
+  }
+
+  Future<void> confirmRevokeSession(
+    BuildContext context,
+    OwnSession session,
+  ) async {
+    final owner = state.accountId;
+    final confirmed = await showConfirmationDialog<bool>(
+      context: context,
+      cancelOn: state,
+      shouldCancel: () =>
+          state.accountId != owner ||
+          !state.items.any((item) => item.id == session.id && !item.current),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Подтвердите завершение сеанса'),
+        content: Text(
+          'Сеанс «${session.label}» потеряет доступ к сообщениям и голосу. '
+          'Завершить его?',
+        ),
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Завершить сеанс'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true &&
+        state.accountId == owner &&
+        state.items.any((item) => item.id == session.id && !item.current)) {
+      await state.revoke(session.id);
+    }
+  }
+
+  Future<void> confirmRevokeOthers(BuildContext context) async {
+    final owner = state.accountId;
+    final confirmed = await showConfirmationDialog<bool>(
+      context: context,
+      cancelOn: state,
+      shouldCancel: () =>
+          state.accountId != owner || !state.items.any((item) => !item.current),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Подтвердите завершение сеансов'),
+        content: const Text(
+          'Все остальные сеансы потеряют доступ к сообщениям и голосу. '
+          'Текущий сеанс останется активным. Продолжить?',
+        ),
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Завершить сеансы'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true &&
+        state.accountId == owner &&
+        state.items.any((item) => !item.current)) {
+      await state.revokeOthers();
+    }
   }
 
   Widget row(BuildContext context, OwnSession session) => Padding(
@@ -29,7 +107,7 @@ class OwnSessionsView extends StatelessWidget {
         OutlinedButton(
           onPressed: state.busy || session.current
               ? null
-              : () => state.revoke(session.id),
+              : () => confirmRevokeSession(context, session),
           child: const Text('Завершить'),
         ),
       ],
@@ -65,7 +143,7 @@ class OwnSessionsView extends StatelessWidget {
             OutlinedButton(
               onPressed: state.busy || !state.items.any((row) => !row.current)
                   ? null
-                  : state.revokeOthers,
+                  : () => confirmRevokeOthers(context),
               child: const Text('Завершить все остальные'),
             ),
           ],

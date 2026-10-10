@@ -12,6 +12,7 @@ export default defineConfig({
     viewport: { width: 390, height: 844 },
     hasTouch: true,
     isMobile: true,
+    launchOptions: { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH },
   },
   webServer: {
     cwd: fileURLToPath(new URL('../../', import.meta.url)),

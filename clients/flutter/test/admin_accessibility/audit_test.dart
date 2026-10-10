@@ -88,6 +88,18 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      final resultCount = find.text('Показано: 1 из 1 загруженных');
+      await tester.scrollUntilVisible(
+        resultCount,
+        250,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(resultCount, findsOneWidget);
       final event = find.byType(ExpansionTile);
       await tester.scrollUntilVisible(
         event,

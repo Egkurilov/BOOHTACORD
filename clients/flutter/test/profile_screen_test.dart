@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' show SemanticsRole, Tristate;
 
@@ -11,7 +12,93 @@ import 'package:boohtacord_desktop/src/widgets/authenticated_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _LogoutTrackingState extends AppState {
+  _LogoutTrackingState() : super(ApiClient());
+
+  int logoutCalls = 0;
+
+  @override
+  Future<void> logout() async {
+    logoutCalls++;
+  }
+}
+
+class _ProfileSavingState extends AppState {
+  _ProfileSavingState() : super(ApiClient());
+
+  final saveCompleter = Completer<void>();
+
+  @override
+  Future<bool> saveDisplayName(String value) async {
+    profileSaving = true;
+    notifyListeners();
+    await saveCompleter.future;
+    final current = profile!;
+    profile = OwnProfile(
+      accountId: current.accountId,
+      login: current.login,
+      displayName: value,
+      role: current.role,
+      avatarUrl: current.avatarUrl,
+    );
+    profileSaving = false;
+    notifyListeners();
+    return true;
+  }
+}
+
 void main() {
+  testWidgets(
+    'profile save state follows unchanged, dirty, pending, and saved',
+    (tester) async {
+      final state = _ProfileSavingState()
+        ..profile = const OwnProfile(
+          accountId: 'account-1',
+          login: 'member',
+          displayName: 'Участник',
+          role: 'MEMBER',
+        );
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: ProfileScreen(state: state)),
+        ),
+      );
+
+      final save = find.widgetWithText(FilledButton, 'Сохранить профиль');
+      final initialStatus = find.text('Изменения не внесены');
+      expect(save, findsOneWidget);
+      expect(tester.widget<FilledButton>(save).onPressed, isNull);
+      expect(
+        tester.getSemantics(initialStatus).flagsCollection.isLiveRegion,
+        isTrue,
+      );
+
+      await tester.enterText(find.byType(TextField).first, 'Новое имя');
+      await tester.pump();
+      expect(find.text('Есть несохранённые изменения'), findsOneWidget);
+      expect(tester.widget<FilledButton>(save).onPressed, isNotNull);
+
+      await tester.tap(save);
+      await tester.pump();
+      expect(find.text('Сохраняем имя профиля…'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Сохраняем…'), findsOneWidget);
+
+      state.saveCompleter.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Имя профиля сохранено.'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Сохранить профиль'),
+            )
+            .onPressed,
+        isNull,
+      );
+    },
+  );
+
   testWidgets('announces profile loading status', (tester) async {
     final state = AppState(ApiClient())..profileLoading = true;
     addTearDown(state.dispose);
@@ -197,6 +284,117 @@ void main() {
     },
   );
 
+  for (final width in [320.0, 390.0, 1440.0]) {
+    testWidgets(
+      'profile settings keep save reachable at $width px with 2x text',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = Size(width, 844);
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final state = AppState(ApiClient())
+          ..profile = const OwnProfile(
+            accountId: 'account-1',
+            login: 'длинныйлогиндлинныйлогиндлинныйлогиндлинныйлогин',
+            displayName: 'ОООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООООО',
+            role: 'ADMINISTRATOR',
+          );
+        addTearDown(state.dispose);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(2)),
+              child: child!,
+            ),
+            home: Scaffold(body: ProfileScreen(state: state)),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final save = find.widgetWithText(FilledButton, 'Сохранить профиль');
+        expect(save, findsOneWidget);
+        await tester.ensureVisible(save);
+        final saveRect = tester.getRect(save);
+        expect(saveRect.left, greaterThanOrEqualTo(0));
+        expect(saveRect.right, lessThanOrEqualTo(width));
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('profile save remains reachable with the system keyboard open', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 844);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    final state = AppState(ApiClient())
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'long-member-login',
+        displayName: 'Длинное отображаемое имя участника',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final save = find.widgetWithText(FilledButton, 'Сохранить профиль');
+    await tester.ensureVisible(save);
+    expect(tester.getRect(save).left, greaterThanOrEqualTo(0));
+    expect(tester.getRect(save).right, lessThanOrEqualTo(320));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('profile settings reflow when a desktop window becomes compact', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1440, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = AppState(ApiClient())
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'long-member-login',
+        displayName: 'Длинное отображаемое имя участника',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    final content = find.byKey(const ValueKey('profile-settings-content'));
+    expect(tester.getRect(content).width, 720);
+
+    tester.view.physicalSize = const Size(320, 844);
+    await tester.pumpAndSettle();
+
+    expect(tester.getRect(content).width, 288);
+    final save = find.widgetWithText(FilledButton, 'Сохранить профиль');
+    await tester.ensureVisible(save);
+    expect(tester.getRect(save).right, lessThanOrEqualTo(320));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('moves keyboard focus to the profile heading like web', (
     tester,
   ) async {
@@ -319,5 +517,163 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(appVersionLabel), findsOneWidget);
     semantics.dispose();
+  });
+
+  testWidgets('profile logout requires an explicit confirmation', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = _LogoutTrackingState()
+      ..phase = AppPhase.ready
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    final logout = find.widgetWithText(OutlinedButton, 'Выйти из аккаунта');
+    await tester.ensureVisible(logout);
+    await tester.tap(logout);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Подтвердите выход из аккаунта'), findsOneWidget);
+    expect(state.logoutCalls, 0);
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+    expect(find.text('Подтвердите выход из аккаунта'), findsNothing);
+    expect(state.logoutCalls, 0);
+    expect(state.phase, AppPhase.ready);
+  });
+
+  testWidgets('confirmed profile logout starts session shutdown', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = _LogoutTrackingState()
+      ..phase = AppPhase.ready
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    final logout = find.widgetWithText(OutlinedButton, 'Выйти из аккаунта');
+    await tester.ensureVisible(logout);
+    await tester.tap(logout);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Выйти'));
+    await tester.pumpAndSettle();
+
+    expect(state.logoutCalls, 1);
+  });
+
+  testWidgets('account change closes a stale logout confirmation', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = _LogoutTrackingState()
+      ..phase = AppPhase.ready
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    final logout = find.widgetWithText(OutlinedButton, 'Выйти из аккаунта');
+    await tester.ensureVisible(logout);
+    await tester.tap(logout);
+    await tester.pumpAndSettle();
+    expect(find.text('Подтвердите выход из аккаунта'), findsOneWidget);
+
+    state.profile = const OwnProfile(
+      accountId: 'account-2',
+      login: 'another-member',
+      displayName: 'Другой участник',
+      role: 'MEMBER',
+    );
+    state.notifyListeners();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Подтвердите выход из аккаунта'), findsNothing);
+    expect(state.logoutCalls, 0);
+  });
+
+  testWidgets('logout asks before discarding an unsaved profile name', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = _LogoutTrackingState()
+      ..phase = AppPhase.ready
+      ..profile = const OwnProfile(
+        accountId: 'account-1',
+        login: 'member',
+        displayName: 'Участник',
+        role: 'MEMBER',
+      );
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ProfileScreen(state: state)),
+      ),
+    );
+    await tester.enterText(find.byType(TextField).first, 'Новое имя');
+    await tester.tap(find.byKey(const ValueKey('profile-tab-security')));
+    await tester.pumpAndSettle();
+    final logout = find.widgetWithText(OutlinedButton, 'Выйти из аккаунта');
+    await tester.ensureVisible(logout);
+    await tester.tap(logout);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Несохранённые изменения'), findsOneWidget);
+    expect(find.text('Подтвердите выход из аккаунта'), findsNothing);
+    await tester.tap(find.text('Отмена'));
+    await tester.pumpAndSettle();
+    expect(state.logoutCalls, 0);
+    await tester.tap(find.byKey(const ValueKey('profile-tab-profile')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+      'Новое имя',
+    );
   });
 }

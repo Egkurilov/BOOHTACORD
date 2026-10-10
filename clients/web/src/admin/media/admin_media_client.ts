@@ -1,5 +1,6 @@
 import { tracedFetch } from '../../telemetry/client_tracing'
 import { apiBaseUrl } from '../../config/runtime'
+import { AdminResponseError } from '../admin_request_feedback'
 
 export interface AdminScreenSample {
   platform: 'ios_web' | 'android_web' | 'desktop_web' | 'android_native' | 'desktop_native' | 'ios_native' | 'windows_native' | 'macos_native'
@@ -61,7 +62,7 @@ function sample(value: unknown): AdminScreenSample {
 
 export async function listAdminScreenMetrics(request: typeof fetch = tracedFetch): Promise<AdminScreenSample[]> {
   const response = await request(`${apiBaseUrl}/admin/screen-metrics`, { credentials: 'same-origin', headers: { accept: 'application/json' }, cache: 'no-store' })
-  if (!response.ok) throw new Error('Не удалось загрузить показатели медиа.')
+  if (!response.ok) throw new AdminResponseError(response.status)
   const payload = record(await response.json())
   if (!Array.isArray(payload.samples) || payload.samples.length > 16) throw new Error('Некорректные показатели медиа.')
   return payload.samples.map(sample)

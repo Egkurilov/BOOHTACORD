@@ -47,21 +47,24 @@ class WorkspaceDirectMessageNavigation extends StatelessWidget {
         ],
       ),
       for (final conversation in state.directMessages)
-        ListTile(
-          selected: state.selectedDirectMessage?.id == conversation.id,
-          leading: const CircleAvatar(child: Icon(Icons.person, size: 18)),
-          title: Text(
-            conversation.displayName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        Material(
+          color: Colors.transparent,
+          child: ListTile(
+            selected: state.selectedDirectMessage?.id == conversation.id,
+            leading: const CircleAvatar(child: Icon(Icons.person, size: 18)),
+            title: Text(
+              conversation.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: conversation.unreadCount > 0
+                ? Badge(label: Text('${conversation.unreadCount}'))
+                : null,
+            onTap: () async {
+              await state.openDirectConversation(conversation);
+              onSelected?.call();
+            },
           ),
-          trailing: conversation.unreadCount > 0
-              ? Badge(label: Text('${conversation.unreadCount}'))
-              : null,
-          onTap: () async {
-            await state.openDirectConversation(conversation);
-            onSelected?.call();
-          },
         ),
       if (state.directMessages.isEmpty)
         const Padding(

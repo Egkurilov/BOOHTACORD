@@ -1,5 +1,6 @@
 import '../native_bindings.dart';
 import '../lifecycle/context.dart';
+import '../feedback/handler.dart';
 
 extension RoleSaveAction on RolePermissionsContext {
   Future<void> executeSavePermissions() async {
@@ -20,25 +21,33 @@ extension RoleSaveAction on RolePermissionsContext {
         values: draft,
         confirmDeleteGrants: newDeletes,
       );
-      await loadRoles(reset: true);
+      final refreshed = await loadRoles(reset: true);
+      if (!mounted) return;
       await widget.onSaved();
-      if (mounted) mutate(() => status = 'Разрешения сохранены.');
+      if (mounted) {
+        mutate(
+          () => status = refreshed
+              ? 'Разрешения сохранены.'
+              : 'Разрешения сохранены, но не удалось обновить значения.',
+        );
+      }
     } catch (cause) {
+      if (!mounted) return;
       if (cause is ApiFailure && cause.status == 409) {
         mutate(() {
           conflict = true;
           conflictBefore = before;
+          conflictCurrent = null;
           error = 'Настройки уже изменены. Проверьте актуальные значения и решите, применять ли черновик.';
         });
         await loadRoles(reset: false);
-        if (mounted) {
-          mutate(() {
-            conflictCurrent = Map<GuildPermission, bool>.of(baseline);
-            error = 'Настройки уже изменены. Проверьте актуальные значения и решите, применять ли черновик.';
-          });
-        }
       } else if (mounted) {
-        mutate(() => error = cause.toString());
+        mutate(() {
+          denied =
+              cause is ApiFailure &&
+              (cause.status == 401 || cause.status == 403);
+          error = rolePermissionsFailureMessage(cause);
+        });
       }
     } finally {
       if (mounted) mutate(() => saving = false);

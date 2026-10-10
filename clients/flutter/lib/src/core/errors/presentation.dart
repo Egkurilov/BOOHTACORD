@@ -1,10 +1,19 @@
+import 'dart:async' as async;
+
 import 'package:flutter/services.dart';
 import 'package:livekit_client/livekit_client.dart';
+import 'package:http/http.dart' as http;
 
 import '../http/api_failure.dart';
 
 String appFailureMessage(Object cause) {
   if (cause is ApiFailure) return cause.message;
+  if (cause is http.ClientException) {
+    return 'Нет соединения с сервером. Проверьте подключение.';
+  }
+  if (cause is async.TimeoutException) {
+    return 'Сервер не ответил вовремя. Повторите попытку.';
+  }
   if (cause is PlatformException) {
     final code = String.fromCharCodes(
       cause.code.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '').runes.take(80),

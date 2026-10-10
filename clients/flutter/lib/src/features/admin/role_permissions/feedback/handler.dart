@@ -1,6 +1,36 @@
 import '../native_bindings.dart';
 import '../lifecycle/context.dart';
 
+import 'package:http/http.dart' as http;
+
+String rolePermissionsFailureMessage(Object cause) {
+  if (cause is ApiFailure) {
+    if (cause.status == 401) {
+      return 'Сессия завершена. Войдите снова.';
+    }
+    if (cause.status == 403) {
+      return 'Нет доступа к изменению разрешений этой роли.';
+    }
+    if (cause.status == 404) {
+      return 'Роль не найдена. Обновите данные и повторите попытку.';
+    }
+    if (cause.status == 429) {
+      return 'Слишком много запросов. Подождите немного и повторите попытку.';
+    }
+    if (cause.status != null && cause.status! >= 500) {
+      return 'Сервис временно не отвечает. Попробуйте позже.';
+    }
+    return cause.message;
+  }
+  if (cause is http.ClientException) {
+    return 'Нет соединения с сервером. Проверьте подключение.';
+  }
+  if (cause is TimeoutException) {
+    return 'Сервер не ответил вовремя. Повторите попытку.';
+  }
+  return cause.toString();
+}
+
 extension RoleFeedbackAction on RolePermissionsContext {
   List<Widget> executeRenderRoleFeedback() => [
     if (role == GuildRole.member && dirty)

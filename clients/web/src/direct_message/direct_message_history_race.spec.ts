@@ -33,6 +33,25 @@ describe('DM history across multiple pages and concurrent refresh', () => {
     expect(store.nextCursor).toBeUndefined()
   })
 
+  it('distinguishes forbidden history from an empty conversation', async () => {
+    const store = useDirectMessageStore()
+    await store.open('dm-1', async () => new Response(JSON.stringify({ error: { code: 'FORBIDDEN' } }), { status: 403 }))
+    expect(store.error).toBe('Нет доступа к этому действию.')
+    expect(store.retryableError).toBe(false)
+    expect(store.historyLoaded).toBe(false)
+    expect(store.messages).toEqual([])
+  })
+
+  it('retains loaded private messages as stale and exposes a deliberate retry after a 503', async () => {
+    const store = useDirectMessageStore()
+    await store.open('dm-1', async () => page(1, 1))
+    await store.refreshHistory(async () => new Response('{}', { status: 503 }))
+    expect(store.messages.map(({ id }) => id)).toEqual(['message-1'])
+    expect(store.historyLoaded).toBe(true)
+    expect(store.error).toBe('Сервис временно не отвечает. Попробуйте позже.')
+    expect(store.retryableError).toBe(true)
+  })
+
   it('does not move the cursor backwards when realtime refresh completes after an older page', async () => {
     const store = useDirectMessageStore()
     let resolveRefresh: ((response: Response) => void) | undefined

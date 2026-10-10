@@ -58,8 +58,18 @@ export function useWorkspaceDrawerFocus(
       const entry = panel && (focusables(panel)[0] ?? panel.querySelector<HTMLElement>('.nav-drawer') ?? panel)
       entry?.focus()
     } else {
-      const trigger = closed === 'search' ? document.querySelector<HTMLElement>('.guild-search-button') : null
-      restorableDrawerFocusTarget(priorFocus, document.body, document.documentElement, trigger)?.focus()
+      const triggerSelector = closed === 'search'
+        ? '.guild-search-button'
+        : closed === 'nav'
+          ? '.workspace-header-toggle--nav'
+          : closed === 'members'
+            ? '.workspace-header-toggle--members'
+            : null
+      const trigger = triggerSelector ? document.querySelector<HTMLElement>(triggerSelector) : null
+      const target = (closed === 'nav' || closed === 'members') && trigger
+        ? trigger
+        : restorableDrawerFocusTarget(priorFocus, document.body, document.documentElement, trigger)
+      target?.focus({ preventScroll: true })
       priorFocus = null
     }
   }

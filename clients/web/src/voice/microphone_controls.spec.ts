@@ -19,4 +19,23 @@ describe('microphone controls', () => {
     await controls.setMicrophoneMuted(false); expect(state.value).toBe('CONNECTED')
   })
 
+  it('retries microphone permission with one click from the listener state', async () => {
+    const state = ref('LISTENER')
+    const microphoneMuted = ref(false)
+    const microphonePermissionDenied = ref(true)
+    const session = {
+      setMicrophoneMuted: vi.fn(async (muted: boolean) => muted ? 'MUTED' as const : 'PUBLISHED' as const),
+    }
+    const controls = createMicrophoneControls(
+      session, ref({}), state, ref(false), microphoneMuted, microphonePermissionDenied, ref(null),
+    )
+
+    await controls.toggleMicrophone()
+
+    expect(session.setMicrophoneMuted).toHaveBeenCalledExactlyOnceWith(false)
+    expect(state.value).toBe('CONNECTED')
+    expect(microphoneMuted.value).toBe(false)
+    expect(microphonePermissionDenied.value).toBe(false)
+  })
+
 })

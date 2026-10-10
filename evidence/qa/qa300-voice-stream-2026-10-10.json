@@ -1,0 +1,84 @@
+{
+  "id": "QA-300-VOICE-STREAM",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #300 — voice join/reconnect and progressive screen-share setup",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/300",
+  "source_revision": "07117027 plus the tested working tree",
+  "working_tree_changes": true,
+  "status": "PASS_WITH_NATIVE_RUNTIME_NOT_RUN",
+  "checks": [
+    {
+      "name": "Combined Web accessibility/admin fixture run on current tree",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' ./node_modules/.bin/playwright test -c tests/accessibility/playwright.config.ts tests/accessibility/accessibility.browser.spec.ts tests/accessibility/admin_fixture_matrix.browser.spec.ts",
+      "result": "PASS",
+      "passed": 34,
+      "observations": [
+        "Voice prejoin, connected room, listener fallback, reconnecting/duplicate-join guard, microphone denial/retry, screen-share setup and focus behavior pass axe and browser assertions.",
+        "The setup flow shows its recommended 1080p/60 profile before advanced options, keeps the selected profile visible, and passes the selected profile to Start.",
+        "Current tree includes desktop and mobile voice-room after captures and desktop stream action/settings captures."
+      ]
+    },
+    {
+      "name": "Focused Flutter voice/screen-share lifecycle and setup suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/screen_share_lifecycle_contract_test.dart test/screen_share_profile_contract_test.dart test/voice_reconnect_policy_test.dart test/voice_screen_ended_test.dart test/screen_share_quality_test.dart test/screen_setup",
+      "result": "PASS",
+      "passed": 51,
+      "observations": [
+        "Screen-profile/lifecycle contracts remain intact; reconnect and ended-share states are explicit.",
+        "Source inventory, platform-specific guidance, cancellation, mobile safe viewport, 2x text and simulated keyboard-inset scenarios pass."
+      ]
+    },
+    {
+      "name": "Flutter analysis for the screen-share lifecycle/setup suite",
+      "command": "cd clients/flutter && flutter analyze --no-pub test/screen_share_lifecycle_contract_test.dart test/screen_share_profile_contract_test.dart test/voice_reconnect_policy_test.dart test/voice_screen_ended_test.dart test/screen_share_quality_test.dart test/screen_setup",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Available Flutter targets",
+      "command": "cd clients/flutter && flutter devices --machine",
+      "result": "PASS_WITH_LIMITED_TARGETS",
+      "available": ["macOS 26.6.1 arm64", "Chrome 154.0.8037.98"],
+      "unavailable": ["Android device/emulator", "iOS device/simulator", "Windows"],
+      "observation": "This records host availability only; no native runtime screen-share flow was launched."
+    }
+  ],
+  "source_archive": {
+    "path": "artifacts/ui-ux-screenshots.zip",
+    "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
+  },
+  "source_captures": [
+    {"path": ".out/uiux-source/ui-ux-screenshots/desktop-voice-room.png", "sha256": "092542a95206b66e22c79bb3852284072416a2d3283270a77023dba156db529b", "raster": "2880x1800"},
+    {"path": ".out/uiux-source/ui-ux-screenshots/mobile-voice-room.png", "sha256": "cb80e9851d105196369e1bf19a59c4bb29d2b951bf391034e2d26b9322351688", "raster": "1179x2556"},
+    {"path": ".out/uiux-source/ui-ux-screenshots/desktop-stream-launch-actions.png", "sha256": "8dc6f5ce8baac37837ccc133dd02273c162f5af30d3ae5f460260ef2f3367c16", "raster": "2880x1800"},
+    {"path": ".out/uiux-source/ui-ux-screenshots/desktop-stream-launch-settings.png", "sha256": "fa61f7ccdf37238bf676afc8f71c73f893db863336820da9d4135d0203445e16", "raster": "2880x1800"},
+    {"path": ".out/uiux-source/ui-ux-screenshots/mobile-stream-launch-actions.png", "sha256": "7a3857ea747927f5b42e35f801c8f9bc52be07628383ba69adbbd341780ecdac", "raster": "786x1704"},
+    {"path": ".out/uiux-source/ui-ux-screenshots/mobile-stream-launch-settings.png", "sha256": "b9328b7f785a0f290f5e90d1c5d2dbe589b53ec88574ea0cfa2aff0c810a336b", "raster": "786x1704"}
+  ],
+  "after_captures": [
+    {"path": ".out/accessibility-browser-results/accessibility.browser-conn-950f1-and-stream-action-available/desktop-voice-room-after.png", "sha256": "51c0c32e526568018aafb2f1daca38987e58d1848a8e10ec25b0d5c8f0418dfe", "raster": "1440x900", "state": "Connected voice room with stream action; isolated production component fixture"},
+    {"path": ".out/accessibility-browser-results/accessibility.browser-conn-950f1-and-stream-action-available/mobile-voice-room-after.png", "sha256": "479d2a82727d4b4040b6f80343b59239170d3655bbc6afc8c38511cf206d7494", "raster": "390x844", "state": "Connected voice room at mobile viewport; isolated production component fixture"},
+    {"path": ".out/accessibility-browser-results/accessibility.browser-scre-d3f11-progressive-quality-options/desktop-stream-launch-actions-after.png", "sha256": "b0526103b3a60b4c5287cd3273568285e680c60323f69921d413014a97d3ad05", "raster": "1440x900", "state": "Desktop setup with advanced options collapsed"},
+    {"path": ".out/accessibility-browser-results/accessibility.browser-scre-d3f11-progressive-quality-options/desktop-stream-launch-settings-after.png", "sha256": "cab8afc28c1d81ec5a0f2f8f7dbd18f8f40002129dd7aadd4957fdbd81946c25", "raster": "1440x900", "state": "Desktop setup with advanced options expanded and selected profile visible"},
+    {"path": ".out/accessibility-browser-results/accessibility.browser-scre-d3f11-progressive-quality-options/screen-share-setup-recommended-profile.png", "sha256": "1689aaf01fba6c0895c6901b529e1ac458c5fb60a9677776e0d1035688a357b3", "raster": "320x640", "state": "Compact setup before progressive disclosure"},
+    {"path": ".out/accessibility-browser-results/accessibility.browser-scre-d3f11-progressive-quality-options/screen-share-setup-progressive-options.png", "sha256": "a5e86e8b95dc1c1e447d0cc25905e586fc4a757ef6f3ec7c06aa3acbefc3708a", "raster": "320x640", "state": "Compact setup with advanced controls expanded"},
+    {"path": ".out/uiux-2026-epic-289/dialogs/web-screen-share-setup-open-after.png", "sha256": "7978e064f0d8941194c853feacf5e57d44926e4b2167995aa1309fc9c83aa79c", "raster": "786x1704", "state": "Mobile source-sized setup actions after"},
+    {"path": ".out/uiux-2026-epic-289/dialogs/web-screen-share-setup-actions-after.png", "sha256": "82ec947bb6e7a278512d08db4692af7026583c56d33a93ae38eaa637771db7a6", "raster": "786x1704", "state": "Mobile source-sized setup settings after"},
+    {"path": ".out/accessibility-browser-results/accessibility.browser-voic-dca26-the-listener-path-available/voice-prejoin-desktop-after.png", "sha256": "e7d9a0aa44a27052087d575163fe98384deaa4d59d05b2a3f9134eb973ddbdcc", "raster": "1440x900", "state": "Desktop missing-microphone voice prejoin with listener path"}
+  ],
+  "capture_limitations": [
+    "Source-sized mobile setup pairs match 786x1704; desktop source screenshots are 2880x1800 while the current component-harness captures are 1440x900 logical pixels.",
+    "The new voice-room captures mount the production component, not the full authenticated application shell.",
+    "No native OS screen picker, platform permission prompt, physical device, or live media restart/rejoin flow was run."
+  ],
+  "acceptance": {
+    "voice_journey_and_status_copy": "PASS",
+    "primary_join_and_listener_actions": "PASS",
+    "progressive_screen_share_setup": "PASS",
+    "responsive_browser_and_widget_matrix": "PASS",
+    "media_state_profile_contracts": "PASS",
+    "before_after_screenshots": "PASS_WITH_COMPONENT_HARNESS_AND_RASTER_LIMITS",
+    "native_runtime_smoke": "NOT_RUN_SEPARATE_DEVICE_GATE",
+    "issue_state_at_capture": "OPEN"
+  }
+}

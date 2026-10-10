@@ -42,12 +42,19 @@ def local_docker():
 
 
 def remove_owned(name, owner, kind='container'):
-    label = output('docker', kind, 'inspect', name,
-                   '--format', '{{index .Config.Labels "'+LABEL+'"}}' if kind == 'container'
-                   else '{{index .Labels "'+LABEL+'"}}')
+    if kind == 'container' or kind == 'image':
+        template = '{{index .Config.Labels "'+LABEL+'"}}'
+    elif kind == 'network':
+        template = '{{index .Labels "'+LABEL+'"}}'
+    elif kind == 'volume':
+        template = '{{index .Labels "'+LABEL+'"}}'
+    else:
+        raise ValueError('Refusing to remove an unsupported resource kind')
+    target = ('image' if kind == 'image' else kind)
+    label = output('docker', target, 'inspect', name, '--format', template)
     if label != owner:
         raise ValueError('Refusing to remove a foreign resource')
-    args = ['docker', kind, 'rm'] + (['-f'] if kind == 'container' else []) + [name]
+    args = ['docker', target, 'rm'] + (['-f'] if kind == 'container' else []) + [name]
     run(*args, stdout=subprocess.DEVNULL)
 
 

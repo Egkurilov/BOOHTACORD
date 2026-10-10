@@ -42,6 +42,6 @@ describe('Design V2 topology creation dialog', () => {
   })
 
   it('uses the handoff sidebar surface for channel and category fields', () => {
-    expect(presentation).toContain('color: var(--gc-text-primary); background: var(--gc-sidebar); font-size: 14px;')
+    expect(presentation).toContain('color: var(--gc-text-primary); background: var(--gc-sidebar); font-size: 0.875rem;')
   })
 })

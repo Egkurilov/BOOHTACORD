@@ -37,7 +37,7 @@ button:disabled { cursor: not-allowed; }
 }
 
 .state { color: var(--gc-text-secondary); }
-.state-error { color: var(--gc-danger); }
+.state-error { color: var(--gc-danger-text); }
 
 .gc-button,
 .voice-join,

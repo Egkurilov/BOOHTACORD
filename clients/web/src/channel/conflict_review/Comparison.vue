@@ -12,3 +12,10 @@ defineEmits<{apply:[];discard:[];refresh:[]}>()
     <button type="button" :disabled="busy || !ready" @click="$emit('apply')">Проверено — применить моё изменение</button>
   </section>
 </template>
+
+<style scoped>
+.admin-conflict-review > button {
+  min-height: 36px;
+  padding: 4px 10px;
+}
+</style>

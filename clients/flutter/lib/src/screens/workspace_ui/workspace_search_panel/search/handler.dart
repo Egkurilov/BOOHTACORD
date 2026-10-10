@@ -39,6 +39,7 @@ extension WorkspaceWorkspaceSearchPanelStateWorkspaceSearchAction
       workspaceLoading = true;
       workspaceError = null;
     });
+    workspaceSaveSearchSession();
     try {
       final page = await state.api.searchMessages(
         query,
@@ -60,6 +61,18 @@ extension WorkspaceWorkspaceSearchPanelStateWorkspaceSearchAction
         workspaceActiveQuery = query;
         workspaceSearched = true;
       });
+      workspaceSaveSearchSession();
+      if (before == null && workspaceRestoreScrollOffset > 0) {
+        final offset = workspaceRestoreScrollOffset;
+        workspaceRestoreScrollOffset = 0;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !workspaceScroll.hasClients) return;
+          final position = workspaceScroll.position;
+          workspaceScroll.jumpTo(
+            offset.clamp(0.0, position.maxScrollExtent).toDouble(),
+          );
+        });
+      }
     } catch (cause) {
       if (mounted && sequence == workspaceSequence) {
         workspaceMutateView(() {
@@ -71,6 +84,7 @@ extension WorkspaceWorkspaceSearchPanelStateWorkspaceSearchAction
     } finally {
       if (mounted && sequence == workspaceSequence) {
         workspaceMutateView(() => workspaceLoading = false);
+        workspaceSaveSearchSession();
       }
     }
   }

@@ -23,7 +23,7 @@ const visible = computed(() => props.chat !== 'CONNECTED' || !props.rosterAvaila
   </section>
 </template>
 <style scoped>
-.connection-status { padding: 8px 12px; font-size: 11px; border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent); }
+.connection-status { padding: 8px 12px; font-size: 0.6875rem; border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent); }
 .connection-status p { margin: 3px 0; }
 .connection-status button { font: inherit; padding: 3px 0; text-decoration: underline; }
 </style>

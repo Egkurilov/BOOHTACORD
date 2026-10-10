@@ -5,6 +5,11 @@ mixin WorkspaceWorkspaceSearchPanelStateWorkspaceQueryChangedBinding
     on WorkspaceWorkspaceSearchPanelStateContext {
   @override
   void workspaceQueryChanged() {
+    final normalizedQuery = workspaceQuery.text.trim();
+    if (normalizedQuery != workspaceActiveQuery) {
+      workspaceRestoreScrollOffset = 0;
+      workspaceLastScrollOffset = 0;
+    }
     executeWorkspaceWorkspaceSearchPanelStateWorkspaceQueryChanged();
   }
 }
@@ -12,6 +17,9 @@ mixin WorkspaceWorkspaceSearchPanelStateWorkspaceQueryChangedBinding
 extension WorkspaceWorkspaceSearchPanelStateWorkspaceQueryChangedAction
     on WorkspaceWorkspaceSearchPanelStateContext {
   void executeWorkspaceWorkspaceSearchPanelStateWorkspaceQueryChanged() {
-    if (mounted) workspaceMutateView(() {});
+    if (mounted) {
+      workspaceMutateView(() {});
+      workspaceSaveSearchSession();
+    }
   }
 }

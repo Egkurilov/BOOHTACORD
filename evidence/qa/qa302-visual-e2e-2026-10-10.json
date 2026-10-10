@@ -1,0 +1,836 @@
+{
+  "id": "QA-302-VISUAL-E2E",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #302 — visual matrix, responsive smoke and retained review captures",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/302",
+  "source_revision": "a89ef57d",
+  "working_tree_changes": true,
+  "status": "AUTOMATED_SCOPED_PASS_REVIEW_ONLY_REGION_DELTAS_RECORDED_GOLDEN_AND_CI_ARTIFACT_RUN_PENDING",
+  "checks": [
+    {
+      "name": "Pinned source screenshot/catalog verifier",
+      "command": "python3 -m tools.verify.uiux_visual_matrix",
+      "result": "PASS",
+      "summary": "41 source PNG entries verified (18 desktop, 23 mobile), source archive SHA-256, names, raster/CSS sizes, Web/Flutter mappings and duplicate-content findings.",
+      "duplicate_sources": [
+        {
+          "asset": "desktop-guild-settings.png",
+          "duplicateOf": "desktop-guild-members.png",
+          "status": "BLOCKED_DUPLICATE_BASELINE"
+        }
+      ]
+    },
+    {
+      "name": "Web responsive-shell viewport and interaction browser suite",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:responsive-shell",
+      "result": "PASS",
+      "tests_passed": 7,
+      "viewports": [
+        "320x640",
+        "375x812",
+        "390x844",
+        "393x852",
+        "430x932",
+        "600x900",
+        "768x1024",
+        "840x390",
+        "1024x768",
+        "1280x800",
+        "1440x900",
+        "1920x1080"
+      ],
+      "observations": [
+        "Workspace/composer/dock geometry and document overflow are checked on all 12 widths.",
+        "Navigation and message history scroll independently.",
+        "Favorite toggle and channel actions remain inside their row and the selected lower favorite remains reachable after Favorites is added.",
+        "Browser Back/Forward and drawer focus restoration are covered."
+      ]
+    },
+    {
+      "name": "Flutter production visual-capture widget suite",
+      "command": "cd clients/flutter && BOOHTACORD_VISUAL_CAPTURE_DIR='/Users/pistol121/DEV/BOOHTACORD/.out/visual/flutter' flutter test --no-pub test/uiux_2026/admin_visual_capture_test.dart test/uiux_2026/dialog_visual_capture_test.dart test/mobile_navigation_visual_capture_test.dart",
+      "result": "PASS",
+      "test_cases_passed": 5,
+      "png_captures": 25,
+      "coverage": "Seven admin sections at 393x852, 393x852 with 2x text and 1440x900; three dialog/setup states; mobile navigation header.",
+      "supplemental_widget_coverage": [
+        "clients/flutter/test/admin_accessibility/scaling_test.dart",
+        "clients/flutter/test/admin_accessibility/resize_scroll_test.dart",
+        "clients/flutter/test/admin_accessibility/contrast_test.dart",
+        "clients/flutter/test/screen_setup/dialog_test.dart",
+        "clients/flutter/test/screen_share_profile_geometry_test.dart"
+      ],
+      "note": "These are production-widget captures and geometry/state assertions, not approved pixel-golden comparisons."
+    },
+    {
+      "name": "Earlier full-stack source-matched Web review",
+      "result": "PASS_SCOPED",
+      "source_revision": "55f18d2b179ab87f93a9cb1d08ed9b3fffff338c",
+      "coverage": "Six admin reference screenshots (D05-D10 and M08-M13) visually reviewed at source-sized desktop/mobile rasters; synthetic fixture differences are documented in the epic QA report.",
+      "limitation": "Review captures are not approved pixel goldens; D11 desktop settings reference duplicates desktop members."
+    },
+    {
+      "name": "Review-only region-scoped screenshot delta measurements",
+      "command": "python3 -m unittest tools.verify.test_uiux_visual_diff -v\npython3 -m tools.verify.uiux_visual_diff --config .out/uiux-visual-diff-302/channel-desktop.json --report .out/uiux-visual-diff-302/channel-desktop-report.json\npython3 -m tools.verify.uiux_visual_diff --config .out/uiux-visual-diff-302/channel-mobile.json --report .out/uiux-visual-diff-302/channel-mobile-report.json\npython3 -m tools.verify.uiux_visual_diff --config .out/uiux-visual-diff-302/settings-mobile.json --report .out/uiux-visual-diff-302/settings-mobile-report.json",
+      "result": "PASS_REVIEW_ONLY",
+      "unit_tests_passed": 4,
+      "status_policy": "Reports measurements only; it does not pass/fail visual changes because the archive references are not approved pixel goldens.",
+      "mask_policy": "Named review regions select stable UI areas; optional ignored rectangles exclude dynamic avatars, timestamps or backend-provided data.",
+      "pairs": [
+        {
+          "screen": "Channel conversation — desktop",
+          "reference": {
+            "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/desktop-channel-overview.png",
+            "sha256": "1c6780a376993228a18f6012f5c60abf337469428bef44059dba31e298990f63",
+            "raster": "2880x1800"
+          },
+          "actual": {
+            "path": ".out/client-lifecycle/1440/channel-text.png",
+            "sha256": "b2ad38320c5619956a97cb7be4d1a2c2a848e654345d644848562e2c2d9b8d7b",
+            "raster": "2880x1800"
+          },
+          "regions": [
+            {
+              "name": "conversation-toolbar",
+              "rect": [
+                560,
+                0,
+                2320,
+                130
+              ],
+              "meanAbsoluteRgbChange": 1.345,
+              "pixelsChangedOverThresholdPercent": 0.672
+            },
+            {
+              "name": "composer-controls",
+              "rect": [
+                600,
+                1600,
+                1750,
+                200
+              ],
+              "meanAbsoluteRgbChange": 1.06,
+              "pixelsChangedOverThresholdPercent": 0.715
+            }
+          ]
+        },
+        {
+          "screen": "Channel conversation — mobile",
+          "reference": {
+            "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-channel-overview.png",
+            "sha256": "6ab04d76b87dc665bad23a023dfcfadf11aedf932948c69e7cbead5917aa95e5",
+            "raster": "1179x2556"
+          },
+          "actual": {
+            "path": ".out/client-lifecycle/393/channel-text.png",
+            "sha256": "bfbe93f68d6faf12fa84b98d7804073956e725a3ee669761bd3616a2ca7a8b0c",
+            "raster": "1179x2556"
+          },
+          "regions": [
+            {
+              "name": "mobile-conversation-header",
+              "rect": [
+                0,
+                0,
+                1179,
+                250
+              ],
+              "meanAbsoluteRgbChange": 1.507,
+              "pixelsChangedOverThresholdPercent": 1.666
+            },
+            {
+              "name": "mobile-composer",
+              "rect": [
+                0,
+                2260,
+                1179,
+                290
+              ],
+              "meanAbsoluteRgbChange": 0.379,
+              "pixelsChangedOverThresholdPercent": 0
+            }
+          ]
+        },
+        {
+          "screen": "Guild settings — mobile",
+          "reference": {
+            "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-guild-settings.png",
+            "sha256": "d8ffe033e6784f1214a2a79bed53493a62da3a133cb26fae6928e21fd97fd8aa",
+            "raster": "1179x2556"
+          },
+          "actual": {
+            "path": ".out/client-lifecycle/393/guild-settings.png",
+            "sha256": "6bf95c0266e9d020d1af1885479af5c6c53f4ad8ef9448b9854f0bcc14a53093",
+            "raster": "1179x2556"
+          },
+          "regions": [
+            {
+              "name": "admin-header-and-tabs",
+              "rect": [
+                0,
+                0,
+                1179,
+                430
+              ],
+              "meanAbsoluteRgbChange": 10.748,
+              "pixelsChangedOverThresholdPercent": 8.894
+            }
+          ],
+          "review_note": "The larger delta is visible in the shortened “Админ” header title and the horizontal-tabs helper line; it is recorded as review data, not an automatic regression."
+        }
+      ],
+      "report_outputs": [
+        ".out/uiux-visual-diff-302/channel-desktop-report.json",
+        ".out/uiux-visual-diff-302/channel-mobile-report.json",
+        ".out/uiux-visual-diff-302/settings-mobile-report.json"
+      ],
+      "ciWiring": {
+        "workflow": ".github/workflows/ci-frontend.yaml",
+        "step": "Test review-only UI/UX screenshot region deltas",
+        "command": "python3 -m unittest tools.verify.test_uiux_visual_diff",
+        "workflowRun": "NOT_RUN_THIS_CHECKPOINT_SKIP_CI"
+      }
+    }
+  ],
+  "source_archive": {
+    "path": "artifacts/ui-ux-screenshots.zip",
+    "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c",
+    "expected_png_count": 41,
+    "desktop_count": 18,
+    "mobile_count": 23,
+    "unique_payloads": 40
+  },
+  "capture_outputs": {
+    "web_responsive_shell": {
+      "count": 12,
+      "files": [
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-1024x768.png",
+          "sha256": "1ac68c5863c503e128c30497bc5fd1e9e703393ead141336949599a601630949",
+          "raster": "1024x768"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-1280x800.png",
+          "sha256": "b79872f52eda363e86362262a6660477d9fb0d534588d2bc6489710516d13430",
+          "raster": "1280x800"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-1440x900.png",
+          "sha256": "54e7a278eaf1b08eb33085b38d217bf99854387f4f1a5137950672f3eee21b4d",
+          "raster": "1440x900"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-1920x1080.png",
+          "sha256": "3c6f716951bd154f61a323232b1200738f01d9649067f1db3f4a0bbee1a8743b",
+          "raster": "1920x1080"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-320x640.png",
+          "sha256": "f670ea50865b6bd8ca870cf80792e7299932603bf26b316a5a3db50cea82bec9",
+          "raster": "320x640"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-375x812.png",
+          "sha256": "c0ed734290a62a0762e47b761ed5e5fc88cd32bb0d85d18f62b808bb1ca01751",
+          "raster": "375x812"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-390x844.png",
+          "sha256": "19a0bd34a87e0797b7bcfbaf7beb5d4310b9d8c7b7abe598b8649b9dd9cf69a2",
+          "raster": "390x844"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-393x852.png",
+          "sha256": "9a508e46b86bb25edc2ff7c4a1792a2b178bc971b1b40c4f1cf4644fdf240f92",
+          "raster": "393x852"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-430x932.png",
+          "sha256": "229b6a4164b8ea4641ebe2fc1523e8dbc897b63beddad2a3887853f93ab98b58",
+          "raster": "430x932"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-600x900.png",
+          "sha256": "3dd3f40dad130b2889202ffab1a75a5ef71f8d5c4aa5a0f316f882ab7e71e45a",
+          "raster": "600x900"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-768x1024.png",
+          "sha256": "4b5cf4915f13a7343c685de413614ce4f58e4371169deb2bfa5a43b2a84d53cd",
+          "raster": "768x1024"
+        },
+        {
+          "path": ".out/responsive-shell-browser-results/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing/shell-840x390.png",
+          "sha256": "874d505a0e1b09b5717c926ebae6ee67e9e8268ac4846a589bc6b26223b74f08",
+          "raster": "840x390"
+        }
+      ]
+    },
+    "flutter_visual_review": {
+      "count": 25,
+      "files": [
+        {
+          "path": ".out/visual/flutter/R14-navigation-top.png",
+          "sha256": "e8ba0c48846e4be9d2ff796984670ff33f64df2aec15a83ff44579d0043639bd",
+          "raster": "320x172"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-audit-desktop-1440x900.png",
+          "sha256": "0f53e1551c4242781291db6bb60e86305e19c7de82049b38c401cda5c0acd76b",
+          "raster": "2880x1800"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-audit-mobile-393x852.png",
+          "sha256": "6f5909027cf022e72986a69be4f062d83487fbf0524c57ede5cef1e890999f30",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-audit-mobile-large-text-393x852.png",
+          "sha256": "ae90f2298a20d9fe26abd1bc04808fbcd5a278c81d9cf5fcab3fd44426176fda",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-channels-desktop-1440x900.png",
+          "sha256": "0be408fb2bdcd95b9694ec27d0d0be648efe2b32d04fdbec9b39aafb9e816c3a",
+          "raster": "2880x1800"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-channels-mobile-393x852.png",
+          "sha256": "b2098ae72367ef8331cfd04f7ed7e33c200a17828e40d100eae09ef5695fe089",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-channels-mobile-large-text-393x852.png",
+          "sha256": "a917a7f06de2530a286735da1ed74603ba188ae6ef502c03383a26f75cbdd244",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-guild-desktop-1440x900.png",
+          "sha256": "66420ae65ba5cae67b0ac79781c339f53c151d5170539813fd2eb4d8c759f1d9",
+          "raster": "2880x1800"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-guild-mobile-393x852.png",
+          "sha256": "3f654c09b66fc10557a88c163cd56daf70a65fabc5529d42cc189476cd33de3f",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-guild-mobile-large-text-393x852.png",
+          "sha256": "cb7cb576404b05c2155965e9256ab16ee9e31da172643bc2d1cf2856582ff872",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-media-desktop-1440x900.png",
+          "sha256": "b670c5f94601b455d41e6a31e4aad86196583413c81bdc946e8f8f5ed79fc52e",
+          "raster": "2880x1800"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-media-mobile-393x852.png",
+          "sha256": "6d64cb5d30df2daca4a0efb41fd9c98bcc1aedb5333aeff897c0e5b67db22f65",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-media-mobile-large-text-393x852.png",
+          "sha256": "d0e64e2788748ee82999bdce0b5729e471045f39a0d531e1b0667bb5a162ca23",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-members-desktop-1440x900.png",
+          "sha256": "8b5bd8833265cc962d2d6356387c36b76ef28fd7fa2d44272331f009f7789103",
+          "raster": "2880x1800"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-members-mobile-393x852.png",
+          "sha256": "0b3ff77313e31ae9de0ceaeb8241ec0b46cee6cac53203427090e063036312cf",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-members-mobile-large-text-393x852.png",
+          "sha256": "ebb08c7132e8896b0c8444b03c53035e02b6f1889938ecc395a3ea1e1de6bbd2",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-readiness-desktop-1440x900.png",
+          "sha256": "6332bbed9e4340f4aaacadef83c5393bea8f6be9ab97542ce5fb7ac101a59add",
+          "raster": "2880x1800"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-readiness-mobile-393x852.png",
+          "sha256": "2c845528c7b25406abf30cff2f6380d41ad34b91a414cdbbe14bbf3d1b412841",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-readiness-mobile-large-text-393x852.png",
+          "sha256": "2636c11f6fa4d28a6f389359c50b6098f75105355bd46eeeb341dac1e2910db5",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-roles-desktop-1440x900.png",
+          "sha256": "5af7498f3091b15db725e314295208939c524e6e87ccbb5478997d73a9ffccdd",
+          "raster": "2880x1800"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-roles-mobile-393x852.png",
+          "sha256": "b8ec25b7206629945460fce183bd038ea0bce34e30230e2ab67dc3b28572726e",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-admin-roles-mobile-large-text-393x852.png",
+          "sha256": "533171e50b953e8c29ed20958ad0a82aaf2ff4e83a397a716e17601fa4bb3d9d",
+          "raster": "1179x2556"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-screen-share-mobile-ime-2x-393x852.png",
+          "sha256": "6ec06c3fe0c77f2c21c3c3183661abbcc0fa59bfaa8dcfcdd3af36925f4edbbf",
+          "raster": "786x1704"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-topology-create-desktop-1440x900@2x.png",
+          "sha256": "a9a0af93b6d5ab38695245ef6adca015df3273611c30505d842d252193ffe2f3",
+          "raster": "2880x1800"
+        },
+        {
+          "path": ".out/visual/flutter/flutter-topology-destructive-desktop-1440x900@2x.png",
+          "sha256": "8c65e442e3c9e9dcd89520826e01013f89db6a2dfc310e2e0b8e57b3fea077b4",
+          "raster": "2880x1800"
+        }
+      ]
+    }
+  },
+  "ci_artifacts": {
+    "web": {
+      "workflow": ".github/workflows/ci-frontend.yaml",
+      "path": ".out/responsive-shell-browser-results/**",
+      "retention_days": 30,
+      "status": "CONFIGURED"
+    },
+    "flutter": {
+      "workflow": ".github/workflows/ci-flutter.yaml",
+      "path": ".out/visual/flutter/**",
+      "retention_days": 30,
+      "status": "CONFIGURED_IN_THIS_CHANGE"
+    },
+    "actions_run_for_current_checkpoint": "NOT_RUN_SKIP_CI_REQUEST"
+  },
+  "golden_comparison": {
+    "status": "NOT_APPROVED_FOR_FULL_CATALOG",
+    "source_assets_are_audit_references": true,
+    "reviewed_source_matched_admin_screens": 6,
+    "remaining_source_backed_full_app_after_captures": "NOT_RUN",
+    "note": "Do not convert the audit archive into a pixel gate without review; the source has one duplicate baseline and other slots have no approved current-state capture."
+  },
+  "acceptance": {
+    "41_screen_catalog_and_source_integrity": "PASS",
+    "web_required_six_viewports_and_extra_shell_widths": "PASS_12_VIEWPORTS",
+    "flutter_widget_capture_set": "PASS_25_CAPTURES",
+    "deterministic_keyboard/navigation/modal/semantics_smokes": "PASS_SCOPED_BY_UX_ISSUE_SUITES",
+    "all_critical_flows_approved_pixel_goldens": "NOT_RUN",
+    "current_github_actions_artifact_bundle": "NOT_RUN_SKIP_CI_REQUEST",
+    "no_live_production_service_dependency": "PASS_FIXTURE_AND_DISPOSABLE_STACK",
+    "issue_state_at_capture": "OPEN",
+    "responsive_shell_cross_browser": "PASS_21_CASES_CHROMIUM_WEBKIT_FIREFOX"
+  },
+  "limitations": [
+    "Only the six admin screens listed above have reviewed source-sized full-stack comparisons; the other catalog slots do not yet have source-backed full-app after captures.",
+    "Source screenshots are audit evidence, not approved goldens. desktop-guild-settings.png is byte-identical to desktop-guild-members.png.",
+    "The user requested [skip ci] for checkpoint pushes, so no GitHub Actions artifact from this checkpoint can be linked yet; the workflows are configured to retain Web and Flutter capture bundles for 30 days when CI runs.",
+    "The 2026-10-10 rerun at 2cdc9b2c passed locally. The commits use [skip ci], so there is still no GitHub Actions artifact bundle for this source revision."
+  ],
+  "artifact_storage": "All 37 PNG captures remain ignored local .out files; only the manifest and workflow/test/docs edits will be staged.",
+  "latest_revalidation": {
+    "commit": "a89ef57d",
+    "date": "2026-10-10",
+    "source_catalog": "PASS_41_ENTRIES",
+    "web_responsive_shell": "PASS_7_TESTS_12_VIEWPORTS",
+    "flutter_visual_capture": "PASS_5_TESTS_25_CAPTURES",
+    "current_shared_accessibility_suite": "PASS_47_BROWSER_CASES_EACH_CHROMIUM_WEBKIT_FIREFOX_PLUS_1_AXE",
+    "ci_artifact_run": "NOT_RUN_SKIP_CI_REQUEST",
+    "accessibility_cross_browser_runs": {
+      "Chromium": "47/47",
+      "WebKit": "47/47",
+      "Firefox": "47/47",
+      "message_action_axe": "1/1 Chrome PASS"
+    }
+  },
+  "region_delta_follow_up": {
+    "date": "2026-10-10",
+    "source_revision": "2e8b4e4343805ce8a0d9295af4c85eb6b2bba3d8",
+    "result": "PASS_REVIEW_ONLY",
+    "status_policy": "No approved pixel-golden thresholds; report measurements only.",
+    "pairs": [
+      {
+        "screen": "Guild members — desktop",
+        "reference": {
+          "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/desktop-guild-members.png",
+          "sha256": "0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57",
+          "raster": "2880x1800"
+        },
+        "actual": {
+          "path": ".out/client-lifecycle/1440/guild-members.png",
+          "sha256": "72f88f196ca31743b7921b0430d192bb03e1fcba2b813bf297446fb393530b4d",
+          "raster": "2880x1800"
+        },
+        "regions": [
+          {
+            "name": "admin-heading-and-tabs",
+            "selectedPixels": 974400,
+            "meanAbsoluteRgbChange": 4.558,
+            "pixelsChangedOverThresholdPercent": 3.122
+          },
+          {
+            "name": "member-filter-and-table-header",
+            "selectedPixels": 440000,
+            "meanAbsoluteRgbChange": 9.64,
+            "pixelsChangedOverThresholdPercent": 5.376
+          }
+        ]
+      },
+      {
+        "screen": "Guild members — mobile",
+        "reference": {
+          "path": "artifacts/ui-ux-screenshots.zip#ui-ux-screenshots/mobile-guild-members.png",
+          "sha256": "c568818c1ee367eb2e3562ccfb32f2db380dc4f53fe3f8250f0bb4683f790f26",
+          "raster": "1179x2556"
+        },
+        "actual": {
+          "path": ".out/client-lifecycle/393/guild-members.png",
+          "sha256": "289abd8168f81c69643f3c6a62c0ab9581ff8bc5680c426ad142dc0f34075cab",
+          "raster": "1179x2556"
+        },
+        "regions": [
+          {
+            "name": "admin-heading-and-tabs",
+            "selectedPixels": 660240,
+            "meanAbsoluteRgbChange": 15.751,
+            "pixelsChangedOverThresholdPercent": 10.968
+          },
+          {
+            "name": "member-controls-and-first-cards",
+            "selectedPixels": 825300,
+            "meanAbsoluteRgbChange": 16.296,
+            "pixelsChangedOverThresholdPercent": 15.907
+          }
+        ]
+      }
+    ],
+    "review_notes": [
+      "Desktop and mobile matching-raster pairs were visually reviewed. Visible structure changes include removal of the desktop hero heading, the compact mobile 'Админ' title and horizontal-tabs helper, and current refresh/result-count controls.",
+      "Synthetic account data differs from the audit references. These named-region values are not pixel parity, a regression verdict or golden approval."
+    ],
+    "report_outputs": [
+      ".out/uiux-visual-diff-302/members-desktop-report.json",
+      ".out/uiux-visual-diff-302/members-mobile-report.json"
+    ]
+  },
+  "working_tree_change_note": "The review-only region-delta reporter, responsive-shell focus-restore fix, and the channel-route regression extension are recorded in cross_browser_revalidation and channel_route_follow_up. The unrelated .gitignore change remains unstaged.",
+  "cross_browser_revalidation": {
+    "date": "2026-10-10",
+    "source_revision": "a89ef57d",
+    "playwright_version": "1.63.0",
+    "viewports": [
+      "320x640",
+      "375x812",
+      "390x844",
+      "393x852",
+      "430x932",
+      "600x900",
+      "768x1024",
+      "840x390",
+      "1024x768",
+      "1280x800",
+      "1440x900",
+      "1920x1080"
+    ],
+    "runs": [
+      {
+        "browser": "Chromium",
+        "version": "Google Chrome 154.0.8037.98",
+        "result": "PASS_AUTOMATED_ONLY",
+        "tests_passed": 7,
+        "viewports_tested": 12,
+        "command": "CHROMIUM_EXECUTABLE_PATH=/Applications/Google Chrome.app/Contents/MacOS/Google Chrome npx playwright test -c tests/responsive_shell/playwright.config.ts --browser chromium --output ../../.out/uiux-cross-browser-2026-10-10/chromium",
+        "capture_directory": ".out/uiux-cross-browser-2026-10-10/chromium",
+        "captures": [
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-1024x768.png",
+            "sha256": "1ac68c5863c503e128c30497bc5fd1e9e703393ead141336949599a601630949",
+            "raster": "1024x768"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-1280x800.png",
+            "sha256": "b79872f52eda363e86362262a6660477d9fb0d534588d2bc6489710516d13430",
+            "raster": "1280x800"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-1440x900.png",
+            "sha256": "54e7a278eaf1b08eb33085b38d217bf99854387f4f1a5137950672f3eee21b4d",
+            "raster": "1440x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-1920x1080.png",
+            "sha256": "3c6f716951bd154f61a323232b1200738f01d9649067f1db3f4a0bbee1a8743b",
+            "raster": "1920x1080"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-320x640.png",
+            "sha256": "f670ea50865b6bd8ca870cf80792e7299932603bf26b316a5a3db50cea82bec9",
+            "raster": "320x640"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-375x812.png",
+            "sha256": "c0ed734290a62a0762e47b761ed5e5fc88cd32bb0d85d18f62b808bb1ca01751",
+            "raster": "375x812"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-390x844.png",
+            "sha256": "19a0bd34a87e0797b7bcfbaf7beb5d4310b9d8c7b7abe598b8649b9dd9cf69a2",
+            "raster": "390x844"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-393x852.png",
+            "sha256": "9a508e46b86bb25edc2ff7c4a1792a2b178bc971b1b40c4f1cf4644fdf240f92",
+            "raster": "393x852"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-430x932.png",
+            "sha256": "229b6a4164b8ea4641ebe2fc1523e8dbc897b63beddad2a3887853f93ab98b58",
+            "raster": "430x932"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-600x900.png",
+            "sha256": "3dd3f40dad130b2889202ffab1a75a5ef71f8d5c4aa5a0f316f882ab7e71e45a",
+            "raster": "600x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-768x1024.png",
+            "sha256": "4b5cf4915f13a7343c685de413614ce4f58e4371169deb2bfa5a43b2a84d53cd",
+            "raster": "768x1024"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/chromium/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-chromium/shell-840x390.png",
+            "sha256": "874d505a0e1b09b5717c926ebae6ee67e9e8268ac4846a589bc6b26223b74f08",
+            "raster": "840x390"
+          }
+        ]
+      },
+      {
+        "browser": "WebKit",
+        "version": "Playwright WebKit 26.6 (v2359)",
+        "result": "PASS_AUTOMATED_ONLY",
+        "tests_passed": 7,
+        "viewports_tested": 12,
+        "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/responsive_shell/playwright.config.ts --browser webkit --output ../../.out/uiux-cross-browser-2026-10-10/webkit",
+        "capture_directory": ".out/uiux-cross-browser-2026-10-10/webkit",
+        "captures": [
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-1024x768.png",
+            "sha256": "4f14e5042d2448887eb22b146d16ab47e26e32194198b32db5c1991785692448",
+            "raster": "1024x768"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-1280x800.png",
+            "sha256": "c40eaa1c548a89ebd3f84446aab5cb269279240ef138b8b464e8b71f530f2f39",
+            "raster": "1280x800"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-1440x900.png",
+            "sha256": "8a8e88500f440281b10d0ff4128166f11f603883672b1896ffe94935e23244ef",
+            "raster": "1440x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-1920x1080.png",
+            "sha256": "9a9b2c91628869a377205673003aceca5c863bc1a94ba264ed047d0cdedda58e",
+            "raster": "1920x1080"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-320x640.png",
+            "sha256": "fb6f12d145314841c7808d7c0a845b46568f7dd786f19bad57f69d22fb599140",
+            "raster": "320x640"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-375x812.png",
+            "sha256": "3c39816901ad4fe841f86e5d63497aefb0553fdd779be8d97ad524c08760afe0",
+            "raster": "375x812"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-390x844.png",
+            "sha256": "b023c486fe48850ce0e9171f6f4a541e39c1c550b859599781558ec9d65c115f",
+            "raster": "390x844"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-393x852.png",
+            "sha256": "f700bfe9b490c25a5263b4626468215efc64a3cda412d1dfc331a8465b7729da",
+            "raster": "393x852"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-430x932.png",
+            "sha256": "95b61688225e3cb03437284c8c5555962a6ec2bad890c333f0035f0269640336",
+            "raster": "430x932"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-600x900.png",
+            "sha256": "27ff036cab7ae0b9cc135c3d5c51495724dafe81cde49e9f6f13887f9210d7f7",
+            "raster": "600x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-768x1024.png",
+            "sha256": "c50975cc9426cccd5b97efb855cea5b272c149910091cbcee0a775f2830f3563",
+            "raster": "768x1024"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/webkit/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-webkit/shell-840x390.png",
+            "sha256": "7222a7b427686397f8d273cc807bf3254d32faad04b1663be5d8d26f279fa977",
+            "raster": "840x390"
+          }
+        ]
+      },
+      {
+        "browser": "Firefox",
+        "version": "Playwright Firefox 155.0 (v1543)",
+        "result": "PASS_AUTOMATED_ONLY",
+        "tests_passed": 7,
+        "viewports_tested": 12,
+        "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/responsive_shell/playwright.config.ts --browser firefox --output ../../.out/uiux-cross-browser-2026-10-10/firefox",
+        "capture_directory": ".out/uiux-cross-browser-2026-10-10/firefox",
+        "captures": [
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-1024x768.png",
+            "sha256": "6297fadf5116748f2a5795d2b3e00cbd68f2bca3b07e29095f8723113b4ad890",
+            "raster": "1024x768"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-1280x800.png",
+            "sha256": "dad7983e1895272a9aa92b678c3174a53e45e31deb3dca195038bd87f6d01cf3",
+            "raster": "1280x800"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-1440x900.png",
+            "sha256": "2e5bf619cf527ae8d3955c27444bb8a942f9046cb5970243a5550e95afadabb7",
+            "raster": "1440x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-1920x1080.png",
+            "sha256": "01ff038565d9ef54b00945837f4dd6b8a429c5722bd717217ecc6b88db6788f9",
+            "raster": "1920x1080"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-320x640.png",
+            "sha256": "adc9f495d652c0cba5688d1659c4fa9c11ac0f331e3c2f68fca3a22fa96d47e5",
+            "raster": "320x640"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-375x812.png",
+            "sha256": "3642f5013ccb9fead2d5acced012bf58c5a4206d901764334ab91dee1dc7b99f",
+            "raster": "375x812"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-390x844.png",
+            "sha256": "b3decbf59871ce7a2bd5d958baee604bf5cb0ae0f97a1dafb6e0ed1a2a97bab8",
+            "raster": "390x844"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-393x852.png",
+            "sha256": "b0e1c66d88c57b5e14edbeaaaa14d93e621a9d52fd0b4d6e07c258ed777c2130",
+            "raster": "393x852"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-430x932.png",
+            "sha256": "113689e8fb9389faf420230d9aca1a43c47a9523c9e81b9ed0f45e67b377650f",
+            "raster": "430x932"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-600x900.png",
+            "sha256": "e834a1812fc7a19051546cd6d4d616179b8ed680c0b1b5f15605ee333954f1ca",
+            "raster": "600x900"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-768x1024.png",
+            "sha256": "a0bae3e2723f0b98fa9f600284dc459c6c20ab17424f618eefda0d1758bdfdd4",
+            "raster": "768x1024"
+          },
+          {
+            "path": ".out/uiux-cross-browser-2026-10-10/firefox/responsive_shell.browser-p-cc83e-ts-workspace-while-resizing-firefox/shell-840x390.png",
+            "sha256": "7d54522760fd2765fe7cb15b9ddc800162b7bd84158b81d706e0896e56fd05e2",
+            "raster": "840x390"
+          }
+        ]
+      }
+    ],
+    "focus_restore_regression": {
+      "before_fix": "WebKit opened the drawer but restored focus to #main-region rather than the navigation trigger after Escape; WebKit does not reliably make a clicked button document.activeElement on this host.",
+      "fix": "When navigation or members drawer closes, prefer its explicit workspace-header opener and call focus({preventScroll:true}); retain prior-focus restoration for the search drawer.",
+      "coverage": "The browser regression now checks focus return after Escape and selection for navigation, and after Escape for the members panel.",
+      "verification": "The regression failed in WebKit before the fix; after the fix it passes in Chromium, WebKit and Firefox."
+    },
+    "supplemental_checks": [
+      {
+        "command": "npm test -- --run src/workspace/workspace_drawer_focus.spec.ts",
+        "result": "PASS",
+        "tests_passed": 3
+      },
+      {
+        "command": "VITE_PUBLIC_ORIGIN=https://voice.example.test npm run build",
+        "result": "PASS",
+        "notes": "vue-tsc and Vite production build succeed; Vite reports existing LiveKit import/chunk-size warnings."
+      }
+    ],
+    "limitations": [
+      "Playwright WebKit is an automated WebKit engine run, not manual Safari app or iOS Safari acceptance.",
+      "Firefox is the Playwright runtime, not a native Firefox user-task or physical device acceptance.",
+      "All browser screenshots are ignored local .out outputs; the requested [skip ci] means no GitHub Actions artifact exists for this checkpoint."
+    ],
+    "dialog_focus_regression": {
+      "before_fix": "WebKit left focus on body after pointer activation, and the native Tab order skipped the second dialog button.",
+      "fix": "Remember the most recent focusable click target as a fallback opener; prevent scroll on restoration; cycle Tab/Shift+Tab explicitly through dialog controls. Tab-stop calculation treats each same-name radio group as one stop at its checked option and includes visible summary controls.",
+      "verification": "The complete 47-case accessibility suite passes in Chromium 154, Playwright WebKit 26.6 and Firefox 155. A screen-share regression verifies Tab from the checked radio skips unchecked peers and Shift+Tab returns to it."
+    }
+  },
+  "channel_route_follow_up": {
+    "date": "2026-10-10",
+    "code_revision": "b69b635c",
+    "test_files": [
+      "clients/web/tests/responsive_shell/responsive_shell.browser.spec.ts",
+      "clients/web/tests/responsive_shell/workspace_location.browser.spec.ts"
+    ],
+    "result": "PASS_AUTOMATED_ONLY",
+    "responsive_shell_tests_passed_per_engine": 11,
+    "channel_route_tests_passed_per_engine": 4,
+    "engines": {
+      "Chromium": "Google Chrome 154.0.8037.98",
+      "WebKit": "Playwright WebKit 26.6 (v2359)",
+      "Firefox": "Playwright Firefox 155.0 (v1543)"
+    },
+    "production_lifecycle": {
+      "source_revision": "f273c59a",
+      "environment": "Production Web client against owned disposable Go API, PostgreSQL and Tempo; synthetic QA accounts; Chrome 154; no mocks and no live SFU.",
+      "runs": [
+        {
+          "viewport": "393x852 CSS px, DPR 3, touch enabled",
+          "result": "PASS",
+          "channel_url": "PASS",
+          "channel_refresh": "PASS",
+          "persisted_after_restart": true,
+          "owned_resources_removed": true,
+          "report_sha256": "dede09a5c013daea1f5c72fc590307f755d3bcfbaf0d1c47fdd7ca5cd5f99d61"
+        },
+        {
+          "viewport": "1440x900 CSS px, DPR 2",
+          "result": "PASS",
+          "channel_url": "PASS",
+          "channel_refresh": "PASS",
+          "persisted_after_restart": true,
+          "owned_resources_removed": true,
+          "report_sha256": "6de825851daead3ef50daf9bc03b22e13024d4d2cefe510d5a0eee2b7bdeb6f3"
+        }
+      ]
+    },
+    "coverage": [
+      "Direct channel fragment load and refresh",
+      "Inaccessible channel id falls back without granting access",
+      "Browser Back and Forward restore the selected channel",
+      "Selecting from the mobile navigation drawer leaves no stale drawer history",
+      "Favorite toggle remains within its row across responsive widths"
+    ],
+    "fixture_limit": "The browser fixture mounts production navigation code with a synthetic authorized topology for inaccessible-ID fallback; the separate full-stack lifecycle verifies authenticated selected-channel URL restoration after refresh against disposable API/PostgreSQL/Tempo at desktop and mobile sizes. Neither run is native Safari, physical-device, or screen-reader acceptance."
+  }
+}

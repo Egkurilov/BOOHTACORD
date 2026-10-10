@@ -1,4 +1,5 @@
 import { expect, it, vi } from 'vitest'
+import { DirectMessageCandidateRequestError } from '../../direct_message/direct_message_candidate_client'
 import { createQuickJumpOpen } from './open'
 
 function fixture() {
@@ -23,6 +24,15 @@ it('rejects stale cached dialogs when the authoritative refresh fails', async ()
   expect(ports.dialog).not.toHaveBeenCalled()
   expect(ports.error).toHaveBeenLastCalledWith('Личный диалог больше недоступен.')
 })
+for (const status of [403, 404]) {
+  it(`reports an unavailable DM for an explicit ${status} response`, async () => {
+    const { ports } = fixture()
+    const member = vi.fn(async () => { throw new DirectMessageCandidateRequestError(status) })
+    await createQuickJumpOpen(ports, member).open({ kind: 'MEMBER', id: 'member' })
+    expect(ports.dialog).not.toHaveBeenCalled()
+    expect(ports.error).toHaveBeenLastCalledWith('Личный диалог больше недоступен.')
+  })
+}
 it('disposal discards a late member response before navigation', async () => {
   const { ports } = fixture()
   let resolve!: (value: { id: string; participantOneId: string; participantTwoId: string; createdAt: string }) => void

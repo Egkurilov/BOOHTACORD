@@ -13,6 +13,7 @@ mixin WorkspaceWorkspaceSearchPanelStateDisposeBinding
 extension WorkspaceWorkspaceSearchPanelStateDisposeAction
     on WorkspaceWorkspaceSearchPanelStateContext {
   void executeWorkspaceWorkspaceSearchPanelStateDispose() {
+    workspaceSaveSearchSession();
     workspaceSequence++;
     workspaceQuery.removeListener(workspaceQueryChanged);
     workspaceQuery.dispose();

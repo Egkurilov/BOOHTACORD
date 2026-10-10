@@ -74,8 +74,8 @@ export async function media(a, b, member, channelId, report, input) {
     const leave = page.getByTestId('voice-dock').getByRole('button', { name: 'Выйти из голосового канала', exact: true })
     if (await leave.count()) await leave.click()
   }
-  await a.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
-  await b.locator('.channel-button').filter({ hasText: 'WelcomeLab' }).click()
+  await a.locator('.channel-button').filter({ hasText: 'Text' }).click()
+  await b.locator('.channel-button').filter({ hasText: 'Text' }).click()
   report.connection_status.targeted_roster_retry = true
   await teardown(a, b, channelId, input, report, observed)
 }

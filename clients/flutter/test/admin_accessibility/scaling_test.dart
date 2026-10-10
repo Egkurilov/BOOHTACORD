@@ -5,6 +5,21 @@ import 'package:boohtacord_desktop/src/features/admin/shell/section_tabs.dart';
 import 'fixture.dart';
 
 void main() {
+  for (final width in [320.0, 360.0, 390.0, 430.0]) {
+    testWidgets('all admin sections remain usable at $width px with 2x text', (
+      tester,
+    ) async {
+      await mountAdmin(tester, size: Size(width, 844), scale: 2);
+      for (final section in AdminSection.values) {
+        final tab = find.byKey(ValueKey('admin-section-tab-${section.name}'));
+        await tester.ensureVisible(tab);
+        await tester.tap(tab);
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(tester.takeException(), isNull, reason: section.name);
+      }
+    });
+  }
+
   for (final width in [390.0, 600.0, 1440.0]) {
     for (final scale in [1.0, 1.3, 2.0]) {
       testWidgets(

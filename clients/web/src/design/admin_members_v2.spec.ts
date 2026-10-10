@@ -17,9 +17,9 @@ describe('V2 administrator member directory', () => {
 
   it('uses the handoff typography for the mobile directory', () => {
     const css = readFileSync(new URL('./design_v2_admin_members.css', import.meta.url), 'utf8')
-    expect(css).toContain('.admin-panel--members .admin-panel-heading h1 { font-size: 24px; line-height: 32px; font-weight: 600; }')
-    expect(css).toContain('.admin-panel--members .admin-section-heading h2 { font-size: 20px; line-height: 28px; font-weight: 600; }')
-    expect(css).toContain('.admin-panel--members .admin-mobile-user strong { font-size: 16px; line-height: 20px; font-weight: 600; }')
+    expect(css).toContain('.admin-panel--members .admin-panel-heading h1 { font-size: var(--gc-text-page); line-height: var(--gc-line-page); font-weight: var(--gc-weight-semibold); }')
+    expect(css).toContain('.admin-panel--members .admin-section-heading h2 { font-size: var(--gc-text-section); line-height: var(--gc-line-section); font-weight: var(--gc-weight-semibold); }')
+    expect(css).toContain('.admin-panel--members .admin-mobile-user strong { font-size: 1rem; line-height: 1.25rem; font-weight: 600; }')
     const header = readFileSync(new URL('../shared/workspace_header/settings_header.css', import.meta.url), 'utf8')
     expect(header).toContain('.settings-workspace-header .workspace-header-toggle--nav, .settings-workspace-close { width: 44px; height: 44px; }')
   })
@@ -36,10 +36,12 @@ describe('V2 administrator member directory', () => {
 
   it('aligns mobile search and account status geometry with R22', () => {
     const css = readFileSync(new URL('./design_v2_admin_members.css', import.meta.url), 'utf8')
-    expect(css).toContain('.admin-member-filters select { width: 81px;')
-    expect(css).toContain('background: #11131a; font-size: 14px;')
-    expect(css).toContain('.admin-panel--members .admin-mobile-meta .is-active { border-radius: 4px; padding: 2px 6px; color: #78e6a0; background: #123320; font-size: 12px; font-weight: 600; line-height: 16px; }')
-    expect(css).toContain('.admin-account-status { border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 600; line-height: 16px; }')
+    expect(css).toContain('.admin-member-filters { display: grid; height: auto; grid-template-columns: repeat(2, minmax(0, 1fr));')
+    expect(css).toContain('.admin-member-filters select { width: 100%; min-width: 0;')
+    expect(members).toContain('Фильтр по статусу')
+    expect(css).toContain('background: var(--gc-sidebar); font-size: 0.875rem;')
+    expect(css).toContain('.admin-panel--members .admin-mobile-meta .is-active { border-radius: 4px; padding: 2px 6px; color: #78e6a0; background: #123320; font-size: 0.75rem; font-weight: 600; line-height: 1rem; }')
+    expect(css).toContain('.admin-account-status { border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; font-weight: 600; line-height: 1rem; }')
     expect(css).toContain('.admin-account-status.is-active { color: #78e6a0; background: #123320; }')
   })
 })

@@ -147,6 +147,10 @@ void main() {
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Дополнительные настройки качества'));
+    await tester.tap(find.text('Дополнительные настройки качества'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('1440p'));
     await tester.tap(find.text('1440p'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('60 FPS'));
@@ -379,6 +383,9 @@ void main() {
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Дополнительные настройки качества'));
+    await tester.tap(find.text('Дополнительные настройки качества'));
+    await tester.pumpAndSettle();
 
     expect(
       find.textContaining('Android покажет системный запрос'),
@@ -418,6 +425,9 @@ void main() {
       ),
     );
     await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Дополнительные настройки качества'));
+    await tester.tap(find.text('Дополнительные настройки качества'));
     await tester.pumpAndSettle();
 
     for (final label in [
@@ -471,6 +481,9 @@ void main() {
       ),
     );
     await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Дополнительные настройки качества'));
+    await tester.tap(find.text('Дополнительные настройки качества'));
     await tester.pumpAndSettle();
 
     final start = tester.getRect(

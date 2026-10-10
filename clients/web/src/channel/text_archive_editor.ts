@@ -4,10 +4,10 @@ import type { AdminTopologyRequest } from './admin_topology_client'
 import { archiveTextChannel, TextArchiveError } from './text_archive_client'
 import type { TopologyCategory } from './topology_client'
 
-export interface TextArchiveSnapshot { categories: TopologyCategory[]; revision: number; selectedChannelId: string }
+export interface TextArchiveSnapshot { accountId?: string; categories: TopologyCategory[]; revision: number; selectedChannelId: string }
 
 export function createTextArchiveEditor(snapshot: () => TextArchiveSnapshot, changed: () => void,
-  clearSelected: (id: string) => void, confirm: (message: string) => boolean | Promise<boolean>, request?: AdminTopologyRequest) {
+  clearSelected: (id: string) => void, confirm: (message: string, stillCurrent: () => boolean) => boolean | Promise<boolean>, request?: AdminTopologyRequest) {
   const pending = ref(false)
   const conflict = ref(false)
   const needsRefresh = ref(false)
@@ -35,7 +35,14 @@ export function createTextArchiveEditor(snapshot: () => TextArchiveSnapshot, cha
     const current = snapshot()
     const channel = selectedText()
     if (!channel || pending.value || needsRefresh.value || current.revision < 1) return false
-    if (!await confirm(`Архивировать текстовый канал «${channel.name}»? История сообщений сохранится, канал исчезнет из навигации.`)) return false
+    const stillCurrent = () => {
+      const latest = snapshot()
+      const latestChannel = latest.categories.flatMap(({ channels }) => channels)
+        .find(({ id }) => id === channel.id)
+      return latest.accountId === current.accountId && latest.categories === current.categories &&
+        latest.revision === current.revision && latestChannel?.kind === 'TEXT' && latestChannel.name === channel.name
+    }
+    if (!await confirm(`Архивировать текстовый канал «${channel.name}»? История сообщений сохранится, канал исчезнет из навигации.`, stillCurrent) || !stillCurrent()) return false
     error.value = null
     status.value = null
     pending.value = true

@@ -13,7 +13,7 @@ describe('administrator channel order controls', () => {
       ],
     }] })
     const html = await renderToString(app)
-    expect(html).toContain('Порядок в категории')
+    expect(html).toContain('Порядок в разделе')
     expect(html).toContain('Голосовой A')
     expect(html).toContain('Текстовый B')
     expect(html).toContain('aria-label="Переместить канал «Голосовой A» выше"')

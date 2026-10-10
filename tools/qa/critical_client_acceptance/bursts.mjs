@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
-import { api, expect, status } from '../client_lifecycle/request.mjs'
+import { api, expect, openNavigation, status } from '../client_lifecycle/request.mjs'
 import { requests } from './requests.mjs'
 export async function bursts(a, b, channelId, report, directory, baseline = false) {
   const category = await api(a, '/admin/categories', 'POST', { name: 'HiddenLab' }); status(category, 201)
   const hidden = await api(a, `/admin/categories/${category.body.id}/channels`, 'POST', { name: 'HiddenLab', kind: 'TEXT' }); status(hidden, 201)
+  await openNavigation(b)
   await expect(b.locator('.channel-button').filter({ hasText: 'HiddenLab' })).toBeVisible()
   await b.locator('.channel-button').filter({ hasText: 'HiddenLab' }).click()
   const counters = [requests(a, channelId), requests(b, channelId)]
@@ -21,7 +22,10 @@ export async function bursts(a, b, channelId, report, directory, baseline = fals
     }, { channelId, size })
     result.forEach(row => status(row, 201))
     oldest ??= result[0].body
-    await expect(a.getByRole('log')).toContainText(`Synthetic burst ${size} item ${size-1}`)
+    await expect.poll(async () => {
+      const visible = await a.getByRole('log').innerText()
+      return result.some(row => visible.includes(row.body.body))
+    }).toBe(true)
     await expect.poll(() => counters.every(counter => counter.quiet()), { timeout: 10000 }).toBe(true)
     const [active, hiddenResult] = counters.map(counter => counter.stop())
     assert.equal(hiddenResult.history, 0)

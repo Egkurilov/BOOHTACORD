@@ -22,7 +22,7 @@ export function createMemberConflictState() {
     baseline[id]={...current};if(discard) drafts[id]=state(current)
     delete conflicts[id];return true
   }
-  function saved(id:string):void {delete baseline[id];delete drafts[id];delete conflicts[id]}
+  function saved(id:string,current:AdminAccount):void {baseline[id]={...current};drafts[id]=state(current);delete conflicts[id]}
   function summary(value:MemberDraft):string {return `${value.role==='ADMINISTRATOR'?'Администратор':'Пользователь'}; ${value.blocked?'заблокирован':'доступ открыт'}`}
   return {drafts,baseline,conflicts,sync,capture,accept,saved,summary}
 }

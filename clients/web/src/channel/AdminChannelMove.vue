@@ -30,13 +30,13 @@ function changeTarget(event: Event): void { editor.setTargetCategoryId((event.ta
         </optgroup>
       </select>
     </label>
-    <label>В категорию
+    <label>В раздел
       <select :value="editor.targetCategoryId.value" :disabled="editor.pending.value || editor.needsRefresh.value || !selected" name="target-category" @change="changeTarget">
         <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
       </select>
     </label>
     <button type="submit" :disabled="!editor.canMove()">{{ editor.pending.value ? 'Переносим…' : 'Перенести канал' }}</button>
-    <p v-if="selected" class="admin-topology-kind">Канал останется {{ selected.kind === 'VOICE' ? 'голосовым' : 'текстовым' }}. Изменится только его категория.</p>
+    <p v-if="selected" class="admin-topology-kind">Канал останется {{ selected.kind === 'VOICE' ? 'голосовым' : 'текстовым' }}. Изменится только его раздел.</p>
     <button v-if="editor.needsRefresh.value" type="button" @click="emit('changed')">Повторить обновление списка</button>
     <p v-if="editor.status.value" class="admin-topology-status" aria-live="polite">{{ editor.status.value }}</p>
     <p v-if="editor.error.value" class="admin-topology-error" role="alert">{{ editor.error.value }}</p>

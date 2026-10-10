@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { ChannelDescriptionError, updateChannelDescription } from './channel_description_client'
+import { requestFailureMessage } from '../request_feedback'
 
 const props = defineProps<{ channelId: string; description?: string; revision: number }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -38,7 +39,7 @@ async function save(): Promise<void> {
     status.value = 'Описание сохранено.'
     emit('changed')
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'Не удалось сохранить описание канала.'
+    error.value = requestFailureMessage(cause, 'Не удалось сохранить описание канала.')
     if (cause instanceof ChannelDescriptionError && cause.status === 409) emit('changed')
   } finally { pending.value = false }
 }

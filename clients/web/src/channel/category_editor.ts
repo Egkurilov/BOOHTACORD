@@ -48,7 +48,7 @@ export function createCategoryEditor(snapshot: () => CategoryEditorSnapshot, cha
   }
 
   function failed(cause: unknown): void {
-    error.value = cause instanceof Error ? cause.message : 'Не удалось изменить категории.'
+    error.value = cause instanceof Error ? cause.message : 'Не удалось изменить разделы.'
     if (cause instanceof CategoryMutationError && cause.status === 409) {
       conflict.value = true
       needsRefresh.value = true
@@ -62,7 +62,7 @@ export function createCategoryEditor(snapshot: () => CategoryEditorSnapshot, cha
     error.value = null
     status.value = null
     if (!renameDraft.value.trim() || !validCodePointLength(renameDraft.value, 1, 80)) {
-      error.value = 'Введите имя категории до 80 символов.'
+      error.value = 'Введите название раздела до 80 символов.'
       return false
     }
     pending.value = true
@@ -71,7 +71,7 @@ export function createCategoryEditor(snapshot: () => CategoryEditorSnapshot, cha
       renameDraft.value = renamed.name
       dirty = false
       needsRefresh.value = true
-      status.value = 'Категория переименована. Обновляем список.'
+      status.value = 'Раздел переименован. Обновляем список.'
       changed()
       return true
     } catch (cause) { failed(cause); return false }
@@ -92,7 +92,7 @@ export function createCategoryEditor(snapshot: () => CategoryEditorSnapshot, cha
     try {
       await reorderCategories(ids, current.revision, request)
       needsRefresh.value = true
-      status.value = 'Порядок категорий сохранён. Обновляем список.'
+      status.value = 'Порядок разделов сохранён. Обновляем список.'
       changed()
       return true
     } catch (cause) { failed(cause); return false }

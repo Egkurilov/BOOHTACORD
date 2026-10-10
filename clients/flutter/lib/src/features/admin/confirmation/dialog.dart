@@ -7,6 +7,8 @@ Future<T?> showConfirmationDialog<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   bool barrierDismissible = false,
+  Listenable? cancelOn,
+  bool Function()? shouldCancel,
 }) async {
   final initiator = FocusManager.instance.primaryFocus;
   final result = await showDialog<T>(
@@ -22,11 +24,63 @@ Future<T?> showConfirmationDialog<T>({
         const SingleActivator(LogicalKeyboardKey.escape): () =>
             Navigator.of(dialogContext).maybePop<T>(),
       },
-      child: FocusScope(autofocus: true, child: builder(dialogContext)),
+      child: _DismissWhenChanged(
+        listenable: cancelOn,
+        shouldDismiss: shouldCancel,
+        child: FocusScope(autofocus: true, child: builder(dialogContext)),
+      ),
     ),
   );
   if (context.mounted && initiator?.context?.mounted == true) {
     initiator!.requestFocus();
   }
   return result;
+}
+
+class _DismissWhenChanged extends StatefulWidget {
+  const _DismissWhenChanged({
+    required this.listenable,
+    required this.shouldDismiss,
+    required this.child,
+  });
+
+  final Listenable? listenable;
+  final bool Function()? shouldDismiss;
+  final Widget child;
+
+  @override
+  State<_DismissWhenChanged> createState() => _DismissWhenChangedState();
+}
+
+class _DismissWhenChangedState extends State<_DismissWhenChanged> {
+  @override
+  void initState() {
+    super.initState();
+    widget.listenable?.addListener(_dismissIfNeeded);
+  }
+
+  @override
+  void didUpdateWidget(covariant _DismissWhenChanged oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.listenable != widget.listenable) {
+      oldWidget.listenable?.removeListener(_dismissIfNeeded);
+      widget.listenable?.addListener(_dismissIfNeeded);
+    }
+  }
+
+  void _dismissIfNeeded() {
+    if (!mounted || !(widget.shouldDismiss?.call() ?? false)) return;
+    if (ModalRoute.of(context)?.isCurrent ?? false) {
+      Navigator.of(context).maybePop();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.listenable?.removeListener(_dismissIfNeeded);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

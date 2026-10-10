@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { createChannel } from './admin_topology_client'
+import { requestFailureMessage } from '../request_feedback'
 import type { ChannelKind, TopologyCategory } from './topology_client'
 
 const props = defineProps<{ categories: TopologyCategory[]; categoryId: string }>()
@@ -14,9 +15,10 @@ const error = ref<string | null>(null)
 const status = ref<string | null>(null)
 
 async function submit(): Promise<void> {
+  if (pending.value) return
   error.value = null
   status.value = null
-  if (!selected.value) { error.value = 'Сначала выберите категорию.'; return }
+  if (!selected.value) { error.value = 'Сначала выберите раздел.'; return }
   if (!channelName.value.trim() || !validCodePointLength(channelName.value, 1, 80)) {
     error.value = 'Введите имя канала до 80 символов.'
     return
@@ -27,7 +29,7 @@ async function submit(): Promise<void> {
     channelName.value = ''
     status.value = 'Канал создан. Топология обновляется.'
     emit('changed')
-  } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось создать канал.' }
+  } catch (cause) { error.value = requestFailureMessage(cause, 'Не удалось создать канал.') }
   finally { pending.value = false }
 }
 </script>
@@ -35,7 +37,7 @@ async function submit(): Promise<void> {
 <template>
   <form class="admin-topology-form admin-topology-form--channel" @submit.prevent="submit">
     <h4>Добавить канал в «{{ selected?.name ?? 'раздел' }}»</h4>
-    <label>Новый канал<input v-model="channelName" :disabled="pending || !selected" name="channel-name" required :aria-describedby="error ? 'admin-topology-error' : undefined"></label>
+    <label>Новый канал<input v-model="channelName" :disabled="pending || !selected" name="channel-name" required :aria-invalid="error ? 'true' : undefined" :aria-describedby="error ? 'admin-topology-error' : undefined"></label>
     <label>Тип канала<select v-model="channelKind" :disabled="pending || !selected" name="channel-kind">
       <option value="VOICE">Голосовой</option><option value="TEXT">Текстовый</option>
     </select></label>

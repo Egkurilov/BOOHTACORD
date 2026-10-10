@@ -6,6 +6,7 @@ import type { VoiceConnectionState } from './types'
 import { voiceLeaseRevocationMessage } from '../voice_lease_revocation_reason'
 import type { createVoiceConnectionRevocation } from '../voice_connection_revocation'
 import { VoiceRequestError } from '../admission_client'
+import { voiceJoinErrorMessage } from './join_error'
 import type { createControllerOwnership } from '../controller_ownership/state'
 interface JoinContext {
  session:VoiceSession;terminal:VoiceDisconnectState;revocation:ReturnType<typeof createVoiceConnectionRevocation>
@@ -54,7 +55,7 @@ export function createConnectionJoin(context:JoinContext) {
       transferRequired.value = cause instanceof VoiceRequestError && cause.status===409 && ['ACTIVE_VOICE_LEASE','ORIGIN_MEDIA_BUSY'].includes(cause.code ?? '')
       context.transferChannelId.value=transferRequired.value && cause instanceof VoiceRequestError ? cause.activeChannelId ?? null : null
       if (cancelledReason && terminal.leaseID) terminal.server(terminal.leaseID, cancelledReason)
-      error.value = terminal.notice.value?.message ?? (cancelledReason ? voiceLeaseRevocationMessage(cancelledReason) : cause instanceof Error ? cause.message : 'Не удалось подключиться к голосовому каналу.')
+      error.value = terminal.notice.value?.message ?? (cancelledReason ? voiceLeaseRevocationMessage(cancelledReason) : voiceJoinErrorMessage(cause))
     } finally {if(generation===terminal.generation&&!active.value) await context.ownership.release()}
   }
 

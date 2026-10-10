@@ -5,11 +5,13 @@ class TopologyConfirmation {
     required this.title,
     required this.content,
     required this.confirmLabel,
+    this.stillCurrent,
   });
 
   final String title;
   final String content;
   final String confirmLabel;
+  final bool Function()? stillCurrent;
 }
 
 typedef TopologyConfirmationHandler = Future<bool?> Function(

@@ -1,0 +1,265 @@
+{
+  "id": "QA-303-PLATFORM-ACCEPTANCE",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #303 — physical platform and assistive-technology acceptance inventory",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/303",
+  "source_revision": "a89ef57d",
+  "application_manifest_version": "1.0.38+71",
+  "status": "BLOCKED_DEVICE_MATRIX_NOT_RUN",
+  "inventory_commands": [
+    {
+      "command": "cd clients/flutter && flutter devices --machine",
+      "result": "PASS_INVENTORY",
+      "available": [
+        "macOS 26.6.1 25G76 darwin-arm64",
+        "Chrome 154.0.8037.98"
+      ],
+      "unavailable": [
+        "Android device/emulator",
+        "iOS device/simulator",
+        "Windows device/VM"
+      ]
+    },
+    {
+      "command": "adb devices -l",
+      "result": "PASS_INVENTORY_EMPTY",
+      "connected_devices": [],
+      "note": "ADB daemon started successfully in the authorized inventory check; no USB or emulator targets were listed."
+    },
+    {
+      "command": "Check /Users/pistol121/Library/Android/sdk/emulator/emulator -list-avds",
+      "result": "NOT_AVAILABLE",
+      "observation": "Android emulator binary is not installed at the configured SDK path."
+    },
+    {
+      "command": "Check installed desktop browsers and Safari WebDriver",
+      "result": "PASS_INVENTORY",
+      "available": [
+        "Google Chrome 154.0.8037.98",
+        "Safari 26.6 (21624.4.5.11.5), safaridriver available"
+      ],
+      "unavailable": [
+        "Firefox application/browser binary"
+      ]
+    },
+    {
+      "command": "xcrun simctl list devices available",
+      "result": "NOT_RUN_CORE_SIMULATOR_UNAVAILABLE",
+      "observation": "CoreSimulatorService connection failed and no simulator devices could be enumerated; Flutter device discovery also reported no iOS target."
+    }
+  ],
+  "historical_observations": [
+    {
+      "date": "2026-10-10",
+      "observation": "An earlier same-day Flutter inventory briefly reported Android 15/API 35 emulator-5554. It was not available in the current inventory; ADB is empty and the configured emulator binary is absent.",
+      "acceptance_effect": "The earlier observation is not treated as current device availability or as platform acceptance."
+    }
+  ],
+  "current_browser_attempts": [
+    {
+      "date": "2026-10-10",
+      "target": "Native Safari desktop 26.6",
+      "result": "EXPLORATORY_FIXTURE_VIEW_ONLY",
+      "url": "http://127.0.0.1:4807/tests/responsive_shell/fixture.html",
+      "observation": "The local responsive shell fixture rendered and exposed the favorite control in Safari's accessibility tree. This fixture is not the full application and its visible favorite control has no interaction handler.",
+      "acceptance_effect": "No task script was completed; Safari desktop remains NOT_RUN for #303. The transient UI screenshot was not saved as a durable QA artifact."
+    },
+    {
+      "date": "2026-10-10",
+      "target": "Playwright WebKit responsive-shell suite",
+      "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/responsive_shell/playwright.config.ts --browser webkit",
+      "result": "NOT_RUN_BROWSER_RUNTIME_MISSING",
+      "launch_error": "Expected Playwright runtime /Users/pistol121/Library/Caches/ms-playwright/webkit-2359/pw_run.sh is absent; all seven cases stopped at browser launch.",
+      "acceptance_effect": "The first attempt stopped before assertions because the browser runtime was missing. Playwright WebKit and Firefox were subsequently installed from the official CDN and the full WebKit suite passed 7/7."
+    },
+    {
+      "date": "2026-10-10",
+      "target": "Playwright responsive-shell cross-browser viewport matrix",
+      "result": "PASS_AUTOMATED_ONLY",
+      "playwright_version": "1.63.0",
+      "runs": [
+        {
+          "browser": "Chromium",
+          "version": "Google Chrome 154.0.8037.98",
+          "tests_passed": 7,
+          "viewports": 12
+        },
+        {
+          "browser": "WebKit",
+          "version": "26.6 (Playwright v2359)",
+          "tests_passed": 7,
+          "viewports": 12
+        },
+        {
+          "browser": "Firefox",
+          "version": "155.0 (Playwright v1543)",
+          "tests_passed": 7,
+          "viewports": 12
+        }
+      ],
+      "evidence": "evidence/qa/qa302-visual-e2e-2026-10-10.json",
+      "capture_root": ".out/uiux-cross-browser-2026-10-10/",
+      "acceptance_effect": "Automated responsive viewport and interaction coverage is now available for three browser engines. It does not count as native Safari, mobile browser, physical device or screen-reader task acceptance.",
+      "source_revision": "7e5c0ffc plus the tested working tree",
+      "runtime_install": "WebKit 26.6 and Firefox 155 Playwright runtimes were installed from the official Playwright CDN after the initial missing-runtime attempt."
+    },
+    {
+      "date": "2026-10-10",
+      "target": "Playwright accessibility suite across Chromium, WebKit and Firefox",
+      "result": "PASS_AUTOMATED_ONLY",
+      "playwright_version": "1.63.0",
+      "runs": [
+        {
+          "browser": "Google Chrome 154.0.8037.98 (Playwright Chromium)",
+          "tests_passed": 47
+        },
+        {
+          "browser": "Playwright WebKit 26.6 (v2359)",
+          "tests_passed": 47
+        },
+        {
+          "browser": "Playwright Firefox 155.0 (v1543)",
+          "tests_passed": 47
+        }
+      ],
+      "evidence": "evidence/qa/qa301-accessibility-2026-10-10.json",
+      "acceptance_effect": "Automated browser accessibility, keyboard dialog traversal and focus restoration are covered across three engines. This does not satisfy native Safari, mobile browser, physical device or assistive technology task scripts.",
+      "source_revision": "a89ef57d",
+      "keyboard_regression": "Screen-share dialog Tab/Shift+Tab preserves checked radio-group semantics in all three engines."
+    }
+  ],
+  "platform_matrix": [
+    {
+      "target": "Web Chrome desktop/mobile viewport automation",
+      "available": true,
+      "result": "PASS_AUTOMATED_ONLY",
+      "browserVersion": "154.0.8037.98",
+      "evidence": [
+        "evidence/qa/qa302-visual-e2e-2026-10-10.json",
+        "evidence/qa/qa301-accessibility-2026-10-10.json"
+      ],
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "Chrome viewport emulation is not physical mobile acceptance."
+    },
+    {
+      "target": "Web Safari desktop",
+      "available": true,
+      "result": "NOT_RUN",
+      "browserVersion": "Safari 26.6",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "Safari is installed; only the local fixture was opened in the Safari app. Full-app task smoke remains NOT_RUN. Playwright WebKit 26.6 passes separately as automated engine coverage."
+    },
+    {
+      "target": "Web Firefox desktop/mobile",
+      "available": true,
+      "result": "PASS_AUTOMATED_ONLY",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "Playwright Firefox viewport smoke passes 7/7 on 12 dimensions. Standalone Firefox app manual task smoke and physical-device acceptance were not run.",
+      "browserVersion": "Playwright Firefox 155.0 (v1543)"
+    },
+    {
+      "target": "Web Safari on iOS / physical mobile browser",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "No physical iOS device is connected; a desktop browser or viewport emulation is not mobile Safari acceptance."
+    },
+    {
+      "target": "Flutter macOS desktop",
+      "available": true,
+      "result": "NOT_RUN",
+      "manifestVersion": "1.0.38+71",
+      "applicationLaunched": false,
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "The host is detected, but the current candidate was not launched against an isolated QA account and no screen-reader task was run."
+    },
+    {
+      "target": "Flutter Windows desktop",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "No Windows device or VM is connected to this task."
+    },
+    {
+      "target": "Flutter Android portrait/landscape",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "ADB device list is empty and the configured Android emulator binary/AVD is absent."
+    },
+    {
+      "target": "Flutter iOS portrait/landscape",
+      "available": false,
+      "result": "NOT_RUN",
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "No device is reported by Flutter; CoreSimulatorService could not enumerate simulators during this inventory."
+    },
+    {
+      "target": "Playwright WebKit desktop/mobile viewport automation",
+      "available": true,
+      "result": "PASS_AUTOMATED_ONLY",
+      "browserVersion": "WebKit 26.6 (Playwright v2359)",
+      "testsPassed": 7,
+      "viewports": 12,
+      "manualTaskSmoke": "NOT_RUN",
+      "limitation": "Automated WebKit engine coverage is not native Safari app or iOS Safari task acceptance."
+    }
+  ],
+  "physical_task_scripts": [
+    {
+      "scenario": "channel/DM search, message send/edit/react",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "voice join, screen setup, cancel, reconnect and stop",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "admin member/role/channel management",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "settings save and destructive-action cancel",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "system Back/swipe, keyboard overlays, SafeArea and dynamic text",
+      "result": "NOT_RUN"
+    },
+    {
+      "scenario": "TalkBack, VoiceOver, macOS VoiceOver and Windows Narrator",
+      "result": "NOT_RUN"
+    }
+  ],
+  "automated_evidence_is_not_physical_acceptance": {
+    "web_responsive_suite": "PASS_7_TESTS_12_VIEWPORTS",
+    "web_accessibility_suite": "PASS_47_CASES_PLUS_1_AXE_CASE",
+    "flutter_accessibility_suite": "PASS_197_WIDGET_TESTS",
+    "flutter_voice_stream_suite": "PASS_51_WIDGET_TESTS",
+    "details": [
+      "evidence/qa/qa301-accessibility-2026-10-10.json",
+      "evidence/qa/qa300-voice-stream-2026-10-10.json",
+      "evidence/qa/qa302-visual-e2e-2026-10-10.json"
+    ],
+    "web_cross_browser_responsive_suite": "PASS_21_CASES_CHROMIUM_WEBKIT_FIREFOX"
+  },
+  "open_release_gates": [
+    "Obtain and run a current Android physical device and iOS physical device/simulator.",
+    "Run current native Flutter task scripts on macOS and Windows; verify window resizing, keyboard/focus and native capture picker behavior.",
+    "Run mobile IME, SafeArea, Back/swipe, dynamic text and TalkBack/VoiceOver acceptance.",
+    "Record per-target OS/device, app build, reproducible steps and source-sized screenshots/video; link any user-blocking issues.",
+    "Run a non-skip-ci workflow to publish the configured browser/Flutter CI artifacts.",
+    "Run actual full-app Safari and physical/mobile browser task scripts; current WebKit/Firefox results are automated viewport smoke only."
+  ],
+  "acceptance": {
+    "platform_results_recorded_as_pass_fail_not_run": "PASS",
+    "version_and_inventory_recorded": "PASS",
+    "physical_p1_task_smoke": "NOT_RUN",
+    "screen_reader_acceptance": "NOT_RUN",
+    "all_supported_platforms_unblocked": "NOT_RUN",
+    "issue_state_at_capture": "OPEN",
+    "cross_browser_responsive_automation": "PASS_21_CASES_3_ENGINES"
+  },
+  "artifact_storage": "No physical captures/video exist. Browser viewport PNGs are local and ignored under .out/uiux-cross-browser-2026-10-10/; no GitHub Actions artifact was produced for the [skip ci] checkpoint.",
+  "scope_note": "Platform media QoE is separate from UI acceptance and remains under #173/#174; no media capacity or quality claim is made here."
+}

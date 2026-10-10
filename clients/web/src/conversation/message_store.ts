@@ -5,10 +5,11 @@ import { createTextDelivery } from './delivery_uncertainty/text_send'
 import { deleteTextMessage, editTextMessage, MessageRequestError, type MessageRequest } from './message_client'
 import type { EditResult } from './message_edit_controller'
 import { createTextHistory, type PendingSend } from './text_history'
+import { requestFailureMessage } from '../request_feedback'
 
 export const useMessageStore = defineStore('text-messages', () => {
   const pending = new Map<string, PendingSend>()
-  const { channelId, messages, messageById, nextCursor, newerCursor, loading, olderLoading, newerLoading, historyLoaded, error, olderError, newerError, open, refresh, loadOlder, loadNewer, setHistoryAnchor, refreshMessage, refreshMessages } = createTextHistory(pending)
+  const { channelId, messages, messageById, nextCursor, newerCursor, loading, olderLoading, newerLoading, historyLoaded, error, retryableError, olderError, newerError, open, refresh, loadOlder, loadNewer, setHistoryAnchor, refreshMessage, refreshMessages } = createTextHistory(pending)
   const deletedMessageIds = ref<string[]>([])
   watch(channelId, () => { deletedMessageIds.value = [] })
   const sending = ref(false)
@@ -36,7 +37,7 @@ export const useMessageStore = defineStore('text-messages', () => {
     } catch (cause) {
       const message = cause instanceof MessageRequestError && cause.status === 409
         ? 'Сообщение изменилось. Обновите версию, чтобы сохранить свой текст.'
-        : cause instanceof Error ? cause.message : 'Не удалось изменить сообщение.'
+        : requestFailureMessage(cause, 'Не удалось изменить сообщение.')
       if (channelId.value === targetChannelId) error.value = message
       return { kind: cause instanceof MessageRequestError && cause.status === 409 ? 'conflict' : 'error', message }
     }
@@ -58,10 +59,10 @@ export const useMessageStore = defineStore('text-messages', () => {
       applyDeletedHint(targetChannelId, messageId)
       return true
     } catch (cause) {
-      if (channelId.value === targetChannelId) error.value = cause instanceof Error ? cause.message : 'Не удалось удалить сообщение.'
+      if (channelId.value === targetChannelId) error.value = requestFailureMessage(cause, 'Не удалось удалить сообщение.')
       return false
     }
   }
 
-  return { applyDeletedHint, channelId, deletedMessageIds, edit, editWithResult, error, loading, olderLoading, newerLoading, historyLoaded, olderError, newerError, loadOlder, loadNewer, messages, messageById, nextCursor, newerCursor, open, refresh, refreshMessage, refreshMessages, remove, retry, send, sending, setHistoryAnchor }
+  return { applyDeletedHint, channelId, deletedMessageIds, edit, editWithResult, error, loading, olderLoading, newerLoading, historyLoaded, retryableError, olderError, newerError, loadOlder, loadNewer, messages, messageById, nextCursor, newerCursor, open, refresh, refreshMessage, refreshMessages, remove, retry, send, sending, setHistoryAnchor }
 })

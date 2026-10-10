@@ -14,7 +14,7 @@ void main() {
         insets: const EdgeInsets.only(bottom: 300),
       );
       final search = find.byKey(const ValueKey('admin-member-search'));
-      await tester.ensureVisible(search);
+      await revealAdminControl(tester, search);
       await tester.tap(search);
       await tester.pump();
       final editable = tester
@@ -27,7 +27,7 @@ void main() {
         greaterThanOrEqualTo(editable.preferredLineHeight),
       );
       final save = find.byKey(const ValueKey('save-account:account-a'));
-      await tester.ensureVisible(save);
+      await revealAdminControl(tester, save);
       await tester.pump();
       expect(tester.getSize(save).height, greaterThanOrEqualTo(44));
       expect(tester.getRect(save).bottom, lessThanOrEqualTo(844 - 300));

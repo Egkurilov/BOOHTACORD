@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { listAuditEvents, type AuditEvent } from '../../identity/admin_directory_client'
+import { requestFailureMessage } from '../../request_feedback'
 import AdminAuditFilters from './AdminAuditFilters.vue'
 import { presentAuditEvent } from './audit_event_display'
 import { appendAuditPage, filterAuditEvents, groupAuditDays, type AuditFilters } from './audit_filter'
@@ -24,7 +25,7 @@ async function load(before?: string): Promise<void> {
     const page = await listAuditEvents(before)
     events.value = before ? appendAuditPage(events.value, page.events) : page.events
     cursor.value = page.next_cursor
-  } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить аудит.' }
+  } catch (cause) { error.value = requestFailureMessage(cause, 'Не удалось загрузить аудит.') }
   finally { loading.value = false }
 }
 onMounted(() => { void load() })
@@ -35,6 +36,7 @@ onMounted(() => { void load() })
     <header class="admin-section-heading"><div><h2 id="admin-audit-title">Аудит</h2><p>События управления без содержимого сообщений</p></div>
       <button type="button" :disabled="loading" @click="load()">Обновить</button></header>
     <AdminAuditFilters v-model:filters="filters" :events="events" />
+    <p class="admin-audit-results" role="status" aria-live="polite">Показано: {{ filtered.length }} из {{ events.length }} загруженных</p>
     <p class="admin-audit-scope">Фильтры применяются к {{ events.length }} загруженным записям. Для более ранних событий загрузите следующую страницу.</p>
     <p v-if="loading && !events.length" class="state" aria-live="polite">Загружаем аудит…</p>
     <p v-else-if="!loading && !events.length && !error" class="state">Записей пока нет.</p>

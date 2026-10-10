@@ -39,3 +39,25 @@ class SafetyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 remove_owned('qa-owned', 'owner')
             run.assert_not_called()
+
+    def test_cleanup_removes_only_a_labelled_owned_image(self):
+        with patch('tools.qa.client_lifecycle.services.output', return_value='owner'), \
+                patch('tools.qa.client_lifecycle.services.run') as run:
+            remove_owned('qa-api', 'owner', 'image')
+            self.assertEqual(run.call_args.args, ('docker', 'image', 'rm', 'qa-api'))
+
+    def test_cleanup_removes_only_a_labelled_owned_volume(self):
+        with patch('tools.qa.client_lifecycle.services.output', return_value='owner') as output, \
+                patch('tools.qa.client_lifecycle.services.run') as run:
+            remove_owned('qa-data', 'owner', 'volume')
+            self.assertEqual(output.call_args.args, (
+                'docker', 'volume', 'inspect', 'qa-data',
+                '--format', '{{index .Labels "boohtacord.qa.owner"}}'))
+            self.assertEqual(run.call_args.args, ('docker', 'volume', 'rm', 'qa-data'))
+
+    def test_cleanup_rejects_a_foreign_volume(self):
+        with patch('tools.qa.client_lifecycle.services.output', return_value='foreign'), \
+                patch('tools.qa.client_lifecycle.services.run') as run:
+            with self.assertRaises(ValueError):
+                remove_owned('qa-data', 'owner', 'volume')
+            run.assert_not_called()

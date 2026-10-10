@@ -98,7 +98,7 @@ async function post(path: string, input: CreateCategoryInput | CreateChannelInpu
 }
 
 export async function createCategory(input: CreateCategoryInput, request: AdminTopologyRequest = tracedFetch): Promise<CreatedCategory> {
-  if (!input.name.trim() || !validCodePointLength(input.name, 1, 80)) throw new Error('Введите имя категории до 80 символов.')
+  if (!input.name.trim() || !validCodePointLength(input.name, 1, 80)) throw new Error('Введите название раздела до 80 символов.')
   return parseCreatedCategory(await post('/admin/categories', input, request))
 }
 
@@ -108,7 +108,7 @@ export async function createChannel(categoryId: string, input: CreateChannelInpu
 }
 
 export async function deleteEmptyCategory(categoryId: string, expectedRevision: number, request: AdminTopologyRequest = tracedFetch): Promise<DeletedCategory> {
-  if (!categoryId || !Number.isInteger(expectedRevision) || expectedRevision < 1) throw new Error('Некорректные параметры удаления категории.')
+  if (!categoryId || !Number.isInteger(expectedRevision) || expectedRevision < 1) throw new Error('Некорректные параметры удаления раздела.')
   const response = await request(`${apiBaseUrl}/admin/categories/${encodeURIComponent(categoryId)}?expected_revision=${expectedRevision}`, { method: 'DELETE', credentials: 'same-origin', headers: { accept: 'application/json' } })
   if (!response.ok) throw new Error(await errorMessage(response))
   const result = asRecord(await response.json())

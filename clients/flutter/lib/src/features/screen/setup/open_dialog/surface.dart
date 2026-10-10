@@ -9,7 +9,16 @@ class SetupSurface extends StatelessWidget {
   final List<Widget> children;
   @override
   Widget build(BuildContext context) {
-    final height = math.min(760.0, MediaQuery.sizeOf(context).height * .9);
+    final media = MediaQuery.of(context);
+    final preferredHeight = math.min(760.0, media.size.height * .9);
+    final keyboardSafeHeight =
+        media.size.height -
+        media.viewInsets.vertical -
+        media.padding.vertical -
+        40;
+    final height = math
+        .min(preferredHeight, math.max(0.0, keyboardSafeHeight))
+        .toDouble();
     return Dialog(
       insetPadding: const EdgeInsets.all(20),
       backgroundColor: Colors.transparent,

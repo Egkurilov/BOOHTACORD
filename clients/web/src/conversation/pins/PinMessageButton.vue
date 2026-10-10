@@ -14,4 +14,4 @@ async function pin():Promise<void>{
 }
 </script>
 <template><span><button type="button" :disabled="busy" @click="pin">Закрепить сообщение</button><small v-if="notice" role="status">{{notice}}</small><small v-if="error" role="alert">{{error}}</small></span></template>
-<style scoped>button{min-height:28px;border:1px solid var(--gc-border);border-radius:14px;background:transparent;color:inherit;padding:3px 8px}small{display:block}</style>
+<style scoped>button{min-height:28px;border:1px solid var(--gc-border);border-radius:14px;background:transparent;color:inherit;padding:3px 8px}small{display:block}@media (max-width:600px),(hover:none),(pointer:coarse){button{min-width:44px;min-height:44px}}</style>

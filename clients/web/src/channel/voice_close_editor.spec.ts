@@ -33,11 +33,44 @@ describe('VOICE close admission editor', () => {
     const confirm = vi.fn().mockReturnValue(false)
     const editor = createVoiceCloseEditor(() => ({ categories, revision: 7, selectedChannelId: 'voice-1' }), vi.fn(), confirm, request)
     await expect(editor.close()).resolves.toBe(false)
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('отзыв media-доступа'))
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('отзыв media-доступа'), expect.any(Function))
     expect(request).not.toHaveBeenCalled()
     const closed = [{ ...categories[0]!, channels: [{ ...voice, admissionClosed: true }] }]
     const closedEditor = createVoiceCloseEditor(() => ({ categories: closed, revision: 8, selectedChannelId: 'voice-1' }), vi.fn(), () => true, request)
     await expect(closedEditor.close()).resolves.toBe(false)
+  })
+
+  it('does not close admission when account or confirmed target changes during the prompt', async () => {
+    let accountId = 'account-1'
+    let revision = 7
+    let currentCategories = categories
+    const request = vi.fn()
+    const editor = createVoiceCloseEditor(
+      () => ({ accountId, categories: currentCategories, revision, selectedChannelId: 'voice-1' }),
+      vi.fn(), async (_message, stillCurrent) => {
+        accountId = 'account-2'
+        expect(stillCurrent()).toBe(false)
+        return true
+      }, request,
+    )
+
+    await expect(editor.close()).resolves.toBe(false)
+    expect(request).not.toHaveBeenCalled()
+
+    accountId = 'account-1'
+    revision = 7
+    currentCategories = categories
+    const staleTarget = createVoiceCloseEditor(
+      () => ({ accountId, categories: currentCategories, revision, selectedChannelId: 'voice-1' }),
+      vi.fn(), async (_message, stillCurrent) => {
+        revision = 8
+        currentCategories = [{ ...categories[0]!, channels: [] }]
+        expect(stillCurrent()).toBe(false)
+        return true
+      }, request,
+    )
+    await expect(staleTarget.close()).resolves.toBe(false)
+    expect(request).not.toHaveBeenCalled()
   })
 
   it('keeps SFU pending after success even with zero logical leases, then finalizes only when server topology omits the channel', async () => {

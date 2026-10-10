@@ -15,7 +15,7 @@ const permissionGroups = [
   ),
   (
     label: 'Разделы',
-    hint: 'Создание и удаление только пустых категорий.',
+    hint: 'Создание и удаление только пустых разделов.',
     create: GuildPermission.categoryCreate,
     delete: GuildPermission.categoryDelete,
   ),

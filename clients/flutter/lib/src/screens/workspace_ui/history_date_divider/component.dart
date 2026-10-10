@@ -10,11 +10,17 @@ class WorkspaceHistoryDateDivider extends StatelessWidget {
     child: Row(
       children: [
         const Expanded(child: Divider(height: 1, color: GcColors.border)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            label,
-            style: const TextStyle(color: GcColors.muted, fontSize: 12),
+        Flexible(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: GcColors.muted, fontSize: 12),
+            ),
           ),
         ),
         const Expanded(child: Divider(height: 1, color: GcColors.border)),

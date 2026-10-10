@@ -11,7 +11,7 @@ describe('voice room header actions', () => {
     expect(pane).toContain("emit('openSearch')")
     expect(pane).toContain('<ConversationOverflowMenu')
     expect(main).toContain('@open-search="emit(\'openSearch\')"')
-    expect(app).toContain('@open-search="togglePanel(\'search\')"')
+    expect(app).toContain('@open-search="requestPanel(\'search\')"')
   })
 
   it('labels the voice menu and uses a participant icon for the member toggle', () => {

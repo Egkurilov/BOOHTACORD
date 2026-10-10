@@ -20,10 +20,10 @@ class AdminMemberRoleFilter extends StatelessWidget {
             : double.infinity,
       ),
       child: SizedBox(
-        width: largeText
+        width: compact
             ? double.infinity
-            : compact
-            ? 81
+            : largeText
+            ? double.infinity
             : 121,
         child: Semantics(
           label: 'Фильтр по роли',
@@ -31,7 +31,8 @@ class AdminMemberRoleFilter extends StatelessWidget {
             key: const ValueKey('admin-member-role-filter'),
             initialValue: role,
             isExpanded: true,
-            style: const TextStyle(fontSize: 14),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(fontSize: 14),
             selectedItemBuilder: (_) => compact && !largeText
                 ? const [
                     FittedBox(

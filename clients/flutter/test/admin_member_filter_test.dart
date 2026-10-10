@@ -1,4 +1,5 @@
 import 'package:boohtacord_desktop/src/app_state.dart';
+import 'package:boohtacord_desktop/src/features/admin/audit/filter.dart';
 import 'package:boohtacord_desktop/src/models.dart';
 import 'package:boohtacord_desktop/src/screens/admin_member_filter.dart';
 import 'package:boohtacord_desktop/src/screens/admin_screen.dart';
@@ -8,15 +9,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'admin_topology_fake_api.dart';
 
-AdminAccount account(String id, String name, String login, String role) =>
-    AdminAccount(
-      accountId: id,
-      login: login,
-      displayName: name,
-      role: role,
-      blocked: false,
-      createdAt: DateTime.utc(2026, 10, 1),
-    );
+AdminAccount account(
+  String id,
+  String name,
+  String login,
+  String role, {
+  bool blocked = false,
+}) => AdminAccount(
+  accountId: id,
+  login: login,
+  displayName: name,
+  role: role,
+  blocked: blocked,
+  createdAt: DateTime.utc(2026, 10, 1),
+);
 
 class _ConflictMemberApi extends ApiClient {
   int loads = 0;
@@ -73,6 +79,22 @@ void main() {
       filterAdminMembers(accounts, search: 'bob', role: 'ADMINISTRATOR'),
       isEmpty,
     );
+    final blockedAccount = account(
+      'c',
+      'Вера',
+      'vera',
+      'MEMBER',
+      blocked: true,
+    );
+    expect(
+      filterAdminMembers(
+        [accounts.last, blockedAccount],
+        search: '',
+        role: 'ALL',
+        status: 'BLOCKED',
+      ),
+      [blockedAccount],
+    );
   });
 
   testWidgets('member directory keeps count and filters visible cards', (
@@ -96,8 +118,8 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('admin-member-role-filter')))
           .width,
-      81,
-      reason: 'the web compact layout reserves 81 px for the role filter',
+      greaterThan(120),
+      reason: 'compact member filters share the available width',
     );
     expect(
       tester
@@ -238,6 +260,115 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'member filters count results, filter status and reset at 320 px',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 640);
+      addTearDown(tester.view.reset);
+      final api = TopologyTestApi()..accounts = accounts;
+      final state = AppState(api)..topology = api.current;
+      addTearDown(state.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: AdminScreen(state: state)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Показано: 2 из 2 загруженных'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const ValueKey('admin-member-search')),
+        'без совпадений',
+      );
+      await tester.pump();
+      expect(find.text('Показано: 0 из 2 загруженных'), findsOneWidget);
+      expect(find.text('По текущим фильтрам участников нет.'), findsOneWidget);
+      expect(find.text('Сбросить фильтры'), findsOneWidget);
+      await tester.tap(find.text('Сбросить фильтры'));
+      await tester.pumpAndSettle();
+      expect(find.text('Показано: 2 из 2 загруженных'), findsOneWidget);
+      expect(find.text('Алиса'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey('admin-member-status-filter')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Заблокирован').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Показано: 0 из 2 загруженных'), findsOneWidget);
+      expect(find.text('По текущим фильтрам участников нет.'), findsOneWidget);
+      await tester.tap(find.text('Сбросить фильтры'));
+      await tester.pumpAndSettle();
+      expect(find.text('Показано: 2 из 2 загруженных'), findsOneWidget);
+      expect(
+        tester
+            .widget<DropdownButtonFormField<String>>(
+              find.byKey(const ValueKey('admin-member-status-filter')),
+            )
+            .initialValue,
+        'ALL',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('member and audit filters survive section changes', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    final api = TopologyTestApi()..accounts = accounts;
+    final state = AppState(api)..topology = api.current;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: AdminScreen(state: state)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('admin-member-search')),
+      'ALICE',
+    );
+    await tester.pumpAndSettle();
+
+    final auditTab = find.byKey(const ValueKey('admin-section-tab-audit'));
+    await tester.ensureVisible(auditTab);
+    await tester.tap(auditTab);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('admin-audit-scope-filter')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Голос').last);
+    await tester.pumpAndSettle();
+
+    final membersTab = find.byKey(const ValueKey('admin-section-tab-members'));
+    await tester.ensureVisible(membersTab);
+    await tester.tap(membersTab);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('admin-member-search')))
+          .controller!
+          .text,
+      'ALICE',
+    );
+
+    await tester.ensureVisible(auditTab);
+    await tester.tap(auditTab);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<DropdownButtonFormField<AdminAuditScope>>(
+            find.byKey(const ValueKey('admin-audit-scope-filter')),
+          )
+          .initialValue,
+      AdminAuditScope.voice,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('member conflict keeps draft and exposes comparison actions', (
     tester,
   ) async {
@@ -302,16 +433,44 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(
-          'Очень длинное отображаемое имя администратора с редкими символами — 0123456789',
-        ),
-        findsOneWidget,
+      final memberName = find.text(
+        'Очень длинное отображаемое имя администратора с редкими символами — 0123456789',
       );
+      await tester.scrollUntilVisible(
+        memberName,
+        250,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(memberName, findsOneWidget);
       expect(
         find.textContaining('@login_with_an_extremely_long_identifier'),
         findsOneWidget,
       );
+      expect(find.text('Роль'), findsOneWidget);
+      final roleLabelRect = tester.getRect(find.text('Роль'));
+      final roleField = find.byWidgetPredicate(
+        (widget) =>
+            widget is DropdownButtonFormField<String> &&
+            widget.key is ValueKey<String> &&
+            (widget.key! as ValueKey<String>).value.startsWith('role:long:'),
+      );
+      final roleFieldRect = tester.getRect(roleField);
+      expect(
+        roleLabelRect.bottom,
+        lessThanOrEqualTo(roleFieldRect.top),
+        reason: 'the 2× role label stays outside the outlined control',
+      );
+      expect(
+        tester.getSemantics(roleField).getSemanticsData().label,
+        contains('Роль'),
+        reason: 'the dropdown keeps its accessible role label',
+      );
+      expect(find.textContaining('Роль: login_with_'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );

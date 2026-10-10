@@ -30,7 +30,7 @@ export function createMicrophoneControls(
 
   async function toggleMicrophone(): Promise<void> {
     if (['JOINING', 'RECONNECTING', 'LEAVING'].includes(state.value)) return
-    await setMicrophoneMuted(!microphoneMuted.value)
+    await setMicrophoneMuted(microphonePermissionDenied.value ? false : !microphoneMuted.value)
   }
 
   return { setMicrophoneMuted, toggleMicrophone }

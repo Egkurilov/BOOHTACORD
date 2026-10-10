@@ -20,8 +20,12 @@ export async function registration(browser, input, report) {
     await expect(page.getByRole('button', { name: 'Скрыть пароль', exact: true })).toHaveAttribute('aria-pressed', 'true')
     await page.getByRole('button', { name: 'Скрыть пароль', exact: true }).click()
     await page.route('**/api/v1/auth/login', route => route.abort('internetdisconnected'))
+    const registrationResponse = page.waitForResponse(response =>
+      response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/v1/auth/register',
+      { timeout: 15000 })
     await page.locator('.authentication-submit').click()
-    await expect(page.locator('.authentication-hint[role="status"]')).toContainText('Аккаунт создан')
+    assert.equal((await registrationResponse).status(), 201)
+    await expect(page.locator('.authentication-hint[role="status"]')).toContainText('Аккаунт создан', { timeout: 15000 })
     await expect(page.locator('.authentication-submit')).toHaveText('Войти')
     await expect(page.getByLabel('Пароль', { exact: true })).toHaveValue(password)
     await page.screenshot({ path: input.directory+'/registration-login-failed.png' })

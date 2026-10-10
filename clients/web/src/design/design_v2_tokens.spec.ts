@@ -65,17 +65,18 @@ describe('BOOHTACORD Design V2 shared tokens', () => {
       'space-10': '40px', 'space-12': '48px', 'space-16': '64px',
       'radius-xs': '4px', 'radius-sm': '6px', 'radius-md': '8px',
       'radius-lg': '12px', 'radius-shell': '16px', 'radius-full': '999px',
-      'text-caption': '12px', 'line-caption': '16px',
-      'text-body': '14px', 'line-body': '20px',
-      'text-message': '15px', 'line-message': '22px',
-      'text-title': '16px', 'line-title': '24px',
-      'text-section': '20px', 'line-section': '28px',
-      'text-page': '24px', 'line-page': '32px',
+      'text-caption': '0.75rem', 'line-caption': '1rem',
+      'text-body': '0.875rem', 'line-body': '1.25rem',
+      'text-message': '0.9375rem', 'line-message': '1.375rem',
+      'text-title': '1rem', 'line-title': '1.5rem',
+      'text-section': '1.25rem', 'line-section': '1.75rem',
+      'text-page': '1.5rem', 'line-page': '2rem',
       'weight-regular': '400', 'weight-medium': '500',
       'weight-semibold': '600', 'weight-bold': '700',
       'duration-fast': '120ms', 'duration-base': '180ms',
     }
     for (const [name, value] of Object.entries(expected)) expect(cssValue(name), name).toBe(value)
     expect(cssValue('font-family')).toContain('Inter')
+    expect(tokens).toContain('/* Typography uses rem so browser text scaling reflows the interface. */')
   })
 })

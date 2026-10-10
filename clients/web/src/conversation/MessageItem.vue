@@ -39,7 +39,7 @@ const unmatchedMentionIds = computed(() => decorateMessageMentions(props.message
 const compact = computed(() => Boolean(props.grouped && !editing.value))
 const avatarFailed = ref(false)
 const editInput = ref<HTMLTextAreaElement | null>(null)
-const { actionsOpen, actionsToggle, row, closeActions, onRowPointerDown, onRowFocusOut } = useMessageActionDisclosure()
+const { actionsOpen, actionsToggle, row, closeActions, onRowPointerDown, onRowPointerMove, onRowPointerEnd, onRowFocusOut } = useMessageActionDisclosure()
 watch(() => props.message.authorId, (id) => { void authors.ensure(id) }, { immediate: true })
 watch(() => props.message.mentionUserIds, (ids) => { for (const id of ids ?? []) void authors.ensure(id) }, { immediate: true })
 watch(authorAvatar, () => { avatarFailed.value = false })
@@ -56,16 +56,23 @@ function onEditKeydown(event: KeyboardEvent): void {
   }, () => { void editor.submit() })
 }
 
-function reply(): void { actionsOpen.value = false; emit('reply') }
+function closeActionsAndRestoreFocus(): void {
+  actionsOpen.value = false
+  void nextTick(() => {
+    if (actionsToggle.value?.isConnected) actionsToggle.value.focus()
+    else row.value?.focus()
+  })
+}
+function reply(): void { closeActionsAndRestoreFocus(); emit('reply') }
 function remove(): void {
-  if (window.confirm('Удалить это сообщение?')) { actionsOpen.value = false; emit('remove') }
+  if (window.confirm('Удалить это сообщение?')) { closeActionsAndRestoreFocus(); emit('remove') }
 }
 
 </script>
 
 <template>
   <SystemWelcomeMessage v-if="message.kind === 'SYSTEM_WELCOME'" :body="message.body" :author-id="message.authorId" :created-at="message.createdAt" :deleted="message.deleted" :can-delete="canDelete" @remove="emit('remove')" />
-  <article v-else ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown" @focusout="onRowFocusOut">
+  <article v-else ref="row" class="message-item message-row" :class="{ deleted: message.deleted, grouped: compact }" tabindex="-1" @pointerdown="onRowPointerDown" @pointermove="onRowPointerMove" @pointerup="onRowPointerEnd" @pointercancel="onRowPointerEnd" @focusout="onRowFocusOut">
     <span v-if="compact" class="message-avatar-spacer" aria-hidden="true"></span>
     <img v-else-if="authorAvatar && !avatarFailed" class="message-avatar" :src="authorAvatar" alt="" @error="avatarFailed = true">
     <span v-else class="message-avatar" :style="avatarFallbackStyle(message.authorId)" aria-hidden="true">{{ avatarInitials(authorName) }}</span>

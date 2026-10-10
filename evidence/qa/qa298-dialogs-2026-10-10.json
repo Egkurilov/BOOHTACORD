@@ -1,0 +1,163 @@
+{
+  "id": "QA-298-DIALOGS",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #298 — dialogs, bottom sheets and dangerous actions",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/298",
+  "source_revision": "a89ef57d",
+  "working_tree_changes": true,
+  "status": "PARTIAL",
+  "checks": [
+    {
+      "name": "Web dialog, safety, accessibility and viewport browser suite",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' ./node_modules/.bin/playwright test -c tests/accessibility/playwright.config.ts tests/accessibility/admin_confirmation.browser.spec.ts",
+      "result": "PASS",
+      "passed": 12,
+      "observations": [
+        "Axe confirms no critical dialog accessibility violations; safe Cancel is focused first, Escape cancels, focus wraps and returns to the trigger.",
+        "Create category/channel forms pass duplicate-submit checks and preserve their draft and announced response across 403, 409 and 503 before a successful retry.",
+        "A stale topology target, removed voice target or changed account closes confirmation without sending a mutation.",
+        "Screen-share controls remain reachable at 393x852, 320x640, 844x390 landscape and 390x844 with 2x root text."
+      ]
+    },
+    {
+      "name": "Flutter confirmation, target validation, screen setup and visual capture widgets",
+      "command": "cd clients/flutter && flutter test --no-pub test/confirmation_dialog_test.dart test/topology_confirmed_target_test.dart test/screen_setup/dialog_test.dart test/uiux_2026/dialog_visual_capture_test.dart",
+      "result": "PASS",
+      "passed": 31,
+      "observations": [
+        "Cancel-first Enter, modal barrier, closed traversal, Escape/Back, trigger focus restoration, account scope and destructive target/revision rules pass.",
+        "Create retains its draft across 403/409/503, ignores a duplicate while pending and closes on successful retry.",
+        "The simulated mobile IME matrix covers compact, medium and expanded viewports with 1x/2x text; landscape and screen-reader labels are also asserted.",
+        "The visual capture test passed with BOOHTACORD_VISUAL_CAPTURE_DIR set and produced three current widget screenshots."
+      ]
+    },
+    {
+      "name": "Changed Flutter test analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub test/confirmation_dialog_test.dart test/uiux_2026/dialog_visual_capture_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Cross-browser destructive-confirm dialog focus and keyboard traversal",
+      "command": "Playwright accessibility suite with Chromium 154, WebKit 26.6 and Firefox 155",
+      "result": "PASS_AUTOMATED_ONLY",
+      "passed_per_engine": 47,
+      "observations": [
+        "WebKit exposed that pointer activation may leave document.activeElement on body; confirmation now remembers the recently clicked opener and restores it with preventScroll.",
+        "Modal Tab handling now advances through every focusable control itself, so browser-level button tab-order preferences cannot skip the destructive action.",
+        "The safe Cancel action receives initial focus, Escape cancels and both Enter-cancel and Escape return focus to the initiating control.",
+        "The explicit Tab cycle preserves native radio-group semantics: Tab leaves the selected radio for the next control, while Shift+Tab returns to the selected option; visible summary controls are included."
+      ],
+      "limitations": [
+        "No physical touch, VoiceOver, TalkBack, NVDA or Narrator acceptance was run."
+      ]
+    }
+  ],
+  "source_archive": {
+    "path": "artifacts/ui-ux-screenshots.zip",
+    "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
+  },
+  "visual_comparisons": [
+    {
+      "flow": "Create category",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/desktop-modal-create-section.png",
+        "sha256": "873e111eac75fab8f2944f188d58b4f82a9703986df25fbf870e6a45e68af7de",
+        "raster": "2880x1800"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/dialogs/web-topology-create-section-after.png",
+        "sha256": "65108d83885a27eb086dd014a6d47ee414685b72a343be4339bdc4f8b52942cc",
+        "raster": "2880x1800"
+      },
+      "dimensions_match": true
+    },
+    {
+      "flow": "Create channel",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/desktop-modal-create-channel.png",
+        "sha256": "4c292ffa999683cff706542a84552135f7ba86c1eb1e920151ea549ceae70b08",
+        "raster": "2880x1800"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/dialogs/web-topology-create-channel-after.png",
+        "sha256": "215c98db1cf5af704017ff71fcd923e8f91bfc334cd034e0d65ee6b7baa20961",
+        "raster": "2880x1800"
+      },
+      "dimensions_match": true
+    },
+    {
+      "flow": "Destructive channel confirmation",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/desktop-modal-close-channel-confirmation.png",
+        "sha256": "835bb2f7d0a5072312f1ef484eb92bed9115f44460a7439960fa8c13d2775ba0",
+        "raster": "2880x1800"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/dialogs/web-topology-destructive-confirmation-after.png",
+        "sha256": "41459c0a3279117deb5e476bbb105dca7d03dba67ff961004dde88c917d0872c",
+        "raster": "2880x1800"
+      },
+      "dimensions_match": true,
+      "observation": "Source title and description touched the modal edge. The current component has 24 px token padding, retains the explicit object/consequence copy and aligns actions to the bottom."
+    },
+    {
+      "flow": "Mobile screen-share actions",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-stream-launch-actions.png",
+        "sha256": "7a3857ea747927f5b42e35f801c8f9bc52be07628383ba69adbbd341780ecdac",
+        "raster": "786x1704"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/dialogs/web-screen-share-setup-open-after.png",
+        "sha256": "7978e064f0d8941194c853feacf5e57d44926e4b2167995aa1309fc9c83aa79c",
+        "raster": "786x1704"
+      },
+      "dimensions_match": true
+    },
+    {
+      "flow": "Mobile screen-share settings and actions",
+      "source": {
+        "path": ".out/uiux-source/ui-ux-screenshots/mobile-stream-launch-settings.png",
+        "sha256": "b9328b7f785a0f290f5e90d1c5d2dbe589b53ec88574ea0cfa2aff0c810a336b",
+        "raster": "786x1704"
+      },
+      "after": {
+        "path": ".out/uiux-2026-epic-289/dialogs/web-screen-share-setup-actions-after.png",
+        "sha256": "82ec947bb6e7a278512d08db4692af7026583c56d33a93ae38eaa637771db7a6",
+        "raster": "786x1704"
+      },
+      "dimensions_match": true
+    }
+  ],
+  "supplementary_flutter_captures": [
+    {
+      "path": ".out/uiux-2026-epic-289/dialogs/flutter-topology-create-desktop-1440x900@2x.png",
+      "sha256": "a9a0af93b6d5ab38695245ef6adca015df3273611c30505d842d252193ffe2f3",
+      "raster": "2880x1800"
+    },
+    {
+      "path": ".out/uiux-2026-epic-289/dialogs/flutter-topology-destructive-desktop-1440x900@2x.png",
+      "sha256": "8c65e442e3c9e9dcd89520826e01013f89db6a2dfc310e2e0b8e57b3fea077b4",
+      "raster": "2880x1800"
+    },
+    {
+      "path": ".out/uiux-2026-epic-289/dialogs/flutter-screen-share-mobile-ime-2x-393x852.png",
+      "sha256": "6ec06c3fe0c77f2c21c3c3183661abbcc0fa59bfaa8dcfcdd3af36925f4edbbf",
+      "raster": "786x1704",
+      "observation": "Flutter widget at 2x text scale with a simulated 280 px IME inset; this is not a physical OS keyboard capture."
+    }
+  ],
+  "capture_limitations": [
+    "Web screenshots are production component mounts in an isolated Playwright page, not the full authenticated app shell; the archive references show the app background.",
+    "Flutter screenshots are production-widget captures from flutter_test.",
+    "Physical iPhone/Android keyboard, safe-area and landscape tests, and VoiceOver/TalkBack walkthroughs are NOT_RUN. An emulator/widget scenario is not physical-device acceptance."
+  ],
+  "acceptance": {
+    "automated_web": "PASS",
+    "automated_flutter": "PASS",
+    "source_sized_visual_pairs": "PASS_WITH_COMPONENT_HARNESS_LIMITATION",
+    "physical_device_and_assistive_technology": "NOT_RUN",
+    "issue_state": "OPEN"
+  }
+}

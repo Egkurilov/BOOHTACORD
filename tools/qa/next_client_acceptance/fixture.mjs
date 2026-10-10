@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { api, status } from '../client_lifecycle/request.mjs'
-export { api, status, expect, login, chromium } from '../client_lifecycle/request.mjs'
+import { expect, login, chromium } from '../client_lifecycle/request.mjs'
+export { api, status, expect, login, chromium }
 export function owned(role, ...command) {
   const owner = process.env.QA_DB_OWNER
   assert.match(owner, /^qa-client-[a-f0-9]{16}$/)
@@ -36,7 +37,10 @@ export async function setup(page, password) {
 }
 export async function select(page, name) {
   await page.getByRole('button', { name: 'Каналы', exact: true }).click()
-  await page.locator('.channel-button').filter({ hasText: name }).click()
+  const target = page.locator('.channel-button').filter({ hasText: name })
+  await expect(target).toBeVisible()
+  await target.click()
+  await expect(target).toHaveAttribute('aria-current', 'page')
 }
 export function seed(fixture, kind, count=121) {
   const ids = Array.from({ length: count }, () => randomUUID())

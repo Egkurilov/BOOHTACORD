@@ -12,7 +12,7 @@ extension AdminScreenStateAdminCreateChannelBindingAction
     final categoryId =
         adminCategoryId ?? widget.state.topology?.categories.firstOrNull?.id;
     if (categoryId == null) {
-      adminTopologyMutations.reportError('Сначала создайте категорию.');
+      adminTopologyMutations.reportError('Сначала создайте раздел.');
       return;
     }
     final revision = widget.state.topology?.revision;

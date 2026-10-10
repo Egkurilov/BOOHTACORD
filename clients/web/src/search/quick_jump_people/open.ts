@@ -1,5 +1,5 @@
 import type { TopologyChannel } from '../../channel/topology_client'
-import { openDirectMessage } from '../../direct_message/direct_message_candidate_client'
+import { DirectMessageCandidateRequestError, openDirectMessage } from '../../direct_message/direct_message_candidate_client'
 import type { QuickJumpTarget } from '../quick_jump'
 
 interface Ports {
@@ -38,7 +38,15 @@ export function createQuickJumpOpen(ports: Ports, openMember = openDirectMessage
           }
           ports.dialog(id)
         }
-      } catch { if (valid()) ports.error('Не удалось открыть участника. Обновите список и повторите попытку.') }
+      } catch (cause) {
+        if (!valid()) return
+        if (cause instanceof DirectMessageCandidateRequestError &&
+          (cause.status === 403 || cause.status === 404)) {
+          ports.error('Личный диалог больше недоступен.')
+        } else {
+          ports.error('Не удалось открыть участника. Обновите список и повторите попытку.')
+        }
+      }
       finally { busy = false }
     },
     dispose() { disposed = true; sequence++ },

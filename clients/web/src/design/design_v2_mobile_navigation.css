@@ -5,21 +5,21 @@
   .sidebar.is-open > .nav-drawer { box-sizing: border-box; border-right: 0; padding-top: 76px; padding-bottom: 176px; }
   .sidebar.is-open > .guild-header { z-index: calc(var(--gc-z-drawer) + 1); padding-left: 12px; }
   .sidebar.is-open .guild-chevron { display: none; }
-  .sidebar.is-open .mobile-nav-close { position: fixed; top: 10px; left: min(260px, calc(100vw - 100px)); z-index: calc(var(--gc-z-drawer) + 2); display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 8px; color: #aab2c4; background: transparent; font-size: 24px; font-weight: 300; cursor: pointer; }
+  .sidebar.is-open .mobile-nav-close { position: fixed; top: 10px; left: min(260px, calc(100vw - 100px)); z-index: calc(var(--gc-z-drawer) + 2); display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 8px; color: #aab2c4; background: transparent; font-size: 1.5rem; font-weight: 300; cursor: pointer; }
   .sidebar.is-open .mobile-nav-close:hover { background: #242833; }
   .sidebar.is-open .mobile-nav-close svg { width: 20px; height: 20px; stroke-width: 1.8; }
   .sidebar.is-open .sidebar-tabs { border-bottom-color: transparent; }
-  .sidebar.is-open .sidebar-tabs { box-sizing: border-box; width: calc(100% - 24px); height: 40px; margin: 0 12px 8px; border: 0; border-radius: 8px; padding: 4px; background: #0b0d12; }
-  .sidebar.is-open .sidebar-tabs button { height: 32px; min-height: 32px; border-radius: 6px; padding: 0 6px; font-size: 14px; font-weight: 500; }
-  .sidebar.is-open .sidebar-tabs button.is-selected { background: #222631; }
+  .sidebar.is-open .sidebar-tabs { box-sizing: border-box; width: calc(100% - 24px); height: 40px; margin: 0 12px 8px; border: 0; border-radius: 8px; padding: 4px; background: var(--gc-canvas); }
+  .sidebar.is-open .sidebar-tabs button { height: 32px; min-height: 32px; border-radius: 6px; padding: 0 6px; font-size: 0.875rem; font-weight: 500; }
+  .sidebar.is-open .sidebar-tabs button.is-selected { background: var(--gc-surface-raised); }
   .sidebar.is-open .channel-navigation-actions button,
-  .sidebar.is-open .channel-category-actions button { width: 44px; height: 44px; margin: -6px -12px; font-size: 22px; font-weight: 300; }
+  .sidebar.is-open .channel-category-actions button { width: 44px; height: 44px; margin: -6px -12px; font-size: 1.375rem; font-weight: 300; }
   .sidebar.is-open .channel-category:first-of-type h2 { padding-top: 23px; }
   .sidebar.is-open .channel-button { height: 44px; gap: 10px; padding-inline: 8px; }
   .sidebar.is-open .channel-category-disclosure { padding-left: 8px; }
   .sidebar.is-open .channel-category h2 { padding-bottom: var(--gc-space-2); }
   .sidebar.is-open .guild-search-button kbd { display: none; }
-  .sidebar.is-open .guild-search-button { padding: 0 10px; border: 0; color: #a0a9be; background: #0b0d12; font-weight: 400; }
+  .sidebar.is-open .guild-search-button { padding: 0 10px; border: 0; color: var(--gc-text-muted); background: var(--gc-canvas); font-weight: 400; }
   .sidebar.is-open .channel-button.selected { font-weight: 400; }
   .sidebar.is-open .channel-button.voice-connected:not(.selected) { color: var(--gc-text-secondary); }
   .sidebar.is-open .channel-button.voice-connected::before { display: none; }
@@ -28,8 +28,8 @@
   .sidebar.is-open .channel-actions-button:focus-visible { opacity: 1; }
   .sidebar.is-open .voice-member-list { margin-top: 5px; padding-left: 36px; gap: 0; }
   .sidebar.is-open .voice-member-row { min-height: 36px; }
-  .sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 9px; }
-  .sidebar.is-open .voice-member-share { width: auto; min-width: 36px; height: 16px; border-radius: 4px; padding: 0 4px; color: #f6c8eb; background: #4b2042; font-size: 10px; }
+  .sidebar.is-open .voice-member-avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: 0.5625rem; }
+  .sidebar.is-open .voice-member-share { width: auto; min-width: 36px; height: 16px; border-radius: 4px; padding: 0 4px; color: #f6c8eb; background: #4b2042; font-size: 0.625rem; }
   .sidebar.is-open .voice-member-share svg { display: none; }
   .sidebar.is-open .voice-member-share::after { content: 'ЭФИР'; }
   .sidebar.is-open .voice-member-row:has(.voice-member-share) .voice-person-state { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -44,10 +44,10 @@
   .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button svg { position: relative; }
   .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button--danger { color: #fff; }
   .sidebar.is-open .mobile-voice-dock .voice-actions .voice-icon-button--danger::before { background: #b80c16; }
-  .sidebar.is-open .user-footer { right: auto; bottom: 0; left: 0; z-index: calc(var(--gc-z-drawer) + 2); box-sizing: border-box; width: min(320px, calc(100vw - 40px)); height: 64px; min-height: 64px; gap: 10px; border-top: 1px solid #292d39; border-right: 0; padding: 12px 14px; background: #0b0d12; }
+  .sidebar.is-open .user-footer { right: auto; bottom: 0; left: 0; z-index: calc(var(--gc-z-drawer) + 2); box-sizing: border-box; width: min(320px, calc(100vw - 40px)); height: 64px; min-height: 64px; gap: 10px; border-top: 1px solid #292d39; border-right: 0; padding: 12px 14px; background: var(--gc-canvas); }
   .sidebar.is-open .user-footer-profile { gap: 10px; }
   .sidebar.is-open .user-footer .username { gap: 0; }
-  .sidebar.is-open .user-footer small { line-height: 16px; }
-  .sidebar.is-open .user-footer-avatar { color: #e9cbff; font-size: 13px; }
+  .sidebar.is-open .user-footer small { line-height: 1rem; }
+  .sidebar.is-open .user-footer-avatar { color: #e9cbff; font-size: 0.8125rem; }
   .sidebar.is-open .user-footer-settings { width: 44px; height: 44px; }
 }

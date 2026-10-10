@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/304",
+  "status": "PASS_SCOPED",
+  "captured_at": "2026-10-10",
+  "base_revision": "74bf5a79",
+  "source_archive": "artifacts/ui-ux-screenshots.zip",
+  "review_scope": [
+    "Russian copy consistency across Web and Flutter readiness and topology states",
+    "Long audio device labels and access to full values",
+    "Audit timestamp, status and technical identifier readability",
+    "Mobile role warning visibility above persistent save controls",
+    "Reduced-motion behavior, layout stability, contrast and source/after screenshots"
+  ],
+  "source_after_comparisons": [
+    {
+      "screen": "desktop-stream-launch-settings",
+      "source": {"path": ".out/uiux-source/ui-ux-screenshots/desktop-stream-launch-settings.png", "sha256": "fa61f7ccdf37238bf676afc8f71c73f893db863336820da9d4135d0203445e16", "dimensions": "2880x1800"},
+      "after": {"path": ".out/accessibility-browser-results/accessibility.browser-scre-d3f11-progressive-quality-options/desktop-stream-launch-settings-source-scale-after.png", "sha256": "12a17cb9429a87726a55f2fca5eae549f995aa63e3d0aa2bcf0819a3d7d4ae7e", "dimensions": "2880x1800"},
+      "review": "The recommended 1080p/30 FPS profile is visible, advanced controls are collapsed behind a named disclosure, the selected value is summarized, and Start remains reachable after scrolling the modal body. Progressive disclosure is intentional."
+    },
+    {
+      "screen": "mobile-stream-launch-settings",
+      "source": {"path": ".out/uiux-source/ui-ux-screenshots/mobile-stream-launch-settings.png", "sha256": "b9328b7f785a0f290f5e90d1c5d2dbe589b53ec88574ea0cfa2aff0c810a336b", "dimensions": "786x1704"},
+      "after": {"path": ".out/accessibility-browser-results/accessibility.browser-scre-d3f11-progressive-quality-options/mobile-stream-launch-settings-after.png", "sha256": "a66dd28cd5dfe4cfc693a9f619f03125d36afe8eec93878894eeaedc4705fb64", "dimensions": "786x1704"},
+      "review": "Source-sized mobile capture keeps the recommendation and primary setup action clear; advanced settings remain available on demand."
+    },
+    {
+      "screen": "mobile-guild-readiness",
+      "source": {"path": ".out/uiux-source/ui-ux-screenshots/mobile-guild-readiness.png", "sha256": "85cbc35a1012e0d7a1023b73adb36e8a32e48823017cc5b1e7be6a45cd0bf192", "dimensions": "1179x2556"},
+      "after": {"path": ".out/client-lifecycle/393/guild-readiness.png", "sha256": "cf0e849f50d82d4a9314a2bebeb01e336c65b07726694b3d6746ab5543b1d332", "dimensions": "1179x2556"},
+      "review": "Known readiness reasons use contextual Russian text; unknown backend enums are not exposed. Wrapped status badges stay within the layout. Runtime values differ because this disposable fixture has no SFU or object storage."
+    },
+    {
+      "screen": "mobile-guild-roles",
+      "source": {"path": ".out/uiux-source/ui-ux-screenshots/mobile-guild-roles.png", "sha256": "8d771f365cb60522535eeebb5e293f5d5310330007d68f2379213e9c5e49b276", "dimensions": "1179x2556"},
+      "after": {"path": ".out/client-lifecycle/393/guild-roles.png", "sha256": "728326ac7ac84fbd29afbcf6fc72dafb0635a288b92e6b9317785e64698cc970", "dimensions": "1179x2556"},
+      "review": "Selected role and permission states remain explicit. Account and permission fixture values are synthetic. A separate 393x852 production-component regression confirms the long warning scrolls fully above the fixed save actions and passes axe.",
+      "supplementary_after": {"path": ".out/accessibility-browser-results/accessibility.browser-mobi-1f60a-the-persistent-save-actions/mobile-role-warning-above-save-actions-after.png", "sha256": "ffdc55fe184b1f8c340dc05d8edfb61863091f01313f11cc9d84a36449211d02", "dimensions": "393x852"}
+    },
+    {
+      "screen": "mobile-audio-settings",
+      "source": {"path": ".out/uiux-source/ui-ux-screenshots/mobile-audio-settings.png", "sha256": "e481a5536679278d7a23087acd6894c28e0d8e70cf6dff3170430ecbf0073ea0", "dimensions": "1179x2556"},
+      "after": {"path": ".out/uiux-2026-epic-289/settings/393/mobile-audio-settings-after.png", "sha256": "71fe011e00d75bd647b1d1e3b02724ec63cf5e51ac10d8e42c4b01b62412b36d", "dimensions": "1179x2556"},
+      "review": "Long hardware names may be clipped in the closed native select, but the complete option remains available; Web exposes the selected full label in title and Flutter exposes it through tooltip and semantics. Device IDs remain hidden. After labels come from the host browser."
+    },
+    {
+      "screen": "desktop-guild-audit",
+      "source": {"path": ".out/uiux-source/ui-ux-screenshots/desktop-guild-audit.png", "sha256": "266bccace1a8acb746e2541f39956da0bb048b1cee70000cf984b97b0ca3509f", "dimensions": "2880x1800"},
+      "after": {"path": ".out/client-lifecycle/1440/guild-audit.png", "sha256": "5f12bde252a7e2ff7898d65733af99a570c27d68bbd2f23677ef5d7deea0ed33", "dimensions": "2880x1800"},
+      "review": "Events are grouped by local date with visible HH:MM; details provide the full localized timestamp and event type. Long Web detail values wrap instead of clipping; Flutter expansion details retain the full event type and localized timestamp. Synthetic account names differ from the reference data."
+    }
+  ],
+  "behavior_checks": {
+    "readiness_copy": {
+      "result": "PASS",
+      "details": "Web/Flutter map database_unavailable, sfu_unavailable, statfs_unavailable, invalid_measurement, insufficient_space, busy and timeout to Russian contextual copy; unknown and blank codes are suppressed. Status and storage metric labels are aligned."
+    },
+    "layout_shift": {
+      "result": "PASS",
+      "viewport": "320x640",
+      "assertion": "Readiness dependency-card Y position changes by no more than 1 CSS pixel from ready to refreshing and after a 503 response."
+    },
+    "audio_device_labels": {
+      "result": "PASS",
+      "details": "Web native select preserves the full option and selected-label title; Flutter control ellipsizes visually while tooltip and semantics expose the complete label."
+    },
+    "mobile_role_warning": {
+      "result": "PASS",
+      "viewport": "393x852",
+      "details": "The warning can be scrolled wholly above persistent save controls; the production component passes axe."
+    },
+    "audit_readability": {
+      "result": "PASS_SCOPED",
+      "details": "Web summary exposes HH:MM and expanded details expose full localized time and event type; responsive detail values wrap. Flutter exposes full event type and localized time in the expanded row."
+    },
+    "reduced_motion": {
+      "result": "PASS",
+      "evidence": "47-case Web accessibility browser run includes reduced-motion transition and scroll assertions; Flutter audit expansion honors MediaQuery.disableAnimationsOf."
+    },
+    "contrast": {
+      "result": "PASS_SAMPLED",
+      "evidence": "evidence/qa/qa301-accessibility-2026-10-10.json and docs/design/DESIGN_V2_TOKEN_CROSSWALK.md#opaque-color-pair-contrast-snapshot",
+      "ratios": {"primary_text": "15.98 / 17.04 / 15.46:1", "secondary_text": "9.24 / 9.86 / 8.94:1", "white_on_accent": "4.61:1", "focus": "8.03 / 7.77:1", "control_outline": "3.95:1"},
+      "limitation": "Sampled semantic token pairs; not a whole-application contrast certification."
+    },
+    "icon_and_action_semantics": {
+      "result": "PASS_SCOPED",
+      "details": "No new icon-only action was introduced in this polish slice. Reviewed actions retain their labels and selected, disabled, busy and destructive treatments; no unsupported icon behavior was observed in the six reference flows."
+    }
+  },
+  "verification": [
+    {"command": "cd clients/web && npm test -- src/admin/readiness/reason_copy.spec.ts src/design/uiux_copy_glossary.spec.ts src/voice/audio_settings_v2_layout.spec.ts", "result": "PASS", "tests": "17/17"},
+    {"command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' npm run test:accessibility", "result": "PASS", "tests": "47 browser + 1 axe"},
+    {"command": "cd clients/web && VITE_PUBLIC_ORIGIN=https://v.bootybay.ru npm run build", "result": "PASS", "notes": "Existing LiveKit dynamic-import and >500kB chunk advisories remain."},
+    {"command": "cd clients/flutter && flutter test --no-pub test/admin_readiness_widget_test.dart test/admin_readiness_reason_copy_test.dart", "result": "PASS", "tests": "8/8"},
+    {"command": "cd clients/flutter && flutter test --no-pub test/audio_device_dropdown_test.dart", "result": "PASS", "tests": "1/1"},
+    {"command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/admin/readiness/panel.dart lib/src/features/admin/readiness/reason_copy.dart lib/src/screens/workspace_ui/audio_device_dropdown/component.dart test/admin_readiness_widget_test.dart test/admin_readiness_reason_copy_test.dart test/audio_device_dropdown_test.dart", "result": "PASS", "diagnostics": "No issues found."}
+  ],
+  "artifact_handling": "Source and after PNGs are ignored local .out captures. This tracked manifest records paths, dimensions and SHA-256 values; screenshot binaries are not staged.",
+  "release_limitation": "This issue's copy and visual-polish scope is reviewed. Physical device and spoken screen-reader acceptance remain separate open gates under #301 and #303."
+}

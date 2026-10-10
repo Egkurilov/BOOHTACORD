@@ -1,0 +1,278 @@
+{
+  "id": "QA-295-FLUTTER-CAPTURES",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #295 — Flutter admin visual capture matrix",
+  "source_revision": "726ccca33eca77314dc97be76143341ca6a29502",
+  "working_tree_changes": true,
+  "profiles": [
+    "mobile-393x852",
+    "mobile-large-text-393x852",
+    "desktop-1440x900"
+  ],
+  "sections": [
+    "audit",
+    "channels",
+    "guild",
+    "media",
+    "members",
+    "readiness",
+    "roles"
+  ],
+  "checks": [
+    {
+      "name": "Flutter admin accessibility and capture suite",
+      "command": "cd clients/flutter && flutter test --no-pub test/admin_accessibility test/uiux_2026/admin_visual_capture_test.dart",
+      "result": "PASS",
+      "passed": 48,
+      "observation": "All seven production admin sections are captured in each profile; selected-tab semantics are asserted, and the compact 2× text Roles heading/action geometry is checked."
+    },
+    {
+      "name": "Changed Flutter source/test analysis",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/features/admin/role_permissions/heading/handler.dart test/uiux_2026/admin_visual_capture_test.dart",
+      "result": "PASS",
+      "observation": "No analyzer issues found."
+    },
+    {
+      "name": "Flutter production-widget captures",
+      "result": "PASS",
+      "files": [
+        {
+          "section": "audit",
+          "profile": "desktop-1440x900",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-audit-desktop-1440x900.png",
+          "sha256": "0f53e1551c4242781291db6bb60e86305e19c7de82049b38c401cda5c0acd76b"
+        },
+        {
+          "section": "audit",
+          "profile": "mobile-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-audit-mobile-393x852.png",
+          "sha256": "6f5909027cf022e72986a69be4f062d83487fbf0524c57ede5cef1e890999f30"
+        },
+        {
+          "section": "audit",
+          "profile": "mobile-large-text-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-audit-mobile-large-text-393x852.png",
+          "sha256": "ae90f2298a20d9fe26abd1bc04808fbcd5a278c81d9cf5fcab3fd44426176fda"
+        },
+        {
+          "section": "channels",
+          "profile": "desktop-1440x900",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-channels-desktop-1440x900.png",
+          "sha256": "0be408fb2bdcd95b9694ec27d0d0be648efe2b32d04fdbec9b39aafb9e816c3a"
+        },
+        {
+          "section": "channels",
+          "profile": "mobile-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-channels-mobile-393x852.png",
+          "sha256": "b2098ae72367ef8331cfd04f7ed7e33c200a17828e40d100eae09ef5695fe089"
+        },
+        {
+          "section": "channels",
+          "profile": "mobile-large-text-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-channels-mobile-large-text-393x852.png",
+          "sha256": "a917a7f06de2530a286735da1ed74603ba188ae6ef502c03383a26f75cbdd244"
+        },
+        {
+          "section": "guild",
+          "profile": "desktop-1440x900",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-guild-desktop-1440x900.png",
+          "sha256": "66420ae65ba5cae67b0ac79781c339f53c151d5170539813fd2eb4d8c759f1d9"
+        },
+        {
+          "section": "guild",
+          "profile": "mobile-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-guild-mobile-393x852.png",
+          "sha256": "3f654c09b66fc10557a88c163cd56daf70a65fabc5529d42cc189476cd33de3f"
+        },
+        {
+          "section": "guild",
+          "profile": "mobile-large-text-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-guild-mobile-large-text-393x852.png",
+          "sha256": "cb7cb576404b05c2155965e9256ab16ee9e31da172643bc2d1cf2856582ff872"
+        },
+        {
+          "section": "media",
+          "profile": "desktop-1440x900",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-media-desktop-1440x900.png",
+          "sha256": "919755b1698118998f771e3c7a1ee9696de483ccb6cb159065f9c4907d7c67ac"
+        },
+        {
+          "section": "media",
+          "profile": "mobile-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-media-mobile-393x852.png",
+          "sha256": "8e89ac77ce9cf8d4ff5d32ffbbf4aaf417e5f42fcef7329943335c3f2986266d"
+        },
+        {
+          "section": "media",
+          "profile": "mobile-large-text-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-media-mobile-large-text-393x852.png",
+          "sha256": "d0e64e2788748ee82999bdce0b5729e471045f39a0d531e1b0667bb5a162ca23"
+        },
+        {
+          "section": "members",
+          "profile": "desktop-1440x900",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-members-desktop-1440x900.png",
+          "sha256": "8b5bd8833265cc962d2d6356387c36b76ef28fd7fa2d44272331f009f7789103"
+        },
+        {
+          "section": "members",
+          "profile": "mobile-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-members-mobile-393x852.png",
+          "sha256": "0b3ff77313e31ae9de0ceaeb8241ec0b46cee6cac53203427090e063036312cf"
+        },
+        {
+          "section": "members",
+          "profile": "mobile-large-text-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-members-mobile-large-text-393x852.png",
+          "sha256": "ebb08c7132e8896b0c8444b03c53035e02b6f1889938ecc395a3ea1e1de6bbd2"
+        },
+        {
+          "section": "readiness",
+          "profile": "desktop-1440x900",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-readiness-desktop-1440x900.png",
+          "sha256": "6332bbed9e4340f4aaacadef83c5393bea8f6be9ab97542ce5fb7ac101a59add"
+        },
+        {
+          "section": "readiness",
+          "profile": "mobile-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-readiness-mobile-393x852.png",
+          "sha256": "2c845528c7b25406abf30cff2f6380d41ad34b91a414cdbbe14bbf3d1b412841"
+        },
+        {
+          "section": "readiness",
+          "profile": "mobile-large-text-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-readiness-mobile-large-text-393x852.png",
+          "sha256": "2636c11f6fa4d28a6f389359c50b6098f75105355bd46eeeb341dac1e2910db5"
+        },
+        {
+          "section": "roles",
+          "profile": "desktop-1440x900",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-roles-desktop-1440x900.png",
+          "sha256": "5af7498f3091b15db725e314295208939c524e6e87ccbb5478997d73a9ffccdd"
+        },
+        {
+          "section": "roles",
+          "profile": "mobile-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-roles-mobile-393x852.png",
+          "sha256": "b8ec25b7206629945460fce183bd038ea0bce34e30230e2ab67dc3b28572726e"
+        },
+        {
+          "section": "roles",
+          "profile": "mobile-large-text-393x852",
+          "path": "clients/flutter/.out/uiux-2026-flutter/flutter-admin-roles-mobile-large-text-393x852.png",
+          "sha256": "533171e50b953e8c29ed20958ad0a82aaf2ff4e83a397a716e17601fa4bb3d9d"
+        }
+      ],
+      "observation": "21 ignored PNG captures cover seven admin sections at 393×852, 393×852 with 2× text, and 1440×900. PNGs remain local and are not staged."
+    },
+    {
+      "name": "Full-app reference comparison and physical-platform acceptance",
+      "result": "NOT_RUN",
+      "observation": "Synthetic widget captures do not replace authenticated full-app source-matched comparison or physical Android/iOS/macOS/Windows interaction and screen-reader review."
+    },
+    {
+      "name": "Web full-app before/after admin source comparison",
+      "command": "QA_BROWSER_EXECUTABLE=... python3 -m tools.qa.client_lifecycle.run --width 393; --width 1440",
+      "result": "PASS",
+      "passed": 2,
+      "observation": "Current production Web captures of Members, Roles, and Readiness at mobile and desktop profiles were compared with the six issue source screenshots. Both lifecycle reports verify telemetry privacy, API restart persistence, and owned-resource cleanup. Source/after SHA-256 pairs and raster dimensions are recorded in web_full_app_comparison."
+    }
+  ],
+  "status": "PARTIAL — Flutter seven-section widget matrix and Web full-app source comparison pass; changed-file analysis and lifecycle verification pass. Manual Android/iOS/macOS/Windows interaction and screen-reader review remain open.",
+  "web_full_app_comparison": {
+    "result": "PASS",
+    "source_archive": {
+      "path": "artifacts/ui-ux-screenshots.zip",
+      "sha256": "44da32a8c6888a012c8f85cf66d8bd320d240509ec31538854438388964a3b2c"
+    },
+    "reports": [
+      {
+        "viewport": "393",
+        "path": ".out/client-lifecycle/393/report.json",
+        "sha256": "65e4f6c7bee30910978cab3e73e578b00c7a42cd01affec5e61a326a71f090e1",
+        "source_revision": "26246f5e5456b42d741ae2148a338c6310467c60",
+        "telemetry_verified": true,
+        "api_restart_persistence": true,
+        "owned_resources_removed": true
+      },
+      {
+        "viewport": "1440",
+        "path": ".out/client-lifecycle/1440/report.json",
+        "sha256": "5f5dba2e3312e729d04d73d555749e8c0e346c9a4f9394228f16d96264b76d2e",
+        "source_revision": "26246f5e5456b42d741ae2148a338c6310467c60",
+        "telemetry_verified": true,
+        "api_restart_persistence": true,
+        "owned_resources_removed": true
+      }
+    ],
+    "captures": [
+      {
+        "profile": "mobile",
+        "section": "members",
+        "viewport": "393x852 @3x",
+        "raster": "1179x2556",
+        "source_archive_entry": "ui-ux-screenshots/mobile-guild-members.png",
+        "source_sha256": "c568818c1ee367eb2e3562ccfb32f2db380dc4f53fe3f8250f0bb4683f790f26",
+        "after_path": ".out/client-lifecycle/393/guild-members.png",
+        "after_sha256": "ce66185b9110dec85cda221c8f8a23f89997b2dfcba353e8dd12e750425af9eb",
+        "observation": "The shell context and active section are visible; source member names differ from the synthetic QA account data."
+      },
+      {
+        "profile": "mobile",
+        "section": "roles",
+        "viewport": "393x852 @3x",
+        "raster": "1179x2556",
+        "source_archive_entry": "ui-ux-screenshots/mobile-guild-roles.png",
+        "source_sha256": "8d771f365cb60522535eeebb5e293f5d5310330007d68f2379213e9c5e49b276",
+        "after_path": ".out/client-lifecycle/393/guild-roles.png",
+        "after_sha256": "728326ac7ac84fbd29afbcf6fc72dafb0635a288b92e6b9317785e64698cc970",
+        "observation": "Role heading, selector, permissions, warning and sticky save area remain visible; the horizontal-scroll hint is added below tabs."
+      },
+      {
+        "profile": "mobile",
+        "section": "readiness",
+        "viewport": "393x852 @3x",
+        "raster": "1179x2556",
+        "source_archive_entry": "ui-ux-screenshots/mobile-guild-readiness.png",
+        "source_sha256": "85cbc35a1012e0d7a1023b73adb36e8a32e48823017cc5b1e7be6a45cd0bf192",
+        "after_path": ".out/client-lifecycle/393/guild-readiness.png",
+        "after_sha256": "caee36941017fd8952386d31c118cf6285db735e5d07ff134ebef96bfbd7175b",
+        "observation": "Cards reflow into a readable single column; local LiveKit/storage errors differ from the source image’s ready state because this disposable stack has no SFU/storage service."
+      },
+      {
+        "profile": "desktop",
+        "section": "members",
+        "viewport": "1440x900 @2x",
+        "raster": "2880x1800",
+        "source_archive_entry": "ui-ux-screenshots/desktop-guild-members.png",
+        "source_sha256": "0a0ba90ad3288815fa4925b540396e74defaf463f4542fe38c6370c5ff57ff57",
+        "after_path": ".out/client-lifecycle/1440/guild-members.png",
+        "after_sha256": "7cfe0a8994c4e3ad30d21c48fbe9ad677df6ecb0e9ae0b81c03e91b05d680ebb",
+        "observation": "Seven tabs and full-width member table use the available content area; account labels differ in synthetic fixture data."
+      },
+      {
+        "profile": "desktop",
+        "section": "roles",
+        "viewport": "1440x900 @2x",
+        "raster": "2880x1800",
+        "source_archive_entry": "ui-ux-screenshots/desktop-guild-roles.png",
+        "source_sha256": "25a665bc48e76fdb78eef275d852133a7de1300854ba4a6ae71e26b467ff0574",
+        "after_path": ".out/client-lifecycle/1440/guild-roles.png",
+        "after_sha256": "3217622eededdb5b510ed3e403cba7f5cce52cce306f1c2e676502f06a03c462",
+        "observation": "Role heading, selector, permission table, warning and save state fit the content width."
+      },
+      {
+        "profile": "desktop",
+        "section": "readiness",
+        "viewport": "1440x900 @2x",
+        "raster": "2880x1800",
+        "source_archive_entry": "ui-ux-screenshots/desktop-guild-readiness.png",
+        "source_sha256": "5851d67a23d4d97b0bfc4eea52785ab13073f76ad7fb8c54ebf0bc6d487ffd6d",
+        "after_path": ".out/client-lifecycle/1440/guild-readiness.png",
+        "after_sha256": "bf1c99279e5d3338f34a659e897c567c358a861986fbc2527b7f7e0fcf9cbb4b",
+        "observation": "Status cards form a three-column grid; local LiveKit/storage errors differ from the source image’s ready state due to unavailable local dependencies."
+      }
+    ],
+    "review_method": "Side-by-side visual review against each issue source screenshot. Raster dimensions match. Fixture account names and readiness values are runtime data, not visual regressions; local SFU and object storage are intentionally absent from the disposable stack."
+  }
+}

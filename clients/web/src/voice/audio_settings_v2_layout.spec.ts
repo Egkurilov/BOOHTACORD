@@ -40,6 +40,14 @@ describe('Design V2 audio settings', () => {
     expect(presentation).toMatch(/\.audio-device-section label \{[^}]*font-weight: 500;/)
   })
 
+  it('keeps full selected hardware labels available when the native select truncates', () => {
+    expect(component).toContain('selectedInputLabel')
+    expect(component).toContain('selectedOutputLabel')
+    expect(component).toContain(':title="selectedInputLabel"')
+    expect(component).toContain(':title="selectedOutputLabel"')
+    expect(component).toContain('>{{ device.label }}</option>')
+  })
+
   it('allows cards to grow for PTT assignment and device feedback', () => {
     expect(presentation).toContain('height: max-content; min-height: 282px;')
     expect(presentation).toContain('height: max-content; min-height: 164px;')
@@ -53,7 +61,7 @@ describe('Design V2 audio settings', () => {
   })
 
   it('keeps checkbox row labels at the same body size as button row labels', () => {
-    expect(presentation).toMatch(/\.workspace-main-panel--audio \.audio-processing-row \{[^}]*color: var\(--gc-text-primary\);[^}]*font-size: 14px;/)
+    expect(presentation).toMatch(/\.workspace-main-panel--audio \.audio-processing-row \{[^}]*color: var\(--gc-text-primary\);[^}]*font-size: 0.875rem;/)
   })
 
   it('keeps content gutters on tablet and uses the handoff mobile breakpoint', () => {

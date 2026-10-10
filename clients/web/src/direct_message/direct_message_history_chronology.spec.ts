@@ -8,6 +8,29 @@ import DirectMessageHistoryList from './DirectMessageHistoryList.vue'
 import { useDirectMessageStore } from './direct_message_store'
 
 describe('DM history reading order', () => {
+  it('shows an empty history only after a successful empty response', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const store = useDirectMessageStore()
+    store.historyLoaded = false
+    store.error = 'Нет соединения с сервером. Проверьте подключение.'
+    const render = async () => {
+      const app = createSSRApp(DirectMessageHistoryList, {
+        directMessageId: 'dm-1', session: null, otherParticipantId: 'author', otherParticipantDisplayName: 'Автор',
+      })
+      app.use(pinia)
+      return renderToString(app)
+    }
+
+    const failed = await render()
+    expect(failed).not.toContain('Сообщений пока нет.')
+
+    store.error = null
+    store.historyLoaded = true
+    const empty = await render()
+    expect(empty).toContain('Сообщений пока нет.')
+  })
+
   it('places older messages before newer ones and the pagination control above history', async () => {
     const pinia = createPinia()
     setActivePinia(pinia)

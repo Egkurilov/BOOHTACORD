@@ -36,7 +36,7 @@ extension RenderAdminCategoryCreationAction on AdminScreenStateContext {
       controller: adminCategoryName,
       enabled: !adminBusy,
       maxLength: 80,
-      decoration: const InputDecoration(labelText: 'Новая категория'),
+      decoration: const InputDecoration(labelText: 'Новый раздел'),
       onSubmitted: (_) => adminCreateCategory(),
     ),
     const SizedBox(height: 8),
@@ -44,7 +44,7 @@ extension RenderAdminCategoryCreationAction on AdminScreenStateContext {
       alignment: Alignment.centerLeft,
       child: FilledButton.tonal(
         onPressed: adminBusy ? null : adminCreateCategory,
-        child: const Text('Создать категорию'),
+        child: const Text('Создать раздел'),
       ),
     ),
     const Divider(height: 32),

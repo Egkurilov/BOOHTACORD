@@ -60,25 +60,46 @@ extension AdminScreenStateAdminBuildAdminAccountCompactCardBindingAction
             overflow: TextOverflow.ellipsis,
           ),
           children: [
-            DropdownButtonFormField<String>(
-              key: ValueKey('role:${account.accountId}:${draft?.role}'),
-              initialValue: draft?.role,
-              isExpanded: true,
-              decoration: InputDecoration(labelText: 'Роль: ${account.login}'),
-              items: const [
-                DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
-                DropdownMenuItem(
-                  value: 'ADMINISTRATOR',
-                  child: Text('Администратор'),
-                ),
-              ],
-              onChanged: busy || draft == null
-                  ? null
-                  : (value) {
-                      if (value != null) {
-                        adminMutateView(() => draft.role = value);
-                      }
-                    },
+            Semantics(
+              label: 'Роль',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ExcludeSemantics(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: GcSpacing.x2),
+                      child: Text(
+                        'Роль',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: GcColors.muted),
+                      ),
+                    ),
+                  ),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('role:${account.accountId}:${draft?.role}'),
+                    initialValue: draft?.role,
+                    isExpanded: true,
+                    decoration: const InputDecoration(),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'MEMBER',
+                        child: Text('Участник'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'ADMINISTRATOR',
+                        child: Text('Администратор'),
+                      ),
+                    ],
+                    onChanged: busy || draft == null
+                        ? null
+                        : (value) {
+                            if (value != null) {
+                              adminMutateView(() => draft.role = value);
+                            }
+                          },
+                  ),
+                ],
+              ),
             ),
             Material(
               color: GcColors.surface,

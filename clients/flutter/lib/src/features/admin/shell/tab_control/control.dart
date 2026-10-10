@@ -35,6 +35,7 @@ class _AdminTabControlState extends State<AdminTabControl> {
       button: true,
       selected: selected,
       role: SemanticsRole.tab,
+      label: widget.label,
       onTap: widget.onSelected,
       child: ExcludeSemantics(
         child: DecoratedBox(
