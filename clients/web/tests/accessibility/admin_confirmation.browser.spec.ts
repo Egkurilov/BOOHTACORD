@@ -70,7 +70,7 @@ const screenShareSetups = [
 ] as const
 
 for (const viewport of screenShareSetups) {
-  test(`screen-share setup keeps start and cancel reachable at ${viewport.name}`, async ({ page }) => {
+  test(`screen-share setup keeps start and cancel reachable at ${viewport.name}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
     await page.goto('/')
     await page.evaluate(async (textScale) => {
@@ -88,12 +88,14 @@ for (const viewport of screenShareSetups) {
     const cancel = dialog.getByRole('button', { name: 'Отмена' })
     await expect(dialog).toBeVisible()
     await expect(dialog).toContainText('После продолжения браузер покажет системный запрос на выбор экрана или окна.')
+    await page.screenshot({ path: testInfo.outputPath('screen-share-setup-open.png') })
 
     for (const control of [start, cancel]) {
       await control.scrollIntoViewIfNeeded()
-      await expect(control).toBeInViewport()
+      await expect(control).toBeInViewport({ ratio: 0.99 })
       await expect(control).toBeEnabled()
     }
+    await page.screenshot({ path: testInfo.outputPath('screen-share-setup-actions.png') })
   })
 }
 
