@@ -17,7 +17,7 @@ rtc:
   use_external_ip: false
   enable_loopback_candidate: true
   interfaces:
-    includes: ["lo"]
+    includes: ["eth0"]
 keys:
   qa-only: qa-local-only-secret-12345
 webhook:

@@ -7,7 +7,7 @@ from .stack import Stack
 
 
 class LoopbackTransportTests(unittest.TestCase):
-    def test_owned_sfu_enables_only_local_ice_candidates(self):
+    def test_owned_sfu_listens_on_bridge_and_advertises_loopback_candidates(self):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
             stack = Stack(work, work)
@@ -19,7 +19,7 @@ class LoopbackTransportTests(unittest.TestCase):
                 stack.start()
             config = (work/'livekit.yaml').read_text()
             self.assertIn('enable_loopback_candidate: true', config)
-            self.assertIn('includes: ["lo"]', config)
+            self.assertIn('includes: ["eth0"]', config)
             self.assertIn('bind_addresses: ["0.0.0.0"]', config)
             self.assertIn(f'http://{stack.owner}-api:8080/internal/livekit/roster', config)
             self.assertEqual(stack.environment['LIVEKIT_PRIVATE_HTTP_URL'],
