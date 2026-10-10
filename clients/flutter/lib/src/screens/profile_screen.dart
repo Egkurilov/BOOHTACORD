@@ -646,7 +646,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Semantics(
                           header: true,
                           child: const Text(
-                            'Профиль',
+                            'Настройки',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -656,7 +656,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Настройки вашей учётной записи',
+                        'Ваш профиль и параметры приложения.',
                         style: TextStyle(color: GcColors.textSecondary),
                       ),
                       const SizedBox(height: 24),
