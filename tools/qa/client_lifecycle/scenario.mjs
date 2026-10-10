@@ -41,6 +41,11 @@ try {
   console.log('stage=two-admin-clients-authenticated')
   const flowAccount = input.critical ? await registration(browser, input, report) : null
   console.log('stage=registration-outcome-accepted')
+  await expect.poll(async () => {
+    try { return (await api(a, '/health')).status }
+    catch { return 0 }
+  }, { timeout: 15000 }).toBe(200)
+  console.log('stage=browser-api-ready-after-registration')
   await guest.goto(origin)
   const expectedMemberCount = 20 + Number(Boolean(flowAccount))
   const value = await guild(a, b, guest, input.password, report, input.directory, expectedMemberCount)
