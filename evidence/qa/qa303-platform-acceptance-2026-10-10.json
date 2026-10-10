@@ -55,6 +55,24 @@
       "acceptance_effect": "The earlier observation is not treated as current device availability or as platform acceptance."
     }
   ],
+  "current_browser_attempts": [
+    {
+      "date": "2026-10-10",
+      "target": "Native Safari desktop 26.6",
+      "result": "EXPLORATORY_FIXTURE_VIEW_ONLY",
+      "url": "http://127.0.0.1:4807/tests/responsive_shell/fixture.html",
+      "observation": "The local responsive shell fixture rendered and exposed the favorite control in Safari's accessibility tree. This fixture is not the full application and its visible favorite control has no interaction handler.",
+      "acceptance_effect": "No task script was completed; Safari desktop remains NOT_RUN for #303. The transient UI screenshot was not saved as a durable QA artifact."
+    },
+    {
+      "date": "2026-10-10",
+      "target": "Playwright WebKit responsive-shell suite",
+      "command": "env -u CHROMIUM_EXECUTABLE_PATH npx playwright test -c tests/responsive_shell/playwright.config.ts --browser webkit",
+      "result": "NOT_RUN_BROWSER_RUNTIME_MISSING",
+      "launch_error": "Expected Playwright runtime /Users/pistol121/Library/Caches/ms-playwright/webkit-2359/pw_run.sh is absent; all seven cases stopped at browser launch.",
+      "acceptance_effect": "No WebKit test assertion ran. This is an unavailable local browser binary, not an observed UI regression. No browser download was attempted."
+    }
+  ],
   "platform_matrix": [
     {
       "target": "Web Chrome desktop/mobile viewport automation",
