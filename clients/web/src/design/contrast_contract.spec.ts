@@ -28,6 +28,7 @@ describe('GuildChat dark-theme contrast tokens', () => {
       ['text-muted', 'content'], ['text-muted', 'sidebar'], ['text-muted', 'surface'],
       ['accent-text', 'content'], ['accent-text', 'sidebar'], ['on-accent', 'accent'],
       ['success', 'success-bg'], ['warning', 'warning-bg'], ['danger', 'danger-bg'],
+      ['danger-text', 'surface'],
     ] as const
     const controlPairs = [['border-control', 'surface'], ['focus', 'content'], ['accent', 'content']] as const
 

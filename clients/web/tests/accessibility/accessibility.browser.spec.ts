@@ -572,6 +572,21 @@ test('voice prejoin announces connecting and blocks duplicate joins', async ({ p
   await expectAxeClear(page, '.voice-prejoin')
 })
 
+test('voice prejoin explains a missing microphone and keeps the listener path available', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 320, height: 640 })
+  await mountProductionComponent(page, '/src/voice/VoicePrejoin.vue', {
+    channelId: 'voice-1',
+    voiceError: 'Микрофон не найден. Подключитесь без микрофона или подключите устройство и повторите попытку.',
+    voiceState: 'ERROR', voiceTransferRequired: false,
+    roster: { channelId: 'voice-1', participants: [], revision: 1 },
+  })
+
+  await expect(page.getByRole('alert')).toContainText('Микрофон не найден')
+  await expect(page.getByRole('button', { name: 'Подключиться без микрофона' })).toBeEnabled()
+  await expectAxeClear(page, '.voice-prejoin')
+  await page.screenshot({ path: testInfo.outputPath('voice-prejoin-microphone-missing.png') })
+})
+
 test('voice dock explains denied microphone access and exposes a retry at mobile 2x text', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 640 })
   await mountProductionComponent(page, '/src/voice/VoiceDock.vue', {
