@@ -48,17 +48,28 @@ extension WorkspaceAudioSettingsScreenBuildAction
                     ? ''
                     : 'Проверьте устройства перед разговором.',
                 onBack: compact ? onBack : null,
-                trailing: IconButton(
-                  tooltip: 'Обновить список устройств',
-                  onPressed: state.audioDevicesLoading
-                      ? null
-                      : state.refreshAudioDevices,
-                  icon: state.audioDevicesLoading
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Обновить список устройств',
+                      onPressed: state.audioDevicesLoading
+                          ? null
+                          : state.refreshAudioDevices,
+                      icon: state.audioDevicesLoading
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh),
+                    ),
+                    if (!compact)
+                      IconButton(
+                        tooltip: 'Закрыть настройки аудио',
+                        onPressed: onBack,
+                        icon: const Icon(Icons.close),
+                      ),
+                  ],
                 ),
               ),
               Expanded(
