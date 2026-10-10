@@ -153,7 +153,25 @@ void main() {
     final mediaTab = tester.getSemantics(
       find.byKey(const ValueKey('admin-section-tab-media')),
     );
-    expect(mediaTab.getSemanticsData().role, SemanticsRole.tab);
+    for (final (section, label) in [
+      ('guild', 'Гильдия'),
+      ('members', 'Участники'),
+      ('roles', 'Роли'),
+      ('channels', 'Каналы'),
+      ('audit', 'Аудит'),
+      ('media', 'Медиа'),
+      ('readiness', 'Статус'),
+    ]) {
+      final semantics = tester.getSemantics(
+        find.byKey(ValueKey('admin-section-tab-$section')),
+      );
+      expect(
+        semantics.getSemanticsData().role,
+        SemanticsRole.tab,
+        reason: section,
+      );
+      expect(semantics.getSemanticsData().label, label, reason: section);
+    }
     expect(
       mediaTab.getSemanticsData().flagsCollection.isSelected,
       Tristate.isTrue,
