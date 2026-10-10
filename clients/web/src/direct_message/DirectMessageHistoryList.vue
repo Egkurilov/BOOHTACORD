@@ -106,7 +106,7 @@ async function loadOlder(): Promise<void> {
       />
     </li>
     </template>
-    <li v-if="!store.messages.length && !store.loadingHistory" class="state">Сообщений пока нет.</li>
+    <li v-if="store.historyLoaded && !store.error && !store.messages.length && !store.loadingHistory" class="state">Сообщений пока нет.</li>
   </ol>
   </div>
 </template>

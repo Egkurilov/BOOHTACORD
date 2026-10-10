@@ -4,6 +4,7 @@ import { loadDirectMessageHistory, type DirectMessageHistoryItem, type DirectMes
 import { pendingDirectMessage, type DirectMessageDisplayItem, type PendingDirectMessageSend } from './direct_message_pending'
 import { createLoadedRevisionRefresh } from '../conversation/revision_refresh/loaded'
 import { trackRealtimeMessages } from '../telemetry/realtime_flow/process'
+import { requestFailureFeedback, requestFailureMessage } from '../request_feedback'
 
 export function createDirectMessageHistory(pending: Map<string, PendingDirectMessageSend>, acknowledge: (id: string) => void) {
   const directMessageId = ref<string | null>(null)
@@ -13,6 +14,7 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
   const olderLoading = ref(false)
   const historyLoaded = ref(false)
   const error = ref<string | null>(null)
+  const retryableError = ref(false)
   const olderError = ref<string | null>(null)
   let generation = 0
   let refreshSequence = 0
@@ -40,6 +42,7 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
     olderLoading.value = false
     olderError.value = null
     historyLoaded.value = false
+    retryableError.value = false
     olderPagesLoaded = false
     await refreshHistory(request)
   }
@@ -55,6 +58,7 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
     historyLoaded.value = false
     olderError.value = null
     error.value = null
+    retryableError.value = false
     olderPagesLoaded = false
   }
 
@@ -65,6 +69,7 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
     const sequence = ++refreshSequence
     loadingHistory.value = true
     error.value = null
+    retryableError.value = false
     try {
       const page = await loadDirectMessageHistory(target, undefined, request)
       if (generation !== version || directMessageId.value !== target || refreshSequence !== sequence) return
@@ -72,7 +77,11 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
       if (!olderPagesLoaded) nextCursor.value = page.nextCursor
       historyLoaded.value = true
     } catch (cause) {
-      if (generation === version && refreshSequence === sequence) error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить историю личных сообщений.'
+      if (generation === version && refreshSequence === sequence) {
+        const feedback = requestFailureFeedback(cause, 'Не удалось загрузить историю личных сообщений.')
+        error.value = feedback.message
+        retryableError.value = feedback.retryable
+      }
     } finally {
       if (generation === version && refreshSequence === sequence) loadingHistory.value = false
     }
@@ -93,7 +102,7 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
       olderPagesLoaded = true
       return true
     } catch (cause) {
-      if (generation === version) olderError.value = cause instanceof Error ? cause.message : 'Не удалось загрузить старые личные сообщения.'
+      if (generation === version) olderError.value = requestFailureMessage(cause, 'Не удалось загрузить старые личные сообщения.')
       return false
     } finally {
       if (generation === version) olderLoading.value = false
@@ -104,5 +113,5 @@ export function createDirectMessageHistory(pending: Map<string, PendingDirectMes
     resourceId: directMessageId, version: () => generation, load: loadDirectMessageHistory, merge: mergePage, error,
     fallback: 'Не удалось обновить личное сообщение.' })
 
-  return { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder, refreshMessage, refreshMessages }
+  return { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, retryableError, olderError, open, refreshHistory, loadOlder, refreshMessage, refreshMessages }
 }

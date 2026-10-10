@@ -341,7 +341,7 @@ test('profile logout waits for an explicit confirmation', async ({ page }) => {
   await expect(page.locator('body')).toHaveAttribute('data-logout', 'confirmed')
 })
 
-test('empty direct-message navigation offers a visible start-conversation action', async ({ page }) => {
+test('empty direct-message navigation offers a visible start-conversation action', async ({ page }, testInfo) => {
   await page.route('**/api/v1/members?*', route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ members: [{
       user_id: 'member-1', login: 'alice', display_name: 'Алиса', role: 'MEMBER',
@@ -412,6 +412,7 @@ test('empty direct-message navigation offers a visible start-conversation action
   await expect(page.getByRole('heading', { name: 'Алиса' })).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'Сообщение' })).toBeVisible()
   await expect(page.getByText('Сообщений пока нет.')).toBeVisible()
+  await page.screenshot({ path: testInfo.outputPath('direct-message-empty-after.png'), fullPage: true })
 })
 
 test('direct-message search keeps its query and results after opening and returning from context', async ({ page }) => {
@@ -585,6 +586,9 @@ test('voice prejoin explains a missing microphone and keeps the listener path av
   await expect(page.getByRole('button', { name: 'Подключиться без микрофона' })).toBeEnabled()
   await expectAxeClear(page, '.voice-prejoin')
   await page.screenshot({ path: testInfo.outputPath('voice-prejoin-microphone-missing.png') })
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await expectAxeClear(page, '.voice-prejoin')
+  await page.screenshot({ path: testInfo.outputPath('voice-prejoin-desktop-after.png') })
 })
 
 test('voice dock explains denied microphone access and exposes a retry at mobile 2x text', async ({ page }, testInfo) => {
@@ -731,7 +735,7 @@ test('destructive confirmation defaults to cancel, traps focus and requires an e
   await expect(page.locator('#confirmation-result')).toHaveText('true')
 })
 
-test('WCAG smoke distinguishes readiness loading, refresh, stale failure and retry states', async ({ page }) => {
+test('WCAG smoke distinguishes readiness loading, refresh, stale failure and retry states', async ({ page }, testInfo) => {
   let requests = 0
   let releaseInitial: (() => void) | undefined
   let releaseRefresh: (() => void) | undefined
@@ -776,13 +780,14 @@ test('WCAG smoke distinguishes readiness loading, refresh, stale failure and ret
   await expect(status).toHaveText('Нет свежего подтверждения готовности')
   await expect(page.locator('dl dd').first()).toHaveText('устарело')
   await expectAxeClear(page, '#mount')
+  await page.screenshot({ path: testInfo.outputPath('readiness-stale-503-mobile-after.png'), fullPage: true })
 
   await refresh.click()
   await expect(status).toHaveText('Сервисы готовы')
   await expect(page.getByRole('alert')).toHaveCount(0)
 })
 
-test('readiness service and capacity values use a responsive dashboard layout', async ({ page }) => {
+test('readiness service and capacity values use a responsive dashboard layout', async ({ page }, testInfo) => {
   const sampledAt = new Date().toISOString()
   await page.route('**/api/v1/**', route => route.fulfill({
     status: 200, contentType: 'application/json', body: '{}',
@@ -832,6 +837,7 @@ test('readiness service and capacity values use a responsive dashboard layout', 
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   }
+  await page.screenshot({ path: testInfo.outputPath('readiness-dashboard-desktop-after.png'), fullPage: true })
 })
 
 test('readiness access denial is explained and stops automatic retry', async ({ page }) => {
@@ -852,6 +858,152 @@ test('readiness access denial is explained and stops automatic retry', async ({ 
   expect(requests).toBe(1)
 })
 
+test('role mutation keeps its draft across 403/404/429/503 and reports one pending outcome', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  let reads = 0
+  let writes = 0
+  let saved = false
+  let releaseFirst!: () => void
+  let firstStarted!: () => void
+  const firstWrite = new Promise<void>(resolve => { firstStarted = resolve })
+  const memberPermissions = {
+    'channel.text.create': false, 'channel.text.delete': false,
+    'channel.voice.create': false, 'channel.voice.delete': false,
+    'category.create': false, 'category.delete': false,
+  }
+  const adminPermissions = Object.fromEntries(Object.keys(memberPermissions).map(key => [key, true]))
+
+  await page.route('**/api/v1/admin/roles**', async route => {
+    if (route.request().method() === 'GET') {
+      reads++
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+        revision: 7,
+        roles: [
+          { role: 'ADMINISTRATOR', display_name: 'Администратор', editable: false, permissions: adminPermissions },
+          { role: 'MEMBER', display_name: 'Пользователь', editable: true, permissions: { ...memberPermissions, 'channel.text.create': saved } },
+        ],
+      }) })
+      return
+    }
+
+    writes++
+    if (writes === 1) {
+      firstStarted()
+      await new Promise<void>(resolve => { releaseFirst = resolve })
+      await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'fixture 403' } }) })
+      return
+    }
+    const failures = [404, 429, 503]
+    const status = failures[writes - 2]
+    if (status) {
+      await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify({ error: { code: `FIXTURE_${status}`, message: `fixture ${status}` } }) })
+      return
+    }
+    if (writes === 5) {
+      await route.abort('failed')
+      return
+    }
+    saved = true
+    await route.fulfill({ status: 204, body: '' })
+  })
+
+  await mountProductionComponent(page, '/src/admin/role_permissions/AdminRolePermissions.vue')
+  const permission = page.getByRole('checkbox', { name: 'Создавать текстовые каналы' })
+  const save = page.locator('.role-policy-actions button').last()
+  await expect(permission).toBeVisible()
+  await expectAxeClear(page, '#mount')
+  await page.screenshot({ path: testInfo.outputPath('role-mutation-before.png'), fullPage: true })
+  await permission.check()
+  await save.click()
+  await firstWrite
+  await expect(save).toBeDisabled()
+  await expect(page.getByRole('status')).toHaveText('Сохраняем…')
+  expect(writes).toBe(1)
+  releaseFirst()
+
+  for (const status of [403, 404, 429, 503]) {
+    await expect(page.getByRole('alert')).toHaveText(status === 403 ? 'Нет доступа к изменению разрешений этой роли.' : `fixture ${status}`)
+    await expect(permission).toBeChecked()
+    await expect(page.locator('.role-policy-status')).toHaveText('Есть несохранённые изменения')
+    if (status === 403) {
+      await expect(save).toBeDisabled()
+      await page.getByRole('button', { name: 'Обновить' }).click()
+      await expect(page.getByRole('alert')).toHaveCount(0)
+      await expect(save).toBeEnabled()
+    } else await expect(save).toBeEnabled()
+    if (status === 503) await page.screenshot({ path: testInfo.outputPath('role-mutation-failure-503.png'), fullPage: true })
+    expect(writes).toBe(status === 403 ? 1 : status === 404 ? 2 : status === 429 ? 3 : 4)
+    expect(reads).toBe(2)
+    if (status !== 503) await save.click()
+  }
+
+  await save.click()
+  await expect(page.getByRole('alert')).toHaveText('Нет соединения с сервером. Проверьте подключение.')
+  await expect(permission).toBeChecked()
+  await expect(save).toBeEnabled()
+  await page.screenshot({ path: testInfo.outputPath('role-mutation-offline.png'), fullPage: true })
+  expect(reads).toBe(2)
+  await save.click()
+  await expect(page.locator('.admin-status')).toHaveText('Разрешения участников сохранены.')
+  await expect(permission).toBeChecked()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expectAxeClear(page, '#mount')
+  await page.screenshot({ path: testInfo.outputPath('role-mutation-after.png'), fullPage: true })
+  expect(writes).toBe(6)
+  expect(reads).toBe(3)
+})
+
+test('role 409 requires conflict review before a deliberate retry', async ({ page }, testInfo) => {
+  let reads = 0
+  let writes = 0
+  let saved = false
+  const permissions = {
+    'channel.text.create': false, 'channel.text.delete': false,
+    'channel.voice.create': false, 'channel.voice.delete': false,
+    'category.create': false, 'category.delete': false,
+  }
+  const adminPermissions = Object.fromEntries(Object.keys(permissions).map(key => [key, true]))
+  await page.route('**/api/v1/admin/roles**', async route => {
+    if (route.request().method() === 'GET') {
+      reads++
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ revision: reads, roles: [
+        { role: 'ADMINISTRATOR', display_name: 'Администратор', editable: false, permissions: adminPermissions },
+        { role: 'MEMBER', display_name: 'Пользователь', editable: true, permissions: { ...permissions, 'channel.text.create': saved } },
+      ] }) })
+      return
+    }
+    writes++
+    if (writes === 1) {
+      await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'PERMISSIONS_REVISION_CONFLICT', message: 'Настройки изменились.' } }) })
+      return
+    }
+    saved = true
+    await route.fulfill({ status: 204, body: '' })
+  })
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mountProductionComponent(page, '/src/admin/role_permissions/AdminRolePermissions.vue')
+  const permission = page.getByRole('checkbox', { name: 'Создавать текстовые каналы' })
+  await permission.check()
+  await page.locator('.role-policy-actions button').last().click()
+  await expect(page.getByRole('alert')).toHaveText('Настройки уже изменены другим администратором. Черновик сохранён; обновите данные или отмените изменения.')
+  const review = page.getByRole('region', { name: 'Сравнение конфликтующих изменений' })
+  await expect(review).toBeVisible()
+  await expect(review).toContainText('Ваше изменение')
+  await expect(permission).toBeChecked()
+  await expectAxeClear(page, '#mount')
+  await page.screenshot({ path: testInfo.outputPath('role-conflict-review.png'), fullPage: true })
+  expect(writes).toBe(1)
+  expect(reads).toBe(2)
+
+  await review.getByRole('button', { name: 'Проверено — применить моё изменение' }).click()
+  await expect(page.locator('.admin-status')).toHaveText('Разрешения участников сохранены.')
+  await expect(permission).toBeChecked()
+  expect(writes).toBe(2)
+  expect(reads).toBe(3)
+  await page.screenshot({ path: testInfo.outputPath('role-conflict-after-review.png'), fullPage: true })
+})
+
 test('screen-share setup keeps keyboard focus inside its modal dialog', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await mountProductionComponent(page, '/src/voice/ScreenShareSetupDialog.vue', { initialProfile: 'P1080_30' })
@@ -867,7 +1019,7 @@ test('screen-share setup keeps keyboard focus inside its modal dialog', async ({
   await expect(start).toBeFocused()
 })
 
-test('WCAG smoke distinguishes media metric loading, refresh and failure states', async ({ page }) => {
+test('WCAG smoke distinguishes media metric loading, refresh and failure states', async ({ page }, testInfo) => {
   let requests = 0
   let releaseInitial: (() => void) | undefined
   let releaseRefresh: (() => void) | undefined
@@ -912,10 +1064,12 @@ test('WCAG smoke distinguishes media metric loading, refresh and failure states'
   await expect(page.getByRole('alert')).toContainText('Сервис временно не отвечает. Попробуйте позже.')
   await expect(page.getByRole('alert')).toContainText('Прежние измерения нельзя считать текущими')
   await expectAxeClear(page, '.admin-media-freshness')
+  await page.screenshot({ path: testInfo.outputPath('media-stale-503-mobile-after.png'), fullPage: true })
 
   await refresh.click()
   await expect(status).toContainText('Есть измерения')
   await expect(page.getByRole('alert')).toHaveCount(0)
+  await page.screenshot({ path: testInfo.outputPath('media-recovered-mobile-after.png'), fullPage: true })
 })
 
 test('media access denial stops automatic polling and disables retry', async ({ page }) => {

@@ -92,7 +92,7 @@ onBeforeUnmount(() => searchTarget.clearFor('DIRECT_MESSAGE', props.directMessag
     </header>
     <div v-if="searchMounted" v-show="searchOpen && !contextOpen()" class="conversation-tools"><KeepAlive><DirectMessageSearch v-if="searchOpen" :key="props.directMessageId" :direct-message-id="props.directMessageId" @open="searchTarget.open({ kind: 'DIRECT_MESSAGE', conversationId: props.directMessageId, messageId: $event })" @close="closeSearch" /></KeepAlive></div>
     <p v-if="store.loadingHistory" class="state" aria-live="polite">Загружаем историю…</p>
-    <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <button v-if="!store.historyLoaded" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
+    <p v-if="store.error" id="direct-conversation-error" class="state state-error" role="alert">{{ store.error }} <span v-if="store.historyLoaded">Показанная история может быть устаревшей.</span> <button v-if="store.retryableError" type="button" @click="store.refreshHistory()">Повторить загрузку</button></p>
     <div v-if="!filesOpen && unreadBoundary && !readUnlocked" class="unread-boundary-actions" role="status">
       <span>Есть непрочитанные сообщения.</span>
       <button type="button" @click="showUnread">К первому непрочитанному</button>

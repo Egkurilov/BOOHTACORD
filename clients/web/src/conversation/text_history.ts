@@ -6,6 +6,7 @@ import { indexMessages } from './message_index/index'
 import { boundHistoryWindow } from './history_window/eviction'
 import { createHistoryMerger } from './history_window/merge'
 import { createHistoryPaging } from './history_window/paging'
+import { requestFailureFeedback } from '../request_feedback'
 import { type PendingSend } from './history_window/pending'
 
 export { pendingMessage, type PendingSend } from './history_window/pending'
@@ -21,6 +22,7 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
   const newerLoading = ref(false)
   const historyLoaded = ref(false)
   const error = ref<string | null>(null)
+  const retryableError = ref(false)
   const olderError = ref<string | null>(null)
   const newerError = ref<string | null>(null)
   const historyAnchorId = ref<string | undefined>()
@@ -59,6 +61,7 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
     newerError.value = null
     historyAnchorId.value = undefined
     historyLoaded.value = false
+    retryableError.value = false
     windowPaged = false
     await refresh(request)
   }
@@ -70,6 +73,7 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
     const sequence = ++refreshSequence
     loading.value = true
     error.value = null
+    retryableError.value = false
     try {
       const page = await loadMessagePage(target, undefined, request)
       if (generation !== version || channelId.value !== target || refreshSequence !== sequence) return
@@ -80,7 +84,11 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
       )
       historyLoaded.value = true
     } catch (cause) {
-      if (generation === version && refreshSequence === sequence) error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить историю сообщений.'
+      if (generation === version && refreshSequence === sequence) {
+        const feedback = requestFailureFeedback(cause, 'Не удалось загрузить историю сообщений.')
+        error.value = feedback.message
+        retryableError.value = feedback.retryable
+      }
     } finally {
       if (generation === version && refreshSequence === sequence) loading.value = false
     }
@@ -91,5 +99,5 @@ export function createTextHistory(pending: Map<string, PendingSend>) {
     merge: (incoming) => { mergePage(incoming); applyWindow(Boolean(nextCursor.value), Boolean(newerCursor.value)) }, error,
     fallback: 'Не удалось обновить сообщение.' })
 
-  return { channelId, messages, messageById, nextCursor, newerCursor, loading, olderLoading, newerLoading, historyLoaded, error, olderError, newerError, open, refresh, ...paging, setHistoryAnchor: (id?: string) => { historyAnchorId.value = id }, refreshMessage, refreshMessages }
+  return { channelId, messages, messageById, nextCursor, newerCursor, loading, olderLoading, newerLoading, historyLoaded, error, retryableError, olderError, newerError, open, refresh, ...paging, setHistoryAnchor: (id?: string) => { historyAnchorId.value = id }, refreshMessage, refreshMessages }
 }

@@ -41,6 +41,9 @@ export interface DirectMessageReadCursor {
 }
 
 export type DirectMessageRequest = (input: string, init: RequestInit) => Promise<Response>
+export class DirectMessageRequestError extends Error {
+  constructor(readonly status: number) { super(`Не удалось загрузить личные сообщения (${status}).`) }
+}
 
 function invalidHistory(): never { throw new Error('Сервер вернул некорректную историю личных сообщений.') }
 function record(value: unknown): Record<string, unknown> | null { return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : null }
@@ -90,7 +93,7 @@ function readCursor(value: unknown): DirectMessageReadCursor {
 
 async function checked(response: Response): Promise<unknown> {
   if (response.ok) return response.json()
-  throw new Error(`Не удалось загрузить личные сообщения (${response.status}).`)
+  throw new DirectMessageRequestError(response.status)
 }
 
 function requestInit(method: 'GET' | 'PUT', body?: unknown): RequestInit {

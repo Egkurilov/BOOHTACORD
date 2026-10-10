@@ -10,6 +10,7 @@ import ChannelNavigation from '../ChannelNavigation.vue'
 import AdminConfirmation from '../AdminConfirmation.vue'
 import { confirmedTargetIsCurrent } from './confirmed_target'
 import { archiveText, closeVoice, createMemberCategory, createMemberChannel, deleteCategory, TopologyMutationError } from './member_topology_client'
+import { requestFailureMessage } from '../../request_feedback'
 
 const props = defineProps<{ accountId: string; activeVoiceChannelId?: string; selectedChannelId?: string; topology: ChannelTopology; permissions: PermissionValues; voicePresence: VoiceNavigationPresence | null; voiceRosters?: VoiceRoomRoster[] | null }>()
 const emit = defineEmits<{ select: [channel: TopologyChannel]; changed: [] }>()
@@ -62,7 +63,7 @@ async function submit(): Promise<void> {
   } catch (cause) { await failed(cause) } finally { busy.value = false }
 }
 async function failed(cause: unknown): Promise<void> {
-  error.value = cause instanceof Error ? cause.message : 'Не удалось изменить каналы.'
+  error.value = requestFailureMessage(cause, 'Не удалось изменить каналы.')
   if (cause instanceof TopologyMutationError && cause.status === 403) await permissionStore.refresh()
   if (cause instanceof TopologyMutationError && cause.status === 409) emit('changed')
 }

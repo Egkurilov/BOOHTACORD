@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 import { createChannel } from './admin_topology_client'
+import { requestFailureMessage } from '../request_feedback'
 import type { ChannelKind, TopologyCategory } from './topology_client'
 
 const props = defineProps<{ categories: TopologyCategory[]; categoryId: string }>()
@@ -28,7 +29,7 @@ async function submit(): Promise<void> {
     channelName.value = ''
     status.value = 'Канал создан. Топология обновляется.'
     emit('changed')
-  } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось создать канал.' }
+  } catch (cause) { error.value = requestFailureMessage(cause, 'Не удалось создать канал.') }
   finally { pending.value = false }
 }
 </script>

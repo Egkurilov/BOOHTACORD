@@ -17,7 +17,7 @@ class RolePermissionsState extends RolePermissionsContext {
   }
 
   @override
-  Future<void> loadRoles({required bool reset}) =>
+  Future<bool> loadRoles({required bool reset}) =>
       executeLoadRoles(reset: reset);
   @override
   void loadDefaults() => executeLoadDefaults();

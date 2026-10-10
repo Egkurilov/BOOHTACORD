@@ -4,6 +4,7 @@ import { memberPermissionDefaults, type PermissionKey, type PermissionValues } f
 import { loadRolePolicies, RolePolicyError, saveMemberPolicy, type RoleName, type RolePolicy } from './role_policy_client'
 import { changed, copyPermissions, newlyGrantedDeletes } from './role_policy_editor'
 import { createConflictReview } from '../../channel/conflict_review/state'
+import { AdminResponseError, adminRequestFeedback } from '../admin_request_feedback'
 import Comparison from '../../channel/conflict_review/Comparison.vue'
 
 const labels: Record<PermissionKey, string> = {
@@ -19,23 +20,33 @@ const permissionRows: Array<{ name: string; description: string; icon: 'text' | 
 const roles = ref<RolePolicy[]>([]); const selected = ref<RoleName>('MEMBER'); const revision = ref(0)
 const baseline = ref<PermissionValues>(memberPermissionDefaults()); const draft = ref<PermissionValues>(memberPermissionDefaults())
 const loading = ref(false); const saving = ref(false); const error = ref(''); const status = ref('')
+const denied = ref(false)
 const current = computed(() => roles.value.find((role) => role.role === selected.value) ?? null)
 const orderedRoles = computed(() => [...roles.value].sort((left, right) => left.role === 'ADMINISTRATOR' ? -1 : right.role === 'ADMINISTRATOR' ? 1 : 0))
 const dirty = computed(() => selected.value === 'MEMBER' && changed(baseline.value, draft.value))
 const displayed = computed(() => selected.value === 'MEMBER' ? draft.value : current.value?.permissions ?? draft.value)
 const review=createConflictReview<PermissionValues>()
 function summary(value:PermissionValues|null):string {return value ? Object.entries(value).map(([key,on])=>`${labels[key as PermissionKey]}: ${on ? 'да' : 'нет'}`).join('; ') : ''}
+function roleErrorMessage(cause: unknown): string {
+  if (cause instanceof RolePolicyError && cause.status === 401) return 'Сессия завершена. Войдите снова.'
+  if (cause instanceof RolePolicyError && cause.status === 403) return 'Нет доступа к изменению разрешений этой роли.'
+  if (cause instanceof RolePolicyError && cause.code === 'REQUEST_FAILED') return adminRequestFeedback(new AdminResponseError(cause.status)).message
+  return adminRequestFeedback(cause).message
+}
 
 async function load(resetDraft = true): Promise<void> {
   loading.value = true; error.value = ''; status.value = ''
   try {
-    const page = await loadRolePolicies(); roles.value = page.roles; revision.value = page.revision
+    const page = await loadRolePolicies(); roles.value = page.roles; revision.value = page.revision; denied.value = false
     const member = page.roles.find((role) => role.role === 'MEMBER')!
     if(!resetDraft&&dirty.value&&!review.before.value&&changed(baseline.value,member.permissions)) review.capture(copyPermissions(baseline.value),copyPermissions(draft.value))
     baseline.value = copyPermissions(member.permissions)
     if(review.before.value) review.refresh(copyPermissions(member.permissions),page.revision)
     if (resetDraft) {draft.value = copyPermissions(member.permissions);review.reset()}
-  } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить настройки ролей.' }
+  } catch (cause) {
+    if (cause instanceof RolePolicyError && (cause.status === 401 || cause.status === 403)) denied.value = true
+    error.value = roleErrorMessage(cause)
+  }
   finally { loading.value = false }
 }
 function choose(role: RoleName): void {
@@ -53,7 +64,8 @@ async function save(reviewed=false): Promise<void> {
   try { await saveMemberPolicy(revision.value, draft.value, grants.length > 0); await load(true); status.value = 'Разрешения участников сохранены.' }
   catch (cause) {
     if(cause instanceof RolePolicyError&&cause.status===409){review.capture(copyPermissions(baseline.value),copyPermissions(draft.value));await load(false)}
-    error.value = cause instanceof RolePolicyError && cause.status === 409 ? 'Настройки уже изменены другим администратором. Черновик сохранён; обновите данные или отмените изменения.' : cause instanceof Error ? cause.message : 'Не удалось сохранить разрешения.'
+    if (cause instanceof RolePolicyError && (cause.status === 401 || cause.status === 403)) denied.value = true
+    error.value = cause instanceof RolePolicyError && cause.status === 409 ? 'Настройки уже изменены другим администратором. Черновик сохранён; обновите данные или отмените изменения.' : roleErrorMessage(cause)
   } finally { saving.value = false }
 }
 function guard(event: BeforeUnloadEvent): void { if (dirty.value) event.preventDefault() }
@@ -78,7 +90,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', guard))
     </fieldset>
     <p v-if="selected === 'ADMINISTRATOR'" class="role-policy-note">Разрешения администратора обязательны и не изменяются.</p>
     <Comparison v-if="review.before.value" :before="summary(review.before.value)" :current="review.current.value ? summary(review.current.value) : null" :proposed="summary(draft)" :ready="review.ready(revision)" :busy="saving || loading" @refresh="load(false)" @discard="cancel" @apply="save(true)" />
-    <div v-else class="role-policy-actions"><span class="role-policy-status">{{ dirty ? 'Есть несохранённые изменения' : 'Изменения не внесены' }}</span><button type="button" :disabled="saving" @click="reset">По умолчанию</button><button type="button" :disabled="saving" @click="cancel">Отменить</button><button type="button" :disabled="!dirty || saving" @click="save()">{{ saving ? 'Сохраняем…' : 'Сохранить' }}</button></div>
-    <p v-if="status" class="admin-status" aria-live="polite">{{ status }}</p><p v-if="error" class="admin-error" role="alert">{{ error }}</p>
+    <div v-else class="role-policy-actions"><span v-if="dirty || saving" class="role-policy-status" role="status" aria-live="polite">{{ saving ? 'Сохраняем…' : 'Есть несохранённые изменения' }}</span><button type="button" :disabled="saving" @click="reset">По умолчанию</button><button type="button" :disabled="saving" @click="cancel">Отменить</button><button type="button" :disabled="!dirty || saving || denied" @click="save()">Сохранить</button></div>
+    <p v-if="status" class="admin-status" role="status" aria-live="polite">{{ status }}</p><p v-if="error" class="admin-error" role="alert">{{ error }}</p>
   </section>
 </template>

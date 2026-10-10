@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { listAuditEvents, type AuditEvent } from '../../identity/admin_directory_client'
+import { requestFailureMessage } from '../../request_feedback'
 import AdminAuditFilters from './AdminAuditFilters.vue'
 import { presentAuditEvent } from './audit_event_display'
 import { appendAuditPage, filterAuditEvents, groupAuditDays, type AuditFilters } from './audit_filter'
@@ -24,7 +25,7 @@ async function load(before?: string): Promise<void> {
     const page = await listAuditEvents(before)
     events.value = before ? appendAuditPage(events.value, page.events) : page.events
     cursor.value = page.next_cursor
-  } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить аудит.' }
+  } catch (cause) { error.value = requestFailureMessage(cause, 'Не удалось загрузить аудит.') }
   finally { loading.value = false }
 }
 onMounted(() => { void load() })

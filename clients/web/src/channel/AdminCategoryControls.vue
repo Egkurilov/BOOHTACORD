@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { validCodePointLength } from '../validation/unicode_limits/unicode_limits'
 
 import { createCategory, deleteEmptyCategory } from './admin_topology_client'
+import { requestFailureMessage } from '../request_feedback'
 import AdminConfirmation from './AdminConfirmation.vue'
 import { createCategoryEditor } from './category_editor'
 import { confirmedTargetIsCurrent } from './member_topology/confirmed_target'
@@ -45,7 +46,7 @@ async function create(): Promise<void> {
     emit('update:selectedCategoryId', category.id)
     localStatus.value = 'Раздел создан. Обновляем список.'
     emit('changed')
-  } catch (cause) { localError.value = cause instanceof Error ? cause.message : 'Не удалось создать раздел.' }
+  } catch (cause) { localError.value = requestFailureMessage(cause, 'Не удалось создать раздел.') }
   finally { mutating.value = false }
 }
 
@@ -78,7 +79,7 @@ async function remove(): Promise<void> {
     localStatus.value = 'Пустой раздел удалён. Обновляем список.'
     emit('changed')
   } catch (cause) {
-    localError.value = cause instanceof Error ? cause.message : 'Не удалось удалить раздел.'
+    localError.value = requestFailureMessage(cause, 'Не удалось удалить раздел.')
     emit('changed')
   } finally { mutating.value = false }
 }

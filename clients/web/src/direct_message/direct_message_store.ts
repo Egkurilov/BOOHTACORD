@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import { requestFailureMessage } from '../request_feedback'
 
 import {
   loadDirectMessages,
@@ -18,7 +19,7 @@ export const useDirectMessageStore = defineStore('direct-messages', () => {
     pending.delete(id)
     for (const [key, value] of retries) if (value === id) retries.delete(key)
   }
-  const { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, olderError, open, refreshHistory, loadOlder, refreshMessage, refreshMessages } = createDirectMessageHistory(pending, acknowledge)
+  const { close, directMessageId, messages, nextCursor, loadingHistory, olderLoading, historyLoaded, error, retryableError, olderError, open, refreshHistory, loadOlder, refreshMessage, refreshMessages } = createDirectMessageHistory(pending, acknowledge)
   const deletedMessageIds = ref<string[]>([])
   watch(directMessageId, () => { deletedMessageIds.value = [] })
   const loadingNavigation = ref(false)
@@ -48,7 +49,7 @@ export const useDirectMessageStore = defineStore('direct-messages', () => {
       const loaded = await loadDirectMessages(request)
       if (sequence === navigationSequence) directMessages.value = loaded
     } catch (cause) {
-      if (sequence === navigationSequence) error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить список личных сообщений.'
+      if (sequence === navigationSequence) error.value = requestFailureMessage(cause, 'Не удалось загрузить список личных сообщений.')
     } finally {
       if (sequence === navigationSequence) loadingNavigation.value = false
     }
@@ -64,6 +65,7 @@ export const useDirectMessageStore = defineStore('direct-messages', () => {
     loadingHistory,
     olderLoading,
     historyLoaded,
+    retryableError,
     olderError,
     loadOlder,
     loadingNavigation,

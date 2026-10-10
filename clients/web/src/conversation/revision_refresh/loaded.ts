@@ -1,4 +1,5 @@
 import type { Ref } from 'vue'
+import { requestFailureMessage } from '../../request_feedback'
 interface Item { id: string; sendStatus?: string }
 interface Page<T> { messages: T[]; nextCursor?: string }
 interface Options<T extends Item, Request> {
@@ -26,7 +27,7 @@ export function createLoadedRevisionRefresh<T extends Item, Request>(options: Op
       if (current() && found.length) options.merge(found)
       return found
     } catch (cause) {
-      if (current()) options.error.value = cause instanceof Error ? cause.message : options.fallback
+      if (current()) options.error.value = requestFailureMessage(cause, options.fallback)
       return []
     }
   }

@@ -8,9 +8,12 @@ import { avatarInitials } from '../../design/avatar_initials'
 import { restoreAdminSaveFocus } from './admin_member_save_focus'
 import { copyAdminResetLink } from './admin_reset_link_copy'
 import VoiceTimeoutControl from '../voice_timeout/VoiceTimeoutControl.vue'
+import { AdminResponseError, adminRequestFeedback } from '../admin_request_feedback'
 
 const accounts = ref<AdminAccount[]>([]); const cursor = ref<string | undefined>(); const loading = ref(false); const busyID = ref('')
 const error = ref<string | null>(null); const status = ref<string | null>(null)
+const pendingAnnouncement = ref(''); const deniedIDs = ref<Record<string, boolean>>({})
+const refreshRequiredIDs = ref<Record<string, boolean>>({})
 const resetLink = ref<(PasswordResetLink & { login: string }) | null>(null)
 const resetTrigger = ref<HTMLButtonElement | null>(null)
 const resetResult = ref<HTMLElement | null>(null)
@@ -19,10 +22,29 @@ const search = ref(''); const roleFilter = ref<'ALL' | AdminAccount['role']>('AL
 const filteredAccounts = computed(() => accounts.value.filter((account) => (roleFilter.value === 'ALL' || account.role === roleFilter.value) && (statusFilter.value === 'ALL' || (statusFilter.value === 'BLOCKED') === account.blocked) && `${account.display_name} ${account.login}`.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase())))
 const hasMemberFilters = computed(() => Boolean(search.value.trim()) || roleFilter.value !== 'ALL' || statusFilter.value !== 'ALL')
 function resetMemberFilters(): void { search.value = ''; roleFilter.value = 'ALL'; statusFilter.value = 'ALL' }
-async function load(next?: string): Promise<void> {
+async function load(next?: string): Promise<boolean> {
   loading.value = true; error.value = null
-  try { const page = await listAdminAccounts(next); accounts.value = next ? [...accounts.value, ...page.accounts] : page.accounts; cursor.value = page.next_cursor;conflictState.sync(page.accounts) }
-  catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить участников.' } finally { loading.value = false }
+  try {
+    const page = await listAdminAccounts(next)
+    accounts.value = next ? [...accounts.value, ...page.accounts] : page.accounts
+    cursor.value = page.next_cursor
+    conflictState.sync(page.accounts)
+    for (const account of page.accounts) {
+      deniedIDs.value[account.account_id] = false
+      if (refreshRequiredIDs.value[account.account_id]) {
+        conflictState.saved(account.account_id, account)
+        refreshRequiredIDs.value[account.account_id] = false
+      }
+    }
+    return true
+  } catch (cause) { error.value = requestMessage(cause, 'Не удалось загрузить участников.'); return false }
+  finally { loading.value = false }
+}
+function requestMessage(cause: unknown, fallback: string): string {
+  if (cause instanceof AdminDirectoryError && (cause.status === 401 || cause.status === 403)) return cause.status === 401 ? 'Сессия завершена. Войдите снова.' : 'Нет доступа к этому действию.'
+  if (cause instanceof AdminDirectoryError && cause.message.startsWith('Не удалось выполнить запрос (')) return adminRequestFeedback(new AdminResponseError(cause.status)).message
+  if (cause instanceof TypeError) return adminRequestFeedback(cause).message
+  return cause instanceof Error ? cause.message : fallback
 }
 async function save(account: AdminAccount, event: MouseEvent): Promise<void> {
   const draft = drafts[account.account_id]; if (!draft||conflictState.conflicts[account.account_id]) return
@@ -30,15 +52,20 @@ async function save(account: AdminAccount, event: MouseEvent): Promise<void> {
   if(!expected){error.value='Обновите список: серверная версия аккаунта недоступна.';return}
   const trigger = event.currentTarget as HTMLButtonElement
   const wasFocused = document.activeElement === trigger
-  error.value = null; status.value = null; busyID.value = account.account_id
-  try { await updateAdminAccount(account.account_id,draft.role,draft.blocked,undefined,expected);conflictState.saved(account.account_id);status.value = `Права аккаунта ${account.login} сохранены.`; await load() }
-  catch (cause) {if(cause instanceof AdminDirectoryError&&cause.status===409){conflictState.capture(account.account_id);await load()};error.value = cause instanceof Error ? cause.message : 'Не удалось изменить аккаунт.' } finally { busyID.value = ''; await nextTick(); restoreAdminSaveFocus(trigger, wasFocused, document.activeElement, document.body) }
+  error.value = null; status.value = null; pendingAnnouncement.value = 'Сохраняем изменения участника…'; busyID.value = account.account_id
+  try {
+    await updateAdminAccount(account.account_id,draft.role,draft.blocked,undefined,expected)
+    refreshRequiredIDs.value[account.account_id] = true
+    const refreshed = await load()
+    status.value = refreshed ? `Права аккаунта ${account.login} сохранены.` : 'Изменения сохранены, но список не обновился. Обновите его перед следующим действием.'
+  }
+  catch (cause) {if(cause instanceof AdminDirectoryError&&(cause.status===401||cause.status===403)) deniedIDs.value[account.account_id]=true;if(cause instanceof AdminDirectoryError&&cause.status===409){conflictState.capture(account.account_id);await load()};error.value = requestMessage(cause, 'Не удалось изменить аккаунт.') } finally { busyID.value = ''; pendingAnnouncement.value = ''; await nextTick(); restoreAdminSaveFocus(trigger, wasFocused, document.activeElement, document.body) }
 }
 async function createReset(account: AdminAccount, event: MouseEvent): Promise<void> {
   resetTrigger.value = event.currentTarget as HTMLButtonElement
-  resetLink.value = null; error.value = null; status.value = null; busyID.value = account.account_id
+  resetLink.value = null; error.value = null; status.value = null; pendingAnnouncement.value = 'Создаём ссылку восстановления…'; busyID.value = account.account_id
   try { resetLink.value = { ...await createPasswordResetLink(account.account_id), login: account.login }; await nextTick(); resetResult.value?.querySelector('input')?.focus() }
-  catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось создать ссылку восстановления.' } finally { busyID.value = '' }
+  catch (cause) { if(cause instanceof AdminDirectoryError&&(cause.status===401||cause.status===403)) deniedIDs.value[account.account_id]=true; error.value = requestMessage(cause, 'Не удалось создать ссылку восстановления.') } finally { busyID.value = ''; pendingAnnouncement.value = '' }
 }
 function closeReset(): void { resetLink.value = null; void nextTick(() => resetTrigger.value?.isConnected && resetTrigger.value.focus()) }
 async function copyResetLink(): Promise<void> {
@@ -62,7 +89,7 @@ onMounted(() => { void load() })
           <td><span class="admin-account-user"><span class="admin-account-avatar" :style="{ backgroundColor: avatarBackground(account.account_id), color: avatarForeground(account.account_id) }">{{ avatarInitials(account.display_name) }}</span><span><strong>{{ account.display_name }}</strong><small>@{{ account.login }}</small></span></span></td>
           <td>{{ account.role === 'ADMINISTRATOR' ? 'Администратор' : 'Пользователь' }}</td>
           <td><span class="admin-account-status" :class="account.blocked ? 'is-blocked' : 'is-active'">{{ account.blocked ? 'Заблокирован' : 'Активен' }}</span></td>
-          <td class="admin-account-actions"><button type="button" :aria-label="`Действия с участником ${account.display_name}`" :aria-expanded="activeActionsID === account.account_id" @click="activeActionsID = activeActionsID === account.account_id ? '' : account.account_id">⋯</button><div v-if="activeActionsID === account.account_id" class="admin-account-actions-menu"><label>Роль<select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></label><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сохранить изменения для ${account.login}`" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" :aria-label="`Сбросить пароль для ${account.login}`" @click="createReset(account, $event)">Сбросить пароль</button><VoiceTimeoutControl :key="`timeout-desktop-${account.account_id}`" :account-id="account.account_id" :login="account.login" /></div></td>
+          <td class="admin-account-actions"><button type="button" :aria-label="`Действия с участником ${account.display_name}`" :aria-expanded="activeActionsID === account.account_id" @click="activeActionsID = activeActionsID === account.account_id ? '' : account.account_id">⋯</button><div v-if="activeActionsID === account.account_id" class="admin-account-actions-menu"><label>Роль<select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></label><label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label><button type="button" :disabled="busyID === account.account_id || deniedIDs[account.account_id] || refreshRequiredIDs[account.account_id]" :aria-label="`Сохранить изменения для ${account.login}`" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id || deniedIDs[account.account_id] || refreshRequiredIDs[account.account_id]" :aria-label="`Сбросить пароль для ${account.login}`" @click="createReset(account, $event)">Сбросить пароль</button><VoiceTimeoutControl :key="`timeout-desktop-${account.account_id}`" :account-id="account.account_id" :login="account.login" /></div></td>
         </tr>
       </tbody></table>
     </div>
@@ -72,7 +99,7 @@ onMounted(() => { void load() })
         <div class="admin-mobile-edit">
           <label>Роль<select v-model="drafts[account.account_id].role" :disabled="busyID === account.account_id" :aria-label="`Роль: ${account.login}`"><option value="MEMBER">Участник</option><option value="ADMINISTRATOR">Администратор</option></select></label>
           <label class="admin-block-toggle"><input v-model="drafts[account.account_id].blocked" type="checkbox" :disabled="busyID === account.account_id" :aria-label="`Заблокирован: ${account.login}`"> Заблокирован</label>
-          <div class="admin-mobile-actions"><button type="button" :disabled="busyID === account.account_id" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id" @click="createReset(account, $event)">Сбросить пароль</button></div>
+          <div class="admin-mobile-actions"><button type="button" :disabled="busyID === account.account_id || deniedIDs[account.account_id] || refreshRequiredIDs[account.account_id]" @click="save(account, $event)">Сохранить</button><button type="button" :disabled="busyID === account.account_id || deniedIDs[account.account_id] || refreshRequiredIDs[account.account_id]" @click="createReset(account, $event)">Сбросить пароль</button></div>
         </div>
         <VoiceTimeoutControl :key="`timeout-mobile-${account.account_id}`" :account-id="account.account_id" :login="account.login" />
       </details>
@@ -86,6 +113,6 @@ onMounted(() => { void load() })
     </section>
     <button v-if="cursor" class="admin-more" type="button" :disabled="loading" @click="load(cursor)">Загрузить ещё</button>
     <Comparison v-for="(conflict,id) in conflictState.conflicts" :key="id" :before="conflictState.summary(conflict.before)" :current="conflict.current ? conflictState.summary(conflict.current) : null" :proposed="conflictState.summary(drafts[id])" :ready="Boolean(conflict.current?.updated_at)" :busy="loading || Boolean(busyID)" @refresh="load()" @discard="conflictState.accept(id,true)" @apply="conflictState.accept(id,false);status='Сравнение подтверждено. Нажмите «Сохранить» у выбранного участника.'" />
-    <p v-if="status" class="admin-status" aria-live="polite">{{ status }}</p><p v-if="error" class="admin-error" role="alert">{{ error }}</p>
+    <p v-if="pendingAnnouncement" class="admin-status" role="status" aria-live="polite">{{ pendingAnnouncement }}</p><p v-if="status" class="admin-status" role="status" aria-live="polite">{{ status }}</p><p v-if="error" class="admin-error" role="alert">{{ error }}</p>
   </section>
 </template>

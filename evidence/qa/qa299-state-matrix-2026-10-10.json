@@ -1,0 +1,201 @@
+{
+  "id": "QA-299-STATE-MATRIX",
+  "date": "2026-10-10",
+  "task": "UIUX-2026 issue #299 — loading, empty, error, success, stale and mutation feedback",
+  "issue": "https://github.com/Egkurilov/BOOHTACORD/issues/299",
+  "source_revision": "21cd24ed plus the tested working tree",
+  "working_tree_changes": true,
+  "status": "PASS_WITH_DOCUMENTED_EVIDENCE_BOUNDARIES",
+  "checks": [
+    {
+      "name": "Web request feedback and history state unit tests",
+      "command": "cd clients/web && npm test -- --run src/request_feedback.spec.ts src/conversation/text_history_race.spec.ts src/direct_message/direct_message_history_race.spec.ts src/direct_message/direct_message_history_chronology.spec.ts src/admin/members/conflict_state.spec.ts",
+      "result": "PASS",
+      "test_files": 5,
+      "passed": 19,
+      "observations": [
+        "Offline, timeout, authorization, retryable status and fallback copy are distinguished.",
+        "Failed TEXT/DM history stays stale rather than empty, retryability follows the response, and a later scope/request generation wins.",
+        "Member save refresh updates its baseline and draft atomically."
+      ]
+    },
+    {
+      "name": "Web accessibility and admin response fixture matrix in Chrome",
+      "command": "cd clients/web && CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' ./node_modules/.bin/playwright test -c tests/accessibility/playwright.config.ts tests/accessibility/accessibility.browser.spec.ts tests/accessibility/admin_fixture_matrix.browser.spec.ts",
+      "result": "PASS",
+      "passed": 33,
+      "observations": [
+        "Readiness and media fixtures cover pending, stale 503, 403 denial, 429 retry and recovery without false-empty results.",
+        "Role mutations cover 403/404/409/429/503 and offline; drafts survive failure, denied saves wait for refresh, 409 requires deliberate conflict review, and pending/success feedback uses one status region.",
+        "Member fixtures cover 403/409/503, preserved data/drafts and deliberate retries; audit errors remain explicit.",
+        "Axe checks pass at tested responsive states, including conflict review."
+      ]
+    },
+    {
+      "name": "Flutter role and shared offline/timeout presentation analyzer",
+      "command": "cd clients/flutter && flutter analyze --no-pub lib/src/core/errors/presentation.dart lib/src/features/admin/role_permissions test/admin_role_permissions_surface_test.dart test/core_errors_presentation_test.dart",
+      "result": "PASS",
+      "observation": "No issues found."
+    },
+    {
+      "name": "Flutter role and shared error presentation widget tests",
+      "command": "cd clients/flutter && flutter test --no-pub test/admin_role_permissions_surface_test.dart test/core_errors_presentation_test.dart",
+      "result": "PASS",
+      "passed": 11,
+      "observations": [
+        "403/404/409/429/503, offline and timeout feedback retain drafts and use the retry policy.",
+        "A 409 followed by a failed refresh never labels old values as current; a later successful refresh enables explicit review.",
+        "Overlapping role loads ignore the older response; pending and success are live Semantics states."
+      ]
+    },
+    {
+      "name": "Web production build",
+      "command": "cd clients/web && VITE_PUBLIC_ORIGIN='https://boohtacord.example' npm run build",
+      "result": "PASS",
+      "observations": [
+        "Vue type-check and Vite production build completed.",
+        "Build reports existing LiveKit mixed dynamic/static import and large-chunk advisories."
+      ]
+    }
+  ],
+  "visual_artifacts": {
+    "storage": "All PNGs are ignored working-tree QA captures under .out; none are staged or committed.",
+    "issue_source_names": [
+      "mobile-dm-empty-chat.png",
+      "mobile-guild-readiness.png",
+      "desktop-guild-readiness.png",
+      "mobile-guild-media.png",
+      "desktop-voice-room.png"
+    ],
+    "issue_source_files_missing_from_workspace": [
+      "mobile-dm-empty-chat.png",
+      "desktop-voice-room.png"
+    ],
+    "source_captures": [
+      {
+        "path": ".out/uiux-source/mobile-guild-readiness.png",
+        "sha256": "85cbc35a1012e0d7a1023b73adb36e8a32e48823017cc5b1e7be6a45cd0bf192",
+        "raster": "1179x2556"
+      },
+      {
+        "path": ".out/uiux-source/desktop-guild-readiness.png",
+        "sha256": "5851d67a23d4d97b0bfc4eea52785ab13073f76ad7fb8c54ebf0bc6d487ffd6d",
+        "raster": "2880x1800"
+      },
+      {
+        "path": ".out/uiux-source/mobile-guild-media.png",
+        "sha256": "94c7cf2210cc8adbe54b114d0f195e88ef595a6908c97254cc51df1dad8a0c28",
+        "raster": "1179x2556"
+      },
+      {
+        "path": ".out/uiux-source/desktop-guild-media.png",
+        "sha256": "a2319091df0b65ebc531e0cdc18a88e5d868605509abeaeadcf35b8b1afe2480",
+        "raster": "2880x1800"
+      },
+      {
+        "path": ".out/uiux-source/mobile-guild-roles.png",
+        "sha256": "8d771f365cb60522535eeebb5e293f5d5310330007d68f2379213e9c5e49b276",
+        "raster": "1179x2556"
+      },
+      {
+        "path": ".out/client-lifecycle/390/guild-members.png",
+        "sha256": "40e2d83b4c0c0ed9e0424201b2682c705795d49efe3c98b11611a7dff1d4bdae",
+        "raster": "1170x2532"
+      },
+      {
+        "path": ".out/client-lifecycle/390/guild-audit.png",
+        "sha256": "e7bce8c576a048c1496f6575aaa1ac531804ddb257a05b8f96b651e8a166af88",
+        "raster": "1170x2532"
+      }
+    ],
+    "after_captures": [
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-empt-6a4ac-e-start-conversation-action/direct-message-empty-after.png",
+        "sha256": "d7b74e51ccd788d23829200c844fd96dfdb3fdecfc11f81a592e22b4f73171b9",
+        "raster": "320x720",
+        "state": "Successful empty DM history, with a visible start action"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-WCAG-07994-le-failure-and-retry-states/readiness-stale-503-mobile-after.png",
+        "sha256": "7d11afff66fece99c03368afe558dc20b6d939d426839cf4165cf4077e39525a",
+        "raster": "390x1561",
+        "state": "Stale readiness result after 503"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-read-31d26-responsive-dashboard-layout/readiness-dashboard-desktop-after.png",
+        "sha256": "d95e5dc89533e1d49b1aeb58f919063473b796f92f8c552661c049fb8b06ad72",
+        "raster": "1440x1058",
+        "state": "Readiness dashboard at desktop width"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-WCAG-b16a9--refresh-and-failure-states/media-stale-503-mobile-after.png",
+        "sha256": "e3d20beee5acf980af96387dcea95e76134b023ae0eaa278b79aa4132bf474fc",
+        "raster": "390x844",
+        "state": "Stale media measurements after 503"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-WCAG-b16a9--refresh-and-failure-states/media-recovered-mobile-after.png",
+        "sha256": "918b243528fbe46d8965d1548c230f36039da638646a5880a64dcf76bdd3ab1d",
+        "raster": "390x844",
+        "state": "Media measurements after deliberate successful retry"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-role-9ede9-reports-one-pending-outcome/role-mutation-before.png",
+        "sha256": "d1702777fa75918157de46d313c2cc1bc1e07fe9eb1c34bd37146475278b09a6",
+        "raster": "390x844",
+        "state": "Role permission draft before mutation"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-role-9ede9-reports-one-pending-outcome/role-mutation-failure-503.png",
+        "sha256": "cf58945de70477fa13505bbaccd96b61514763dce9fee4d3b36f21660dcf3b58",
+        "raster": "390x844",
+        "state": "Role draft retained after 503"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-role-9ede9-reports-one-pending-outcome/role-mutation-offline.png",
+        "sha256": "e3a5db5a3056f5605e025bb7d91bd102eed1edf41852b586e53d6d5c8b214082",
+        "raster": "390x844",
+        "state": "Role draft retained after offline failure"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-role-9ede9-reports-one-pending-outcome/role-mutation-after.png",
+        "sha256": "97902fec7837ceeb83a60503b8d7e2111ae591dfdb83114f356e4bb34b7e6c4b",
+        "raster": "390x844",
+        "state": "Role permission after deliberate successful retry"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-role-07060-w-before-a-deliberate-retry/role-conflict-review.png",
+        "sha256": "10ccc053c427b0368462514f66c44a74e6a63758558f517242bb348973de07a4",
+        "raster": "390x1303",
+        "state": "409 current/before/proposed review"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-role-07060-w-before-a-deliberate-retry/role-conflict-after-review.png",
+        "sha256": "569308bffb1ab516b5d64fba1aa5cc2aef68b8f94dc2525760d29ee616a10851",
+        "raster": "390x844",
+        "state": "Role permission after reviewed conflict retry"
+      },
+      {
+        "path": ".out/accessibility-browser-results/accessibility.browser-voic-dca26-the-listener-path-available/voice-prejoin-desktop-after.png",
+        "sha256": "e7d9a0aa44a27052087d575163fe98384deaa4d59d05b2a3f9134eb973ddbdcc",
+        "raster": "1440x900",
+        "state": "Voice prejoin error with a listener path at desktop width"
+      }
+    ]
+  },
+  "capture_limitations": [
+    "The issue names mobile-dm-empty-chat.png and desktop-voice-room.png as source inputs, but neither file is present in this workspace; the browser tests produce current DM and voice-prejoin captures instead.",
+    "Browser captures are production-component or test-fixture mounts; they do not claim physical-device rendering.",
+    "No physical VoiceOver/TalkBack walkthrough or live-SFU fault recovery was run."
+  ],
+  "acceptance": {
+    "per_feature_state_contract": "PASS",
+    "shared_failure_feedback_and_existing_state_primitives": "PASS",
+    "retry_denial_draft_and_stale_data_behavior": "PASS",
+    "request_generation_and_scope_race_guards": "PASS",
+    "web_live_status_and_flutter_semantics_fixtures": "PASS",
+    "before_after_capture_set": "PASS_WITH_TWO_SOURCE_FILES_UNAVAILABLE_LOCALLY",
+    "physical_assistive_technology": "NOT_RUN_SEPARATE_RELEASE_GATE",
+    "issue_state_at_capture": "OPEN"
+  }
+}

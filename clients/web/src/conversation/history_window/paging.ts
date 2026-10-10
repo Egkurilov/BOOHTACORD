@@ -1,4 +1,5 @@
 import type { Ref } from 'vue'
+import { requestFailureMessage } from '../../request_feedback'
 
 import { loadMessagePage, type MessageRequest, type TextMessage } from '../message_client'
 
@@ -32,7 +33,7 @@ export function createHistoryPaging(state: PagingState) {
       state.applyWindow(Boolean(page.nextCursor), Boolean(state.newerCursor.value), 'older')
       return true
     } catch (cause) {
-      if (generation === state.generation()) state.olderError.value = cause instanceof Error ? cause.message : 'Не удалось загрузить старые сообщения.'
+      if (generation === state.generation()) state.olderError.value = requestFailureMessage(cause, 'Не удалось загрузить старые сообщения.')
       return false
     } finally {
       if (generation === state.generation()) state.olderLoading.value = false
@@ -53,7 +54,7 @@ export function createHistoryPaging(state: PagingState) {
       state.applyWindow(Boolean(state.olderCursor.value), Boolean(page.nextCursor), 'newer')
       return true
     } catch (cause) {
-      if (generation === state.generation()) state.newerError.value = cause instanceof Error ? cause.message : 'Не удалось загрузить новые сообщения.'
+      if (generation === state.generation()) state.newerError.value = requestFailureMessage(cause, 'Не удалось загрузить новые сообщения.')
       return false
     } finally {
       if (generation === state.generation()) state.newerLoading.value = false
