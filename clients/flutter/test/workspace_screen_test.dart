@@ -4864,7 +4864,13 @@ void main() {
       addTearDown(tester.view.reset);
       await loadUiuxVisualCaptureFonts();
 
-      final state = AppState(_PortraitApi(withHistory: true, historyCount: 3));
+      final state = AppState(
+        _PortraitApi(
+          withHistory: true,
+          historyCount: 3,
+          includeDirectMessage: true,
+        ),
+      );
       await state.initialize();
       state.selectedChannel = _PortraitApi.channel;
       final captureKey = ValueKey('uiux-workspace-capture-${profile.name}');
@@ -4893,6 +4899,22 @@ void main() {
         find.byKey(captureKey),
         fileName:
             'flutter-text-channel-${profile.name}-${profile.size.width.toInt()}x${profile.size.height.toInt()}.png',
+        pixelRatio: profile.pixelRatio,
+      );
+
+      await state.openDirectConversation(state.directMessages.single);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('direct-message-composer-wrap')),
+        findsOneWidget,
+      );
+      expect(find.text('Исходное личное сообщение'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await captureUiuxBoundary(
+        tester,
+        find.byKey(captureKey),
+        fileName:
+            'flutter-dm-conversation-${profile.name}-${profile.size.width.toInt()}x${profile.size.height.toInt()}.png',
         pixelRatio: profile.pixelRatio,
       );
       await tester.pumpWidget(const SizedBox.shrink());
