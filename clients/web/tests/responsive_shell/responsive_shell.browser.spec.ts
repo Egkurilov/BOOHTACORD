@@ -56,6 +56,55 @@ test('production shell CSS stays within the viewport and preserves its workspace
   }
 })
 
+test('navigation and message history scroll independently', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/tests/responsive_shell/fixture.html')
+  await page.evaluate(() => {
+    const drawer = document.querySelector<HTMLElement>('.nav-drawer')!
+    const navContent = document.createElement('div')
+    navContent.className = 'nav-content'
+    for (const child of Array.from(drawer.children)) {
+      if (!child.matches('.mobile-nav-close')) navContent.append(child)
+    }
+    drawer.append(navContent)
+    const navFill = document.createElement('div')
+    navFill.style.height = '1200px'
+    navFill.setAttribute('aria-hidden', 'true')
+    navContent.append(navFill)
+
+    const history = document.querySelector<HTMLOListElement>('.message-list')!
+    history.replaceChildren(...Array.from({ length: 80 }, (_, index) => {
+      const item = document.createElement('li')
+      item.className = 'message-item'
+      item.textContent = `Сообщение ${index + 1}: история сохраняет собственную область прокрутки.`
+      return item
+    }))
+  })
+
+  const navigation = page.locator('.nav-content')
+  const history = page.getByTestId('message-list')
+  const navigationSize = await navigation.evaluate(element => ({
+    client: element.clientHeight,
+    scroll: element.scrollHeight,
+  }))
+  const historySize = await history.evaluate(element => ({
+    client: element.clientHeight,
+    scroll: element.scrollHeight,
+  }))
+  expect(navigationSize.scroll).toBeGreaterThan(navigationSize.client)
+  expect(historySize.scroll).toBeGreaterThan(historySize.client)
+
+  const initialHistoryPosition = await history.evaluate(element => element.scrollTop)
+  await navigation.evaluate(element => { element.scrollTop = 240 })
+  expect(await navigation.evaluate(element => element.scrollTop)).toBeGreaterThan(0)
+  expect(await history.evaluate(element => element.scrollTop)).toBe(initialHistoryPosition)
+
+  const navigationPosition = await navigation.evaluate(element => element.scrollTop)
+  await history.evaluate(element => { element.scrollTop = 320 })
+  expect(await history.evaluate(element => element.scrollTop)).toBeGreaterThan(0)
+  expect(await navigation.evaluate(element => element.scrollTop)).toBe(navigationPosition)
+})
+
 test('the mobile navigation drawer opens inside its available width', async ({ page }) => {
   for (const width of [320, 390, 600, 840]) {
     await page.setViewportSize({ width, height: 844 })
