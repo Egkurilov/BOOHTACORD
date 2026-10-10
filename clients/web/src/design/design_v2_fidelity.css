@@ -19,7 +19,8 @@
 .stream-diagnostics-panel { padding: 16px; color: var(--gc-text-muted); font-size: 0.75rem; box-shadow: 0 24px 64px #0000007A; }
 .voice-participant-volumes { display: flex; justify-content: center; gap: 24px; }
 .topology-dialog { display: flex; flex-direction: column; gap: 20px; overflow: hidden; border-radius: 16px; padding: 0; background: var(--gc-surface); box-shadow: 0 24px 64px #0000007A; }
-.admin-confirm-dialog { display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; padding: 0; background: var(--gc-surface); box-shadow: 0 24px 64px #0000007A; }
+.admin-confirm-dialog { display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; border-radius: 16px; padding: var(--gc-space-6); background: var(--gc-surface); box-shadow: 0 24px 64px #0000007A; }
+.admin-confirm-dialog .admin-confirm-actions { margin-top: auto; }
 dialog:not([open]) { display: none; }
 .screen-share-setup-dialog { display: flex; flex-direction: column; overflow: hidden; background: var(--gc-surface); box-shadow: 0 24px 64px #0000007A; }
 .authentication-page { display: flex; align-items: center; }

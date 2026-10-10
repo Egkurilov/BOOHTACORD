@@ -1,7 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { expectAxeClear } from './axe'
 
-test('destructive confirmation is named, starts safely, traps focus, and Escape cancels', async ({ page }) => {
+test.use({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2 })
+
+test('destructive confirmation is named, starts safely, traps focus, and Escape cancels', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/')
   await page.evaluate(async () => {
     const { createApp, defineComponent, h, ref } = await import('/node_modules/.vite/deps/vue.js')
@@ -27,6 +30,12 @@ test('destructive confirmation is named, starts safely, traps focus, and Escape 
   const destructive = dialog.getByRole('button', { name: 'Архивировать канал' })
   await expect(dialog).toBeVisible()
   await expect(dialog).toContainText('«Чат команды»')
+  const dialogBounds = await dialog.boundingBox()
+  const headingBounds = await dialog.getByRole('heading').boundingBox()
+  expect(dialogBounds).not.toBeNull()
+  expect(headingBounds).not.toBeNull()
+  expect(headingBounds!.x).toBeGreaterThan(dialogBounds!.x + 12)
+  await page.screenshot({ path: testInfo.outputPath('topology-destructive-confirmation.png') })
   await expectAxeClear(page, 'dialog')
   await expect(cancel).toBeFocused()
   await page.keyboard.press('Shift+Tab')
@@ -63,7 +72,7 @@ test('screen-share setup remains scrollable and keeps the action reachable on a 
 })
 
 const screenShareSetups = [
-  { name: '390x844 phone', width: 390, height: 844, textScale: 1 },
+  { name: '393x852 phone', width: 393, height: 852, textScale: 1 },
   { name: '320x640 compact phone', width: 320, height: 640, textScale: 1 },
   { name: '844x390 landscape', width: 844, height: 390, textScale: 1 },
   { name: '390x844 phone at 2x text', width: 390, height: 844, textScale: 2 },
@@ -252,7 +261,36 @@ test('an admin VOICE close confirmation closes when its target disappears', asyn
   expect(mutationRequests).toBe(0)
 })
 
-test('topology create ignores duplicate submits and preserves the draft when the server conflicts', async ({ page }) => {
+test('topology channel creation keeps its form and controls visible', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/')
+  await page.evaluate(async () => {
+    const { createApp, h } = await import('/node_modules/.vite/deps/vue.js')
+    const { createPinia } = await import('/node_modules/.vite/deps/pinia.js')
+    const { default: ChannelTopologyActions } = await import('/src/channel/member_topology/ChannelTopologyActions.vue')
+    document.body.innerHTML = '<div id="mount"></div>'
+    const app = createApp({ render: () => h(ChannelTopologyActions, {
+      accountId: 'account-1', voicePresence: null,
+      topology: { revision: 7, categories: [{ id: 'category-1', name: 'Общее', position: 0, channels: [] }] },
+      permissions: {
+        'channel.text.create': true, 'channel.text.delete': false,
+        'channel.voice.create': true, 'channel.voice.delete': false,
+        'category.create': true, 'category.delete': false,
+      },
+    }) })
+    app.use(createPinia())
+    app.mount('#mount')
+  })
+
+  await page.getByRole('button', { name: 'Создать канал в разделе Общее' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Создать канал' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('textbox', { name: 'Название канала' })).toBeFocused()
+  await page.screenshot({ path: testInfo.outputPath('topology-create-channel.png') })
+})
+
+test('topology create ignores duplicate submits and preserves the draft across server errors', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
   let requests = 0
   let releaseFirst!: () => void
   let firstStarted!: () => void
@@ -265,10 +303,16 @@ test('topology create ignores duplicate submits and preserves the draft when the
       await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'CONFLICT', message: 'Список каналов изменился.' } }) })
       return
     }
-    await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({
-      client_request_id: '11111111-1111-4111-8111-111111111111', topology_revision: 8,
-      result: { resource_type: 'CATEGORY', resource_id: 'category-2', state: 'ACTIVE' },
-    }) })
+    if (requests === 2) {
+      await route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'Недостаточно прав для создания раздела.' } }) })
+    } else if (requests === 3) {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: { code: 'SERVICE_UNAVAILABLE', message: 'Сервис временно недоступен.' } }) })
+    } else {
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({
+        client_request_id: '11111111-1111-4111-8111-111111111111', topology_revision: 8,
+        result: { resource_type: 'CATEGORY', resource_id: 'category-2', state: 'ACTIVE' },
+      }) })
+    }
   })
   await page.goto('/')
   await page.evaluate(async () => {
@@ -292,6 +336,7 @@ test('topology create ignores duplicate submits and preserves the draft when the
   await page.getByRole('button', { name: 'Создать раздел или канал' }).click()
   const dialog = page.getByRole('dialog', { name: 'Создать раздел' })
   const name = dialog.getByRole('textbox', { name: 'Название раздела' })
+  await page.screenshot({ path: testInfo.outputPath('topology-create-section.png') })
   await name.fill('Новый раздел')
   await name.press('Enter')
   await firstRequest
@@ -300,8 +345,16 @@ test('topology create ignores duplicate submits and preserves the draft when the
   releaseFirst()
   await expect(dialog.getByRole('alert')).toContainText('Список каналов изменился.')
   await expect(name).toHaveValue('Новый раздел')
+  await page.screenshot({ path: testInfo.outputPath('topology-create-section-conflict-409.png') })
 
   await dialog.getByRole('button', { name: 'Создать раздел', exact: true }).click()
+  await expect(dialog.getByRole('alert')).toContainText('Недостаточно прав')
+  await expect(name).toHaveValue('Новый раздел')
+  await dialog.getByRole('button', { name: 'Создать раздел', exact: true }).click()
+  await expect(dialog.getByRole('alert')).toContainText('Сервис временно недоступен.')
+  await expect(name).toHaveValue('Новый раздел')
+  await page.screenshot({ path: testInfo.outputPath('topology-create-section-error-503.png') })
+  await dialog.getByRole('button', { name: 'Создать раздел', exact: true }).click()
   await expect(dialog).toBeHidden()
-  expect(requests).toBe(2)
+  expect(requests).toBe(4)
 })
