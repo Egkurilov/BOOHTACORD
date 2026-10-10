@@ -64,7 +64,7 @@ extension AdminScreenStateAdminBuildAdminAccountCompactCardBindingAction
               key: ValueKey('role:${account.accountId}:${draft?.role}'),
               initialValue: draft?.role,
               isExpanded: true,
-              decoration: InputDecoration(labelText: 'Роль: ${account.login}'),
+              decoration: const InputDecoration(labelText: 'Роль'),
               items: const [
                 DropdownMenuItem(value: 'MEMBER', child: Text('Участник')),
                 DropdownMenuItem(

@@ -29,7 +29,8 @@ class AdminMemberStatusFilter extends StatelessWidget {
             key: const ValueKey('admin-member-status-filter'),
             initialValue: status,
             isExpanded: true,
-            style: const TextStyle(fontSize: 14),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(fontSize: 14),
             selectedItemBuilder: (_) => compact && !largeText
                 ? const [
                     FittedBox(

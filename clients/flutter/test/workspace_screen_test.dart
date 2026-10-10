@@ -26,6 +26,8 @@ import 'package:livekit_client/src/proto/livekit_models.pb.dart' as lk;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
+import 'uiux_2026/capture_support.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
@@ -4830,6 +4832,52 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     state.dispose();
   });
+
+  for (final profile in [
+    (name: 'mobile', size: const Size(393, 852), pixelRatio: 3.0),
+    (name: 'desktop', size: const Size(1440, 900), pixelRatio: 2.0),
+  ]) {
+    testWidgets('captures production Flutter text workspace at ${profile.name}', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = profile.pixelRatio;
+      tester.view.physicalSize = Size(
+        profile.size.width * profile.pixelRatio,
+        profile.size.height * profile.pixelRatio,
+      );
+      addTearDown(tester.view.reset);
+      await loadUiuxVisualCaptureFonts();
+
+      final state = AppState(_PortraitApi(withHistory: true, historyCount: 3));
+      await state.initialize();
+      state.selectedChannel = _PortraitApi.channel;
+      final captureKey = ValueKey('uiux-workspace-capture-${profile.name}');
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: guildTheme(),
+          home: RepaintBoundary(
+            key: captureKey,
+            child: AnimatedBuilder(
+              animation: state,
+              builder: (_, _) => WorkspaceScreen(state: state),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Последнее сообщение'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await captureUiuxBoundary(
+        tester,
+        find.byKey(captureKey),
+        fileName:
+            'flutter-text-channel-${profile.name}-${profile.size.width.toInt()}x${profile.size.height.toInt()}.png',
+        pixelRatio: profile.pixelRatio,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      state.dispose();
+    });
+  }
 }
 
 class _PublishedScreenRoom extends Room {

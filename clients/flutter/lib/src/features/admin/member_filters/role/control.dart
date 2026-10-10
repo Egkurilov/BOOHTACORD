@@ -31,7 +31,8 @@ class AdminMemberRoleFilter extends StatelessWidget {
             key: const ValueKey('admin-member-role-filter'),
             initialValue: role,
             isExpanded: true,
-            style: const TextStyle(fontSize: 14),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(fontSize: 14),
             selectedItemBuilder: (_) => compact && !largeText
                 ? const [
                     FittedBox(
