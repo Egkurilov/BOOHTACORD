@@ -1,0 +1,8 @@
+{
+  "version": "webrtc-m150-boohtacord-r1",
+  "source_revision": "030ad13afd0ab7d16c70662e0e793ea1b892c158",
+  "depot_revision": "2fd34a8813b6f34336aad40976cc4223768177f8",
+  "routing_marker": "m150-030ad13-custom-source-r1",
+  "architectures": ["arm64", "x64"],
+  "gn_args": "target_os=\"mac\" mac_deployment_target=\"10.15\" is_debug=false is_component_build=false rtc_include_tests=true rtc_enable_protobuf=true rtc_build_examples=false rtc_enable_symbol_export=true use_rtti=true use_custom_libcxx=false libcxx_abi_unstable=false enable_dsyms=false enable_stripping=true rtc_libvpx_build_vp9=true rtc_use_h264=false enable_libaom=true rtc_include_dav1d_in_internal_decoder_factory=true"
+}
