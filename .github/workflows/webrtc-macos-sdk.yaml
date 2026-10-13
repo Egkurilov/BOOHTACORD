@@ -1,12 +1,6 @@
 name: Patched macOS WebRTC SDK
 
 on:
-  push:
-    branches: [codex/issue335-sdk]
-    paths:
-      - 'tools/build/webrtc_macos/**'
-      - 'clients/flutter/packages/flutter_webrtc/third_party/patches/webrtc-sdk-m150-custom-source-*.patch'
-      - '.github/workflows/webrtc-macos-sdk.yaml'
   workflow_dispatch:
 
 permissions:
