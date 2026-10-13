@@ -1,5 +1,6 @@
 """Build the pinned, patched macOS SDK; run only focused real-route unit tests."""
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -48,7 +49,18 @@ def build(args):
     checkout(depot, 'https://chromium.googlesource.com/chromium/tools/depot_tools.git', recipe['depot_revision'])
     checkout(source, 'https://github.com/webrtc-sdk/webrtc.git', recipe['source_revision'], 'm150_release')
     env = dict(os.environ, DEPOT_TOOLS_UPDATE='0', PATH=str(depot) + os.pathsep + os.environ['PATH'])
-    configuration = "solutions = [{'name': 'src', 'url': 'https://github.com/webrtc-sdk/webrtc.git', 'managed': False, 'custom_deps': {}, 'custom_vars': {}}]\ntarget_os = ['mac']\n"
+    # Initialize the pinned Python shim used by gn/ninja without updating Git
+    # or installing the unrelated lint-tool bootstrap set.
+    call('bash', '-c', 'source "$1/bootstrap_python3"; bootstrap_python3',
+         'sdk-bootstrap', depot, cwd=workspace, env=env)
+    # The pinned tree's sole unnamed hook downloads benchmark video/audio.
+    # These two routing tests use in-memory PCM and need no media fixtures.
+    hooks = next(n.value.elts for n in ast.parse((source / 'DEPS').read_text()).body
+                 if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'hooks' for t in n.targets))
+    unnamed = [h for h in hooks if 'name' not in [k.value for k in h.keys]]
+    if len(unnamed) != 1 or 'chromium-webrtc-resources' not in ast.unparse(unnamed[0]):
+        raise ValueError('Unexpected SDK resource hook; review the pinned recipe')
+    configuration = "solutions = [{'name': 'src', 'url': 'https://github.com/webrtc-sdk/webrtc.git', 'managed': False, 'custom_deps': {}, 'custom_vars': {}, 'custom_hooks': [{'name': ''}]}]\ntarget_os = ['mac']\n"
     (workspace / '.gclient').write_text(configuration)
     if not args.synced:
         call(depot / 'gclient', 'sync', '--nohooks', '--no-history', '--shallow', '-j', '6', cwd=workspace, env=env)
