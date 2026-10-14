@@ -58,9 +58,9 @@ jobs:
           assets=request('/releases/'+str(release['id'])+'/assets?per_page=50&cb='+str(time.time_ns()))
           for asset in assets:
               print({k:asset.get(k) for k in ['id','name','state','size','digest']})
-              if asset['name']=='BOOHTACORD-windows-v1.0.42-x64.zip' and asset['state']=='starter' and asset['size']==0 and not asset.get('digest'):
+              if asset['name']=='BOOHTACORD-windows-v1.0.42-x64.zip' and asset['id']==638624205 and asset['state']=='starter' and asset['size']==26822209 and not asset.get('digest'):
                   request('/releases/assets/'+str(asset['id']),'DELETE')
-                  print('Removed this interrupted zero-byte starter; completed assets retained')
+                  print('Removed owned interrupted starter 638624205; completed assets retained')
           PYCLEAN
       - name: Publish exact retained files without rebuilding
         env:
