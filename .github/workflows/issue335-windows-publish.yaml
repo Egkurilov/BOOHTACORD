@@ -1,0 +1,53 @@
+name: Publish retained Windows 1.0.42 artifact
+on:
+  push:
+    branches: [codex/issue335-sdk]
+    paths: ['.github/workflows/issue335-windows-publish.yaml']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 936fa2282e61272e6b4abc517b939b387462083e
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@v4
+        with:
+          name: BOOHTACORD-windows-v1.0.42-windows-x64
+          run-id: 38485185006
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: retained-windows
+      - name: Verify retained artifact identity and checksums
+        run: |
+          python3 - <<'PYVERIFY'
+          import hashlib,json,pathlib,zipfile
+          p=pathlib.Path('retained-windows')
+          m=json.loads((p/'artifact-manifest.json').read_text())
+          assert m['source_revision']=='936fa2282e61272e6b4abc517b939b387462083e'
+          assert not m['source_dirty'] and m['version']=='1.0.42+77'
+          assert m['signing']['status']=='unsigned'
+          assert hashlib.sha256((p/'BOOHTACORD-windows-v1.0.42-x64.zip').read_bytes()).hexdigest()=='f8928ae5a7db3a31fac4001e5ed5929854a896ec3aef2ae3cc7fc8667647aa9a'
+          for line in (p/'SHA256SUMS').read_text(encoding='utf-8-sig').splitlines():
+              digest,name=line.split('  ',1)
+              assert hashlib.sha256((p/name).read_bytes()).hexdigest()==digest
+          with zipfile.ZipFile(p/'BOOHTACORD-windows-v1.0.42-x64.zip') as archive:
+              for name,item in m['files'].items():
+                  candidates=[n for n in archive.namelist() if n==name or n.endswith('/'+name)]
+                  assert len(candidates)==1
+                  content=archive.read(candidates[0])
+                  assert len(content)==item['bytes'] and hashlib.sha256(content).hexdigest()==item['sha256']
+          print('Retained source, signature metadata, ZIP and packaged files verified')
+          PYVERIFY
+      - name: Publish exact retained files without rebuilding
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node tools/release/windows/publish.mjs --tag windows-v1.0.42 \
+            --asset retained-windows/BOOHTACORD-windows-v1.0.42-x64.zip \
+            --asset retained-windows/artifact-manifest.json \
+            --asset retained-windows/SHA256SUMS
