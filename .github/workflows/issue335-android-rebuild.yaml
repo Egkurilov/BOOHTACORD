@@ -1,0 +1,76 @@
+name: Android 1.0.42 rebuild with release plugin regeneration
+
+# A matching android-v* tag publishes signed APKs using repository signing secrets.
+on:
+  push:
+    branches: [codex/issue335-sdk]
+    paths: ['.github/workflows/issue335-android-rebuild.yaml']
+
+permissions:
+  contents: write
+
+jobs:
+  android-release:
+    concurrency:
+      group: boohtacord-native-signing
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          ref: 768b7f9ea27f0166bb4ffbf979f1d51a9201ab57
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Test idempotent GitHub release publisher
+        run: node --test tools/release/android/publish.test.mjs tools/release/android/publish_retries.test.mjs tools/release/android/publish_conflicts.test.mjs
+
+      - name: Test Android build command and signing boundaries
+        run: python3 -m unittest tools.build.android.test_run tools.build.android.test_signing tools.build.android.test_signature
+
+      - name: Build and verify the signed Android distribution
+        env:
+          BOOHTACORD_ANDROID_KEYSTORE_BASE64: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_BASE64 }}
+          BOOHTACORD_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.BOOHTACORD_ANDROID_KEYSTORE_PASSWORD }}
+          BOOHTACORD_ANDROID_KEY_ALIAS: ${{ secrets.BOOHTACORD_ANDROID_KEY_ALIAS }}
+          BOOHTACORD_ANDROID_KEY_PASSWORD: ${{ secrets.BOOHTACORD_ANDROID_KEY_PASSWORD }}
+        run: GITHUB_REF_NAME=android-v1.0.42 python3 -m tools.build.android.run
+
+      - name: Upload signed APKs as workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOHTACORD-android-v1.0.42-signed-apks
+          path: clients/flutter/build/release-assets/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub release and APK assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag=android-v1.0.42
+          asset_root=clients/flutter/build/release-assets
+          node tools/release/android/publish.mjs \
+            --tag "$tag" \
+            --asset "$asset_root/BOOHTACORD-$tag-arm64-v8a.apk" \
+            --asset "$asset_root/BOOHTACORD-$tag-armeabi-v7a.apk" \
+            --asset "$asset_root/BOOHTACORD-$tag-x86_64.apk" \
+            --asset "$asset_root/artifact-manifest.json" \
+            --asset "$asset_root/SHA256SUMS" \
+            --asset "$asset_root/LICENSE-RNNoise.txt" \
+            --asset "$asset_root/rnnoise-component.cdx.json"
