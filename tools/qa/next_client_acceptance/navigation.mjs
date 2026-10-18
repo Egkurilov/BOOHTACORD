@@ -57,7 +57,12 @@ export async function navigation(page, fixture, input, report) {
   const search=page.getByTestId('search-panel')
   await search.getByLabel('Запрос',{exact:true}).fill('QA history 1')
   await search.getByRole('button',{name:'Найти',exact:true}).click()
+  // A new SQL-only row has never been delivered or rendered in this browser.
+  // It witnesses a genuinely unseen tail, independently of earlier reply scrolling.
+  const unseen=sql(`INSERT INTO messages(id,channel_id,author_id,client_message_id,body,created_at) VALUES(gen_random_uuid(),'${fixture.a}','${fixture.member}',gen_random_uuid(),'QA unseen search tail',now()+INTERVAL '1 second') RETURNING id`)
   const priorCursor=sql(`SELECT message_id FROM channel_read_cursors WHERE account_id='${fixture.admin}' AND channel_id='${fixture.a}'`)
+  assert.ok(priorCursor);assert.notEqual(priorCursor,unseen)
+  await expect(page.locator(`[data-message-id="${unseen}"]`)).toHaveCount(0)
   await search.getByRole('button',{name:/Открыть сообщение от/}).first().click()
   await expect(context.locator('[data-search-anchor]')).toBeFocused()
   assert.equal(sql(`SELECT message_id FROM channel_read_cursors WHERE account_id='${fixture.admin}' AND channel_id='${fixture.a}'`),priorCursor,'Search context consumed unseen history')
