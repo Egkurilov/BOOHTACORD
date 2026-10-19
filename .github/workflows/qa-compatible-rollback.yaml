@@ -1,6 +1,8 @@
 name: Compatible rollback acceptance
 
 on:
+  push:
+    branches: [codex/issue392-rollback-diagnostic]
   pull_request:
     branches: [master]
     paths:
