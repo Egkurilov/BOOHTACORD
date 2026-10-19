@@ -1,0 +1,14 @@
+name: Web release mode proof
+
+on:
+  push:
+    branches: [codex/issue388-release-mode-proof]
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    uses: ./.github/workflows/ci-contracts.yaml
+    with:
+      release_receipt: true
