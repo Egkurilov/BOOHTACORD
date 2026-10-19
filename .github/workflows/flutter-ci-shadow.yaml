@@ -1,6 +1,9 @@
 name: Flutter CI shadow comparison
 'on':
   workflow_dispatch: {}
+  push:
+    branches:
+    - codex/issue390-flutter-shadow
 permissions:
   contents: read
   actions: read
