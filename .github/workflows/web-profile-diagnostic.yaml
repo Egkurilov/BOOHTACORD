@@ -1,0 +1,14 @@
+name: Web profile diagnostic
+
+on:
+  push:
+    branches: [codex/issue388-web-diagnostic]
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    uses: ./.github/workflows/ci-frontend.yaml
+    with:
+      evidence_namespace: diagnostic
