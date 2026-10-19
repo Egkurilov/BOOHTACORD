@@ -2,6 +2,8 @@ name: Web CI same-source shadow
 
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/issue388-web-shadow]
 
 permissions:
   contents: read
