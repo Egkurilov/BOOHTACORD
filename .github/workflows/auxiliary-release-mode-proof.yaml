@@ -9,3 +9,25 @@ jobs:
     uses: ./.github/workflows/ci-contracts.yaml
     with:
       release_receipt: true
+
+  java-identity:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17.0.20+1'
+      - name: Read only public Java identity properties
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,re,subprocess
+          text=subprocess.check_output(['java','-XshowSettings:properties','-version'],stderr=subprocess.STDOUT,text=True)
+          values={}
+          for key in ('java.version','java.runtime.version','java.vendor'):
+              rows=re.findall(r'^\s*'+re.escape(key)+r' = ([^\r\n]+)$',text,re.MULTILINE)
+              assert len(rows)==1
+              assert re.fullmatch(r'[A-Za-z0-9 .+_()-]{1,80}',rows[0])
+              values[key]=rows[0]
+          print(json.dumps(values,sort_keys=True))
+          PY
