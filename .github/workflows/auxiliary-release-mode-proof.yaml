@@ -1,0 +1,11 @@
+name: Auxiliary release mode proof
+on:
+  push:
+    branches: [codex/issue392-release-mode-proof]
+permissions:
+  contents: read
+jobs:
+  contracts:
+    uses: ./.github/workflows/ci-contracts.yaml
+    with:
+      release_receipt: true
