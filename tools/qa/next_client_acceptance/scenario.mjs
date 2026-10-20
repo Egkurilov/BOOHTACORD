@@ -10,13 +10,21 @@ const input = JSON.parse(readFileSync(process.env.QA_INPUT,'utf8'))
 assert.equal(process.env.QA_ORIGIN,'https://localhost:4810')
 let owned, stage = 'browser-launch'
 try {
-  owned = await nativeBrowser()
+  // Diagnostic branch only: reproduce the first-navigation failure before the
+  // unchanged original app scenario. Every failed launch keeps this run red.
+  for (let launch = 0; launch < 20; launch++) {
+    stage = 'browser-launch'
+    owned = await nativeBrowser()
+    owned.context.setDefaultTimeout(20000)
+    await owned.page.setViewportSize({ width:1440, height:900 })
+    stage = 'origin-navigation'
+    await owned.page.goto(process.env.QA_ORIGIN)
+    if (launch < 19) { await owned.close(); owned = undefined }
+  }
   const browser = owned.browser
   const context = owned.context
   context.setDefaultTimeout(20000)
   const page = owned.page, report = { status:'PASS', capacity_limited:input.limited }
-  await page.setViewportSize({ width:1440, height:900 })
-  await page.goto(process.env.QA_ORIGIN)
   stage = 'api-ready'
   await expect.poll(async () => page.evaluate(async () => {
     try { return (await fetch('/api/v1/health', { cache:'no-store' })).status }
@@ -43,6 +51,6 @@ try {
   stage = 'receipt'
   writeFileSync(process.env.QA_RESULT,JSON.stringify(report,null,2)+'\n',{mode:0o600})
 } catch (error) {
-  await captureFailure(owned?.page, input.directory, error, stage).catch(() => console.error('FAIL: bounded fixture diagnostics unavailable'))
+  await captureFailure(owned?.page, input.directory, error, stage, owned?.diagnostics()).catch(() => console.error('FAIL: bounded fixture diagnostics unavailable'))
   console.error(failureSummary(error)); process.exitCode=1
 } finally { await owned?.close() }

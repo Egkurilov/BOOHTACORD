@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "scope": "Temporary diagnostic branch; not final application acceptance or a shipping root-cause fix",
+  "base_revision": "e738c3709a8d60ffa298f36639b03c05844c8ab2",
+  "observed_failure": {
+    "run_id": 39364604424,
+    "job_id": 118438572769,
+    "api_head": "d0abd343daeee747226de8dfffc6605ba8feda8b",
+    "tested_merge": "422aac6ac1c40e325f2f4cea4e1d10b83c3575dc",
+    "artifact_id": 12239097658,
+    "artifact_sha256": "48ffb1697857394c6af3149f7b52c480109130e0ee8ef93fd24d8b2831f49633",
+    "capacity_profile": "limited",
+    "own_source_frame": "scenario.mjs:19:14",
+    "operation": "First page.goto before health/login/application assertions",
+    "root_cause": "UNVERIFIED",
+    "owned_resources_removed": true,
+    "whole_workflow_verdict": "NOT_YET_TERMINAL"
+  },
+  "diagnostic_plan": {
+    "fresh_browser_starts_before_each_original_capacity_scenario": 20,
+    "failure_ends_run": true,
+    "original_application_assertions_and_deadlines_changed": false,
+    "new_finite_fields": ["error category", "browser connected", "page closed", "process exit code", "process signal"],
+    "exception_messages_or_urls_exported": false,
+    "old_schema_one_artifacts_still_supported": true,
+    "hosted_execution": "NOT_RUN"
+  }
+}

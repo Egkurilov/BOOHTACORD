@@ -19,6 +19,15 @@ def dom():
 
 
 class BrowserFailureTests(unittest.TestCase):
+    def test_version_two_retains_finite_browser_process_and_error_category(self):
+        from tools.qa.next_client_acceptance.browser_diagnostics import validate_context
+        row=dict(context(), schema_version=2, stage='origin-navigation', failure_kind='navigation-interrupted',
+                 native_process=dict(browser_connected=True,page_closed=False,exit_code=None,signal=None))
+        self.assertEqual(validate_context(row),row)
+        for field,value in [('failure_kind','PRIVATE-CANARY'),('native_process',dict(row['native_process'], message='PRIVATE-CANARY'))]:
+            with self.subTest(field=field), self.assertRaises(ValueError): validate_context(dict(row,**{field:value}))
+        with self.assertRaises(ValueError): validate_context(dict(row,native_process=dict(row['native_process'],exit_code=True)))
+
     def test_retains_finite_context_safe_dom_and_original_png_without_logs(self):
         with tempfile.TemporaryDirectory() as temporary:
             root=Path(temporary).resolve(); folder=root/'.out/next-client-acceptance'; folder.mkdir(parents=True)
