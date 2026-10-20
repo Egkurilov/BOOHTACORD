@@ -1,119 +1,101 @@
-name: CI
-
-on:
-  pull_request:
-  merge_group:
-    types: [checks_requested]
-  workflow_dispatch:
-
+name: Runner dual Android diagnostic
+'on':
+  workflow_dispatch: {}
 permissions:
   contents: read
-
 concurrency:
-  group: checks-${{ github.workflow }}-${{ github.ref }}
+  group: runner-memory-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
-  changes:
-    if: github.event_name != 'workflow_dispatch' || github.ref != 'refs/heads/master'
-    runs-on: [self-hosted, linux, x64, boohtacord-ci-meta]
-    outputs:
-      contracts: ${{ steps.select.outputs.contracts }}
-      map_version: ${{ steps.select.outputs.map_version }}
-      map_sha256: ${{ steps.select.outputs.map_sha256 }}
-      uncertain: ${{ steps.select.outputs.uncertain }}
-      backend: ${{ steps.select.outputs.backend }}
-      web: ${{ steps.select.outputs.web }}
-      flutter: ${{ steps.select.outputs.flutter }}
-      windows: ${{ steps.select.outputs.windows }}
-      server: ${{ steps.select.outputs.server }}
-      server_release_impact: ${{ steps.select.outputs.server_release_impact }}
-      native_release_impact: ${{ steps.select.outputs.native_release_impact }}
-      actual_profiles: ${{ steps.select.outputs.actual_profiles }}
-      actual_required: ${{ steps.select.outputs.actual_required }}
-      actual_map_sha256: ${{ steps.select.outputs.actual_map_sha256 }}
-      actual_release_required: ${{ steps.select.outputs.actual_release_required }}
-      actual_physical_required: ${{ steps.select.outputs.actual_physical_required }}
+  android-one:
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    - boohtacord-ci-ephemeral
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: ${{ runner.os == 'Linux' && '3.12.15' || '3.12.10' }}
-      - name: Verify selected Python interpreter
-        run: python -m tools.ci.toolchains.runtime python
-      - id: select
-        run: python3 -m tools.ci.select_changes.run
-
-  contracts:
-    if: github.event_name != 'workflow_dispatch' || github.ref != 'refs/heads/master'
-    uses: ./.github/workflows/ci-contracts.yaml
-
-  backend:
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    uses: ./.github/workflows/ci-backend.yaml
-
-  frontend:
-    needs: changes
-    if: needs.changes.outputs.web == 'true'
-    uses: ./.github/workflows/ci-frontend.yaml
-
-  flutter:
-    needs: changes
-    if: needs.changes.outputs.flutter == 'true'
-    uses: ./.github/workflows/ci-flutter.yaml
-
-  windows:
-    needs: changes
-    if: needs.changes.outputs.windows == 'true'
-    uses: ./.github/workflows/flutter-windows.yaml
-
-  actual:
-    needs: changes
-    if: needs.changes.outputs.actual_required == 'true'
-    uses: ./.github/workflows/ci-actual-acceptance.yaml
-    with:
-      profiles: ${{ needs.changes.outputs.actual_profiles }}
-
-  ci-required:
-    name: ci-required
-    if: always()
-    needs: [changes, contracts, backend, frontend, flutter, windows, actual]
-    permissions:
-      contents: read
-      actions: read
-    runs-on: [self-hosted, linux, x64, boohtacord-ci-meta]
-    timeout-minutes: 5
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: ${{ runner.os == 'Linux' && '3.12.15' || '3.12.10' }}
+    - name: Verify selected Python interpreter
+      run: python -m tools.ci.toolchains.runtime python
+    - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+      with:
+        distribution: temurin
+        java-version: 17.0.20+101
+    - name: Verify selected java SDK
+      run: python -m tools.ci.toolchains.runtime java
+    - uses: ./.github/actions/flutter-setup
+      with:
+        channel: stable
+        flutter-version: 3.47.7
+        cache: true
+    - name: Verify both Kotlin modes and build the inspected debug APK
+      env:
+        FLUTTER_EVIDENCE_NAMESPACE: memory-one
+      run: python3 -m tools.ci.flutter_gates.run android
+    - name: Upload Android debug APK
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: boohtacord-android-debug-apk-memory-one-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: .out/native/android-debug/
+        if-no-files-found: error
+        retention-days: 30
+    - name: Retain mandatory Android profile evidence
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: flutter-part-memory-one-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-android
+        path: .out/ci/flutter-parts/android.json
+        if-no-files-found: error
+        retention-days: 30
+  android-two:
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    - boohtacord-ci-ephemeral
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-          fetch-depth: 2
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: ${{ runner.os == 'Linux' && '3.12.15' || '3.12.10' }}
-      - name: Verify selected Python interpreter
-        run: python -m tools.ci.toolchains.runtime python
-      - name: Require successful selector, contracts and applicable component gates
-        env:
-          CI_NEEDS: ${{ toJSON(needs) }}
-          CI_JOBS: '{"changes":"changes","contracts":"contracts","backend":"backend","web":"frontend","flutter":"flutter","windows":"windows","actual":"actual"}'
-        run: python3 -m tools.ci.required_gate.run
-      - name: Explain required-check outcome with source-bound sanitized metadata
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          TRIAGE_NEEDS: ${{ toJSON(needs) }}
-          CI_GATE_OUTCOME: ${{ job.status }}
-        run: python -m tools.ci.observability.summary --scope pr
-      - name: Retain sanitized required-check triage
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: triage-pr-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .out/ci/triage/pr.json
-          if-no-files-found: error
-          retention-days: 30
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: ${{ runner.os == 'Linux' && '3.12.15' || '3.12.10' }}
+    - name: Verify selected Python interpreter
+      run: python -m tools.ci.toolchains.runtime python
+    - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+      with:
+        distribution: temurin
+        java-version: 17.0.20+101
+    - name: Verify selected java SDK
+      run: python -m tools.ci.toolchains.runtime java
+    - uses: ./.github/actions/flutter-setup
+      with:
+        channel: stable
+        flutter-version: 3.47.7
+        cache: true
+    - name: Verify both Kotlin modes and build the inspected debug APK
+      env:
+        FLUTTER_EVIDENCE_NAMESPACE: memory-two
+      run: python3 -m tools.ci.flutter_gates.run android
+    - name: Upload Android debug APK
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: boohtacord-android-debug-apk-memory-two-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: .out/native/android-debug/
+        if-no-files-found: error
+        retention-days: 30
+    - name: Retain mandatory Android profile evidence
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: flutter-part-memory-two-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-android
+        path: .out/ci/flutter-parts/android.json
+        if-no-files-found: error
+        retention-days: 30
